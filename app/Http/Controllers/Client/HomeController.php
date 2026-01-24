@@ -11,7 +11,6 @@ class HomeController extends Controller
     //
     public function index(){
         $khoaHocs = KhoaHoc::all();
-        
-        return view('client.home.index', compact('khoaHocs'));
+        return view('clients.home.index', compact('khoaHocs'));
     }
 }

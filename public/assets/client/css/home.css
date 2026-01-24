@@ -1,0 +1,18 @@
+.hero-section {
+    background: linear-gradient(rgba(16,69,79,0.8), rgba(16,69,79,0.8)),
+    url('/images/hero.jpg') center/cover;
+    color: white;
+    padding: 120px 0;
+}
+
+.stat-box {
+    background: #fff;
+    padding: 30px;
+    border-radius: 10px;
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #10454F;
+}
