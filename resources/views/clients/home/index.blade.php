@@ -60,7 +60,7 @@
                     
                     {{-- Hình ảnh & Nút yêu thích --}}
                     <div class="course-image-wrapper">
-                        <img src="{{ asset($khoaHoc->anhKhoaHoc ?? 'images/course-demo.jpg') }}" alt="{{ $khoaHoc->tenKhoaHoc }}" class="course-img">
+                        <img src="{{ asset('assets/images/' . ($khoaHoc->anhKhoaHoc ?? 'course-demo.jpg')) }}" alt="{{ $khoaHoc->tenKhoaHoc }}" class="course-img">
                         <div class="course-overlay">
                             <button class="btn btn-light btn-sm rounded-pill px-3 fw-bold">Xem chi tiết</button>
                         </div>
