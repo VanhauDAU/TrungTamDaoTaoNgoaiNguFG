@@ -1,20 +1,19 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     @include('partials.client.head')
 </head>
 <body>
-    {{-- @include('partials.loading')
-    @include('partials.floating_button')
-    @include('clients.blocks.header') --}}
-    <div class="container">
-        @yield('content')
-    </div>
+
+    {{-- Header --}}
+    @include('components.header')
+
+    {{-- Nội dung --}}
+    @yield('content')
+
+    {{-- Footer --}}
     {{-- @include('clients.blocks.footer') --}}
-    @if(!Auth::check())
-        <div id="toastContainer" class="position-fixed bottom-0 start-0 p-3" style="z-index: 9999;"></div>
-    @endif
+
+    @yield('script')
 </body>
-{{-- @include('partials.clients.scripts') --}}
-@yield('script')
 </html>
