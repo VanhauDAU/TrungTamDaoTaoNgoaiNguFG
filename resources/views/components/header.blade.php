@@ -92,8 +92,8 @@
                         </div>
                     @else
                         <div class="d-flex gap-2">
-                            <a href="#" class="btn btn-login fw-bold">Đăng nhập</a>
-                            <a href="#" class="btn btn-primary-genius px-4">Đăng ký</a>
+                            <a href="{{ route('login') }}" class="btn btn-login fw-bold">Đăng nhập</a>
+                            <a href="{{ route('register') }}" class="btn btn-primary-genius px-4">Đăng ký</a>
                         </div>
                     @endauth
                 </div>
