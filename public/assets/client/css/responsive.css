@@ -1,0 +1,162 @@
+/* =========================
+   RESPONSIVE - TABLET
+   ========================= */
+@media (max-width: 991.98px) {
+
+  /* Header spacing */
+  .client-header {
+    backdrop-filter: blur(6px);
+  }
+
+  /* Center menu on mobile collapse */
+  .navbar-nav {
+    text-align: center;
+    padding-top: 10px;
+  }
+
+  .navbar-nav .nav-link {
+    padding: 12px 0 !important;
+    font-size: 1.05rem;
+  }
+
+  /* Search box thu nhỏ */
+  .search-input {
+    width: 180px;
+  }
+
+  .search-input:focus {
+    width: 220px;
+  }
+
+  /* User dropdown */
+  .user-pill span {
+    display: none;
+  }
+}
+
+/* =========================
+   RESPONSIVE - MOBILE
+   ========================= */
+@media (max-width: 767.98px) {
+
+  /* Logo nhỏ hơn */
+  .navbar-brand img {
+    height: 40px;
+  }
+
+  .brand-text span {
+    font-size: 1rem;
+  }
+
+  /* Navbar padding */
+  .navbar {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+
+  /* Collapse menu style */
+  .navbar-collapse {
+    background: #ffffff;
+    border-radius: 12px;
+    margin-top: 10px;
+    padding: 15px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+  }
+
+  /* Menu link mobile */
+  .navbar-nav .nav-link {
+    font-weight: 600;
+    border-bottom: 1px solid #f1f3f5;
+  }
+
+  .navbar-nav .nav-link:last-child {
+    border-bottom: none;
+  }
+
+  /* Ẩn search input – chỉ dùng icon */
+  .search-box-modern {
+    display: none !important;
+  }
+
+  /* Icon buttons gọn hơn */
+  .icon-btn-modern,
+  .icon-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  /* Notification dropdown full width */
+  .dropdown-menu {
+    width: 100% !important;
+    max-width: 100%;
+  }
+
+  /* Auth buttons */
+  .btn-login,
+  .btn-primary-genius {
+    font-size: 0.9rem;
+    padding: 6px 14px;
+  }
+}
+
+/* =========================
+   EXTRA SMALL DEVICES
+   ========================= */
+@media (max-width: 575.98px) {
+
+  /* Header shadow rõ hơn */
+  .client-header {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  }
+
+  /* Section title nhỏ lại */
+  .section-title {
+    font-size: 1.5rem;
+  }
+
+  .section-title::after {
+    width: 40px;
+  }
+
+  /* User avatar nhỏ */
+  .user-pill img {
+    width: 34px;
+    height: 34px;
+  }
+}
+/* =========================
+   FIX DROPDOWN MOBILE
+   ========================= */
+@media (max-width: 991.98px) {
+
+  /* Cho phép dropdown nằm đúng luồng */
+  .navbar-collapse {
+    position: relative;
+  }
+
+  .navbar .dropdown-menu {
+    position: static !important;
+    float: none;
+    width: 100%;
+    margin-top: 10px;
+    box-shadow: none;
+    border-radius: 12px;
+  }
+
+  /* Notification dropdown */
+  .dropdown-menu-end {
+    right: auto !important;
+    left: 0 !important;
+  }
+
+  /* Khoảng cách rõ ràng */
+  .dropdown-menu .list-group-item {
+    padding: 12px 16px;
+  }
+
+  /* User dropdown */
+  .user-pill {
+    width: 100%;
+    justify-content: space-between;
+  }
+}

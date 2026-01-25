@@ -15,5 +15,6 @@
     {{-- @include('clients.blocks.footer') --}}
 
     @yield('script')
+    @include('partials.client.script')
 </body>
 </html>
