@@ -32,6 +32,9 @@
   .user-pill span {
     display: none;
   }
+  .form-decor{
+        display: none;
+    }
 }
 
 /* =========================

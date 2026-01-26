@@ -12,7 +12,7 @@ class HomeController extends Controller
     //
     public function index(){
         $khoaHocs = KhoaHoc::all();
-        $giaoViens = TaiKhoan::where('role', 2)->get();
-        return view('clients.home.index', compact('khoaHocs'));
+        $topGiaoVien = TaiKhoan::where('role', 1)->take(4)->get();
+        return view('clients.home.index', compact('khoaHocs', 'topGiaoVien'));
     }
 }
