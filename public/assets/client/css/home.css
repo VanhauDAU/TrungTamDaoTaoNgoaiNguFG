@@ -5,7 +5,147 @@
     --bg-card: #E7F0F2;
     --ff-title: 'Lexend', sans-serif;
 }
+/* Home Banner */
+.home-banner {
+    padding: 60px 0;
+}
 
+/* 1. Typography & Buttons */
+.cl-green { color: var(--cl-green); }
+.ff-title { font-family: 'Lexend', sans-serif; }
+.btn-red {
+    position: relative;
+    z-index: 1;
+    background-color: var(--cl-red);
+    color: white;
+    padding: 14px 35px;
+    border-radius: 50px;
+    font-weight: 700;
+    border: none;
+    transition: all 0.3s ease;
+    animation: pulse 2s infinite;
+}
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(227, 45, 45, 0.6);
+    }
+    70% {
+        box-shadow: 0 0 0 15px rgba(227, 45, 45, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(227, 45, 45, 0);
+    }
+}
+.btn-red:hover { 
+    transform: translateY(-3px); 
+    box-shadow: 0 10px 20px rgba(227, 45, 45, 0.3); 
+    background-color: #cc2626; 
+    color:white; 
+    opacity: 0.8;
+
+}
+
+/* 2. SVG Decoration */
+.title_animate { position: relative; display: inline-block; }
+.svg-bg { position: absolute; top: 0; left: 0; z-index: -1; width: 110%; }
+.title-heart { position: absolute; top: -10px; right: -20px; width: 40px; }
+.title_animate h1 {
+    position: relative; /* [QUAN TRỌNG] Phải có position thì z-index mới có tác dụng */
+    z-index: 2;
+    color: var(--cl-green);
+    font-weight: bold;
+    margin-bottom: 0;
+    font-size: clamp(2.5rem, 5vw, 4rem);
+}
+/* 3. Khung Ảnh Giáo Viên (Blob Effect) */
+.slider-container-wrapper { position: relative; max-width: 550px; margin: auto; }
+.blob-frame {
+    background: var(--cl-green);
+    border-radius: 40% 60% 70% 30% / 40% 40% 60% 50%;
+    overflow: hidden;
+    aspect-ratio: 1/1;
+    transition: all 0.5s ease;
+}
+.blob-frame img { width: 100%; height: 100%; object-fit: cover; }
+
+/* 4. Ngôi sao IELTS */
+/* Cập nhật lại class này */
+.ielts-badge {
+    position: absolute;
+    top: 65%;
+    left: -20px;
+    width: 110px;
+    height: 110px;
+    background: var(--cl-red);
+    border-radius: 50%;
+    z-index: 10;
+}
+
+/* Tạo viền gợn sóng */
+.ielts-badge::before {
+    content: "";
+    position: absolute;
+    inset: -8px;
+    background: var(--cl-red);
+    border-radius: 50%;
+    filter: blur(6px);
+    z-index: -1;
+}
+/* Thêm mới đoạn này để căn giữa nội dung bên trong Slider */
+.badge-slider {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.badge-slider .slick-list, 
+.badge-slider .slick-track {
+    height: 100%;
+    width: 100%;
+}
+
+.badge-slider .item {
+    display: flex !important;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100% !important;
+    color: white;
+    text-align: center;
+    /* Đảm bảo chữ nằm gọn trong vùng an toàn của ngôi sao */
+    padding-top: 10px; 
+}
+
+.badge-slider strong {
+    font-size: 26px; /* Chỉnh lại cỡ chữ cho rõ */
+    line-height: 1.1;
+    display: block;
+}
+
+.badge-slider span {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+}
+/* 5. Navigation Buttons */
+.slider-nav {
+    position: absolute;
+    top: 50%; width: 100%;
+    display: flex; justify-content: space-between;
+    padding: 0 10px; pointer-events: none;
+}
+.nav-btn {
+    pointer-events: auto;
+    background: #fff; border: none; width: 45px; height: 45px;
+    border-radius: 50%; box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    color: var(--cl-green); font-size: 20px; transition: 0.3s;
+}
+.nav-btn:hover { background: var(--cl-green); color: #fff; }
+
+.grayscale { filter: grayscale(1); }
+/* end home banner */
 #trainning-stats {
     background-color: #fff;
     overflow: hidden;

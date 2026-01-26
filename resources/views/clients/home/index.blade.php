@@ -3,28 +3,86 @@
 @section('title', 'Trung tâm đào tạo ngoại ngữ - Five Genius')
 
 @section('content')
+<section class="home-banner">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6 order-2 order-lg-1 py-5">
+                <div class="banner_content">
+                    <div class="title_animate mb-4">
+                        <svg width="431" height="119" viewBox="0 0 431 119" fill="none" xmlns="http://www.w3.org/2000/svg" class="svg-bg">
+                            <path d="M26.4044 50.1739C143.289 11.2828 368.028 18.9611 426.999 30.7288C333.952 35.1662 60.1018 98.4423 60.1018 98.4423C60.1018 98.4423 220.66 52.5281 320.761 91.3785" stroke="#B8D3D9" stroke-width="40.8987" stroke-linecap="square"/>
+                        </svg>
+                        <h1 class="ff-title cl-green fw-bold position-relative">
+                            Trung tâm Anh Ngữ <br> FIVE GENIUS
+                        </h1>
+                        <img src="https://theforumcenter.com/wp-content/themes/the-forum/assets/images/title-icon.png" class="title-heart" alt="">
+                    </div>
 
-{{-- STATS --}}
-<div class="container my-5">
-    <div class="row text-center">
-        <div class="col-md-3 stat-box">
-            <span class="stat-number">5000+</span>
-            <span>Học viên</span>
-        </div>
-        <div class="col-md-3 stat-box">
-            <span class="stat-number">50+</span>
-            <span>Giảng viên</span>
-        </div>
-        <div class="col-md-3 stat-box">
-            <span class="stat-number">10+</span>
-            <span>Năm kinh nghiệm</span>
-        </div>
-        <div class="col-md-3 stat-box">
-            <span class="stat-number">98%</span>
-            <span>Hài lòng</span>
+                    <div class="desc mb-4">
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-check-circle-fill me-2"></i>Mô hình học tiên phong University Lecture</li>
+                            <li><i class="bi bi-check-circle-fill me-2"></i>Nâng band cấp tốc chỉ sau 90 giờ học</li>
+                            <li><i class="bi bi-check-circle-fill me-2"></i>Chuyên đào tạo IELTS/SAT/Tiếng Anh Trẻ Em</li>
+                            <li><i class="bi bi-check-circle-fill me-2"></i>Cam kết chất lượng đầu ra</li>
+                        </ul>
+                    </div>
+
+                    <a href="#" class="btn btn-red mb-5">
+                        Đăng ký ngay <img src="https://theforumcenter.com/wp-content/themes/the-forum/assets/images/right.png" alt="">
+                    </a>
+
+                    <div class="partners">
+                        <h6 class="ff-title fs-18 mb-3 text-muted">Hợp tác với các tổ chức giáo dục hàng đầu.</h6>
+                        <div class="d-flex gap-4 align-items-center grayscale opacity-50">
+                            <img src="https://theforumcenter.com/wp-content/uploads/2025/05/partner1.png" height="35" alt="">
+                            <img src="https://theforumcenter.com/wp-content/uploads/2025/05/partner2.png" height="35" alt="">
+                            <img src="https://theforumcenter.com/wp-content/uploads/2025/05/partner3.png" height="35" alt="">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6 order-1 order-lg-2">
+                <div class="slider-container-wrapper">
+                    <div class="main-image-slider">
+                        <div class="item"><div class="blob-frame"><img src="https://tqcap.khanhhoa.edu.vn/upload/38625/20191204/grab9fc08co_giao_co_kha_nang_lay_nuoc_mat_hoc_tro_trong_nhung_tiet_giang_van_1.JPG" alt=""></div></div>
+                        <div class="item"><div class="blob-frame"><img src="{{asset('assets/images/teacher2.png')}}" alt=""></div></div>
+                        <div class="item"><div class="blob-frame"><img src="{{asset('assets/images/teacher3.png')}}" alt=""></div></div>
+                    </div>
+
+                    <div class="ielts-badge">
+                        <div class="badge-slider">
+                            <div class="item"><strong>9.0</strong><span>IELTS</span></div>
+                            <div class="item"><strong>8.5</strong><span>IELTS</span></div>
+                            <div class="item"><strong>8.0</strong><span>IELTS</span></div>
+                        </div>
+                    </div>
+
+                    <div class="slider-nav">
+                        <button class="nav-btn prev"><i class="bi bi-chevron-left"></i></button>
+                        <button class="nav-btn next"><i class="bi bi-chevron-right"></i></button>
+                    </div>
+
+                    <div class="teacher-info-slider mt-4 text-center">
+                        <div class="item">
+                            <h4 class="cl-green fw-bold">Thầy Hoàng Huy</h4>
+                            <p class="text-muted">Tốt nghiệp thạc sĩ - FHNW University, Switzerland</p>
+                        </div>
+                        <div class="item">
+                            <h4 class="cl-green fw-bold">Vũ Đình Nam</h4>
+                            <p class="text-muted">Cử nhân Đại học Việt Đức - SAT 1500</p>
+                        </div>
+                        <div class="item">
+                            <h4 class="cl-green fw-bold">Lê Khánh Hoàng</h4>
+                            <p class="text-muted">Thạc sĩ Ngôn ngữ học - Giảng viên ĐH Kinh tế</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-</div>
+</section>
+{{-- TRAINNING STATS SECTION --}}
 <section id="trainning-stats">
     <div class="training py-80">
         <div class="container">
@@ -48,9 +106,9 @@
                 </div>
             </div>
             <div class="counter">
-                <div class="row">
+                <div class="row g-4">
                     <div class="col-lg-4 col-6">
-                        <div class="training_item item item_1 fadeUp" style="translate: none; rotate: none; scale: none; transform: translate(0px, 0px); opacity: 1;">
+                        <div class="training_item item item_1 fadeUp" data-aos="fade-up" data-aos-delay="100" style="translate: none; rotate: none; scale: none; transform: translate(0px, 0px); opacity: 1;">
                             <div class="fs-96 cl-red ff-title mb-3">
                                 <span class="number" data-count="8">8</span><span class="fs-48">+</span>
                             </div>
@@ -82,7 +140,7 @@
                     <div class="col-lg-4 col-6">
                         <div class="training_item item item_4 fadeUp" style="translate: none; rotate: none; scale: none; transform: translate(0px, 0px); opacity: 1;">
                             <div class="fs-96 cl-red ff-title mb-3">
-                                <span class="number" data-count="100">100</span><span class="fs-48">%</span>
+                                <span class="number" data-count="100">0</span><span class="fs-48">%</span>
                             </div>
                             <div class="ff-title fs-24">
                                 Giáo viên chuyên môn chất lượng cao
@@ -92,7 +150,7 @@
                     <div class="col-lg-4 col-6">
                         <div class="training_item item item_5 fadeUp" style="translate: none; rotate: none; scale: none; transform: translate(0px, 0px); opacity: 1;">
                             <div class="fs-96 cl-red ff-title mb-3">
-                                <span class="number" data-count="5000">5,000</span><span class="fs-48">+</span>
+                                <span class="number" data-count="999">0</span><span class="fs-48">+</span>
                             </div>
                             <div class="ff-title fs-24">
                                 Học viên<br>cán đích
@@ -172,63 +230,4 @@
         </div>
     </div>
 </section>
-{{-- TEACHERS SECTION --}}
-<section id="teachers" class="teachers-section py-5 bg-light">
-    <div class="container">
-        {{-- Header --}}
-        <div class="text-center mb-5">
-            <h2 class="section-title">Đội Ngũ Giảng Viên</h2>
-            <p class="text-muted w-75 mx-auto">
-                Five Genius tự hào sở hữu đội ngũ giảng viên giàu kinh nghiệm, 
-                được đào tạo bài bản và có chứng chỉ quốc tế, luôn đồng hành cùng học viên trên hành trình chinh phục ngoại ngữ.
-            </p>
-        </div>
-
-        {{-- Teachers list --}}
-        <div class="row g-4">
-            @foreach($giaoViens as $gv)
-            <div class="col-xl-3 col-lg-4 col-md-6">
-                <div class="teacher-card text-center h-100">
-                    {{-- Avatar --}}
-                    <div class="teacher-avatar">
-                        <img 
-                            src="{{ asset('assets/images/' . ($gv->anhDaiDien ?? 'teacher-demo.jpg')) }}" 
-                            alt="{{ $gv->tenGiaoVien }}"
-                        >
-                    </div>
-
-                    {{-- Info --}}
-                    <div class="teacher-info p-4">
-                        <h5 class="teacher-name mb-1">
-                            {{ $gv->tenGiaoVien ?? 'Nguyễn Văn A' }}
-                        </h5>
-
-                        <span class="teacher-major d-block mb-2">
-                            {{ $gv->chuyenMon ?? 'Giảng viên Tiếng Anh' }}
-                        </span>
-
-                        <p class="teacher-desc text-muted mb-3">
-                            {{ Str::limit($gv->gioiThieu ?? 'Giảng viên có nhiều năm kinh nghiệm giảng dạy, từng đào tạo hàng nghìn học viên đạt chứng chỉ quốc tế.', 90) }}
-                        </p>
-
-                        {{-- Meta --}}
-                        <div class="teacher-meta d-flex justify-content-center gap-3 mb-3">
-                            <span><i class="fas fa-briefcase me-1"></i> {{ $gv->kinhNghiem ?? '8+' }} năm</span>
-                            <span><i class="fas fa-star text-warning me-1"></i> 4.9</span>
-                        </div>
-
-                        {{-- Social --}}
-                        <div class="teacher-social d-flex justify-content-center gap-3">
-                            <a href="#" class="social-btn"><i class="fab fa-facebook-f"></i></a>
-                            <a href="#" class="social-btn"><i class="fab fa-linkedin-in"></i></a>
-                            <a href="#" class="social-btn"><i class="fas fa-envelope"></i></a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            @endforeach
-        </div>
-    </div>
-</section>
-
 @endsection
