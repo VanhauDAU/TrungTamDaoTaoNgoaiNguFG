@@ -4,20 +4,6 @@
 
 @section('content')
 
-{{-- HERO FULL WIDTH --}}
-<section class="hero-section">
-    <div class="container-fluid text-center">
-        <h1>Khai Phá Tài Năng Ngôn Ngữ</h1>
-        <p class="lead mb-4">
-            Học ngoại ngữ cùng đội ngũ chuyên gia hàng đầu tại Five Genius.
-        </p>
-        <div class="d-flex justify-content-center gap-3">
-            <a href="#courses" class="btn btn-warning btn-lg fw-bold">Xem khóa học</a>
-            <a href="#contact" class="btn btn-outline-light btn-lg">Tư vấn ngay</a>
-        </div>
-    </div>
-</section>
-
 {{-- STATS --}}
 <div class="container my-5">
     <div class="row text-center">
@@ -39,14 +25,102 @@
         </div>
     </div>
 </div>
-
+<section id="trainning-stats">
+    <div class="training py-80">
+        <div class="container">
+            <div class="text-center">
+                <div class="title_animate px-5 mb-lg-5 mb-4">
+                    <svg width="567" height="115" viewBox="0 0 567 115" fill="none" xmlns="http://www.w3.org/2000/svg" class="active">
+                        <g opacity="0.5">
+                        <path d="M60.2197 42.5534C210.232 9.439 399.105 21.1999 474.79 31.2196C355.372 34.9979 3.90527 88.8754 3.90527 88.8754C3.90527 88.8754 341.193 27.2786 540.69 88.8754" stroke="#B8D3D9" stroke-width="40.8987" stroke-linecap="square" class="title-style-2"></path>
+                        </g>
+                    </svg>                
+                    <h3 class="fs-48 ff-title cl-green mb-0 textSkewUp" style="perspective: 400px; opacity: 1;"><div class="word" style="display: inline-block;"><div class="char" style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">C</div><div class="char" style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">h</div><div class="char" style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">ư</div><div class="char" style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">ơ</div><div class="char" style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">n</div><div class="char" style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">g</div></div> <div class="word" style="display: inline-block;"><div class="char" style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">t</div><div class="char" style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">r</div><div class="char" style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">ì</div><div class="char" style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">n</div><div class="char" style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">h</div></div> <div class="word" style="display: inline-block;"><div class="char" style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">đ</div><div class="char" style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">à</div><div class="char" style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">o</div></div> <div class="word" style="display: inline-block;"><div class="char" style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">t</div><div class="char" style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">ạ</div><div class="char" style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">o</div></div><br> <div class="word" style="display: inline-block;"><div class="char" style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">c</div><div class="char" style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">h</div><div class="char" style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">ấ</div><div class="char" style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">t</div></div> <div class="word" style="display: inline-block;"><div class="char" style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">l</div><div class="char" style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">ư</div><div class="char" style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">ợ</div><div class="char" style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">n</div><div class="char" style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">g</div></div> <div class="word" style="display: inline-block;"><div class="char" style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">c</div><div class="char" style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">a</div><div class="char" style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">o</div></div></h3>
+                    <div class="title_icon no-1">
+                        <img src="{{asset('assets/images/star-title.png')}}" class="img-fluid" alt="">
+                    </div>
+                    <div class="title_icon no-2">
+                        <img src="{{asset('assets/images/star-title.png')}}" class="img-fluid" alt="">
+                    </div>
+                    <div class="title_icon no-3">
+                        <img src="{{asset('assets/images/star-title.png')}}" class="img-fluid" alt="">
+                    </div>
+                </div>
+            </div>
+            <div class="counter">
+                <div class="row">
+                    <div class="col-lg-4 col-6">
+                        <div class="training_item item item_1 fadeUp" style="translate: none; rotate: none; scale: none; transform: translate(0px, 0px); opacity: 1;">
+                            <div class="fs-96 cl-red ff-title mb-3">
+                                <span class="number" data-count="8">8</span><span class="fs-48">+</span>
+                            </div>
+                            <div class="ff-title fs-24">
+                                Năm<br>hoạt động
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-6">
+                        <div class="training_item item item_2 fadeUp" style="translate: none; rotate: none; scale: none; transform: translate(0px, 0px); opacity: 1;">
+                            <div class="fs-96 cl-red ff-title mb-3">
+                                <span class="number" data-count="10">10</span><span class="fs-48">+</span>
+                            </div>
+                            <div class="ff-title fs-24">
+                                Cơ sở<br>trên toàn quốc
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-6">
+                        <div class="training_item item item_3 fadeUp" style="translate: none; rotate: none; scale: none; transform: translate(0px, 0px); opacity: 1;">
+                            <div class="fs-96 cl-red ff-title mb-3">
+                                <span class="number" data-count="200">200</span><span class="fs-48">+</span>
+                            </div>
+                            <div class="ff-title fs-24">
+                                Học viên xuất sắc đạt <br>IELTS 8.0+
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-6">
+                        <div class="training_item item item_4 fadeUp" style="translate: none; rotate: none; scale: none; transform: translate(0px, 0px); opacity: 1;">
+                            <div class="fs-96 cl-red ff-title mb-3">
+                                <span class="number" data-count="100">100</span><span class="fs-48">%</span>
+                            </div>
+                            <div class="ff-title fs-24">
+                                Giáo viên chuyên môn chất lượng cao
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-6">
+                        <div class="training_item item item_5 fadeUp" style="translate: none; rotate: none; scale: none; transform: translate(0px, 0px); opacity: 1;">
+                            <div class="fs-96 cl-red ff-title mb-3">
+                                <span class="number" data-count="5000">5,000</span><span class="fs-48">+</span>
+                            </div>
+                            <div class="ff-title fs-24">
+                                Học viên<br>cán đích
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-6">
+                        <div class="training_item item item_6 fadeUp" style="translate: none; rotate: none; scale: none; transform: translate(0px, 0px); opacity: 1;">
+                            <div class="fs-96 cl-red ff-title mb-3">
+                                <span class="number" data-count="10">10</span><span class="fs-48">+ Top</span>
+                            </div>
+                            <div class="ff-title fs-24">
+                                Đối tác bạch kim của IDP <br>và British Council Vietnam                        
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 {{-- COURSES SECTION --}}
 <section id="courses" class="courses-section py-5">
     <div class="container">
         <div class="d-flex justify-content-between align-items-end mb-5">
             <div>
                 <h2 class="section-title text-start mb-2">Khóa Học Nổi Bật</h2>
-                <p class="text-muted">Lộ trình bài bản, cam kết đầu ra theo tiêu chuẩn quốc tế.</p>
+                <p class="text-muted mt-4">Lộ trình bài bản, cam kết đầu ra theo tiêu chuẩn quốc tế.</p>
             </div>
             <a href="#" class="btn btn-outline-primary-genius d-none d-md-block">Xem tất cả khóa học</a>
         </div>
@@ -95,7 +169,6 @@
                 </div>
             </div>
             @endforeach
-            {{-- Kết thúc vòng lặp --}}
         </div>
     </div>
 </section>

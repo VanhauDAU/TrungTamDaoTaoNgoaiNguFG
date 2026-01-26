@@ -1,18 +1,89 @@
-.hero-section {
-    background: linear-gradient(rgba(16,69,79,0.8), rgba(16,69,79,0.8)),
-    url('/images/hero.jpg') center/cover;
-    color: white;
-    padding: 120px 0;
+/* Variables & Fonts */
+:root {
+    --cl-red: #E32D2D;
+    --cl-green: #154345;
+    --bg-card: #E7F0F2;
+    --ff-title: 'Lexend', sans-serif;
 }
 
-.stat-box {
-    background: #fff;
-    padding: 30px;
-    border-radius: 10px;
+#trainning-stats {
+    background-color: #fff;
+    overflow: hidden;
 }
 
-.stat-number {
-    font-size: 2.5rem;
-    font-weight: bold;
-    color: #10454F;
+.py-80 { padding: 80px 0; }
+
+/* Title Styling */
+.title_animate {
+    position: relative;
+    display: inline-block;
+}
+
+.title_animate svg {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1;
+    width: 100%;
+    max-width: 500px;
+}
+
+.title_animate h3 {
+    position: relative;
+    z-index: 2;
+    font-weight: 800;
+    color: var(--cl-green);
+    font-size: 3rem;
+    line-height: 1.2;
+}
+
+.title_icon {
+    position: absolute;
+    width: 30px;
+}
+.title_icon.no-1 { top: -20px; right: -30px; }
+.title_icon.no-2 { top: 40px; left: -50px; }
+
+/* Training Item Cards */
+.training_item {
+    background: var(--bg-card);
+    border-radius: 20px;
+    padding: 40px 30px;
+    height: 100%;
+    margin-bottom: 24px;
+    position: relative;
+    transition: transform 0.3s ease;
+    overflow: hidden; /* Để che các khối decor */
+}
+
+.training_item:hover {
+    transform: translateY(-10px);
+}
+
+/* Decor Shapes (Giả lập các icon chìm trong ảnh) */
+.training_item::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    right: -10px;
+    width: 100px;
+    height: 100px;
+    background: rgba(184, 211, 217, 0.3);
+    border-radius: 50%;
+    z-index: 1;
+}
+
+/* Typography classes */
+.cl-red { color: var(--cl-red) !important; }
+.cl-green { color: var(--cl-green) !important; }
+.ff-title { font-family: var(--ff-title); font-weight: 700; }
+.fs-96 { font-size: clamp(3rem, 5vw, 6rem); font-weight: 800; line-height: 1; }
+.fs-48 { font-size: 2.5rem; }
+.fs-24 { font-size: 1.25rem; line-height: 1.4; color: var(--cl-green); }
+
+/* Responsive */
+@media (max-width: 991px) {
+    .fs-96 { font-size: 4rem; }
+    .title_animate h3 { font-size: 2rem; }
 }
