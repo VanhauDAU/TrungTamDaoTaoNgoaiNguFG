@@ -122,3 +122,78 @@ document.addEventListener('DOMContentLoaded', function() {
         observer.observe(counterSection);
     }
 });
+
+// register-sentence animation
+document.addEventListener('DOMContentLoaded', function() {
+    // Chọn phần tử cần theo dõi
+    const trigger = document.querySelector('.animate-trigger');
+    
+    if (trigger) {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                // Khi phần tử xuất hiện trong khung nhìn
+                if (entry.isIntersecting) {
+                    // Thêm class 'active' để kích hoạt CSS animation
+                    entry.target.classList.add('active');
+                    // Ngừng theo dõi sau khi đã kích hoạt
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.5 }); // Kích hoạt khi 50% phần tử xuất hiện
+
+        observer.observe(trigger);
+    }
+});
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('.register-sentence-form');
+    const inputs = form.querySelectorAll('.input-inline, .select-inline');
+
+    // Các quy tắc Validate
+    const validators = {
+        fullname: (value) => value.trim().length >= 2,
+        course: (value) => value !== "",
+        phone: (value) => /(0[3|5|7|8|9])+([0-9]{8})\b/g.test(value), // Regex số ĐT VN
+        email: (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+    };
+
+    // Hàm kiểm tra từng Input
+    function validateInput(input) {
+        const name = input.getAttribute('name');
+        const value = input.value;
+        let isValid = true;
+
+        if (validators[name]) {
+            isValid = validators[name](value);
+        }
+
+        if (!isValid) {
+            input.classList.add('is-invalid');
+        } else {
+            input.classList.remove('is-invalid');
+        }
+        return isValid;
+    }
+
+    // Validate ngay khi người dùng nhập (Real-time)
+    inputs.forEach(input => {
+        input.addEventListener('input', () => validateInput(input));
+        input.addEventListener('blur', () => validateInput(input)); // Khi rời khỏi input
+    });
+
+    // Chặn gửi Form nếu còn lỗi
+    form.addEventListener('submit', function(e) {
+        let isFormValid = true;
+
+        inputs.forEach(input => {
+            if (!validateInput(input)) {
+                isFormValid = false;
+            }
+        });
+
+        if (!isFormValid) {
+            e.preventDefault(); // Ngừng gửi form
+            alert('Vui lòng kiểm tra lại thông tin đăng ký!');
+        }
+    });
+});
+// end register-sentence animation

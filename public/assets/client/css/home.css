@@ -227,3 +227,160 @@
     .fs-96 { font-size: 4rem; }
     .title_animate h3 { font-size: 2rem; }
 }
+
+/* REGISTER ADVISE SECTION */
+/* Màu gạch chân khi có lỗi */
+.input-inline.is-invalid, .select-inline.is-invalid {
+    border-bottom-color: #ff4d4d !important;
+    background-color: rgba(255, 77, 77, 0.05);
+}
+
+/* Hiệu ứng rung nhẹ khi nhập sai */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+.input-inline.is-invalid {
+    animation: shake 0.2s ease-in-out 0s 2;
+}
+
+/* Hiển thị thông báo lỗi nhỏ (nếu cần) */
+.error-message {
+    color: #ff4d4d;
+    font-size: 12px;
+    font-weight: 400;
+    position: absolute;
+    bottom: -20px;
+    left: 10px;
+    display: none;
+}
+/* Nền trắng cho section */
+.bg-white {
+    background-color: #fff !important;
+}
+
+/* Font chữ và màu sắc chung */
+.ff-title { font-family: 'Lexend', sans-serif; }
+.cl-white{ color: #fff; }
+.cl-red { color: #E32D2D; }
+
+/* Style cho form dạng câu văn */
+.sentence-body {
+    line-height: 2.8;
+    font-size: 22px;
+}
+
+/* Để các phần tử nằm trên cùng một dòng */
+.line-group {
+    display: inline;
+    white-space: normal;
+}
+
+.sentence-body .text {
+    font-family: 'Lexend', sans-serif;
+    color: white;
+    font-weight: 500;
+}
+
+/* Style cho Input và Select (Gạch chân nét đứt) */
+.input-inline, .select-inline {
+    border: none;
+    border-bottom: 2px dashed #B8D3D9; /* Gạch chân màu xám xanh */
+    background: transparent;
+    padding: 5px 10px;
+    color: #27c4b5; /* Chữ màu đỏ khi nhập */
+    font-family: 'Lexend', sans-serif;
+    font-weight: 800;
+    font-size: 24px;
+    outline: none;
+    text-align: center;
+    transition: all 0.3s ease;
+    min-width: 200px; /* Độ rộng tối thiểu */
+}
+
+/* Hiệu ứng khi focus */
+.input-inline:focus, .select-inline:focus {
+    border-bottom-color: var(--cl-red); /* Đổi màu gạch chân thành đỏ */
+    background-color: rgba(227, 45, 45, 0.05);
+}
+
+/* Style cho placeholder */
+.input-inline::placeholder {
+    color: #27c4b5;
+    font-weight: 400;
+    font-style: italic;
+    font-size: 18px;
+    font-weight: 800;
+    font-size: 24px;
+}
+
+/* Điều chỉnh độ rộng cho input số điện thoại và email */
+.phone-input { min-width: 180px; }
+.email-input { min-width: 250px; }
+
+/* Style cho nút submit */
+.btn-red {
+    background-color: var(--cl-red);
+    color: white;
+    border: none;
+    transition: all 0.3s ease;
+}
+.btn-red:hover {
+    background-color: #c02626;
+    transform: translateY(-3px);
+    color: white;
+}
+.course-select {
+    min-width: 450px; /* Tăng chiều dài tại đây */
+    text-align-last: center; /* Căn giữa nội dung bên trong select */
+    cursor: pointer;
+}
+
+/* Đảm bảo khi trên mobile nó không bị tràn màn hình */
+@media (max-width: 768px) {
+    .course-select {
+        min-width: 100%;
+    }
+}
+/* --- HIỆU ỨNG VẼ SVG --- */
+.draw-path {
+    stroke-dasharray: 1000; /* Độ dài nét vẽ */
+    stroke-dashoffset: 1000; /* Ẩn nét vẽ ban đầu */
+    transition: stroke-dashoffset 2s ease-out; /* Thời gian vẽ 2s */
+}
+
+/* Khi có class 'active', nét vẽ sẽ hiện ra */
+.title_animate.active .draw-path {
+    stroke-dashoffset: 0;
+}
+.register-sentence-form{
+    position: relative;
+    background-color: #004646;
+    padding: 20px 40px;
+    border-radius: 15px;
+}
+.form-decor{
+    width: 500px;
+    top: 0px;
+    right: 0px;
+}
+.desc{
+    text-align: left;
+    max-width: 700px;
+}
+/* Responsive */
+@media (max-width: 768px) {
+    .sentence-body { font-size: 18px; line-height: 2; }
+    .input-inline, .select-inline { 
+        display: block; 
+        width: 100%; 
+        margin: 10px auto; 
+        text-align: left;
+    }
+    .form-decor{
+        display: none;
+    }
+}
+/* END REGISTER ADVISE SECTION */

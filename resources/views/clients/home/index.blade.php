@@ -41,20 +41,23 @@
                     </div>
                 </div>
             </div>
-
             <div class="col-lg-6 order-1 order-lg-2">
                 <div class="slider-container-wrapper">
                     <div class="main-image-slider">
-                        <div class="item"><div class="blob-frame"><img src="https://tqcap.khanhhoa.edu.vn/upload/38625/20191204/grab9fc08co_giao_co_kha_nang_lay_nuoc_mat_hoc_tro_trong_nhung_tiet_giang_van_1.JPG" alt=""></div></div>
-                        <div class="item"><div class="blob-frame"><img src="{{asset('assets/images/teacher2.png')}}" alt=""></div></div>
-                        <div class="item"><div class="blob-frame"><img src="{{asset('assets/images/teacher3.png')}}" alt=""></div></div>
+                        @foreach ($topGiaoVien as $giaoVien)
+                             <div class="item"><div class="blob-frame">
+                                <img src="{{ $giaoVien->hoSoNguoiDung->anhDaiDien ? asset('storage/teachers/' . $giaoVien->hoSoNguoiDung->anhDaiDien) : asset('assets/images/default-teacher.jpeg') }}" 
+                                    alt="{{ $giaoVien->hoSoNguoiDung->hoTen }}">
+                            </div>
+                        </div>
+                        @endforeach
                     </div>
 
                     <div class="ielts-badge">
                         <div class="badge-slider">
-                            <div class="item"><strong>9.0</strong><span>IELTS</span></div>
-                            <div class="item"><strong>8.5</strong><span>IELTS</span></div>
-                            <div class="item"><strong>8.0</strong><span>IELTS</span></div>
+                            @foreach ($topGiaoVien as $giaoVien)
+                                <div class="item"><strong>9.0</strong><span>IELTS</span></div>
+                            @endforeach
                         </div>
                     </div>
 
@@ -64,18 +67,12 @@
                     </div>
 
                     <div class="teacher-info-slider mt-4 text-center">
-                        <div class="item">
-                            <h4 class="cl-green fw-bold">Thầy Hoàng Huy</h4>
-                            <p class="text-muted">Tốt nghiệp thạc sĩ - FHNW University, Switzerland</p>
-                        </div>
-                        <div class="item">
-                            <h4 class="cl-green fw-bold">Vũ Đình Nam</h4>
-                            <p class="text-muted">Cử nhân Đại học Việt Đức - SAT 1500</p>
-                        </div>
-                        <div class="item">
-                            <h4 class="cl-green fw-bold">Lê Khánh Hoàng</h4>
-                            <p class="text-muted">Thạc sĩ Ngôn ngữ học - Giảng viên ĐH Kinh tế</p>
-                        </div>
+                        @foreach ($topGiaoVien as $giaoVien)
+                            <div class="item">
+                                <h4 class="cl-green fw-bold">{{$giaoVien->hoSoNguoiDung->hoTen}}</h4>
+                                <p class="text-muted">Tốt nghiệp {{$giaoVien->nhanSu->hocVi}} - với bằng cấp {{$giaoVien->nhanSu->bangCap}}</p>
+                            </div>
+                        @endforeach
                     </div>
                 </div>
             </div>
@@ -227,6 +224,65 @@
                 </div>
             </div>
             @endforeach
+        </div>
+    </div>
+</section>
+{{-- REGISTER ADVISE SECTION --}}
+<section class="register-section py-80"> {{-- Thêm bg-white --}}
+    <div class="container">
+        <div class="form_register_wrapper mx-auto">
+            {{-- Form Laravel chuẩn --}}
+            <form action="{{-- route('tu-van.store') --}}" method="POST" class="register-sentence-form">
+                @csrf
+                <img src="{{asset('assets/images/form-corner.png')}}" class="form-decor position-absolute" alt="">
+                <div class="title_animate mb-4 text-center position-relative animate-trigger">
+                    {{-- SVG đã thêm class "draw-path" --}}
+                    <svg width="574" height="97" viewBox="0 0 574 97" fill="none" xmlns="http://www.w3.org/2000/svg" class="position-absolute top-0 start-50 translate-middle-x" style="z-index: 0;">
+                        <path d="M24.6462 72.3225C177.933 35.7379 472.664 42.9608 550.001 54.0305" 
+                              stroke="#B8D3D9" stroke-width="30" stroke-linecap="round" class="draw-path"/>
+                    </svg>                    
+                    <h4 class="fs-48 ff-title cl-white position-relative" style="z-index: 1;">Đăng ký tư vấn miễn phí</h4>
+                </div>
+
+                <div class="text-center mb-5">
+                    <p class="desc fw-light cl-white fs-5">Xây dựng lộ trình học TOÀN DIỆN, bằng cách đăng ký qua form hoặc liên hệ với chúng tôi qua email hoặc số điện thoại bên dưới</p>
+                </div>
+
+                <div class="sentence-body">
+                    <div class="line-group mb-3">
+                        <span class="text">Xin chào! Mình là</span>
+                        <input type="text" name="fullname" class="input-inline" placeholder="Họ và tên" required>
+                        <span class="text">,</br></span>
+                    </div>
+
+                    <div class="line-group mb-3">
+                        <span class="text">quan tâm đến khoá học</span>
+                        {{-- Select dùng class tùy chỉnh "select-inline" --}}
+                        <select name="course" class="select-inline course-select" required>
+                            <option value="" disabled selected>Chọn khóa học</option>
+                            <option value="IELTS">IELTS tại trung tâm</option>
+                            <option value="IELTS_ONLINE">IELTS Online 4+2</option>
+                            <option value="SAT">SAT Preparation</option>
+                            <option value="KIDS">Kid & Teenager</option>
+                        </select>
+                        <span class="text">!</br></span>
+                    </div>
+
+                    <div class="line-group">
+                        <span class="text">Liên hệ với mình qua số</span>
+                        <input type="tel" name="phone" class="input-inline phone-input" placeholder="Số điện thoại" required>
+                        <span class="text">, Hoặc Email</span>
+                        <input type="email" name="email" class="input-inline email-input" placeholder="Email của bạn" required>
+                        <span class="text">. ❤️</span>
+                    </div>
+                </div>
+
+                <div class="form-submit text-center mt-5">
+                    <button type="submit" class="btn btn-red px-5 py-3 shadow rounded-pill fw-bold fs-5">
+                        GỬI YÊU CẦU TƯ VẤN<i class="bi bi-send-fill ms-2"></i> 
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </section>
