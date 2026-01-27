@@ -22,10 +22,7 @@
             <div class="collapse navbar-collapse" id="mainNavbar">
                 <ul class="navbar-nav mx-auto mb-2 mb-lg-0 gap-lg-4">
                     <li class="nav-item">
-                        <a class="nav-link active" href="{{route('home.index')}}">Trang chủ</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">Khóa học</a>
+                        <a class="nav-link {{ request()->routeIs('home.index') ? 'active' : '' }}" href="{{route('home.index')}}">Trang chủ</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="#">Về chúng tôi</a>
@@ -37,7 +34,7 @@
                         <a class="nav-link" href="#">Tin tức</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{route('home.lienhe.index')}}">Liên hệ</a>
+                        <a class="nav-link {{ request()->routeIs('home.lienhe.index') ? 'active' : '' }}" href="{{route('home.lienhe.index')}}">Liên hệ</a>
                     </li>
                 </ul>
 

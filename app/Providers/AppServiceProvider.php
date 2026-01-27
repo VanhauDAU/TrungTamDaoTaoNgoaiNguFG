@@ -22,9 +22,17 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         //
-        View::composer('components.client.footer', function ($view) {
-        $courses = KhoaHoc::where('trangThai', 1)->limit(6)->get();
-        $view->with('footerCourses', $courses);
-    });
+        View::composer(
+            ['components.client.footer', 'components.client.register-advice'], 
+            function ($view) {
+                // Lấy 6 khóa học đang hoạt động
+                $courses = KhoaHoc::where('trangThai', 1)->get();
+                
+                // Truyền biến vào view. 
+                // Lưu ý: Tên biến nên đồng nhất để dễ quản lý
+                $view->with('footerCourses', $courses);
+                $view->with('danhSachKhoaHoc', $courses); 
+                }
+            );
     }
 }
