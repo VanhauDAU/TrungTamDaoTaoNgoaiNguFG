@@ -234,7 +234,6 @@
     border-bottom-color: #ff4d4d !important;
     background-color: rgba(255, 77, 77, 0.05);
 }
-
 /* Hiệu ứng rung nhẹ khi nhập sai */
 @keyframes shake {
     0%, 100% { transform: translateX(0); }
@@ -384,3 +383,197 @@
     }
 }
 /* END REGISTER ADVISE SECTION */
+/* NEWS */
+/* --- TỔNG QUAN SECTION --- */
+.news.py-80 {
+    padding: 80px 0;
+    background-color: #fff;
+    overflow: hidden;
+}
+
+/* --- TIÊU ĐỀ ANIMATE --- */
+.title_animate {
+    position: relative;
+    display: inline-block;
+}
+
+.title_animate svg {
+    position: absolute;
+    bottom: -5px;
+    left: -10px;
+    z-index: 0;
+    width: 110%;
+    pointer-events: none;
+}
+
+.title_animate h3 {
+    position: relative;
+    z-index: 1;
+    font-weight: 800;
+    color: #10454F; /* Màu đặc trưng của Five Genius */
+}
+
+.title_icon {
+    position: absolute;
+    top: -20px;
+    right: -40px;
+    width: 35px;
+}
+
+/* --- NÚT XEM THÊM --- */
+.btn-red {
+    background-color: #E31E24;
+    color: #fff;
+    padding: 10px 25px;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: 0.3s;
+    text-decoration: none;
+}
+
+.btn-red:hover {
+    background-color: #b3161b;
+    transform: translateY(-3px);
+    color: #fff;
+    box-shadow: 0 10px 20px rgba(227, 30, 36, 0.2);
+}
+
+/* --- POST ITEM CARD --- */
+.post_item {
+    transition: 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    margin-bottom: 30px;
+}
+
+.post_item figure {
+    overflow: hidden;
+    border-radius: 20px;
+    margin-bottom: 20px;
+}
+
+.post_item figure img {
+    transition: 0.6s ease;
+    width: 100%;
+    object-fit: cover;
+}
+
+.post_item:hover figure img {
+    transform: scale(1.1);
+}
+
+/* Hiệu ứng vẽ mực khi Hover Tiêu đề bài viết */
+.title_wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.title_wrapper svg {
+    position: absolute;
+    bottom: -10px;
+    left: 0;
+    width: 100%;
+    height: auto;
+    z-index: 0;
+}
+
+.title_wrapper .title_hover {
+    stroke-dasharray: 1000;
+    stroke-dashoffset: 1000;
+    transition: 0.8s ease-in-out;
+}
+
+.post_item:hover .title_hover {
+    stroke-dashoffset: 0;
+}
+
+.post_title a {
+    position: relative;
+    z-index: 1;
+    color: #10454F;
+    text-decoration: none;
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* --- METADATA --- */
+.post_tag li a {
+    color: #E31E24;
+    text-transform: uppercase;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.post_date {
+    color: #999;
+}
+
+.post_excerpt {
+    color: #666;
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+/* --- ANIMATION KHI CUỘN --- */
+.fadeUp {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: 0.8s ease-out;
+}
+
+.fadeUp.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+.post_category {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 10px 0;
+}
+
+.post_category li a {
+    color: #E31E24; /* Màu đỏ làm điểm nhấn */
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-decoration: none;
+    transition: 0.3s;
+    font-size: 11px; /* Thường để nhỏ cho tinh tế */
+}
+
+.post_category li a:hover {
+    color: #10454F; /* Chuyển sang màu thương hiệu khi hover */
+    letter-spacing: 1.5px; /* Hiệu ứng giãn chữ nhẹ */
+}
+/* Container chứa các thẻ */
+.tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px; /* Khoảng cách giữa các thẻ */
+    margin-top: 15px;
+}
+
+/* Base Style cho từng Tag */
+.tag {
+    display: inline-block;
+    padding: 6px 16px;
+    background-color: #f1f3f5; /* Màu nền xám nhạt */
+    color: #10454F; /* Màu xanh Navy của bạn */
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: 50px; /* Bo tròn dạng viên thuốc */
+    border: 1px solid transparent;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* Hiệu ứng khi Hover */
+.tag:hover {
+    background-color: #10454F;
+    color: #ffffff !important;
+    transform: translateY(-2px); /* Nhấc nhẹ lên */
+    box-shadow: 0 4px 10px rgba(16, 69, 79, 0.2);
+}
+/* END NEWS */

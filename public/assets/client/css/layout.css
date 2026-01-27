@@ -19,7 +19,7 @@
 /* HEADER */
 /* Color Palette */
 :root {
-    --primary-color: #10454F;
+    --primary-color: #e32c2d;
     --accent-color: #FFB800;
     --text-dark: #2D3436;
 }
@@ -80,7 +80,103 @@
     color: #636e72;
     padding-right: 15px;
 }
+/* footer */
+/* --- TỔNG QUAN FOOTER --- */
+.custom-container{
+    --bs-gutter-x: 1.5rem;
+    max-width: calc(100vw - 128px + 1.5rem);
+    padding-right: calc(var(--bs-gutter-x) * 0.5);
+    padding-left: calc(var(--bs-gutter-x) * 0.5);
+    margin-right: auto;
+    margin-left: auto;
+}
+#footer_site {
+    background-color: #ffffff;
+    padding: 80px 0 40px;
+    border-top: 1px solid #f0f0f0;
+    font-family: 'Be Vietnam Pro', sans-serif;
+}
 
+#footer_site a {
+    text-decoration: none;
+    transition: all 0.3s ease;
+    color: #10454F; /* Màu navy đậm giống logo bạn */
+}
+
+#footer_site ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#footer_site ul li {
+    margin-bottom: 12px;
+}
+
+#footer_site ul li a {
+    font-size: 14px;
+    font-weight: 500;
+    opacity: 0.9;
+}
+
+#footer_site ul li a:hover {
+    color: #E31E24; /* Màu đỏ khi hover */
+    padding-left: 5px;
+}
+
+/* --- TYPOGRAPHY & COLORS --- */
+.cl-red { color: #E31E24 !important; }
+.cl-gray { color: #636e72; line-height: 1.6; font-size: 14px; }
+.cl-green { color: #10454F; font-size: 13px; font-weight: 600; }
+
+.fs-12 { font-size: 12px !important; letter-spacing: 1px; }
+.ff-title { font-weight: 700; text-transform: uppercase; }
+
+/* --- LOGO & CONTACT --- */
+.logo_ft img {
+    max-height: 60px;
+    margin-bottom: 20px;
+}
+
+.contact li a {
+    font-weight: 700 !important;
+    font-size: 15px !important;
+}
+
+/* --- COPYRIGHT SECTION --- */
+.mt-80 { margin-top: 80px; }
+
+.copyright {
+    padding-top: 30px;
+    border-top: 1px solid #eee;
+}
+
+/* --- SOCIAL ICONS --- */
+.social {
+    display: flex;
+    gap: 20px;
+    justify-content: flex-end;
+}
+
+.social img {
+    height: 20px;
+    width: auto;
+    filter: grayscale(1); /* Để màu xám giống mẫu */
+    transition: 0.3s;
+}
+
+.social a:hover img {
+    filter: grayscale(0); /* Hiện màu khi hover */
+}
+
+/* --- RESPONSIVE --- */
+@media (max-width: 991.98px) {
+    #footer_site { padding: 50px 0 30px; }
+    .mt-80 { margin-top: 40px; }
+    .social { justify-content: flex-start; margin-top: 20px !important; }
+    .copyright .col-lg-3, .copyright .col-lg { margin-bottom: 10px; }
+}
+/* endfooter */
 /* Buttons */
 .btn-primary-genius {
     background: var(--primary-color);
@@ -91,7 +187,9 @@
 }
 
 .btn-primary-genius:hover {
-    background: #1a6d7d;
+    background: #c12728;
+    opacity: 0.9;
+    color:white;
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(16, 69, 79, 0.3);
 }
