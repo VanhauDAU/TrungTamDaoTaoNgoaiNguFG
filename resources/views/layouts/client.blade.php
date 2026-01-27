@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+    <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
     @include('partials.client.head')
 </head>
 <body>
