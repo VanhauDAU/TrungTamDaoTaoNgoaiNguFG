@@ -63,6 +63,7 @@
                         
                         <div class="dropdown-menu dropdown-menu-end border-0 shadow-lg rounded-4 p-0 overflow-hidden noti-dropdown-custom">
                             <div class="p-3 bg-light border-bottom d-flex justify-content-between align-items-center">
+
                                 <h6 class="mb-0 fw-bold">Thông báo</h6>
                                 <a href="#" class="text-primary small text-decoration-none">Đánh dấu đã đọc</a>
                             </div>
