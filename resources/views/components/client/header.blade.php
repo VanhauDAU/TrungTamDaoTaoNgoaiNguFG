@@ -7,10 +7,6 @@
                 <div class="logo-wrapper me-2">
                     <img src="{{ asset('assets/images/logo.png') }}" alt="Logo" height="48">
                 </div>
-                <div class="brand-text d-flex flex-column">
-                    <span class="fw-bold lh-1 text-primary-dark fs-4">FIVE GENIUS</span>
-                    <small class="text-muted fw-semibold" style="font-size: 10px; letter-spacing: 2px;">ACADEMY</small>
-                </div>
             </a>
 
             {{-- TOGGLE MOBILE --}}
@@ -31,7 +27,7 @@
                         <a class="nav-link" href="#">Khóa học</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">Tin tức</a>
+                        <a class="nav-link {{ request()->routeIs('home.blog.index') ? 'active' : '' }}" href="{{ route('home.blog.index') }}">Blog</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('home.lienhe.index') ? 'active' : '' }}" href="{{route('home.lienhe.index')}}">Liên hệ</a>

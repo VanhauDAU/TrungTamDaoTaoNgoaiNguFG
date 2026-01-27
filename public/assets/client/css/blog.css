@@ -1,0 +1,296 @@
+/* --- TỔNG QUAN --- */
+.blog_page {
+    background-color: #fff;
+    padding-bottom: 80px;
+    padding-top: 80px;
+}
+
+/* --- TIÊU ĐỀ & ICON --- */
+.title_animate {
+    position: relative;
+    display: inline-block;
+}
+
+.title_animate svg {
+    position: absolute;
+    bottom: -15px;
+    left: -10px;
+    z-index: 0;
+    width: 100%;
+    pointer-events: none;
+}
+
+.title_animate h1 {
+    position: relative;
+    z-index: 1;
+    font-weight: 800;
+    color: #10454F; /* Màu Navy thương hiệu */
+}
+
+.title_icon {
+    position: absolute;
+    top: -20px;
+    right: -40px;
+    width: 40px;
+}
+
+/* --- THANH DANH MỤC (SCROLL NGANG) --- */
+.cate_menu {
+    list-style: none;
+    padding: 10px 0;
+    margin: 0;
+    display: flex;
+    gap: 10px;
+    overflow-x: auto; /* Kích hoạt cuộn ngang */
+    white-space: nowrap; /* Không cho rớt dòng */
+    -ms-overflow-style: none;  /* Ẩn thanh cuộn IE/Edge */
+    scrollbar-width: none;  /* Ẩn thanh cuộn Firefox */
+}
+
+.cate_menu::-webkit-scrollbar {
+    display: none; /* Ẩn thanh cuộn Chrome/Safari */
+}
+
+.cate_menu li a {
+    display: inline-block;
+    padding: 8px 20px;
+    background: #f8f9fa;
+    color: #10454F;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    transition: 0.3s;
+    border: 1px solid transparent;
+}
+
+.cate_menu li.active a,
+.cate_menu li a:hover {
+    background: #10454F;
+    color: #fff !important;
+}
+
+/* --- TÌM KIẾM --- */
+.search_post .input-group {
+    background: #f1f3f5;
+    border-radius: 50px;
+    padding: 5px 5px 5px 20px;
+    border: 1px solid #eee;
+}
+
+.search_post .form-control {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    font-size: 14px;
+}
+
+.search_post .btn {
+    background: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* --- THẺ BÀI VIẾT (POST ITEM) --- */
+.post_item {
+    margin-bottom: 40px;
+    transition: 0.3s;
+}
+
+.post_item figure {
+    border-radius: 20px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    aspect-ratio: 4/3;
+    background: #f0f0f0;
+}
+
+.post_item figure img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: 0.5s;
+}
+
+.post_item:hover figure img {
+    transform: scale(1.1);
+}
+
+/* Meta tags (Category/Date) */
+.post_tag li a {
+    color: #E31E24;
+    font-weight: 700;
+    text-transform: uppercase;
+    text-decoration: none;
+    background: rgba(227, 30, 36, 0.05);
+    padding: 2px 10px;
+    border-radius: 4px;
+}
+
+.post_date {
+    color: #999;
+}
+
+/* Hiệu ứng gạch chân mực khi Hover tiêu đề */
+.title_wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.title_wrapper svg {
+    position: absolute;
+    bottom: -8px;
+    left: 0;
+    width: 100%;
+    z-index: 0;
+}
+
+.title_wrapper .title_hover {
+    stroke-dasharray: 1000;
+    stroke-dashoffset: 1000;
+    transition: 0.8s ease-in-out;
+}
+
+.post_item:hover .title_hover {
+    stroke-dashoffset: 0;
+}
+
+.post_title a {
+    position: relative;
+    z-index: 1;
+    color: #10454F;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 20px;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* --- PHÂN TRANG --- */
+/* --- TÙY CHỈNH PAGINATION LARAVEL --- */
+.j_paging .pagination {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    border: none;
+}
+
+.j_paging .page-item .page-link {
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px !important; /* Bo góc như mẫu */
+    border: none;
+    background: #f8f9fa;
+    color: #10454F;
+    font-weight: 700;
+    transition: 0.3s;
+}
+
+/* Trang hiện tại */
+.j_paging .page-item.active .page-link {
+    background-color: #10454F !important; /* Màu Navy thương hiệu */
+    color: #fff !important;
+}
+
+/* Khi hover hoặc nút Next/Prev */
+.j_paging .page-link:hover {
+    background-color: #E31E24; /* Màu Đỏ khi hover */
+    color: #fff;
+}
+
+/* Ẩn các phần thừa của Bootstrap mặc định nếu cần */
+.j_paging .pagination .page-item:first-child .page-link,
+.j_paging .pagination .page-item:last-child .page-link {
+    font-size: 20px;
+}
+
+/* --- RESPONSIVE --- */
+@media (max-width: 991px) {
+    .cate_menu {
+        margin-bottom: 20px;
+    }
+}
+/* --- TỐI ƯU DANH SÁCH (Xóa dấu chấm) --- */
+.cate_menu, .post_tag {
+    list-style: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* --- THANH DANH MỤC (Cập nhật cuộn ngang) --- */
+.cate_menu {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto; 
+    white-space: nowrap;
+    padding-bottom: 12px; /* Tạo khoảng trống để không đè lên thanh cuộn */
+    
+    /* Hiện thanh cuộn cho Firefox và Edge */
+    -ms-overflow-style: auto; 
+    scrollbar-width: thin; 
+    scrollbar-color: #10454F #f1f3f5; /* Màu con trượt và màu nền */
+}
+
+/* --- STYLE THANH CUỘN CHO CHROME/SAFARI --- */
+.cate_menu::-webkit-scrollbar {
+    display: block; /* Hiện lại thanh cuộn */
+    height: 5px;    /* Độ dày thanh cuộn ngang */
+}
+
+.cate_menu::-webkit-scrollbar-track {
+    background: #f1f3f5; /* Màu nền của thanh cuộn */
+    border-radius: 10px;
+}
+
+.cate_menu::-webkit-scrollbar-thumb {
+    background: #10454F; /* Màu Navy thương hiệu của Five Genius */
+    border-radius: 10px;
+}
+
+.cate_menu::-webkit-scrollbar-thumb:hover {
+    background: #E31E24; /* Chuyển sang đỏ khi người dùng rà chuột vào */
+}
+
+/* Đảm bảo item không bị co lại khi cuộn */
+.cate_menu li {
+    flex-shrink: 0;
+}
+/* Style cho meta info (Ngày và Lượt xem) */
+.post_date, .post_view {
+    color: #999;
+    font-weight: 400;
+    display: flex;
+    align-items: center;
+}
+
+.post_date i, .post_view i {
+    color: #ccc; /* Màu icon nhạt hơn chữ một chút */
+    font-size: 13px;
+}
+
+/* Hiệu ứng khi hover vào post_item thì icon sáng lên */
+.post_item:hover .post_view i {
+    color: var(--primary-navy); /* Hoặc màu #10454F của thương hiệu */
+    transition: 0.3s;
+}
+
+/* Đảm bảo khoảng cách trên Mobile */
+@media (max-width: 575px) {
+    .meta_post .col-auto {
+        margin-top: 10px;
+        width: 100%;
+        justify-content: space-between;
+    }
+}
