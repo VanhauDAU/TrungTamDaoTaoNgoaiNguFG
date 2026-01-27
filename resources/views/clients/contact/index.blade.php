@@ -84,24 +84,9 @@
                             </div>
                         </div>
                     @endforeach
-
-                    {{-- ITEM 2: Cơ sở Đà Nẵng (Hoặc bất kỳ cơ sở nào khác) --}}
-                    <div class="map_slide_item">
-                        <div class="iframe_box">
-                            <iframe src="https://www.google.com/maps/embed?pb=..." 
-                                    width="100%" height="500" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
-                        </div>
-                        <div class="meta_info_box shadow-lg">
-                            <div class="city_label fs-12 mb-2">TP. Đà Nẵng</div>
-                            <h4 class="fs-24 ff-title text-primary-dark mb-3">Chi nhánh Đà Nẵng</h4>
-                            <div class="address_text fs-12 fw-light cl-gray">
-                                Lê Duẩn, Quận Hải Châu, TP. Đà Nẵng
-                            </div>
-                        </div>
-                    </div>
-
                 </div>
             </div>
         </div>
     </div>
+    <x-client.register-advice />
 @endsection

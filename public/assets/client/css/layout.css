@@ -203,7 +203,16 @@
         opacity: 0;
     }
 }
+/* Màu chữ khi ở trang hiện tại */
+.navbar-nav .nav-link.active {
+    color: var(--primary-color) !important;
+    font-weight: 700; /* Có thể làm đậm hơn để nổi bật */
+}
 
+/* Luôn hiển thị đường gạch chân khi active */
+.navbar-nav .nav-link.active::after {
+    width: 60%;
+}
 /* --- 4. STYLE CHI TIẾT ITEM --- */
 .unread-indicator {
     width: 8px;
