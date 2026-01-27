@@ -5,7 +5,7 @@
             {{-- LOGO --}}
             <a class="navbar-brand d-flex align-items-center" href="{{ url('/') }}">
                 <div class="logo-wrapper me-2">
-                    <img src="{{ asset('images/logo.png') }}" alt="Five Genius" height="48">
+                    <img src="{{ asset('assets/images/logo.png') }}" alt="Logo" height="48">
                 </div>
                 <div class="brand-text d-flex flex-column">
                     <span class="fw-bold lh-1 text-primary-dark fs-4">FIVE GENIUS</span>
