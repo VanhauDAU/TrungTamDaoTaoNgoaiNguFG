@@ -22,7 +22,7 @@
             <div class="collapse navbar-collapse" id="mainNavbar">
                 <ul class="navbar-nav mx-auto mb-2 mb-lg-0 gap-lg-4">
                     <li class="nav-item">
-                        <a class="nav-link active" href="#">Trang chủ</a>
+                        <a class="nav-link active" href="{{route('home.index')}}">Trang chủ</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="#">Khóa học</a>
@@ -34,13 +34,10 @@
                         <a class="nav-link" href="#">Khóa học</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">Cơ sở đào tạo</a>
-                    </li>
-                    <li class="nav-item">
                         <a class="nav-link" href="#">Tin tức</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">Liên hệ</a>
+                        <a class="nav-link" href="{{route('home.lienhe.index')}}">Liên hệ</a>
                     </li>
                 </ul>
 
@@ -55,26 +52,38 @@
                         </form>
                     </div>
 
-                    {{-- NOTIFICATION --}}
-                    <div class="dropdown">
-                        <button class="icon-btn-modern position-relative" data-bs-toggle="dropdown">
-                            <i class="far fa-bell"></i>
-                            <span class="badge-dot"></span>
+                    <div class="dropdown notification-hover-wrapper">
+                        <button class="icon-btn-modern position-relative" type="button">
+                            <i class="fas fa-bell noti-bell-icon"></i>
+                            <span class="noti-badge-wrapper">
+                                <span class="noti-ping"></span>
+                                <span class="noti-dot"></span>
+                            </span>
                         </button>
-                        <div class="dropdown-menu dropdown-menu-end border-0 shadow-lg mt-3 rounded-4 p-0 overflow-hidden" style="width: 320px;">
-                            <div class="p-3 bg-light border-bottom">
+                        
+                        <div class="dropdown-menu dropdown-menu-end border-0 shadow-lg rounded-4 p-0 overflow-hidden noti-dropdown-custom">
+                            <div class="p-3 bg-light border-bottom d-flex justify-content-between align-items-center">
                                 <h6 class="mb-0 fw-bold">Thông báo</h6>
+                                <a href="#" class="text-primary small text-decoration-none">Đánh dấu đã đọc</a>
                             </div>
-                            <div class="list-group list-group-flush">
-                                <a href="#" class="list-group-item list-group-item-action p-3 border-0">
+                            <div class="list-group list-group-flush" style="max-height: 400px; overflow-y: auto;">
+                                <a href="#" class="list-group-item list-group-item-action p-3 border-0 noti-item">
                                     <div class="d-flex gap-3">
-                                        <div class="icon-circle bg-primary-soft"><i class="fas fa-bullhorn text-primary"></i></div>
-                                        <div>
-                                            <p class="mb-1 small">Lớp **IELTS Intensive** sẽ bắt đầu vào tối nay!</p>
-                                            <small class="text-muted">10 phút trước</small>
+                                        <div class="icon-circle bg-primary-soft">
+                                            <i class="fas fa-bullhorn text-primary"></i>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <p class="mb-1 small fw-semibold">Lớp **IELTS Intensive** sẽ bắt đầu vào tối nay!</p>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <small class="text-muted"><i class="far fa-clock me-1"></i>10 phút trước</small>
+                                                <span class="unread-indicator"></span>
+                                            </div>
                                         </div>
                                     </div>
                                 </a>
+                                </div>
+                            <div class="p-2 border-top text-center bg-light">
+                                <a href="#" class="text-primary small fw-bold text-decoration-none">Xem tất cả thông báo</a>
                             </div>
                         </div>
                     </div>

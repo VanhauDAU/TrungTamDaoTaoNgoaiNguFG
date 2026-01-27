@@ -80,6 +80,151 @@
     color: #636e72;
     padding-right: 15px;
 }
+/* --- 1. XỬ LÝ HOVER VÀ KẺ HỞ --- */
+.notification-hover-wrapper {
+    position: relative;
+}
+.icon-btn-modern {
+    /* 1. Quan trọng nhất: Xóa viền mặc định */
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+
+    /* 2. Thiết lập hình dáng và màu sắc */
+    width: 42px;
+    height: 42px;
+    border-radius: 10px; /* Bo góc nhẹ cho hiện đại */
+    background-color: #f8f9fa; /* Màu nền xám cực nhạt */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+/* Hiệu ứng khi di chuột vào (Hover) */
+.icon-btn-modern:hover {
+    background-color: #e9ecef;
+    transform: translateY(-2px); /* Nhích nhẹ lên cho xịn */
+}
+
+/* Xóa cái viền xanh/đen khi nhấn vào nút (Focus) */
+.icon-btn-modern:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(16, 69, 79, 0.1); /* Tạo bóng mờ thay vì viền cứng */
+}
+/* Hiển thị menu khi hover vào wrapper */
+.notification-hover-wrapper:hover .noti-dropdown-custom {
+    display: block;
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.noti-dropdown-custom {
+    display: block; /* Ép display block để kiểm soát bằng opacity/transform */
+    opacity: 0;
+    visibility: hidden;
+    position: absolute;
+    top: 100%; /* Nằm ngay dưới nút */
+    right: 0;
+    width: 420px;
+    margin-top: 15px; /* Tạo khoảng cách hiển thị */
+    transform: translateY(10px);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    z-index: 1000;
+}
+
+/* CẦU NỐI TÀNG HÌNH: Lấp đầy khoảng hở 15px để chuột di qua không bị mất hover */
+.noti-dropdown-custom::before {
+    content: "";
+    position: absolute;
+    top: -20px;
+    left: 0;
+    width: 100%;
+    height: 25px;
+    background: transparent;
+}
+
+/* --- 2. LÀM ĐẸP ICON THÔNG BÁO --- */
+.noti-bell-icon {
+    font-size: 1.3rem;
+    color: #10454F; /* Màu Navy của Five Genius */
+    transition: 0.3s;
+}
+
+.notification-hover-wrapper:hover .noti-bell-icon {
+    color: #E31E24; /* Đổi sang đỏ khi hover */
+    animation: bell-shake 0.5s both;
+}
+
+/* Chấm thông báo xịn */
+.noti-badge-wrapper {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    width: 10px;
+    height: 10px;
+}
+
+.noti-dot {
+    width: 10px;
+    height: 10px;
+    background: #E31E24;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    position: relative;
+    z-index: 2;
+}
+
+.noti-ping {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: #E31E24;
+    border-radius: 50%;
+    opacity: 0.8;
+    animation: ping-wave 1.5s infinite;
+    z-index: 1;
+}
+
+/* --- 3. ANIMATIONS --- */
+@keyframes bell-shake {
+    0%, 100% { transform: rotate(0); }
+    25% { transform: rotate(15deg); }
+    50% { transform: rotate(-15deg); }
+    75% { transform: rotate(10deg); }
+}
+
+@keyframes ping-wave {
+    75%, 100% {
+        transform: scale(3);
+        opacity: 0;
+    }
+}
+
+/* --- 4. STYLE CHI TIẾT ITEM --- */
+.unread-indicator {
+    width: 8px;
+    height: 8px;
+    background: #007bff;
+    border-radius: 50%;
+}
+
+.icon-circle {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.bg-primary-soft {
+    background-color: rgba(16, 69, 79, 0.1);
+}
 /* footer */
 /* --- TỔNG QUAN FOOTER --- */
 .custom-container{

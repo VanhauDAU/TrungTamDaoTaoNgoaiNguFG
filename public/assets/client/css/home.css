@@ -55,7 +55,7 @@
     color: var(--cl-green);
     font-weight: bold;
     margin-bottom: 0;
-    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-size: clamp(2.5rem, 5vw, 3.5rem);
 }
 /* 3. Khung Ảnh Giáo Viên (Blob Effect) */
 .slider-container-wrapper { position: relative; max-width: 550px; margin: auto; }
