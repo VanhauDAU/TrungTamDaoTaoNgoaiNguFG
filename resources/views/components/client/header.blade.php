@@ -61,7 +61,7 @@
                             <i class="far fa-bell"></i>
                             <span class="badge-dot"></span>
                         </button>
-                        <div class="dropdown-menu dropdown-menu-end border-0 shadow-lg mt-3 rounded-4 p-0 overflow-hidden" style="width: 320px;">
+                        <div class="dropdown-menu dropdown-menu-end border-0 shadow-lg mt-3 rounded-4 p-0 overflow-hidden" style="width: 420px;">
                             <div class="p-3 bg-light border-bottom">
                                 <h6 class="mb-0 fw-bold">Thông báo</h6>
                             </div>
