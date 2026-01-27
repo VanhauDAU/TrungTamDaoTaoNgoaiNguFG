@@ -6,17 +6,18 @@
 <body>
 
     {{-- Header --}}
-    @include('components.header')
+    @include('components.client.header')
 
     {{-- Nội dung --}}
     @yield('content')
 
     {{-- Footer --}}
-    {{-- @include('clients.blocks.footer') --}}
+    @include('components.client.footer')
     @unless(Route::is('login') || Route::is('register'))
-        @include('components.sticky_contact')
+        @include('components.client.sticky_contact')
     @endunless
     @yield('script')
     @include('partials.client.script')
+    @include('components.client.floating-contact')
 </body>
 </html>

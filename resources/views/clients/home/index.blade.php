@@ -227,6 +227,81 @@
         </div>
     </div>
 </section>
+{{-- NEWS SECTION --}}
+<div class="news py-80">
+    <div class="container">
+        <div class="row justify-content-between align-items-end my-5">
+            <div class="col-auto">
+                <div class="title_animate ps-lg-5 pe-5">
+                    <svg width="348" height="75" viewBox="0 0 348 75" fill="none" xmlns="http://www.w3.org/2000/svg" class="active" style="position: absolute; left: 150px;">
+                        <g opacity="0.5">
+                            <path d="M27.6708 48.0817C113.841 11.4972 279.525 18.7201 323 29.7898" stroke="#B8D3D9" stroke-width="40.8987" stroke-linecap="square" class="title-style-4"></path>
+                        </g>
+                    </svg>                
+                    <h3 class="fs-48 ff-title cl-green mb-0 textSkewUp" style="perspective: 400px; opacity: 1;"> <div class="word" style="display: inline-block;"><div class="char" style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">T</div><div class="char" style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">i</div><div class="char" style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">n</div></div> <div class="word" style="display: inline-block;"><div class="char" style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">t</div><div class="char" style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">ứ</div><div class="char" style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">c</div></div> <div class="word" style="display: inline-block;"><div class="char" style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">&amp;</div></div> <div class="word" style="display: inline-block;"><div class="char" style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">B</div><div class="char" style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">l</div><div class="char" style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">o</div><div class="char" style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">g</div><div class="char" style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">s</div></div></h3>
+                    <div class="title_icon">
+                        <img src="https://theforumcenter.com/wp-content/themes/the-forum/assets/images/news-title.png" class="img-fluid" alt="">
+                    </div>
+                </div>
+            </div>
+            <div class="col-auto">
+                <a href="https://theforumcenter.com/blog/" class="btn btn-red">
+                    Xem thêm
+                </a>
+            </div>
+        </div>
+        <div class="news_wrapper mt-60">
+            <div class="row">
+                @foreach ($baiViets as $baiViet)
+                    <div class="col-lg-4">
+                        <div class="post_item fadeUp" style="translate: none; rotate: none; scale: none; transform: translate(0px, 0px); opacity: 1;">
+                            <figure>
+                                <a href="https://theforumcenter.com/trung-tam-luyen-thi-ielts-binh-thanh/">
+                                    <img width="600" height="450" src="https://theforumcenter.com/wp-content/uploads/2023/02/trung-tam-luyen-thi-ielts-binh-thanh.jpg" class="img-fluid wp-post-image" alt="" decoding="async"> </a>
+                            </figure>
+                            <div class="meta_post">
+                                <div class="row">
+                                    <div class="col">
+                                        <ul class="post_category fs-12">
+                                            <li>
+                                                <a href="https://theforumcenter.com/category/tips-luyen-thi-du-hoc/">{{ $baiViet->danhMucs->first()->tenDanhMuc ?? '' }}</a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-auto">
+                                        <div class="post_date fs-12">
+                                            {{ \Carbon\Carbon::parse($baiViet->created_at)->format('d/m/Y') }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="title_wrapper mb-3">
+                                    <svg width="305" height="52" viewBox="0 0 305 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <g opacity="0.5">
+                                        <path d="M10.595 21.7566C95.912 4.64015 259.955 8.01944 303 13.1985C235.083 15.1515 35.1916 43 35.1916 43C35.1916 43 152.387 22.7926 225.454 39.8912" stroke="#27C4B5" stroke-width="18" stroke-linecap="square" class="title_hover"></path>
+                                        </g>
+                                    </svg>                                    
+                                    <h4 class="fs-24 ff-title post_title mb-0"><a href="https://theforumcenter.com/trung-tam-luyen-thi-ielts-binh-thanh/">{{ $baiViet->tieuDe }}</a></h4>
+                                </div>
+                                <div class="post_excerpt fw-light">
+                                    <p>{{ $baiViet->tomTat }}</p>
+                                </div>
+                                {{-- Các tag thuộc bài viết --}}
+                                <div class="tags">
+                                    @foreach($baiViet->tags as $tag)
+                                        <a href="#" class="tag">
+                                            #{{ $tag->tenTag }}
+                                        </a>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+                
+            </div>
+        </div>
+    </div>
+</div>
 {{-- REGISTER ADVISE SECTION --}}
 <section class="register-section py-80"> {{-- Thêm bg-white --}}
     <div class="container">
@@ -260,10 +335,10 @@
                         {{-- Select dùng class tùy chỉnh "select-inline" --}}
                         <select name="course" class="select-inline course-select" required>
                             <option value="" disabled selected>Chọn khóa học</option>
-                            <option value="IELTS">IELTS tại trung tâm</option>
-                            <option value="IELTS_ONLINE">IELTS Online 4+2</option>
-                            <option value="SAT">SAT Preparation</option>
-                            <option value="KIDS">Kid & Teenager</option>
+                            @foreach ($danhSachKhoaHoc as $khoaHoc)
+                                <option value="{{ $khoaHoc->slug }}">{{ $khoaHoc->tenKhoaHoc }}</option>
+                            @endforeach
+                            
                         </select>
                         <span class="text">!</br></span>
                     </div>

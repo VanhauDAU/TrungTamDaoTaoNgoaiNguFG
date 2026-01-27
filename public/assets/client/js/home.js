@@ -197,3 +197,36 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 // end register-sentence animation
+document.addEventListener("DOMContentLoaded", function() {
+    // 1. Hiệu ứng Fade Up khi cuộn trang
+    const observerOptions = {
+        threshold: 0.1
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('active');
+            }
+        });
+    }, observerOptions);
+
+    document.querySelectorAll('.fadeUp').forEach(el => {
+        observer.observe(el);
+    });
+
+    // 2. Hiệu ứng vẽ chữ (Optional: nếu bạn dùng thư viện GSAP)
+    // Nếu không dùng thư viện, CSS bên trên đã xử lý phần hover mực.
+    
+    // 3. Tự động vẽ path SVG ở tiêu đề chính khi load xong
+    const mainTitlePath = document.querySelector('.title-style-4');
+    if (mainTitlePath) {
+        mainTitlePath.style.strokeDasharray = mainTitlePath.getTotalLength();
+        mainTitlePath.style.strokeDashoffset = mainTitlePath.getTotalLength();
+        
+        setTimeout(() => {
+            mainTitlePath.style.transition = "stroke-dashoffset 2s ease-in-out";
+            mainTitlePath.style.strokeDashoffset = "0";
+        }, 500);
+    }
+});

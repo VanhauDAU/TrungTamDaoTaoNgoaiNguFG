@@ -28,10 +28,19 @@
                         <a class="nav-link" href="#">Khóa học</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">Lộ trình</a>
+                        <a class="nav-link" href="#">Về chúng tôi</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Khóa học</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Cơ sở đào tạo</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="#">Tin tức</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Liên hệ</a>
                     </li>
                 </ul>
 
