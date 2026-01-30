@@ -40,9 +40,6 @@
     transform: translateY(-50%);
     pointer-events: none;
 }
-
-.title_animate h1 { position: relative; z-index: 1; font-weight: 800; line-height: 1.2; }
-
 .title_animate .title-style-1 {
     stroke-dasharray: 2000;
     stroke-dashoffset: 2000;
