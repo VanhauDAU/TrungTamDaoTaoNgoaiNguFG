@@ -4,6 +4,7 @@
     padding-bottom: 80px;
     padding-top: 80px;
 }
+
 /* --- THANH DANH MỤC (SCROLL NGANG) --- */
 .cate_menu {
     list-style: none;
@@ -11,14 +12,19 @@
     margin: 0;
     display: flex;
     gap: 10px;
-    overflow-x: auto; /* Kích hoạt cuộn ngang */
-    white-space: nowrap; /* Không cho rớt dòng */
-    -ms-overflow-style: none;  /* Ẩn thanh cuộn IE/Edge */
-    scrollbar-width: none;  /* Ẩn thanh cuộn Firefox */
+    overflow-x: auto;
+    /* Kích hoạt cuộn ngang */
+    white-space: nowrap;
+    /* Không cho rớt dòng */
+    -ms-overflow-style: none;
+    /* Ẩn thanh cuộn IE/Edge */
+    scrollbar-width: none;
+    /* Ẩn thanh cuộn Firefox */
 }
 
 .cate_menu::-webkit-scrollbar {
-    display: none; /* Ẩn thanh cuộn Chrome/Safari */
+    display: none;
+    /* Ẩn thanh cuộn Chrome/Safari */
 }
 
 .cate_menu li a {
@@ -160,7 +166,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 10px !important; /* Bo góc như mẫu */
+    border-radius: 10px !important;
+    /* Bo góc như mẫu */
     border: none;
     background: #f8f9fa;
     color: #10454F;
@@ -170,13 +177,15 @@
 
 /* Trang hiện tại */
 .j_paging .page-item.active .page-link {
-    background-color: #10454F !important; /* Màu Navy thương hiệu */
+    background-color: #10454F !important;
+    /* Màu Navy thương hiệu */
     color: #fff !important;
 }
 
 /* Khi hover hoặc nút Next/Prev */
 .j_paging .page-link:hover {
-    background-color: #E31E24; /* Màu Đỏ khi hover */
+    background-color: #E31E24;
+    /* Màu Đỏ khi hover */
     color: #fff;
 }
 
@@ -192,8 +201,10 @@
         margin-bottom: 20px;
     }
 }
+
 /* --- TỐI ƯU DANH SÁCH (Xóa dấu chấm) --- */
-.cate_menu, .post_tag {
+.cate_menu,
+.post_tag {
     list-style: none !important;
     padding: 0 !important;
     margin: 0 !important;
@@ -203,56 +214,68 @@
 .cate_menu {
     display: flex;
     gap: 12px;
-    overflow-x: auto; 
+    overflow-x: auto;
     white-space: nowrap;
-    padding-bottom: 12px; /* Tạo khoảng trống để không đè lên thanh cuộn */
-    
+    padding-bottom: 12px;
+    /* Tạo khoảng trống để không đè lên thanh cuộn */
+
     /* Hiện thanh cuộn cho Firefox và Edge */
-    -ms-overflow-style: auto; 
-    scrollbar-width: thin; 
-    scrollbar-color: #10454F #f1f3f5; /* Màu con trượt và màu nền */
+    -ms-overflow-style: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #10454F #f1f3f5;
+    /* Màu con trượt và màu nền */
 }
 
 /* --- STYLE THANH CUỘN CHO CHROME/SAFARI --- */
 .cate_menu::-webkit-scrollbar {
-    display: block; /* Hiện lại thanh cuộn */
-    height: 5px;    /* Độ dày thanh cuộn ngang */
+    display: block;
+    /* Hiện lại thanh cuộn */
+    height: 5px;
+    /* Độ dày thanh cuộn ngang */
 }
 
 .cate_menu::-webkit-scrollbar-track {
-    background: #f1f3f5; /* Màu nền của thanh cuộn */
+    background: #f1f3f5;
+    /* Màu nền của thanh cuộn */
     border-radius: 10px;
 }
 
 .cate_menu::-webkit-scrollbar-thumb {
-    background: #10454F; /* Màu Navy thương hiệu của Five Genius */
+    background: #10454F;
+    /* Màu Navy thương hiệu của Five Genius */
     border-radius: 10px;
 }
 
 .cate_menu::-webkit-scrollbar-thumb:hover {
-    background: #E31E24; /* Chuyển sang đỏ khi người dùng rà chuột vào */
+    background: #E31E24;
+    /* Chuyển sang đỏ khi người dùng rà chuột vào */
 }
 
 /* Đảm bảo item không bị co lại khi cuộn */
 .cate_menu li {
     flex-shrink: 0;
 }
+
 /* Style cho meta info (Ngày và Lượt xem) */
-.post_date, .post_view {
+.post_date,
+.post_view {
     color: #999;
     font-weight: 400;
     display: flex;
     align-items: center;
 }
 
-.post_date i, .post_view i {
-    color: #ccc; /* Màu icon nhạt hơn chữ một chút */
+.post_date i,
+.post_view i {
+    color: #ccc;
+    /* Màu icon nhạt hơn chữ một chút */
     font-size: 13px;
 }
 
 /* Hiệu ứng khi hover vào post_item thì icon sáng lên */
 .post_item:hover .post_view i {
-    color: var(--primary-navy); /* Hoặc màu #10454F của thương hiệu */
+    color: var(--primary-navy);
+    /* Hoặc màu #10454F của thương hiệu */
     transition: 0.3s;
 }
 
