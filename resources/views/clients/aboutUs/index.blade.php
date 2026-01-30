@@ -287,6 +287,66 @@
                         </div>
                     </div>
                 </div>
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="200">
+                    <div class="location-card">
+                        <figure>
+                            <img src="https://images.unsplash.com/photo-1562774053-701939374585?w=500" alt="Cơ sở 2"
+                                loading="lazy">
+                        </figure>
+                        <div class="card-content">
+                            <span class="city-tag">TP. Hồ Chí Minh</span>
+                            <h4><a href="#">Cơ Sở Tân Bình</a></h4>
+                            <div class="address">
+                                <i class="fas fa-map-marker-alt me-2 text-danger"></i>
+                                456 Lê Văn Sỹ, Quận Tân Bình, TP.HCM
+                            </div>
+                            <div class="mt-2">
+                                <i class="fas fa-phone me-2 text-success"></i>
+                                <a href="tel:0777464347">0777.46.43.47</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="200">
+                    <div class="location-card">
+                        <figure>
+                            <img src="https://images.unsplash.com/photo-1562774053-701939374585?w=500" alt="Cơ sở 2"
+                                loading="lazy">
+                        </figure>
+                        <div class="card-content">
+                            <span class="city-tag">TP. Hồ Chí Minh</span>
+                            <h4><a href="#">Cơ Sở Tân Bình</a></h4>
+                            <div class="address">
+                                <i class="fas fa-map-marker-alt me-2 text-danger"></i>
+                                456 Lê Văn Sỹ, Quận Tân Bình, TP.HCM
+                            </div>
+                            <div class="mt-2">
+                                <i class="fas fa-phone me-2 text-success"></i>
+                                <a href="tel:0777464347">0777.46.43.47</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="200">
+                    <div class="location-card">
+                        <figure>
+                            <img src="https://images.unsplash.com/photo-1562774053-701939374585?w=500" alt="Cơ sở 2"
+                                loading="lazy">
+                        </figure>
+                        <div class="card-content">
+                            <span class="city-tag">TP. Hồ Chí Minh</span>
+                            <h4><a href="#">Cơ Sở Tân Bình</a></h4>
+                            <div class="address">
+                                <i class="fas fa-map-marker-alt me-2 text-danger"></i>
+                                456 Lê Văn Sỹ, Quận Tân Bình, TP.HCM
+                            </div>
+                            <div class="mt-2">
+                                <i class="fas fa-phone me-2 text-success"></i>
+                                <a href="tel:0777464347">0777.46.43.47</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="300">
                     <div class="location-card">
                         <figure>

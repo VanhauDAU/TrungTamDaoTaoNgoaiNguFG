@@ -24,11 +24,9 @@
     right: -20%;
     width: 600px;
     height: 600px;
-    background: radial-gradient(
-        circle,
-        rgba(39, 196, 181, 0.1) 0%,
-        transparent 70%
-    );
+    background: radial-gradient(circle,
+            rgba(39, 196, 181, 0.1) 0%,
+            transparent 70%);
     border-radius: 50%;
 }
 
@@ -63,14 +61,16 @@
     top: 50%;
     transform: translate(-50%, -50%);
     z-index: 0;
-    pointer-events: none; /* SVG không chặn click vào text */
+    pointer-events: none;
+    /* SVG không chặn click vào text */
 }
 
 .title_animate h2,
 .title_animate h3,
 .title_animate .fs-48 {
     position: relative !important;
-    z-index: 1 !important; /* Text nằm TRÊN SVG */
+    z-index: 1 !important;
+    /* Text nằm TRÊN SVG */
 }
 
 .title_animate .title_icon {
@@ -97,10 +97,12 @@
 }
 
 @keyframes float {
+
     0%,
     100% {
         transform: translateY(0);
     }
+
     50% {
         transform: translateY(-10px);
     }
@@ -151,6 +153,7 @@
     from {
         transform: rotate(0deg);
     }
+
     to {
         transform: rotate(360deg);
     }
@@ -192,11 +195,9 @@
     left: 0;
     width: 5px;
     height: 100%;
-    background: linear-gradient(
-        to bottom,
-        var(--primary-red),
-        var(--accent-teal)
-    );
+    background: linear-gradient(to bottom,
+            var(--primary-red),
+            var(--accent-teal));
 }
 
 .program-item h4 {

@@ -24,5 +24,6 @@
     <link rel="stylesheet" href="{{ asset('assets/client/css/contact.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/client/css/blog.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/client/css/floating-contact.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/client/css/about.css') }}">
     @yield('stylesheet')
     

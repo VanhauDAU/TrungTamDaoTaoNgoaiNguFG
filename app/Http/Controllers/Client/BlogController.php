@@ -1,10 +1,11 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Client;
 
 use App\Models\Content\BaiViet;
 use Illuminate\Http\Request;
 use App\Models\Content\DanhMucBaiViet;
+use App\Http\Controllers\Controller;
 
 class BlogController extends Controller
 {

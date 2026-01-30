@@ -5,13 +5,10 @@
     @include('partials.client.head')
 </head>
 <body>
-
     {{-- Header --}}
     @include('components.client.header')
-
     {{-- Nội dung --}}
     @yield('content')
-
     {{-- Footer --}}
     @include('components.client.footer')
     @unless(Route::is('login') || Route::is('register'))

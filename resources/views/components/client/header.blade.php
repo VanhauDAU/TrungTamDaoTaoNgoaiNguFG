@@ -27,7 +27,7 @@
                             href="{{route('home.about.index') }}">Về chúng tôi</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">Khóa học</a>
+                        <a class="nav-link" href="{{route('home.courses.index')}}">Khóa học</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('home.blog.index') ? 'active' : '' }}"
