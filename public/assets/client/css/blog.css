@@ -4,36 +4,6 @@
     padding-bottom: 80px;
     padding-top: 80px;
 }
-
-/* --- TIÊU ĐỀ & ICON --- */
-.title_animate {
-    position: relative;
-    display: inline-block;
-}
-
-.title_animate svg {
-    position: absolute;
-    bottom: -15px;
-    left: -10px;
-    z-index: 0;
-    width: 100%;
-    pointer-events: none;
-}
-
-.title_animate h1 {
-    position: relative;
-    z-index: 1;
-    font-weight: 800;
-    color: #10454F; /* Màu Navy thương hiệu */
-}
-
-.title_icon {
-    position: absolute;
-    top: -20px;
-    right: -40px;
-    width: 40px;
-}
-
 /* --- THANH DANH MỤC (SCROLL NGANG) --- */
 .cate_menu {
     list-style: none;
