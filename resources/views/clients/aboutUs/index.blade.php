@@ -43,8 +43,8 @@
 
                     {{-- Video Intro --}}
                     <div class="video-wrapper" data-aos="fade-up" data-aos-delay="200">
-                        <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="Five Genius Introduction"
-                            loading="lazy"
+                        <iframe src="https://www.youtube.com/embed/oafyFIOqtsw?autoplay=1&mute=1&rel=0&si=lhkQVctnoXQuh_A6"
+                            title="Five Genius Introduction" loading="lazy"
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                             allowfullscreen>
                         </iframe>
@@ -138,7 +138,7 @@
                         </div>
                         <div class="col-lg-7">
                             <figure>
-                                <img src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800"
+                                <img src="https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800"
                                     alt="IELTS Program" class="img-fluid rounded-4" loading="lazy">
                             </figure>
                         </div>

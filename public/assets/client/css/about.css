@@ -131,6 +131,16 @@
     background-size: contain;
     background-repeat: no-repeat;
     z-index: 2;
+    pointer-events: none; /* QUAN TRỌNG: Không chặn click vào video */
+}
+
+.video-wrapper iframe {
+    width: 100%;
+    aspect-ratio: 16/9;
+    background: #000;
+    display: block;
+    position: relative;
+    z-index: 1;
 }
 
 .video-wrapper::before {
