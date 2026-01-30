@@ -74,16 +74,19 @@ body {
 
 /* Form Elements */
 .form-control {
-    padding: 12px 20px;
-    border: 1px solid #ddd;
-    border-radius: 10px;
+    padding: 13px 20px;
+    background-color: #f2f6f7; /* Màu nền mới theo yêu cầu */
+    border: 1px solid transparent; /* Loại bỏ viền thô */
+    border-radius: 12px;
     font-size: 0.95rem;
     transition: all 0.3s ease;
+    color: var(--primary-green);
 }
 
 .form-control:focus {
+    background-color: #fff; /* Khi gõ thì nền trắng lại cho dễ nhìn */
     border-color: var(--accent-teal);
-    box-shadow: 0 0 0 0.2rem rgba(39, 196, 181, 0.15);
+    box-shadow: 0 10px 20px rgba(39, 196, 181, 0.1);
 }
 
 .btn-red {
@@ -111,12 +114,14 @@ body {
 
 .password_box .show_text {
     position: absolute;
-    right: 15px;
+    right: 20px; /* Điều chỉnh lại vị trí để cân đối */
     top: 50%;
     transform: translateY(-50%);
     cursor: pointer;
     color: var(--text-gray);
-    margin-top: -8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* Remember Box */
