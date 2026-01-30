@@ -3,6 +3,7 @@
 namespace App\Models\Course;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Education\LopHoc;
 
 class KhoaHoc extends Model
 {
@@ -12,5 +13,8 @@ class KhoaHoc extends Model
 
     public function loaiKhoaHoc(){
         return $this->belongsTo(LoaiKhoaHoc::class, 'loaiKhoaHocId', 'loaiKhoaHocId');
+    }
+    public function lopHoc(){
+        return $this->hasMany(LopHoc::class, 'khoaHocId', 'khoaHocId');
     }
 }
