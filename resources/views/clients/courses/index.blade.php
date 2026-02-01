@@ -22,12 +22,16 @@
                             </div>
                         </div>
                     </div>
-                    <div class="type-courses-tabs"><a
-                            href="https://ieltstest.theforumcenter.com/local/ieltstest/index.php?tab=all&amp;wp=true"
-                            class="active">Tất cả</a>
+                    <div class="type-courses-tabs">
+                        <a href="{{ route('home.courses.index') }}"
+                            class="{{ !request()->has('category') ? 'active' : '' }}">
+                            Tất cả
+                        </a>
                         @foreach ($listTypeCourses as $typeCourse)
-                            <a
-                                href="https://ieltstest.theforumcenter.com/local/ieltstest/index.php?tab=reading&amp;wp=true">{{ $typeCourse->tenLoai }}</a>
+                            <a href="{{ route('home.courses.index', ['category' => $typeCourse->slug]) }}"
+                                class="{{ request()->input('category') == $typeCourse->slug ? 'active' : '' }}">
+                                {{ $typeCourse->tenLoai }}
+                            </a>
                         @endforeach
                     </div>
                     <hr class="mobile-ielts-divider">
@@ -50,11 +54,6 @@
                                 <option value="2024">2024</option>
                                 <option value="2025">2025</option>
                                 <option value="2026">2026</option>
-                                <option value="2027">2027</option>
-                                <option value="2028">2028</option>
-                                <option value="2029">2029</option>
-                                <option value="2030">2030</option>
-                                <option value="2031">2031</option>
                             </select>
                             <select name="sort" onchange="this.form.submit()" id="yui_3_18_1_1_1769760065435_17">
                                 <option value="default" selected="">Sắp xếp</option>
@@ -73,7 +72,7 @@
                                     <!-- Course Image with Overlay -->
                                     <div class="course-image">
 
-                                        <img src="{{ asset('storage/' . $course->hinhAnh) ?? asset('assets/client/images/default-course.jpg') }}"
+                                        <img src="{{ asset('storage/courses/' . $course->anhKhoaHoc) ?? asset('assets/client/images/default-course.jpg') }}"
                                             alt="{{ $course->tenKhoaHoc }}">
                                         <div class="course-image-overlay"></div>
                                         <div class="course-tag-floating">
@@ -124,5 +123,4 @@
                 </div>
             </div>
         </div>
-        <x-client.register-advice />
     @endsection
