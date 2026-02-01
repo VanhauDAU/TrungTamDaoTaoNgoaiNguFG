@@ -1,0 +1,14 @@
+{
+    "Name": "Họ và tên",
+    "Email Address": "Địa chỉ Email",
+    "Password": "Mật khẩu",
+    "Confirm Password": "Xác nhận mật khẩu",
+    "Register": "Đăng ký",
+    "Login": "Đăng nhập",
+    "Logout": "Đăng xuất",
+    "Remember Me": "Ghi nhớ đăng nhập",
+    "Forgot Your Password?": "Quên mật khẩu?",
+    "Reset Password": "Đặt lại mật khẩu",
+    "Send Password Reset Link": "Gửi link đặt lại mật khẩu",
+    "Toggle navigation": "Chuyển đổi điều hướng"
+}
