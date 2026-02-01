@@ -24,7 +24,7 @@
                         và giáo dục. </div>
                 </div>
             </div>
-            <div class="mt-60">
+            <div class="mt-60"> 
                 <div class="row align-items-center">
                     <div class="col-lg-4 order-lg-1">
                         <div class="search_post mb-3 mb-lg-0">
