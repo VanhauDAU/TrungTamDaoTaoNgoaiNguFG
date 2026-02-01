@@ -23,6 +23,7 @@ Route::prefix('/')->name('home.')->group(function () {
     Route::prefix('khoa-hoc')->name('courses.')->group(function () {
         Route::get('/', [CourseController::class, 'index'])->name('index');
     });
+    
 });
 Auth::routes();
 
