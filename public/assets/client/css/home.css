@@ -5,14 +5,21 @@
     --bg-card: #E7F0F2;
     --ff-title: 'Lexend', sans-serif;
 }
+
 /* Home Banner */
 .home-banner {
     padding: 60px 0;
 }
 
 /* 1. Typography & Buttons */
-.cl-green { color: var(--cl-green); }
-.ff-title { font-family: 'Lexend', sans-serif; }
+.cl-green {
+    color: var(--cl-green);
+}
+
+.ff-title {
+    font-family: 'Lexend', sans-serif;
+}
+
 .btn-red {
     position: relative;
     z-index: 1;
@@ -25,40 +32,68 @@
     transition: all 0.3s ease;
     animation: pulse 2s infinite;
 }
+
 @keyframes pulse {
     0% {
         box-shadow: 0 0 0 0 rgba(227, 45, 45, 0.6);
     }
+
     70% {
         box-shadow: 0 0 0 15px rgba(227, 45, 45, 0);
     }
+
     100% {
         box-shadow: 0 0 0 0 rgba(227, 45, 45, 0);
     }
 }
-.btn-red:hover { 
-    transform: translateY(-3px); 
-    box-shadow: 0 10px 20px rgba(227, 45, 45, 0.3); 
-    background-color: #cc2626; 
-    color:white; 
+
+.btn-red:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(227, 45, 45, 0.3);
+    background-color: #cc2626;
+    color: white;
     opacity: 0.8;
 
 }
 
 /* 2. SVG Decoration */
-.title_animate { position: relative; display: inline-block; }
-.svg-bg { position: absolute; top: 0; left: 0; z-index: -1; width: 110%; }
-.title-heart { position: absolute; top: -10px; right: -20px; width: 40px; }
+.title_animate {
+    position: relative;
+    display: inline-block;
+}
+
+.svg-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: -1;
+    width: 110%;
+}
+
+.title-heart {
+    position: absolute;
+    top: -10px;
+    right: -20px;
+    width: 40px;
+}
+
 .title_animate h1 {
-    position: relative; /* [QUAN TRỌNG] Phải có position thì z-index mới có tác dụng */
+    position: relative;
+    /* [QUAN TRỌNG] Phải có position thì z-index mới có tác dụng */
     z-index: 2;
     color: var(--cl-green);
     font-weight: bold;
     margin-bottom: 0;
     font-size: clamp(2.5rem, 5vw, 3.5rem);
 }
+
 /* 3. Khung Ảnh Giáo Viên (Blob Effect) */
-.slider-container-wrapper { position: relative; max-width: 550px; margin: auto; }
+.slider-container-wrapper {
+    position: relative;
+    max-width: 550px;
+    margin: auto;
+}
+
 .blob-frame {
     background: var(--cl-green);
     border-radius: 40% 60% 70% 30% / 40% 40% 60% 50%;
@@ -66,7 +101,12 @@
     aspect-ratio: 1/1;
     transition: all 0.5s ease;
 }
-.blob-frame img { width: 100%; height: 100%; object-fit: cover; }
+
+.blob-frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
 
 /* 4. Ngôi sao IELTS */
 /* Cập nhật lại class này */
@@ -91,6 +131,7 @@
     filter: blur(6px);
     z-index: -1;
 }
+
 /* Thêm mới đoạn này để căn giữa nội dung bên trong Slider */
 .badge-slider {
     width: 100%;
@@ -100,7 +141,7 @@
     justify-content: center;
 }
 
-.badge-slider .slick-list, 
+.badge-slider .slick-list,
 .badge-slider .slick-track {
     height: 100%;
     width: 100%;
@@ -115,11 +156,12 @@
     color: white;
     text-align: center;
     /* Đảm bảo chữ nằm gọn trong vùng an toàn của ngôi sao */
-    padding-top: 10px; 
+    padding-top: 10px;
 }
 
 .badge-slider strong {
-    font-size: 26px; /* Chỉnh lại cỡ chữ cho rõ */
+    font-size: 26px;
+    /* Chỉnh lại cỡ chữ cho rõ */
     line-height: 1.1;
     display: block;
 }
@@ -129,29 +171,49 @@
     font-weight: 600;
     letter-spacing: 1px;
 }
+
 /* 5. Navigation Buttons */
 .slider-nav {
     position: absolute;
-    top: 50%; width: 100%;
-    display: flex; justify-content: space-between;
-    padding: 0 10px; pointer-events: none;
+    top: 50%;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 10px;
+    pointer-events: none;
 }
+
 .nav-btn {
     pointer-events: auto;
-    background: #fff; border: none; width: 45px; height: 45px;
-    border-radius: 50%; box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    color: var(--cl-green); font-size: 20px; transition: 0.3s;
+    background: #fff;
+    border: none;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    color: var(--cl-green);
+    font-size: 20px;
+    transition: 0.3s;
 }
-.nav-btn:hover { background: var(--cl-green); color: #fff; }
 
-.grayscale { filter: grayscale(1); }
+.nav-btn:hover {
+    background: var(--cl-green);
+    color: #fff;
+}
+
+.grayscale {
+    filter: grayscale(1);
+}
+
 /* end home banner */
 #trainning-stats {
     background-color: #fff;
     overflow: hidden;
 }
 
-.py-80 { padding: 80px 0; }
+.py-80 {
+    padding: 80px 0;
+}
 
 /* Title Styling */
 .title_animate {
@@ -182,8 +244,16 @@
     position: absolute;
     width: 30px;
 }
-.title_icon.no-1 { top: -20px; right: -30px; }
-.title_icon.no-2 { top: 40px; left: -50px; }
+
+.title_icon.no-1 {
+    top: -20px;
+    right: -30px;
+}
+
+.title_icon.no-2 {
+    top: 40px;
+    left: -50px;
+}
 
 /* Training Item Cards */
 .training_item {
@@ -194,7 +264,8 @@
     margin-bottom: 24px;
     position: relative;
     transition: transform 0.3s ease;
-    overflow: hidden; /* Để che các khối decor */
+    overflow: hidden;
+    /* Để che các khối decor */
 }
 
 .training_item:hover {
@@ -215,30 +286,69 @@
 }
 
 /* Typography classes */
-.cl-red { color: var(--cl-red) !important; }
-.cl-green { color: var(--cl-green) !important; }
-.ff-title { font-family: var(--ff-title); font-weight: 700; }
-.fs-96 { font-size: clamp(3rem, 5vw, 6rem); font-weight: 800; line-height: 1; }
-.fs-48 { font-size: 2.5rem; }
-.fs-24 { font-size: 1.25rem; line-height: 1.4; color: var(--cl-green); }
+.cl-red {
+    color: var(--cl-red) !important;
+}
+
+.cl-green {
+    color: var(--cl-green) !important;
+}
+
+.ff-title {
+    font-family: var(--ff-title);
+    font-weight: 700;
+}
+
+.fs-96 {
+    font-size: clamp(3rem, 5vw, 6rem);
+    font-weight: 800;
+    line-height: 1;
+}
+
+.fs-48 {
+    font-size: 2.5rem;
+}
+
+.fs-24 {
+    font-size: 1.25rem;
+    line-height: 1.4;
+    color: var(--cl-green);
+}
 
 /* Responsive */
 @media (max-width: 991px) {
-    .fs-96 { font-size: 4rem; }
-    .title_animate h3 { font-size: 2rem; }
+    .fs-96 {
+        font-size: 4rem;
+    }
+
+    .title_animate h3 {
+        font-size: 2rem;
+    }
 }
 
 /* REGISTER ADVISE SECTION */
 /* Màu gạch chân khi có lỗi */
-.input-inline.is-invalid, .select-inline.is-invalid {
+.input-inline.is-invalid,
+.select-inline.is-invalid {
     border-bottom-color: #ff4d4d !important;
     background-color: rgba(255, 77, 77, 0.05);
 }
+
 /* Hiệu ứng rung nhẹ khi nhập sai */
 @keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-5px); }
-    75% { transform: translateX(5px); }
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    25% {
+        transform: translateX(-5px);
+    }
+
+    75% {
+        transform: translateX(5px);
+    }
 }
 
 .input-inline.is-invalid {
@@ -255,15 +365,24 @@
     left: 10px;
     display: none;
 }
+
 /* Nền trắng cho section */
 .bg-white {
     background-color: #fff !important;
 }
 
 /* Font chữ và màu sắc chung */
-.ff-title { font-family: 'Lexend', sans-serif; }
-.cl-white{ color: #fff; }
-.cl-red { color: #E32D2D; }
+.ff-title {
+    font-family: 'Lexend', sans-serif;
+}
+
+.cl-white {
+    color: #fff;
+}
+
+.cl-red {
+    color: #E32D2D;
+}
 
 /* Style cho form dạng câu văn */
 .sentence-body {
@@ -284,24 +403,30 @@
 }
 
 /* Style cho Input và Select (Gạch chân nét đứt) */
-.input-inline, .select-inline {
+.input-inline,
+.select-inline {
     border: none;
-    border-bottom: 2px dashed #B8D3D9; /* Gạch chân màu xám xanh */
+    border-bottom: 2px dashed #B8D3D9;
+    /* Gạch chân màu xám xanh */
     background: transparent;
     padding: 5px 10px;
-    color: #27c4b5; /* Chữ màu đỏ khi nhập */
+    color: #27c4b5;
+    /* Chữ màu đỏ khi nhập */
     font-family: 'Lexend', sans-serif;
     font-weight: 800;
     font-size: 24px;
     outline: none;
     text-align: center;
     transition: all 0.3s ease;
-    min-width: 200px; /* Độ rộng tối thiểu */
+    min-width: 200px;
+    /* Độ rộng tối thiểu */
 }
 
 /* Hiệu ứng khi focus */
-.input-inline:focus, .select-inline:focus {
-    border-bottom-color: var(--cl-red); /* Đổi màu gạch chân thành đỏ */
+.input-inline:focus,
+.select-inline:focus {
+    border-bottom-color: var(--cl-red);
+    /* Đổi màu gạch chân thành đỏ */
     background-color: rgba(227, 45, 45, 0.05);
 }
 
@@ -316,8 +441,13 @@
 }
 
 /* Điều chỉnh độ rộng cho input số điện thoại và email */
-.phone-input { min-width: 180px; }
-.email-input { min-width: 250px; }
+.phone-input {
+    min-width: 180px;
+}
+
+.email-input {
+    min-width: 250px;
+}
 
 /* Style cho nút submit */
 .btn-red {
@@ -326,14 +456,18 @@
     border: none;
     transition: all 0.3s ease;
 }
+
 .btn-red:hover {
     background-color: #c02626;
     transform: translateY(-3px);
     color: white;
 }
+
 .course-select {
-    min-width: 450px; /* Tăng chiều dài tại đây */
-    text-align-last: center; /* Căn giữa nội dung bên trong select */
+    min-width: 450px;
+    /* Tăng chiều dài tại đây */
+    text-align-last: center;
+    /* Căn giữa nội dung bên trong select */
     cursor: pointer;
 }
 
@@ -343,45 +477,60 @@
         min-width: 100%;
     }
 }
+
 /* --- HIỆU ỨNG VẼ SVG --- */
 .draw-path {
-    stroke-dasharray: 1000; /* Độ dài nét vẽ */
-    stroke-dashoffset: 1000; /* Ẩn nét vẽ ban đầu */
-    transition: stroke-dashoffset 2s ease-out; /* Thời gian vẽ 2s */
+    stroke-dasharray: 1000;
+    /* Độ dài nét vẽ */
+    stroke-dashoffset: 1000;
+    /* Ẩn nét vẽ ban đầu */
+    transition: stroke-dashoffset 2s ease-out;
+    /* Thời gian vẽ 2s */
 }
 
 /* Khi có class 'active', nét vẽ sẽ hiện ra */
 .title_animate.active .draw-path {
     stroke-dashoffset: 0;
 }
-.register-sentence-form{
+
+.register-sentence-form {
     position: relative;
     background-color: #004646;
     padding: 20px 40px;
     border-radius: 15px;
 }
-.form-decor{
+
+.form-decor {
     width: 500px;
     top: 0px;
     right: 0px;
 }
-.desc{
+
+.desc {
     text-align: left;
     max-width: 700px;
 }
+
 /* Responsive */
 @media (max-width: 768px) {
-    .sentence-body { font-size: 18px; line-height: 2; }
-    .input-inline, .select-inline { 
-        display: block; 
-        width: 100%; 
-        margin: 10px auto; 
+    .sentence-body {
+        font-size: 18px;
+        line-height: 2;
+    }
+
+    .input-inline,
+    .select-inline {
+        display: block;
+        width: 100%;
+        margin: 10px auto;
         text-align: left;
     }
-    .form-decor{
+
+    .form-decor {
         display: none;
     }
 }
+
 /* END REGISTER ADVISE SECTION */
 /* NEWS */
 /* --- TỔNG QUAN SECTION --- */
@@ -410,7 +559,8 @@
     position: relative;
     z-index: 1;
     font-weight: 800;
-    color: #10454F; /* Màu đặc trưng của Five Genius */
+    color: #10454F;
+    /* Màu đặc trưng của Five Genius */
 }
 
 .title_icon {
@@ -527,6 +677,7 @@
     opacity: 1;
     transform: translateY(0);
 }
+
 .post_category {
     list-style: none;
     padding: 0;
@@ -534,24 +685,30 @@
 }
 
 .post_category li a {
-    color: #E31E24; /* Màu đỏ làm điểm nhấn */
+    color: #E31E24;
+    /* Màu đỏ làm điểm nhấn */
     text-transform: uppercase;
     font-weight: 700;
     letter-spacing: 1px;
     text-decoration: none;
     transition: 0.3s;
-    font-size: 11px; /* Thường để nhỏ cho tinh tế */
+    font-size: 11px;
+    /* Thường để nhỏ cho tinh tế */
 }
 
 .post_category li a:hover {
-    color: #10454F; /* Chuyển sang màu thương hiệu khi hover */
-    letter-spacing: 1.5px; /* Hiệu ứng giãn chữ nhẹ */
+    color: #10454F;
+    /* Chuyển sang màu thương hiệu khi hover */
+    letter-spacing: 1.5px;
+    /* Hiệu ứng giãn chữ nhẹ */
 }
+
 /* Container chứa các thẻ */
 .tags {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px; /* Khoảng cách giữa các thẻ */
+    gap: 10px;
+    /* Khoảng cách giữa các thẻ */
     margin-top: 15px;
 }
 
@@ -559,12 +716,15 @@
 .tag {
     display: inline-block;
     padding: 6px 16px;
-    background-color: #f1f3f5; /* Màu nền xám nhạt */
-    color: #10454F; /* Màu xanh Navy của bạn */
+    background-color: #f1f3f5;
+    /* Màu nền xám nhạt */
+    color: #10454F;
+    /* Màu xanh Navy của bạn */
     font-size: 13px;
     font-weight: 600;
     text-decoration: none;
-    border-radius: 50px; /* Bo tròn dạng viên thuốc */
+    border-radius: 50px;
+    /* Bo tròn dạng viên thuốc */
     border: 1px solid transparent;
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
@@ -573,7 +733,180 @@
 .tag:hover {
     background-color: #10454F;
     color: #ffffff !important;
-    transform: translateY(-2px); /* Nhấc nhẹ lên */
+    transform: translateY(-2px);
+    /* Nhấc nhẹ lên */
     box-shadow: 0 4px 10px rgba(16, 69, 79, 0.2);
 }
+
 /* END NEWS */
+
+/* list course feature */
+:root {
+    --primary-color: #e32c2d;
+    --accent-color: #FFB800;
+}
+
+.courses-section {
+    background-color: #fcfcfc;
+}
+
+/* Course Card Base */
+.course-card {
+    background: #fff;
+    border-radius: 20px;
+    overflow: hidden;
+    height: 100%;
+    position: relative;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.course-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(16, 69, 79, 0.12);
+}
+
+/* Image Wrapper & Overlay */
+.course-image-wrapper {
+    position: relative;
+    height: 200px;
+    overflow: hidden;
+}
+
+.course-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s ease;
+}
+
+.course-card:hover .course-img {
+    transform: scale(1.1);
+}
+
+.course-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(16, 69, 79, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: 0.3s;
+}
+
+.course-card:hover .course-overlay {
+    opacity: 1;
+}
+
+/* Badges & Buttons */
+.course-badge {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    background: var(--accent-color);
+    color: #000;
+    padding: 4px 12px;
+    border-radius: 50px;
+    font-size: 12px;
+    font-weight: 700;
+    z-index: 2;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.wishlist-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: white;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ff4757;
+    transition: 0.3s;
+    z-index: 2;
+}
+
+.wishlist-btn:hover {
+    background: #ff4757;
+    color: white;
+}
+
+/* Content Styling */
+.course-title a {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    text-decoration: none;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.course-meta,
+.course-rating {
+    font-size: 13px;
+    font-weight: 600;
+    color: #6c757d;
+}
+
+.course-description {
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+/* Price Styling */
+.price-original {
+    display: block;
+    font-size: 13px;
+    text-decoration: line-through;
+    color: #adb5bd;
+}
+
+.price-discount {
+    display: block;
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #e63946;
+}
+
+.enroll-btn {
+    width: 40px;
+    height: 40px;
+    background: var(--primary-color);
+    color: white;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.3s;
+}
+
+.enroll-btn:hover {
+    background: var(--accent-color);
+    color: #000;
+    transform: rotate(-45deg);
+}
+
+.btn-outline-primary-genius {
+    border: 2px solid var(--primary-color);
+    color: var(--primary-color);
+    font-weight: 700;
+    border-radius: 50px;
+}
+
+.btn-outline-primary-genius:hover {
+    background: var(--primary-color);
+    color: white;
+}
+
+/* end list course feature */
