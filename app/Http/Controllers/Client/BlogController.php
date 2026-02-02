@@ -25,4 +25,8 @@ class BlogController extends Controller
 
         return view('clients.blog.index', compact('blogs', 'categories'));
     }
+    public function show($slug){
+        $blog = BaiViet::where('slug', $slug)->first();
+        return view('clients.blog.show', compact('blog'));
+    }
 }

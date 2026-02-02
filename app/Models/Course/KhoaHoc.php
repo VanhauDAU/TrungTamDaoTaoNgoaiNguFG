@@ -17,4 +17,7 @@ class KhoaHoc extends Model
     public function lopHoc(){
         return $this->hasMany(LopHoc::class, 'khoaHocId', 'khoaHocId');
     }
+    public function hocPhis(){
+        return $this->hasMany(HocPhi::class, 'khoaHocId', 'khoaHocId');
+    }
 }

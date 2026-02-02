@@ -69,6 +69,7 @@
     from {
         transform: rotate(0deg);
     }
+
     to {
         transform: rotate(360deg);
     }
@@ -337,6 +338,7 @@
         opacity: 0;
         transform: translateY(-10px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -543,6 +545,7 @@
     background: #cbd9e1;
     transform: translateY(-1px);
 }
+
 .course-button.green {
     background: #0a5568;
     color: #ffffff;
@@ -564,7 +567,7 @@
     .heading_content h1 {
         font-size: 2rem;
     }
-    
+
     .list-courses-row {
         grid-template-columns: 1fr;
     }
@@ -575,17 +578,17 @@
     .list-courses-header {
         padding: 40px 0 30px;
     }
-    
+
     .heading_content h1 {
         font-size: 1.75rem;
         gap: 8px;
     }
-    
+
     .heading_icon {
         width: 30px;
         height: 30px;
     }
-    
+
     .type-courses-tabs {
         justify-content: flex-start;
         overflow-x: auto;
@@ -593,57 +596,57 @@
         padding-bottom: 10px;
         -webkit-overflow-scrolling: touch;
     }
-    
+
     .type-courses-tabs a {
         padding: 10px 20px;
         font-size: 14px;
         flex-shrink: 0;
     }
-    
+
     .mobile-ielts-divider {
         display: block;
     }
-    
+
     .ielts-search-container {
         flex-direction: column;
         gap: 12px;
     }
-    
+
     .ielts-search {
         min-width: 100%;
     }
-    
+
     .ielts-filters {
         width: 100%;
         flex-direction: column;
     }
-    
+
     .ielts-filters select {
         width: 100%;
     }
-    
+
     .ielts-test-item {
         padding: 20px;
     }
-    
+
     .ielts-test-heading {
         flex-direction: column;
     }
-    
+
     .ielts-test-info {
         flex-direction: column;
         align-items: stretch;
         gap: 12px;
     }
-    
+
     .ielts-test-actions {
         flex-direction: column;
     }
-    
+
     .ielts-test-button {
         width: 100%;
     }
-    
+
 }
 
 @media (max-width: 480px) {
@@ -651,11 +654,11 @@
         font-size: 1.5rem;
         gap: 6px;
     }
-    
+
     .ielts-test-title {
         font-size: 16px;
     }
-    
+
     .ielts-test-score p {
         font-size: 28px;
     }
@@ -682,4 +685,73 @@
     padding: 60px 20px;
     color: #a0aec0;
     font-size: 16px;
+}
+
+/* CHI TIẾT KHÓA HỌC */
+/* Kế thừa các biến :root đã tối ưu trước đó */
+.course-detail-page {
+    padding-top: 80px;
+}
+
+.rounded-30 {
+    border-radius: 30px !important;
+}
+
+/* 1. Hero Styling */
+.course-thumb-wrapper img {
+    width: 100%;
+    height: 450px;
+    object-fit: cover;
+    box-shadow: 0 20px 40px rgba(1, 61, 49, 0.1);
+}
+
+.course-summary {
+    font-size: 16px;
+    line-height: 1.8;
+}
+
+/* 2. Class Card Styling */
+.class-card {
+    background: #fff;
+    border: 1px solid #eee;
+    padding: 30px;
+    border-radius: 24px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.class-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 35px rgba(1, 61, 49, 0.08);
+    border-color: var(--teal-nav);
+}
+
+.class-details li {
+    font-size: 14px;
+    color: var(--gray-text);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.class-details i {
+    color: var(--teal-nav);
+    width: 18px;
+    text-align: center;
+}
+
+/* Badge tinh chỉnh */
+.badge {
+    padding: 6px 14px;
+    font-weight: 500;
+    border-radius: 8px;
+    font-size: 12px;
+}
+
+/* Button phụ cho Card */
+.btn-primary-genius.btn-sm {
+    padding: 10px 20px;
+    font-size: 13px;
 }

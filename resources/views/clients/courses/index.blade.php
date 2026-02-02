@@ -106,7 +106,8 @@
                                         </div>
 
                                         <div class="course-footer">
-                                            <a href="#" class="course-button">
+                                            <a href="{{ route('home.courses.show', $course->slug) }}"
+                                                class="course-button">
                                                 Xem chi tiết
                                                 <i class="fas fa-arrow-right"></i>
                                             </a>
