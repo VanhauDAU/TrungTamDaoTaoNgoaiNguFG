@@ -15,15 +15,15 @@ Route::prefix('/')->name('home.')->group(function () {
     });
     Route::prefix('blog')->name('blog.')->group(function () {
         Route::get('/', [BlogController::class, 'index'])->name('index');
-        Route::get('/chi-tiet', [BlogController::class, 'show'])->name('show');
+        Route::get('/{slug}', [BlogController::class, 'show'])->name('show');
     });
     Route::prefix('ve-chung-toi')->name('about.')->group(function () {
         Route::get('/', [AboutController::class, 'index'])->name('index');
     });
     Route::prefix('khoa-hoc')->name('courses.')->group(function () {
         Route::get('/', [CourseController::class, 'index'])->name('index');
+        Route::get('/{slug}', [CourseController::class, 'show'])->name('show');
     });
-    
 });
 Auth::routes();
 

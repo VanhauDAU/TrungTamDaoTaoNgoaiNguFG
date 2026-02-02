@@ -29,4 +29,9 @@ class CourseController extends Controller
         
         return view('clients.courses.index', compact('listTypeCourses', 'listCourses'));
     }
+    public function show($slug)
+    {
+        $course = KhoaHoc::where('slug', $slug)->with('loaiKhoaHoc', 'lopHoc', 'hocPhis')->first();
+        return view('clients.courses.show', compact('course'));
+    }
 }

@@ -9,4 +9,8 @@ class HocPhi extends Model
     //
     protected $table = 'hocphi';
     protected $primaryKey = 'hocPhiId';
+    
+    public function khoaHoc(){
+        return $this->belongsTo(KhoaHoc::class, 'khoaHocId', 'khoaHocId');
+    }
 }

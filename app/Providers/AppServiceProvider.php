@@ -5,6 +5,7 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
 use App\Models\Course\KhoaHoc;
+use App\Models\Facility\CoSoDaoTao;
 use Illuminate\Pagination\Paginator;
 
 class AppServiceProvider extends ServiceProvider
@@ -27,13 +28,11 @@ class AppServiceProvider extends ServiceProvider
         View::composer(
             ['components.client.footer', 'components.client.register-advice'], 
             function ($view) {
-                // Lấy 6 khóa học đang hoạt động
                 $courses = KhoaHoc::where('trangThai', 1)->get();
-                
-                // Truyền biến vào view. 
-                // Lưu ý: Tên biến nên đồng nhất để dễ quản lý
+                $branches = CoSoDaoTao::where('trangThai',1)->get();
                 $view->with('footerCourses', $courses);
                 $view->with('danhSachKhoaHoc', $courses); 
+                $view->with('danhSachCoSo', $branches);
                 }
             );
     }

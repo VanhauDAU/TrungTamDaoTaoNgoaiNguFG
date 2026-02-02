@@ -27,13 +27,14 @@
             <div class="col-lg col-6">
                 <h4 class="fs-12 ff-title cl-red mb-3">Khoá học</h4>
                 <ul>
-                    @foreach($footerCourses as $khoaHoc)
+                    @foreach ($footerCourses as $khoaHoc)
                         <li>
-                            <a href="https://theforumcenter.com/khoa-hoc/ielts-tai-trung-tam/" target="">{{$khoaHoc->tenKhoaHoc}}</a>
+                            <a href="https://theforumcenter.com/khoa-hoc/ielts-tai-trung-tam/"
+                                target="">{{ $khoaHoc->tenKhoaHoc }}</a>
                         </li>
                     @endforeach
                     <li>
-                        <a href="">Xem thêm...</a>
+                        <a href="{{ route('home.courses.index') }}">Xem thêm...</a>
                     </li>
                 </ul>
             </div>

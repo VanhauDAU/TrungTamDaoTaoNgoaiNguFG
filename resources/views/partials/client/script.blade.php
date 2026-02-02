@@ -6,6 +6,3 @@
 <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
 <script src="{{ asset('assets/client/js/header.js') }}"></script>
 <script src="{{ asset('assets/client/js/home.js') }}"></script>
-<script src="{{ asset('assets/client/js/contact.js') }}"></script>
-<script src="{{ asset('assets/client/js/blog.js') }}"></script>
-<script src="{{ asset('assets/client/js/courses.js') }}"></script>
