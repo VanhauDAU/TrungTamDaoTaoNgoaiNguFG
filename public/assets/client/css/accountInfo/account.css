@@ -1,0 +1,156 @@
+/* ============================================
+   ACCOUNT LAYOUT
+============================================ */
+.account-page {
+    padding: 60px 0;
+    min-height: 100vh;
+}
+
+/* SIDEBAR STYLES */
+.account-sidebar {
+    background: #fff;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    border: 1px solid #f0f0f0;
+    position: sticky;
+    top: 100px;
+}
+
+.sidebar-user-info {
+    padding: 30px 20px;
+    text-align: center;
+    background: linear-gradient(135deg, #10454F 0%, #1a6370 100%);
+    color: #fff;
+}
+
+.user-avatar-wrapper {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    margin: 0 auto 15px;
+}
+
+.sidebar-avatar {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid rgba(255, 255, 255, 0.2);
+}
+
+.user-name {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.user-email {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin: 0;
+}
+
+.sidebar-menu {
+    padding: 15px;
+    list-style: none;
+    margin: 0;
+}
+
+.menu-item {
+    margin-bottom: 5px;
+}
+
+.menu-link {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    color: #2D3436;
+    text-decoration: none;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.menu-link i {
+    width: 24px;
+    margin-right: 10px;
+    font-size: 18px;
+    text-align: center;
+    color: #636e72;
+    transition: all 0.3s ease;
+}
+
+.menu-link:hover,
+.menu-link.active {
+    background: rgba(39, 196, 181, 0.1);
+    color: #10454F;
+}
+
+.menu-link:hover i,
+.menu-link.active i {
+    color: #27C4B5;
+}
+
+.menu-link.text-danger:hover {
+    background: rgba(227, 44, 45, 0.1);
+    color: #e32c2d;
+}
+
+.menu-link.text-danger:hover i {
+    color: #e32c2d;
+}
+
+/* CONTENT AREA STYLES */
+.account-content {
+    background: #fff;
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    border: 1px solid #f0f0f0;
+    min-height: 100%;
+}
+
+.content-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #10454F;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 1px dashed #e0e0e0;
+}
+
+/* FORM STYLES */
+.form-label-custom {
+    font-weight: 600;
+    color: #2D3436;
+    margin-bottom: 8px;
+}
+
+.form-control-custom {
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 12px 15px;
+    transition: all 0.3s ease;
+}
+
+.form-control-custom:focus {
+    border-color: #27C4B5;
+    box-shadow: 0 0 0 4px rgba(39, 196, 181, 0.1);
+}
+
+.btn-update {
+    background: linear-gradient(135deg, #10454F 0%, #27C4B5 100%);
+    color: #fff;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-update:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(39, 196, 181, 0.3);
+    color: #fff;
+}

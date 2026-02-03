@@ -1,0 +1,150 @@
+.class-detail-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    margin-bottom: 24px;
+}
+
+.info-row {
+    display: flex;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: 1px dashed #eee;
+}
+
+.info-row:last-child {
+    border-bottom: none;
+}
+
+.info-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: rgba(39, 196, 181, 0.1);
+    color: #10454F;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
+    font-size: 18px;
+}
+
+.info-label {
+    font-size: 13px;
+    color: #636e72;
+    margin-bottom: 2px;
+}
+
+.info-value {
+    font-size: 15px;
+    font-weight: 600;
+    color: #2D3436;
+}
+
+.teacher-card {
+    display: flex;
+    align-items: center;
+    background: #F9F5EE;
+    padding: 20px;
+    border-radius: 12px;
+    margin-top: 10px;
+}
+
+.teacher-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 15px;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 50px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.status-open {
+    background: #e3fcf7;
+    color: #00b894;
+}
+
+.status-closed {
+    background: #ffeaa7;
+    color: #fdcb6e;
+}
+
+/* ============================================
+   RESPONSIVE - NEW LAYOUT
+============================================ */
+@media (max-width: 1199.98px) {
+    .sidebar-sticky {
+        position: relative;
+        top: 0;
+    }
+}
+
+@media (max-width: 991.98px) {
+    .section-title-custom-left {
+        font-size: 1.5rem;
+    }
+
+    .facility-name {
+        font-size: 1.1rem;
+    }
+
+    .class-info-row {
+        flex-direction: column;
+        gap: 12px;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .section-title-custom-left {
+        font-size: 1.3rem;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+
+    .facility-header {
+        padding: 15px 20px;
+    }
+
+    .facility-name {
+        font-size: 1rem;
+    }
+
+    .facility-address {
+        font-size: 13px;
+    }
+
+    .class-card-header,
+    .class-card-body,
+    .class-card-footer {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
+    .class-name-compact {
+        font-size: 1rem;
+    }
+
+    .btn-action {
+        font-size: 13px;
+        padding: 10px 15px;
+    }
+
+    .contact-title {
+        font-size: 1.2rem;
+    }
+
+    .btn-contact-zalo {
+        font-size: 15px;
+        padding: 12px 18px;
+    }
+}

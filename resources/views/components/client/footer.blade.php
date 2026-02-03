@@ -18,10 +18,10 @@
             <div class="col-lg col-6">
                 <h4 class="fs-12 ff-title cl-red mb-3">THE FIVEGENIUS</h4>
                 <ul>
-                    <li><a href="https://theforumcenter.com/" target="">Trang chủ</a></li>
-                    <li><a href="https://theforum.vn/" target="_blank">The FiveGenius</a></li>
-                    <li><a href="https://theforumcenter.com/blog/" target="">Blog</a></li>
-                    <li><a href="https://theforumcenter.com/lien-he/" target="">Liên hệ</a></li>
+                    <li><a href="{{ route('home.index') }}" target="">Trang chủ</a></li>
+                    <li><a href="{{ route('home.about.index') }}" target="_blank">The FiveGenius</a></li>
+                    <li><a href="{{ route('home.blog.index') }}" target="">Blog</a></li>
+                    <li><a href="{{ route('home.contact.index') }}" target="">Liên hệ</a></li>
                 </ul>
             </div>
             <div class="col-lg col-6">
@@ -29,7 +29,7 @@
                 <ul>
                     @foreach ($footerCourses as $khoaHoc)
                         <li>
-                            <a href="https://theforumcenter.com/khoa-hoc/ielts-tai-trung-tam/"
+                            <a href="{{ route('home.courses.show', $khoaHoc->slug) }}"
                                 target="">{{ $khoaHoc->tenKhoaHoc }}</a>
                         </li>
                     @endforeach

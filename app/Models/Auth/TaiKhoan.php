@@ -41,4 +41,8 @@ class TaiKhoan extends Authenticatable
     {
         return $this->hasOne(NhanSu::class, 'taiKhoanId', 'taiKhoanId');
     }
+    public function dangKyLopHocs()
+    {
+        return $this->hasMany(DangKyLopHoc::class, 'taiKhoanId', 'taiKhoanId');
+    }
 }
