@@ -1,0 +1,181 @@
+@extends('layouts.client')
+
+@section('title', $class->tenLopHoc . ' - ' . $class->khoaHoc->tenKhoaHoc)
+
+@section('stylesheet')
+    <link rel="stylesheet" href="{{ asset('assets/client/css/courseDetail.css') }}">
+@endsection
+
+@section('content')
+    <section class="class-detail-page pt-5 pb-5">
+        <div class="custom-container">
+            {{-- BREADCRUMB --}}
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ route('home.index') }}">Trang chủ</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('home.courses.index') }}">Khóa học</a></li>
+                    <li class="breadcrumb-item">
+                        <a href="{{ route('home.courses.show', $class->khoaHoc->slug) }}">
+                            {{ $class->khoaHoc->tenKhoaHoc }}
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ $class->tenLopHoc }}</li>
+                </ol>
+            </nav>
+
+            <div class="row g-4">
+                {{-- LEFT COLUMN --}}
+                <div class="col-lg-8">
+                    {{-- HEADER --}}
+                    <div class="class-detail-card">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <span class="badge bg-gradient-primary mb-2">
+                                <i class="fas fa-layer-group me-1"></i>
+                                {{ $class->khoaHoc->loaiKhoaHoc->tenLoai ?? 'Khóa học' }}
+                            </span>
+
+                            @if ($class->trangThai == 1)
+                                <span class="status-badge status-open"><i class="fas fa-check-circle me-1"></i> Đang mở đăng
+                                    ký</span>
+                            @else
+                                <span class="status-badge status-closed"><i class="fas fa-clock me-1"></i> Đã
+                                    đóng/Đầy</span>
+                            @endif
+                        </div>
+
+                        <h1 class="mb-3 fw-bold text-dark">{{ $class->tenLopHoc }}</h1>
+
+                        <div class="d-flex align-items-center text-muted mb-4">
+                            <i class="fas fa-map-marker-alt me-2 text-danger"></i>
+                            <span>{{ $class->coSo->tenCoSo }} - {{ $class->coSo->diaChi }}</span>
+                        </div>
+                    </div>
+
+                    {{-- DETAIL INFO --}}
+                    <div class="class-detail-card">
+                        <h4 class="mb-4 fw-bold">Thông tin chi tiết</h4>
+
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="info-row">
+                                    <div class="info-icon">
+                                        <i class="far fa-calendar-alt"></i>
+                                    </div>
+                                    <div>
+                                        <div class="info-label">Ngày bắt đầu</div>
+                                        <div class="info-value">
+                                            {{ \Carbon\Carbon::parse($class->ngayBatDau)->format('d/m/Y') }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-row">
+                                    <div class="info-icon">
+                                        <i class="far fa-calendar-check"></i>
+                                    </div>
+                                    <div>
+                                        <div class="info-label">Ngày kết thúc (dự kiến)</div>
+                                        <div class="info-value">
+                                            {{ \Carbon\Carbon::parse($class->ngayKetThuc)->format('d/m/Y') }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-row">
+                                    <div class="info-icon">
+                                        <i class="far fa-clock"></i>
+                                    </div>
+                                    <div>
+                                        <div class="info-label">Thời lượng</div>
+                                        <div class="info-value">{{ $class->soBuoiDuKien ?? 0 }} buổi</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-row">
+                                    <div class="info-icon">
+                                        <i class="fas fa-users"></i>
+                                    </div>
+                                    <div>
+                                        <div class="info-label">Sĩ số</div>
+                                        <div class="info-value">55/{{ $class->soHocVienToiDa }} học viên</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- GIẢNG VIÊN --}}
+                    @if ($class->taiKhoan && $class->taiKhoan->hoSoNguoiDung)
+                        <div class="class-detail-card">
+                            <h4 class="mb-3 fw-bold">Giảng viên phụ trách</h4>
+                            <div class="teacher-card">
+                                <img src="{{ asset('storage/avatars/' . $class->taiKhoan->hoSoNguoiDung->anhDaiDien) }}"
+                                    onerror="this.src='{{ asset('assets/images/user-default.png') }}'" alt="Teacher"
+                                    class="teacher-avatar">
+                                <div>
+                                    <h5 class="mb-1 fw-bold">{{ $class->taiKhoan->hoSoNguoiDung->hoTen }}</h5>
+                                    <p class="mb-0 text-muted small"><i class="fas fa-envelope me-1"></i>
+                                        {{ $class->taiKhoan->email }}</p>
+                                    {{-- chuyên môn --}}
+                                    <p class="mb-0 text-muted small"><i class="fas fa-briefcase me-1"></i>
+                                        {{ $class->taiKhoan->nhanSu->chuyenMon }}</p>
+                                    {{-- bằng cấp --}}
+                                    <p class="mb-0 text-muted small"><i class="fas fa-graduation-cap me-1"></i>
+                                        {{ $class->taiKhoan->nhanSu->bangCap }}</p>
+                                    {{-- Học vị --}}
+                                    <p class="mb-0 text-muted small"><i class="fas fa-graduation-cap me-1"></i>
+                                        {{ $class->taiKhoan->nhanSu->hocVi }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+                </div>
+
+                {{-- RIGHT COLUMN (SIDEBAR) --}}
+                <div class="col-lg-4">
+                    <div class="sidebar-sticky" style="top: 100px">
+                        {{-- HỌC PHÍ CARD --}}
+                        <div class="sidebar-card p-4 text-center mb-4">
+                            <p class="text-muted mb-2">Học phí khóa học</p>
+                            <h2 class="text-primary fw-bold mb-3">
+                                {{ number_format($class->hocPhi->donGia ?? 0, 0, ',', '.') }}đ
+                            </h2>
+
+                            @if ($class->trangThai == 1)
+                                <button class="btn btn-primary w-100 py-3 rounded-3 fw-bold mb-3"
+                                    style="background: linear-gradient(135deg, #10454F 0%, #27C4B5 100%); border: none;">
+                                    ĐĂNG KÝ NGAY
+                                </button>
+                                <p class="small text-muted mb-0"><i class="fas fa-shield-alt me-1"></i> Cam kết hoàn tiền
+                                    trong 7 ngày</p>
+                            @else
+                                <button class="btn btn-secondary w-100 py-3 rounded-3 fw-bold disabled">
+                                    ĐÃ ĐÓNG ĐĂNG KÝ
+                                </button>
+                            @endif
+                        </div>
+
+                        {{-- CONTACT CARD (Reused) --}}
+                        <div class="sidebar-card contact-card">
+                            <div class="contact-header">
+                                <i class="fas fa-headset contact-icon" style="font-size: 36px"></i>
+                                <h3 class="contact-title" style="font-size: 1.2rem">Liên hệ tư vấn</h3>
+                            </div>
+                            <div class="contact-body">
+                                <p class="contact-subtitle" style="font-size: 13px">Cần hỗ trợ về lớp học này?</p>
+                                <a href="https://zalo.me/0816548150" target="_blank" class="btn-contact-zalo">
+                                    <span>Chat qua Zalo</span>
+                                </a>
+                                <div class="contact-phone">
+                                    <i class="fas fa-phone-alt me-2"></i>
+                                    <span>0816548150</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+@endsection

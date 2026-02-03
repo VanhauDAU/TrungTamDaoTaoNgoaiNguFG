@@ -277,7 +277,7 @@
                         <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="{{ $loop->index * 100 }}">
                             <div class="team-card">
                                 <div class="avatar">
-                                    <img src="{{ $giaoVien->hoSoNguoiDung && $giaoVien->hoSoNguoiDung->anhDaiDien ? asset('storage/teachers/' . $giaoVien->hoSoNguoiDung->anhDaiDien) : asset('assets/images/default-teacher.jpeg') }}"
+                                    <img src="{{ $giaoVien->hoSoNguoiDung && $giaoVien->hoSoNguoiDung->anhDaiDien ? asset('storage/avatars/' . $giaoVien->hoSoNguoiDung->anhDaiDien) : asset('assets/images/default-teacher.jpeg') }}"
                                         alt="{{ $giaoVien->hoSoNguoiDung->hoTen ?? 'Giảng viên' }}" loading="lazy">
                                 </div>
                                 <div class="info">

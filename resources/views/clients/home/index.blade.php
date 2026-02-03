@@ -52,7 +52,7 @@
                             @foreach ($topGiaoVien as $giaoVien)
                                 <div class="item">
                                     <div class="blob-frame">
-                                        <img src="{{ $giaoVien->hoSoNguoiDung->anhDaiDien ? asset('storage/teachers/' . $giaoVien->hoSoNguoiDung->anhDaiDien) : asset('assets/images/default-teacher.jpeg') }}"
+                                        <img src="{{ $giaoVien->hoSoNguoiDung->anhDaiDien ? asset('storage/avatars/' . $giaoVien->hoSoNguoiDung->anhDaiDien) : asset('assets/images/default-teacher.jpeg') }}"
                                             alt="{{ $giaoVien->hoSoNguoiDung->hoTen }}">
                                     </div>
                                 </div>
@@ -199,7 +199,7 @@
 
                             {{-- Hình ảnh & Nút yêu thích --}}
                             <div class="course-image-wrapper">
-                                <img src="{{ asset('assets/images/' . ($khoaHoc->anhKhoaHoc ?? 'course-demo.jpg')) }}"
+                                <img src="{{ asset('storage/courses/' . ($khoaHoc->anhKhoaHoc ?? 'course-demo.jpg')) }}"
                                     alt="{{ $khoaHoc->tenKhoaHoc }}" class="course-img">
                                 <div class="course-overlay">
                                     <button class="btn btn-light btn-sm rounded-pill px-3 fw-bold">Xem chi tiết</button>
@@ -244,7 +244,7 @@
             <div class="row justify-content-between align-items-end my-5">
                 <div class="col-auto">
                     <div class="title_animate ps-lg-5 pe-5">
-                        
+
                         <h3 class="fs-48 ff-title cl-green mb-0 textSkewUp" style="perspective: 400px; opacity: 1;">
                             TIN TỨC & BLOGS
                         </h3>

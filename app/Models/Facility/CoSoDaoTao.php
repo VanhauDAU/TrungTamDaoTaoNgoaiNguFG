@@ -13,4 +13,7 @@ class CoSoDaoTao extends Model
     {
         return $this->belongsTo(TinhThanh::class, 'tinhThanhId', 'tinhThanhId');
     }
+    public function lopHoc(){
+        return $this->hasMany(LopHoc::class, 'coSoId', 'coSoId');
+    }
 }

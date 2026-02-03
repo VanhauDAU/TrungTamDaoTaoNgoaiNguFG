@@ -3,8 +3,8 @@
         <div class="row gx-lg-5 justify-content-between">
             <div class="col-lg-3">
                 <div class="mb-4">
-                    <a href="https://theforumcenter.com" class="logo_ft">
-                        <img src="https://theforumcenter.com/wp-content/uploads/2025/05/logo.png" alt="">
+                    <a href="{{ route('home.index') }}" class="logo_ft">
+                        <img src="{{ asset('assets/images/logo.png') }}" alt="">
                     </a>
                 </div>
                 <div class="fw-light cl-gray mb-4">

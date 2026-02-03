@@ -1,14 +1,5 @@
 /* ===== ABOUT US PAGE CSS ===== */
 
-/* Variables */
-:root {
-    --primary-green: #10454f;
-    --primary-red: #e31e24;
-    --accent-teal: #27c4b5;
-    --text-gray: #636e72;
-    --light-bg: #f8f9fa;
-}
-
 /* ===== INTRO SECTION ===== */
 .intro-about {
     padding: 100px 0 80px;

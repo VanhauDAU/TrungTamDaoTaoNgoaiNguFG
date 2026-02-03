@@ -5,6 +5,7 @@ use App\Http\Controllers\Client\ContactController;
 use App\Http\Controllers\Client\HomeController;
 use App\Http\Controllers\Client\AboutController;
 use App\Http\Controllers\Client\CourseController;
+use App\Http\Controllers\Client\StudentController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
@@ -23,6 +24,12 @@ Route::prefix('/')->name('home.')->group(function () {
     Route::prefix('khoa-hoc')->name('courses.')->group(function () {
         Route::get('/', [CourseController::class, 'index'])->name('index');
         Route::get('/{slug}', [CourseController::class, 'show'])->name('show');
+    });
+    Route::prefix('lop-hoc')->name('classes.')->group(function () {
+        Route::get('/{slug}/{lopHocId}', [CourseController::class, 'showClass'])->name('show');
+    });
+    Route::prefix('hoc-vien')->name('student.')->middleware('auth')->group(function () {
+        Route::get('/', [StudentController::class, 'index'])->name('index');
     });
 });
 Auth::routes();
