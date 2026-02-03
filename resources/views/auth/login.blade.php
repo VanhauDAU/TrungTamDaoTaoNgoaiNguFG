@@ -228,25 +228,17 @@
                                             ký ngay!</a>
                                     </div>
 
-                                    {{-- Error Display --}}
-                                    @if ($errors->any())
-                                        <div class="alert alert-danger fs-12 mb-3">
-                                            @foreach ($errors->all() as $error)
-                                                <div>{{ $error }}</div>
-                                            @endforeach
-                                        </div>
-                                    @endif
-
                                     {{-- Email --}}
+                                    <input type="hidden" name="login_attempt" value="1">
                                     <div class="mb-3">
                                         <input type="email" id="email" name="email"
                                             class="form-control @error('email') is-invalid @enderror"
                                             value="{{ old('email') }}" required autocomplete="email" autofocus
-                                            placeholder="Email">
+                                            placeholder="Email đăng nhập">
                                         @error('email')
-                                            <span class="invalid-feedback" role="alert">
-                                                <strong>{{ $message }}</strong>
-                                            </span>
+                                            <div class="invalid-feedback d-block text-danger mt-1">
+                                                <i class="fas fa-exclamation-triangle me-1"></i> {{ $message }}
+                                            </div>
                                         @enderror
                                     </div>
 
@@ -254,14 +246,16 @@
                                     <div class="password_box mb-3">
                                         <input type="password" name="password" id="password"
                                             class="form-control @error('password') is-invalid @enderror"
-                                            autocomplete="current-password" required placeholder="Mật khẩu">
+                                            autocomplete="current-password" required
+                                            placeholder="Mật khẩu (tối thiểu 8 ký tự)">
                                         <div class="show_text" onclick="togglePassword()">
                                             <i class="fa fa-eye-slash" id="toggleIcon"></i>
                                         </div>
                                         @error('password')
-                                            <span class="invalid-feedback" role="alert">
-                                                <strong>{{ $message }}</strong>
-                                            </span>
+                                            <div class="invalid-feedback d-block text-danger mt-1 fw-bold"
+                                                style="font-size: 0.9em;">
+                                                <i class="fas fa-exclamation-triangle me-1"></i> {{ $message }}
+                                            </div>
                                         @enderror
                                     </div>
 

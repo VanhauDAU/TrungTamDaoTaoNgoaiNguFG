@@ -35,8 +35,8 @@
                             href="{{ route('home.blog.index') }}">Blog</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('home.lienhe.index') ? 'active' : '' }}"
-                            href="{{ route('home.lienhe.index') }}">Liên hệ</a>
+                        <a class="nav-link {{ request()->routeIs('home.contact.index') ? 'active' : '' }}"
+                            href="{{ route('home.contact.index') }}">Liên hệ</a>
                     </li>
                 </ul>
 

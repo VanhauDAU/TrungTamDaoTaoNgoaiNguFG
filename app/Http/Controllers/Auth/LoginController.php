@@ -38,6 +38,25 @@ class LoginController extends Controller
         $this->middleware('guest')->except('logout');
         $this->middleware('auth')->only('logout');
     }
+
+    protected function validateLogin(Request $request)
+    {
+        $request->validate([
+            $this->username() => 'required|string',
+            'password' => 'required|string|min:8',
+        ], [
+            $this->username().'.required' => 'Vui lòng nhập Email',
+            'password.required' => 'Vui lòng nhập Mật khẩu',
+            'password.min' => 'Mật khẩu phải có ít nhất 8 ký tự',
+        ]);
+    }
+
+    protected function sendFailedLoginResponse(Request $request)
+    {
+        throw \Illuminate\Validation\ValidationException::withMessages([
+            $this->username() => ['Thông tin đăng nhập không chính xác.'],
+        ]);
+    }
     public function logout(Request $request)
     {
         $this->guard()->logout();

@@ -123,12 +123,13 @@
                                                     </div>
 
                                                     <div class="class-card-footer">
-                                                        <a href="{{ route('home.classes.show', ['slug' => $lopHoc->khoaHoc->slug, 'lopHocId' => $lopHoc->slug]) }}"
+                                                        <a href="{{ route('home.classes.show', ['slug' => $lopHoc->khoaHoc->slug, 'slugLopHoc' => $lopHoc->slug]) }}"
                                                             class="btn-action btn-detail">
                                                             <i class="fas fa-info-circle me-1"></i>
                                                             Chi tiết
                                                         </a>
-                                                        <a href="#" class="btn-action btn-register">
+                                                        <a href="{{ route('home.classes.confirm', ['slug' => $lopHoc->khoaHoc->slug, 'slugLopHoc' => $lopHoc->slug]) }}"
+                                                            class="btn-action btn-register">
                                                             <i class="fas fa-user-plus me-1"></i>
                                                             Đăng ký
                                                         </a>

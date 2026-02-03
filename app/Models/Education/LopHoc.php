@@ -28,7 +28,7 @@ class LopHoc extends Model
         'soHocVienToiDa',
         'donGiaDay',
         'coSoId',
-        'trangThai'
+        'trangThai' // 0: sắp mở, 1: đang mở, 2: đã đóng, 3: đã hủy, 4: đang học
     ];
     public function khoaHoc(){
         return $this->belongsTo(KhoaHoc::class, 'khoaHocId', 'khoaHocId');
@@ -44,5 +44,11 @@ class LopHoc extends Model
     }
     public function coSo(){
         return $this->belongsTo(CoSo::class, 'coSoId', 'coSoId');
+    }
+    public function buoiHocs(){
+        return $this->hasMany(BuoiHoc::class, 'lopHocId', 'lopHocId');
+    }
+    public function dangKyLopHocs(){
+        return $this->hasMany(DangKyLopHoc::class, 'lopHocId', 'lopHocId');
     }
 }

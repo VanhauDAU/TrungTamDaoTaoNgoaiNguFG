@@ -2,7 +2,7 @@
 .blog_page {
     padding-bottom: 80px;
     padding-top: 80px;
-    background: ;
+    background: var(--background-color);
     min-height: 100vh;
 }
 

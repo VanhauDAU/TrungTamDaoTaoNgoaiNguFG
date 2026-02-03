@@ -3,6 +3,7 @@
 @section('title', $class->tenLopHoc . ' - ' . $class->khoaHoc->tenKhoaHoc)
 
 @section('stylesheet')
+    <link rel="stylesheet" href="{{ asset('assets/client/css/classesDetail.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/client/css/courseDetail.css') }}">
 @endsection
 
@@ -22,6 +23,19 @@
                     <li class="breadcrumb-item active" aria-current="page">{{ $class->tenLopHoc }}</li>
                 </ol>
             </nav>
+
+            @if (session('success'))
+                <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+                    <i class="fas fa-check-circle me-2"></i> {{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
+            @if (session('error'))
+                <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+                    <i class="fas fa-exclamation-circle me-2"></i> {{ session('error') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
 
             <div class="row g-4">
                 {{-- LEFT COLUMN --}}
@@ -98,7 +112,9 @@
                                     </div>
                                     <div>
                                         <div class="info-label">Sĩ số</div>
-                                        <div class="info-value">55/{{ $class->soHocVienToiDa }} học viên</div>
+                                        <div class="info-value">
+                                            {{ $class->dangKyLopHocs->where('trangThai', '!=', 0)->count() }}/{{ $class->soHocVienToiDa }}
+                                            học viên</div>
                                     </div>
                                 </div>
                             </div>
@@ -143,10 +159,11 @@
                             </h2>
 
                             @if ($class->trangThai == 1)
-                                <button class="btn btn-primary w-100 py-3 rounded-3 fw-bold mb-3"
+                                <a href="{{ route('home.classes.confirm', ['slug' => $class->khoaHoc->slug, 'slugLopHoc' => $class->slug]) }}"
+                                    class="btn btn-primary w-100 py-3 rounded-3 fw-bold mb-3 d-flex align-items-center justify-content-center text-decoration-none"
                                     style="background: linear-gradient(135deg, #10454F 0%, #27C4B5 100%); border: none;">
                                     ĐĂNG KÝ NGAY
-                                </button>
+                                </a>
                                 <p class="small text-muted mb-0"><i class="fas fa-shield-alt me-1"></i> Cam kết hoàn tiền
                                     trong 7 ngày</p>
                             @else
