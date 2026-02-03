@@ -7,14 +7,8 @@
             <div role="main" id="yui_3_18_1_1_1769760065435_13"><span id="maincontent"></span>
                 <div class="ielts-test-header" id="yui_3_18_1_1_1769760065435_12">
                     <div class="heading_animate">
-                        <svg width="435" height="47" viewBox="0 0 455 47" fill="none"
-                            xmlns="http://www.w3.org/2000/svg" class="active">
-                            <path id="heading-svg-path" d="M21.6835 22.4956C82.2331 20.6507 312.987 19.4468 433 25.5443"
-                                stroke="#B8D3D9" stroke-width="40.8987" stroke-linecap="square"
-                                style="opacity: 0.5; stroke-dashoffset: 0px;"></path>
-                        </svg>
+                        
                         <div class="heading_content">
-                            <x-svg.title-accent class="active" />
                             <h1 class="fs-48 ff-title cl-green mb-0" style="z-index: 2">Danh sách khóa học</h1>
                             <div class="heading_icon">
                                 <img src="	https://ieltstest.theforumcenter.com/local/ieltstest/pix/heading-icon.png"

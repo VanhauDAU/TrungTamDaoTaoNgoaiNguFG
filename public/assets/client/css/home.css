@@ -56,12 +56,6 @@
 
 }
 
-/* 2. SVG Decoration */
-.title_animate {
-    position: relative;
-    display: inline-block;
-}
-
 .svg-bg {
     position: absolute;
     top: 0;
@@ -220,17 +214,6 @@
     position: relative;
     display: inline-block;
 }
-
-.title_animate svg {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 1;
-    width: 100%;
-    max-width: 500px;
-}
-
 .title_animate h3 {
     position: relative;
     z-index: 2;
@@ -538,29 +521,6 @@
     padding: 80px 0;
     background-color: #fff;
     overflow: hidden;
-}
-
-/* --- TIÊU ĐỀ ANIMATE --- */
-.title_animate {
-    position: relative;
-    display: inline-block;
-}
-
-.title_animate svg {
-    position: absolute;
-    bottom: -5px;
-    left: -10px;
-    z-index: 0;
-    width: 110%;
-    pointer-events: none;
-}
-
-.title_animate h3 {
-    position: relative;
-    z-index: 1;
-    font-weight: 800;
-    color: #10454F;
-    /* Màu đặc trưng của Five Genius */
 }
 
 .title_icon {

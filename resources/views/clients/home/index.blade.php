@@ -9,12 +9,6 @@
                 <div class="col-lg-6 order-2 order-lg-1 py-5">
                     <div class="banner_content">
                         <div class="title_animate mb-4">
-                            <svg width="431" height="119" viewBox="0 0 431 119" fill="none"
-                                xmlns="http://www.w3.org/2000/svg" class="svg-bg">
-                                <path
-                                    d="M26.4044 50.1739C143.289 11.2828 368.028 18.9611 426.999 30.7288C333.952 35.1662 60.1018 98.4423 60.1018 98.4423C60.1018 98.4423 220.66 52.5281 320.761 91.3785"
-                                    stroke="#B8D3D9" stroke-width="40.8987" stroke-linecap="square" />
-                            </svg>
                             <h1 class="ff-title cl-green fw-bold position-relative" style="">
                                 Trung tâm Anh Ngữ <br> FIVE GENIUS
                             </h1>
@@ -98,109 +92,8 @@
             <div class="container">
                 <div class="text-center">
                     <div class="title_animate px-5 mb-lg-5 mb-4">
-                        <x-svg.title-accent class="active" />
                         <h3 class="fs-48 ff-title cl-green mb-0 textSkewUp" style="perspective: 400px; opacity: 1;">
-                            <div class="word" style="display: inline-block;">
-                                <div class="char"
-                                    style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">
-                                    C</div>
-                                <div class="char"
-                                    style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">
-                                    h</div>
-                                <div class="char"
-                                    style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">
-                                    ư</div>
-                                <div class="char"
-                                    style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">
-                                    ơ</div>
-                                <div class="char"
-                                    style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">
-                                    n</div>
-                                <div class="char"
-                                    style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">
-                                    g</div>
-                            </div>
-                            <div class="word" style="display: inline-block;">
-                                <div class="char"
-                                    style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">
-                                    t</div>
-                                <div class="char"
-                                    style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">
-                                    r</div>
-                                <div class="char"
-                                    style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">
-                                    ì</div>
-                                <div class="char"
-                                    style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">
-                                    n</div>
-                                <div class="char"
-                                    style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">
-                                    h</div>
-                            </div>
-                            <div class="word" style="display: inline-block;">
-                                <div class="char"
-                                    style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">
-                                    đ</div>
-                                <div class="char"
-                                    style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">
-                                    à</div>
-                                <div class="char"
-                                    style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">
-                                    o</div>
-                            </div>
-                            <div class="word" style="display: inline-block;">
-                                <div class="char"
-                                    style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">
-                                    t</div>
-                                <div class="char"
-                                    style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">
-                                    ạ</div>
-                                <div class="char"
-                                    style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">
-                                    o</div>
-                            </div><br>
-                            <div class="word" style="display: inline-block;">
-                                <div class="char"
-                                    style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">
-                                    c</div>
-                                <div class="char"
-                                    style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">
-                                    h</div>
-                                <div class="char"
-                                    style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">
-                                    ấ</div>
-                                <div class="char"
-                                    style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">
-                                    t</div>
-                            </div>
-                            <div class="word" style="display: inline-block;">
-                                <div class="char"
-                                    style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">
-                                    l</div>
-                                <div class="char"
-                                    style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">
-                                    ư</div>
-                                <div class="char"
-                                    style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">
-                                    ợ</div>
-                                <div class="char"
-                                    style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">
-                                    n</div>
-                                <div class="char"
-                                    style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">
-                                    g</div>
-                            </div>
-                            <div class="word" style="display: inline-block;">
-                                <div class="char"
-                                    style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">
-                                    c</div>
-                                <div class="char"
-                                    style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">
-                                    a</div>
-                                <div class="char"
-                                    style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">
-                                    o</div>
-                            </div>
+                            CHƯƠNG TRÌNH ĐÀO TẠO CHẤT LƯỢNG CAO
                         </h3>
                         <div class="title_icon no-1">
                             <img src="{{ asset('assets/images/star-title.png') }}" class="img-fluid" alt="">
@@ -351,58 +244,9 @@
             <div class="row justify-content-between align-items-end my-5">
                 <div class="col-auto">
                     <div class="title_animate ps-lg-5 pe-5">
-                        <svg width="348" height="75" viewBox="0 0 348 75" fill="none"
-                            xmlns="http://www.w3.org/2000/svg" class="active" style="position: absolute; left: 150px;">
-                            <g opacity="0.5">
-                                <path d="M27.6708 48.0817C113.841 11.4972 279.525 18.7201 323 29.7898" stroke="#B8D3D9"
-                                    stroke-width="40.8987" stroke-linecap="square" class="title-style-4"></path>
-                            </g>
-                        </svg>
+                        
                         <h3 class="fs-48 ff-title cl-green mb-0 textSkewUp" style="perspective: 400px; opacity: 1;">
-                            <div class="word" style="display: inline-block;">
-                                <div class="char"
-                                    style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">
-                                    T</div>
-                                <div class="char"
-                                    style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">
-                                    i</div>
-                                <div class="char"
-                                    style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">
-                                    n</div>
-                            </div>
-                            <div class="word" style="display: inline-block;">
-                                <div class="char"
-                                    style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">
-                                    t</div>
-                                <div class="char"
-                                    style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">
-                                    ứ</div>
-                                <div class="char"
-                                    style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">
-                                    c</div>
-                            </div>
-                            <div class="word" style="display: inline-block;">
-                                <div class="char"
-                                    style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">
-                                    &amp;</div>
-                            </div>
-                            <div class="word" style="display: inline-block;">
-                                <div class="char"
-                                    style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">
-                                    B</div>
-                                <div class="char"
-                                    style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">
-                                    l</div>
-                                <div class="char"
-                                    style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">
-                                    o</div>
-                                <div class="char"
-                                    style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">
-                                    g</div>
-                                <div class="char"
-                                    style="display: inline-block; translate: none; rotate: none; scale: none; opacity: 1; transform: translate(0px, 0px);">
-                                    s</div>
-                            </div>
+                            TIN TỨC & BLOGS
                         </h3>
                         <div class="title_icon">
                             <img src="https://theforumcenter.com/wp-content/themes/the-forum/assets/images/news-title.png"
@@ -445,15 +289,6 @@
                                         </div>
                                     </div>
                                     <div class="title_wrapper mb-3">
-                                        <svg width="305" height="52" viewBox="0 0 305 52" fill="none"
-                                            xmlns="http://www.w3.org/2000/svg">
-                                            <g opacity="0.5">
-                                                <path
-                                                    d="M10.595 21.7566C95.912 4.64015 259.955 8.01944 303 13.1985C235.083 15.1515 35.1916 43 35.1916 43C35.1916 43 152.387 22.7926 225.454 39.8912"
-                                                    stroke="#27C4B5" stroke-width="18" stroke-linecap="square"
-                                                    class="title_hover"></path>
-                                            </g>
-                                        </svg>
                                         <h4 class="fs-24 ff-title post_title mb-0"><a
                                                 href="{{ route('home.blog.show', $baiViet->slug) }}">{{ $baiViet->tieuDe }}</a>
                                         </h4>

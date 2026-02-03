@@ -43,15 +43,6 @@
     display: flex;
     gap: 12px;
 }
-
-.heading_content .word {
-    display: flex;
-}
-
-.heading_content .char {
-    display: inline-block;
-}
-
 .heading_icon {
     width: 40px;
     height: 40px;

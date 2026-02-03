@@ -11,7 +11,7 @@
                 <div class="col-lg-6">
                     <div class="title_page">
                         <div class="title_animate mb-4 mb-lg-0">
-                            <x-svg.title-accent class="active" />
+
                             <h1 class="fs-48 ff-title cl-green mb-0">Chia sẻ kiến thức, tin tức, sự kiện</h1>
                             <div class="title_icon">
                                 <img src="https://theforumcenter.com/wp-content/themes/the-forum/assets/images/plane.svg"
@@ -90,15 +90,6 @@
                                         </div>
                                     </div>
                                     <div class="title_wrapper mb-3">
-                                        <svg width="305" height="52" viewBox="0 0 305 52" fill="none"
-                                            xmlns="http://www.w3.org/2000/svg">
-                                            <g opacity="0.5">
-                                                <path
-                                                    d="M10.595 21.7566C95.912 4.64015 259.955 8.01944 303 13.1985C235.083 15.1515 35.1916 43 35.1916 43C35.1916 43 152.387 22.7926 225.454 39.8912"
-                                                    stroke="#27C4B5" stroke-width="18" stroke-linecap="square"
-                                                    class="title_hover"></path>
-                                            </g>
-                                        </svg>
                                         <h4 class="fs-24 ff-title post_title mb-0"><a
                                                 href="{{ route('home.blog.show', ['slug' => $blog->slug]) }}">{{ $blog->tieuDe }}</a>
                                         </h4>
