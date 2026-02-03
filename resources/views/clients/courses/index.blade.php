@@ -7,7 +7,7 @@
             <div role="main" id="yui_3_18_1_1_1769760065435_13"><span id="maincontent"></span>
                 <div class="ielts-test-header" id="yui_3_18_1_1_1769760065435_12">
                     <div class="heading_animate">
-                        
+
                         <div class="heading_content">
                             <h1 class="fs-48 ff-title cl-green mb-0" style="z-index: 2">Danh sách khóa học</h1>
                             <div class="heading_icon">
@@ -118,4 +118,5 @@
                 </div>
             </div>
         </div>
-    @endsection
+    </section>
+@endsection

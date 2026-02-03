@@ -1,24 +1,8 @@
-:root {
-    /* Brand Colors */
-    --primary-navy: #10454F;
-    --accent-red: #E31E24;
-    --accent-teal: #27C4B5;
-    /* Backgrounds */
-    --bg-pink: #FFF0F1;
-    --bg-cream: #F9F5EE;
-    --bg-cyan: #E8F3F5;
-    /* Common Properties */
-    --radius-xl: 30px;
-    --radius-lg: 24px;
-    --radius-md: 20px;
-    --shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-}
-
 /* --- TỔNG QUAN & RESET --- */
 .contact_page {
-    background: #fff;
+    background: var(--background-color);
     overflow: hidden;
+    min-height: 100vh;
 }
 
 .contact_btn,
@@ -37,6 +21,7 @@
     position: relative;
     display: inline-block;
 }
+
 .title_animate .title-style-1 {
     stroke-dasharray: 2000;
     stroke-dashoffset: 2000;

@@ -8,6 +8,13 @@
 </head>
 
 <body>
+    {{-- Loading Screen --}}
+    <div id="page-loader" class="page-loader">
+        <div class="loader-content">
+            <div class="loader-spinner"></div>
+            <p class="loader-text">Đang tải...</p>
+        </div>
+    </div>
     {{-- Header --}}
     @include('components.client.header')
     {{-- Nội dung --}}

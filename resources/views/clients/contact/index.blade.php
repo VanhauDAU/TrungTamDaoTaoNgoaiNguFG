@@ -2,7 +2,7 @@
 
 @section('title', 'Liên hệ - Trung tâm Anh ngữ Five Genius')
 @section('stylesheet')
-    <link rel="stylesheet" href="{{ asset('assets/css/client/contact.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/client/css/contact.css') }}">
 @endsection
 @section('content')
     <div class="contact_page py-80">

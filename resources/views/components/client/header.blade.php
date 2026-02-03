@@ -20,15 +20,15 @@
                 <ul class="navbar-nav mx-auto mb-2 mb-lg-0 gap-lg-4">
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('home.index') ? 'active' : '' }}"
-                            href="{{route('home.index')}}">Trang chủ</a>
+                            href="{{ route('home.index') }}">Trang chủ</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('home.about.index') ? 'active' : '' }}"
-                            href="{{route('home.about.index') }}">Về chúng tôi</a>
+                            href="{{ route('home.about.index') }}">Về chúng tôi</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {{request()->routeIs('home.courses.index') ? 'active' : ''}}" 
-                            href="{{route('home.courses.index')}}">Khóa học</a>
+                        <a class="nav-link {{ request()->routeIs('home.courses.index') ? 'active' : '' }}"
+                            href="{{ route('home.courses.index') }}">Khóa học</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('home.blog.index') ? 'active' : '' }}"
@@ -36,7 +36,7 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('home.lienhe.index') ? 'active' : '' }}"
-                            href="{{route('home.lienhe.index')}}">Liên hệ</a>
+                            href="{{ route('home.lienhe.index') }}">Liên hệ</a>
                     </li>
                 </ul>
 
@@ -86,7 +86,8 @@
                                 </a>
                             </div>
                             <div class="p-2 border-top text-center bg-light">
-                                <a href="#" class="text-primary small fw-bold text-decoration-none">Xem tất cả thông
+                                <a href="#" class="text-primary small fw-bold text-decoration-none">Xem tất cả
+                                    thông
                                     báo</a>
                             </div>
                         </div>
@@ -96,13 +97,20 @@
                     @auth
                         <div class="dropdown">
                             <a class="user-pill d-flex align-items-center gap-2" href="#" data-bs-toggle="dropdown">
-                                <img src="{{ Auth::user()->avatar ?? asset('images/user-default.png') }}"
-                                    class="rounded-circle shadow-sm" width="38" height="38">
-                                <span class="fw-semibold d-none d-md-block">{{ Auth::user()->name }}</span>
+                                @if (Auth::user()->hoSoNguoiDung && Auth::user()->hoSoNguoiDung->anhDaiDien)
+                                    <img src="{{ asset('storage/avatars/' . Auth::user()->hoSoNguoiDung->anhDaiDien) }}"
+                                        class="rounded-circle shadow-sm" width="38" height="38"
+                                        style="object-fit: cover;">
+                                @else
+                                    <img src="{{ asset('assets/images/user-default.png') }}"
+                                        class="rounded-circle shadow-sm" width="38" height="38">
+                                @endif
+                                <span
+                                    class="fw-semibold d-none d-md-block">{{ Auth::user()->hoSoNguoiDung->hoTen ?? Auth::user()->name }}</span>
                                 <i class="fas fa-chevron-down small opacity-50 ms-1"></i>
                             </a>
-                            <ul class="dropdown-menu dropdown-menu-end border-0 shadow-lg mt-3 rounded-4">
-                                <li><a class="dropdown-item py-2" href="#"><i
+                            <ul class="dropdown-menu dropdown-menu-end dropdown-menu-user border-0 shadow-lg rounded-4">
+                                <li><a class="dropdown-item py-2" href="{{ route('home.student.index') }}"><i
                                             class="far fa-user-circle me-2 text-primary"></i> Hồ sơ</a></li>
                                 <li><a class="dropdown-item py-2" href="#"><i
                                             class="fas fa-graduation-cap me-2 text-primary"></i> Khóa học của tôi</a></li>

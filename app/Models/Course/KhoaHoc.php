@@ -10,6 +10,19 @@ class KhoaHoc extends Model
     //
     protected $table = 'khoahoc'; 
     protected $primaryKey = 'khoaHocId'; 
+    protected $fillable = [
+        'khoaHocId',
+        'loaiKhoaHocId',
+        'tenKhoaHoc',
+        'slug',
+        'anhKhoaHoc',
+        'moTa',
+        'doiTuong',
+        'yeuCauDauVao',
+        'ketQuaDatDuoc',
+        'thoiLuong',
+        'trangThai'
+    ];
 
     public function loaiKhoaHoc(){
         return $this->belongsTo(LoaiKhoaHoc::class, 'loaiKhoaHocId', 'loaiKhoaHocId');
