@@ -230,7 +230,16 @@
                                 <span
                                     class="text-danger">{{ number_format($class->hocPhi->donGia ?? 0, 0, ',', '.') }}đ</span>
                             </div>
-
+                            {{-- errors --}}
+                            @if ($errors->any())
+                                <div class="alert alert-danger">
+                                    <ul>
+                                        @foreach ($errors->all() as $error)
+                                            <li>{{ $error }}</li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            @endif
                             <button type="submit" class="btn btn-confirm mt-4">
                                 XÁC NHẬN & ĐĂNG KÝ <i class="fas fa-arrow-right ms-2"></i>
                             </button>
@@ -260,6 +269,28 @@
             // Init active state
             if (option.querySelector('input[type="radio"]').checked) {
                 option.classList.add('active');
+            }
+        });
+
+        // Form submission handling
+        const checkoutForm = document.getElementById('checkoutForm');
+        const submitBtn = checkoutForm.querySelector('button[type="submit"]');
+        const originalBtnText = submitBtn.innerHTML;
+
+        checkoutForm.addEventListener('submit', function(e) {
+            // Disable button and show loading
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Đang xử lý...';
+
+            // Allow form to submit naturally
+            // The button will be re-enabled if there's an error (page reload with errors)
+        });
+
+        // Re-enable button if there are validation errors (after page reload)
+        window.addEventListener('load', function() {
+            if (document.querySelector('.alert-danger')) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
             }
         });
     </script>

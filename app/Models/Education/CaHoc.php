@@ -20,4 +20,8 @@ class CaHoc extends Model
     {
         return $this->hasMany(BuoiHoc::class, 'caHocId', 'caHocId');
     }
+    public function lopHocs()
+    {
+        return $this->hasMany(LopHoc::class, 'caHocId', 'caHocId');
+    }
 }

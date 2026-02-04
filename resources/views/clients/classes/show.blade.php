@@ -121,6 +121,70 @@
                         </div>
                     </div>
 
+                    {{-- LỊCH HỌC TRONG TUẦN --}}
+                    @if ($class->lichHoc)
+                        <div class="class-detail-card">
+                            <h4 class="mb-4 fw-bold">
+                                <i class="fas fa-calendar-week me-2 text-primary"></i>
+                                Lịch học trong tuần
+                            </h4>
+                            <div class="week-schedule-container">
+                                @php
+                                    $weekDays = [
+                                        '2' => ['label' => 'Thứ 2', 'short' => 'T2'],
+                                        '3' => ['label' => 'Thứ 3', 'short' => 'T3'],
+                                        '4' => ['label' => 'Thứ 4', 'short' => 'T4'],
+                                        '5' => ['label' => 'Thứ 5', 'short' => 'T5'],
+                                        '6' => ['label' => 'Thứ 6', 'short' => 'T6'],
+                                        '7' => ['label' => 'Thứ 7', 'short' => 'T7'],
+                                        'CN' => ['label' => 'Chủ nhật', 'short' => 'CN'],
+                                    ];
+                                    // Parse schedule - support both comma-separated and JSON format
+                                    $scheduleData = $class->lichHoc;
+                                    if (str_contains($scheduleData, '[')) {
+                                        $schedule = json_decode($scheduleData, true) ?? [];
+                                    } else {
+                                        $schedule = array_filter(array_map('trim', explode(',', $scheduleData)));
+                                    }
+                                @endphp
+                                <div class="week-schedule d-flex justify-content-between gap-2">
+                                    @foreach ($weekDays as $key => $day)
+                                        <div class="day-box {{ in_array($key, $schedule) ? 'active' : '' }}">
+                                            <div class="day-label">{{ $day['short'] }}</div>
+                                            @if (in_array($key, $schedule))
+                                                <i class="fas fa-check-circle day-check"></i>
+                                                @if ($class->caHoc)
+                                                    <div class="day-time">
+                                                        {{ \Carbon\Carbon::parse($class->caHoc->gioBatDau)->format('H:i') }}
+                                                        -
+                                                        {{ \Carbon\Carbon::parse($class->caHoc->gioKetThuc)->format('H:i') }}
+                                                    </div>
+                                                @endif
+                                            @endif
+                                        </div>
+                                    @endforeach
+                                </div>
+
+                                <div class="schedule-note mt-3 text-center">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    <small class="text-muted">
+                                        Lớp học diễn ra vào các ngày:
+                                        <strong>
+                                            @foreach ($schedule as $index => $dayKey)
+                                                {{ $weekDays[$dayKey]['label'] ?? $dayKey }}{{ $index < count($schedule) - 1 ? ', ' : '' }}
+                                            @endforeach
+                                        </strong>
+                                        @if ($class->caHoc)
+                                            | Giờ học:
+                                            <strong>{{ \Carbon\Carbon::parse($class->caHoc->gioBatDau)->format('H:i') }} -
+                                                {{ \Carbon\Carbon::parse($class->caHoc->gioKetThuc)->format('H:i') }}</strong>
+                                        @endif
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
                     {{-- GIẢNG VIÊN --}}
                     @if ($class->taiKhoan && $class->taiKhoan->hoSoNguoiDung)
                         <div class="class-detail-card">

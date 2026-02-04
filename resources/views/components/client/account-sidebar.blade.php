@@ -23,6 +23,12 @@
             </li>
             <li class="menu-item">
                 <a href="#" class="menu-link">
+                    <i class="fas fa-file-invoice"></i>
+                    <span>Hóa đơn thanh toán</span>
+                </a>
+            </li>
+            <li class="menu-item">
+                <a href="#" class="menu-link">
                     <i class="fas fa-graduation-cap"></i>
                     <span>Khóa học của tôi</span>
                 </a>

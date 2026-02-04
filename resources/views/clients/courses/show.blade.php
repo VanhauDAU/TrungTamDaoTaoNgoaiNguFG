@@ -119,6 +119,18 @@
                                                                 <i class="fas fa-book-reader"></i>
                                                                 <span>{{ $lopHoc->soBuoiDuKien ?? 'N/A' }} buổi</span>
                                                             </div>
+                                                            {{-- thứ học (lichhoc) --}}
+                                                            <div class="info-item-inline">
+                                                                <i class="fas fa-calendar-alt"></i>
+                                                                @php
+                                                                    $lichHoc = json_decode($lopHoc->lichHoc, true);
+                                                                    $thoiGianHoc = '';
+                                                                    if ($lichHoc) {
+                                                                        $thoiGianHoc = implode(', ', $lichHoc);
+                                                                    }
+                                                                @endphp
+                                                                <span>{{ $thoiGianHoc }}</span>
+                                                            </div>
                                                         </div>
                                                     </div>
 
