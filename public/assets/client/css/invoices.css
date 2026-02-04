@@ -1,0 +1,442 @@
+/* =================================================================
+   INVOICE PAGES STYLING
+   ================================================================= */
+
+/* Invoice Cards Grid */
+.invoices-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 24px;
+    margin-top: 24px;
+}
+
+.invoice-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.invoice-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* Invoice Header */
+.invoice-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 1px solid #dee2e6;
+}
+
+.invoice-id {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    color: #10454F;
+    font-size: 16px;
+}
+
+.invoice-id i {
+    color: #27C4B5;
+}
+
+/* Status Badges */
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-unpaid {
+    background: #fee;
+    color: #dc3545;
+}
+
+.status-partial {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-paid {
+    background: #d4edda;
+    color: #155724;
+}
+
+/* Invoice Body */
+.invoice-body {
+    padding: 20px;
+}
+
+.class-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: #10454F;
+    margin-bottom: 4px;
+}
+
+.course-name {
+    font-size: 14px;
+    margin-bottom: 16px;
+}
+
+.invoice-details {
+    margin: 16px 0;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px dashed #e9ecef;
+}
+
+.detail-row:last-child {
+    border-bottom: none;
+}
+
+.detail-row .label {
+    color: #6c757d;
+    font-size: 14px;
+}
+
+.detail-row .label i {
+    width: 18px;
+    color: #27C4B5;
+}
+
+.detail-row .value {
+    font-weight: 600;
+    color: #2D3436;
+}
+
+/* Invoice Amount */
+.invoice-amount {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 2px solid #e9ecef;
+}
+
+.amount-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    font-size: 14px;
+}
+
+.debt-row {
+    margin-top: 8px;
+    padding-top: 12px;
+    border-top: 1px dashed #dc3545;
+    font-size: 16px;
+}
+
+/* Invoice Footer */
+.invoice-footer {
+    padding: 16px 20px;
+    background: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+}
+
+.btn-detail,
+.btn-pay {
+    background: linear-gradient(135deg, #10454F 0%, #27C4B5 100%);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 8px;
+    text-decoration: none;
+    display: inline-block;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    width: 100%;
+    text-align: center;
+}
+
+.btn-pay {
+    background: var(--primary-color);
+}
+
+.btn-detail:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(39, 196, 181, 0.3);
+    color: #fff;
+}
+
+.btn-pay:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(39, 196, 181, 0.3);
+    background-color: var(--primary-color);
+    color: white;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    margin-top: 24px;
+}
+
+.empty-state i {
+    color: #dee2e6;
+    margin-bottom: 20px;
+}
+
+.empty-state h4 {
+    color: #6c757d;
+    margin-bottom: 12px;
+}
+
+.empty-state p {
+    color: #adb5bd;
+    margin-bottom: 24px;
+}
+
+/* =================================================================
+   INVOICE DETAIL PAGE
+   ================================================================= */
+
+.invoice-detail-wrapper {
+    margin-top: 24px;
+}
+
+/* Status Banner */
+.status-banner {
+    padding: 16px 24px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+}
+
+.status-banner.status-unpaid {
+    background: linear-gradient(135deg, #fee 0%, #fdd 100%);
+    border-left: 4px solid #dc3545;
+}
+
+.status-banner.status-partial {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffe9a6 100%);
+    border-left: 4px solid #ffc107;
+}
+
+.status-banner.status-paid {
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+    border-left: 4px solid #28a745;
+}
+
+/* Detail Sections */
+.detail-section {
+    background: #fff;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.section-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #10454F;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.section-title i {
+    color: #27C4B5;
+}
+
+/* Info Grid */
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.info-item.full-width {
+    grid-column: 1 / -1;
+}
+
+.info-item .label {
+    color: #6c757d;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.info-item .value {
+    color: #2D3436;
+    font-size: 15px;
+}
+
+/* Payment Summary */
+.payment-summary {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.summary-table {
+    background: #fff;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px dashed #e9ecef;
+}
+
+.summary-row:last-child {
+    border-bottom: none;
+}
+
+.summary-row .label {
+    font-size: 15px;
+    color: #6c757d;
+}
+
+.summary-row .value {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.summary-row.total-row {
+    margin-top: 12px;
+    padding-top: 16px;
+    border-top: 2px solid #10454F;
+    font-size: 18px;
+}
+
+/* Transfer Info */
+.transfer-info {
+    background: linear-gradient(135deg, #e7f9f7 0%, #d4f1ec 100%);
+    border: 2px solid #27C4B5;
+}
+
+.transfer-box {
+    background: #fff;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.bank-info {
+    margin-top: 16px;
+}
+
+.bank-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 14px;
+    border-bottom: 1px solid #e9ecef;
+    transition: background 0.2s ease;
+}
+
+.bank-row:last-child {
+    border-bottom: none;
+}
+
+.bank-row:hover {
+    background: #f8f9fa;
+}
+
+.bank-row i {
+    color: #27C4B5;
+    font-size: 20px;
+    width: 24px;
+    margin-top: 2px;
+}
+
+.bank-row>div {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.bank-label {
+    font-size: 13px;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.bank-value {
+    font-size: 16px;
+    color: #2D3436;
+    font-weight: 600;
+}
+
+.bank-row.highlight {
+    background: #fff3cd;
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.btn-copy {
+    background: #27C4B5;
+    color: #fff;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    margin-top: 6px;
+    transition: all 0.3s ease;
+}
+
+.btn-copy:hover {
+    background: #10454F;
+    transform: translateY(-2px);
+}
+
+/* =================================================================
+   RESPONSIVE
+   ================================================================= */
+
+@media (max-width: 991.98px) {
+    .invoices-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .invoice-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .status-badge {
+        font-size: 11px;
+        padding: 4px 10px;
+    }
+
+    .class-name {
+        font-size: 16px;
+    }
+
+    .bank-value {
+        font-size: 14px;
+        word-break: break-all;
+    }
+}

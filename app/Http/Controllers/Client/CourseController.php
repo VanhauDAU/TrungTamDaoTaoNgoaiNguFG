@@ -118,7 +118,7 @@ class CourseController extends Controller
 
         // Validate Payment Method
         $request->validate([
-            'payment_method' => 'required|in:cash,transfer,vnpay',
+            'payment_method' => 'required|in:1,2,3',
         ], [
             'payment_method.required' => 'Vui lòng chọn hình thức thanh toán',
         ]);
@@ -140,7 +140,9 @@ class CourseController extends Controller
                 'daTra' => 0,
                 'taiKhoanId' => $user->taiKhoanId,
                 'dangKyLopHocId' => $registration->dangKyLopHocId,
-                'phuongThucThanhToan' => $request->payment_method,
+                // đổi lại phuongThucThanhToan trên db là kiểu int
+                // 1: tiền mặt, 2: chuyển khoản, 3: vnpay
+                'phuongThucThanhToan' => $request->payment_method, 
                 'coSoId' => $class->coSoId,
                 'trangThai' => 0, // 0: Chưa thanh toán
                 'ghiChu' => 'Đăng ký lớp ' . $class->tenLopHoc

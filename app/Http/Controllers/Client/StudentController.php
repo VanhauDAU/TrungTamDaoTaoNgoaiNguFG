@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Models\Finance\HoaDon;
 
 class StudentController extends Controller
 {
@@ -40,5 +41,29 @@ class StudentController extends Controller
         ]);
 
         return back()->with('success', 'Đổi mật khẩu thành công!');
+    }
+
+    public function invoices()
+    {
+        $invoices = HoaDon::where('taiKhoanId', auth()->user()->taiKhoanId)
+            ->with(['dangKyLopHoc.lopHoc.khoaHoc', 'coSo'])
+            ->orderBy('ngayLap', 'desc')
+            ->paginate(10);
+        
+        return view('clients.student.invoices.index', compact('invoices'));
+    }
+
+    public function invoiceDetail($id)
+    {
+        $invoice = HoaDon::where('hoaDonId', $id)
+            ->where('taiKhoanId', auth()->user()->taiKhoanId)
+            ->with([
+                'dangKyLopHoc.lopHoc.khoaHoc',
+                'coSo.tinhThanh',
+                'phieuThus'
+            ])
+            ->firstOrFail();
+        
+        return view('clients.student.invoices.show', compact('invoice'));
     }
 }

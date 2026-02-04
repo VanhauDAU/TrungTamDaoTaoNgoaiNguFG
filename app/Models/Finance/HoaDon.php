@@ -3,6 +3,9 @@
 namespace App\Models\Finance;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\User;
+use App\Models\Education\DangKyLopHoc;
+use App\Models\Facility\CoSoDaoTao;
 
     class HoaDon extends Model
     {
@@ -34,7 +37,7 @@ use Illuminate\Database\Eloquent\Model;
 
         public function coSo()
         {
-            return $this->belongsTo(CoSo::class, 'coSoId', 'coSoId');
+            return $this->belongsTo(CoSoDaoTao::class, 'coSoId', 'coSoId');
         }
 
         public function phieuThus()
