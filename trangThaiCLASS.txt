@@ -1,0 +1,58 @@
+Danh Sách Các Trạng Thái (trangThai) Trong Hệ Thống
+Tài liệu này liệt kê tất cả các trường trangThai và phuongThucThanhToan trong các bảng của hệ thống.
+
+📌 Các Bảng Có Trường trangThai
+1. LopHoc (Lớp Học)
+0: Sắp mở
+1: Đang mở (đang nhận đăng ký)
+2: Đã đóng
+3: Đã hủy
+4: Đang học
+File: 
+LopHoc.php
+
+2. DangKyLopHoc (Đăng Ký Lớp Học)
+0: Đã hủy
+1: Chờ thanh toán
+2: Đã xác nhận (đã thanh toán)
+File: 
+DangKyLopHoc.php
+
+3. HoaDon (Hóa Đơn)
+0: Chưa thanh toán
+1: Đã thanh toán một phần
+2: Đã thanh toán đủ
+File: 
+HoaDon.php
+
+4. KhoaHoc (Khóa Học)
+0: Ngừng hoạt động
+1: Đang hoạt động
+File: 
+KhoaHoc.php
+
+5. TaiKhoan (Tài Khoản)
+0: Chưa kích hoạt
+1: Đã kích hoạt
+2: Bị khóa
+File: 
+TaiKhoan.php
+
+6. BuoiHoc (Buổi Học)
+0: Chưa diễn ra
+1: Đã hoàn thành
+2: Đã hủy
+File: 
+BuoiHoc.php
+
+7. PhongHoc (Phòng Học)
+0: Không khả dụng
+1: Khả dụng
+File: 
+PhongHoc.php
+
+8. CaHoc (Ca Học)
+0: Không hoạt động
+1: Đang hoạt động
+File: 
+CaHoc.php

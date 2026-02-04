@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use App\Models\Course\LoaiKhoaHoc;
 use App\Models\Course\KhoaHoc;
 use App\Models\Education\LopHoc;
@@ -108,7 +109,6 @@ class CourseController extends Controller
 
         $user = auth()->user();
         $class = LopHoc::where('slug', $slugLopHoc)->firstOrFail();
-
         // Re-validate
         $validation = $this->validateClassRegistration($user, $class);
         if ($validation !== true) {
@@ -124,30 +124,33 @@ class CourseController extends Controller
         ]);
 
         try {
-            \Illuminate\Support\Facades\DB::beginTransaction();
+            DB::beginTransaction();
 
             // 1. Create Registration
             $registration = DangKyLopHoc::create([
-                'taiKhoanId' => $user->id,
+                'taiKhoanId' => $user->taiKhoanId,
                 'lopHocId' => $class->lopHocId,
                 'ngayDangKy' => now(),
                 'trangThai' => 1 // 1: Chờ thanh toán
             ]);
-
             // 2. Create Invoice
-            $hoadon = HoaDon::create([
+            $invoice = HoaDon::create([
                 'ngayLap' => now(),
                 'tongTien' => $class->hocPhi->donGia ?? 0,
                 'daTra' => 0,
-                'taiKhoanId' => $user->id, // Người tạo hóa đơn (là học viên luôn hay nhân viên? Thường là system/user)
-                'dangKyLopHocId' => $registration->dangKyLopHocId, // Cần lấy ID vừa tạo
+                'taiKhoanId' => $user->taiKhoanId,
+                'dangKyLopHocId' => $registration->dangKyLopHocId,
                 'phuongThucThanhToan' => $request->payment_method,
                 'coSoId' => $class->coSoId,
-                'trangThai' => 0, // Chưa thanh toán
+                'trangThai' => 0, // 0: Chưa thanh toán
                 'ghiChu' => 'Đăng ký lớp ' . $class->tenLopHoc
             ]);
-
-            \Illuminate\Support\Facades\DB::commit();
+            // kiểm tra lưu hóa đơn thành công không
+            if (!$invoice) {
+                DB::rollBack();
+                return back()->with('error', 'Có lỗi xảy ra: Không thể tạo hóa đơn');
+            }
+            DB::commit();
 
             // Todo: Handle Online Payment redirect here
 
@@ -155,7 +158,7 @@ class CourseController extends Controller
                 ->with('success', 'Đăng ký thành công! Vui lòng hoàn tất thanh toán để giữ chỗ.');
 
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\DB::rollBack();
+            DB::rollBack();
             return back()->with('error', 'Có lỗi xảy ra: ' . $e->getMessage());
         }
     }
@@ -169,7 +172,7 @@ class CourseController extends Controller
         }
 
         // Check Duplicate
-        $isRegistered = DangKyLopHoc::where('taiKhoanId', $user->id) 
+        $isRegistered = DangKyLopHoc::where('taiKhoanId', $user->taiKhoanId) 
             ->where('lopHocId', $class->lopHocId)
             ->whereIn('trangThai', [1, 2]) 
             ->exists();
@@ -179,7 +182,7 @@ class CourseController extends Controller
         }
 
         // Check Schedule Conflict
-        $userActiveRegistrations = DangKyLopHoc::where('taiKhoanId', $user->id)
+        $userActiveRegistrations = DangKyLopHoc::where('taiKhoanId', $user->taiKhoanId)
             ->whereIn('trangThai', [1, 2])
             ->with('lopHoc.buoiHocs.caHoc')
             ->get();
