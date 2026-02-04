@@ -22,7 +22,8 @@
                 </a>
             </li>
             <li class="menu-item">
-                <a href="#" class="menu-link">
+                <a href="{{ route('home.student.invoices') }}"
+                    class="menu-link {{ request()->routeIs('home.student.invoices*') ? 'active' : '' }}">
                     <i class="fas fa-file-invoice"></i>
                     <span>Hóa đơn thanh toán</span>
                 </a>

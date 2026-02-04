@@ -168,7 +168,7 @@
                             @endif
 
                             <label class="payment-option">
-                                <input type="radio" name="payment_method" value="transfer" checked>
+                                <input type="radio" name="payment_method" value="2" checked>
                                 <span class="payment-icon"><i class="fas fa-university"></i></span>
                                 <div class="payment-label">
                                     <div>Chuyển khoản ngân hàng</div>
@@ -177,7 +177,7 @@
                             </label>
 
                             <label class="payment-option">
-                                <input type="radio" name="payment_method" value="cash">
+                                <input type="radio" name="payment_method" value="1">
                                 <span class="payment-icon"><i class="fas fa-money-bill-wave"></i></span>
                                 <div class="payment-label">
                                     <div>Thanh toán tiền mặt</div>
@@ -186,7 +186,7 @@
                             </label>
 
                             <label class="payment-option text-muted" style="opacity: 0.7; cursor: not-allowed;">
-                                <input type="radio" name="payment_method" value="vnpay" disabled>
+                                <input type="radio" name="payment_method" value="3" disabled>
                                 <span class="payment-icon"><i class="fas fa-qrcode"></i></span>
                                 <div class="payment-label">
                                     <div>VNPAY - QR (Đang bảo trì)</div>
