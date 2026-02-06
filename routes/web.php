@@ -13,6 +13,7 @@ Route::prefix('/')->name('home.')->group(function () {
     Route::get('/', [HomeController::class, 'index'])->name('index');
     Route::prefix('lien-he')->name('contact.')->group(function () {
         Route::get('/', [ContactController::class, 'index'])->name('index');
+        Route::post('/tu-van', [ContactController::class, 'storeConsultation'])->name('consultation.store');
     });
     Route::prefix('blog')->name('blog.')->group(function () {
         Route::get('/', [BlogController::class, 'index'])->name('index');
@@ -26,9 +27,9 @@ Route::prefix('/')->name('home.')->group(function () {
         Route::get('/{slug}', [CourseController::class, 'show'])->name('show');
     });
     Route::prefix('lop-hoc')->name('classes.')->group(function () {
-        Route::get('/{slug}/lop-hoc/{slugLopHoc}', [CourseController::class, 'showClass'])->name('show');
-        Route::get('/{slug}/lop-hoc/{slugLopHoc}/dang-ky', [CourseController::class, 'confirmRegistration'])->name('confirm');
-        Route::post('/{slug}/lop-hoc/{slugLopHoc}/xac-nhan-dang-ky', [CourseController::class, 'processRegistration'])->name('process');
+        Route::get('/{slug}/{slugLopHoc}', [CourseController::class, 'showClass'])->name('show');
+        Route::get('/{slug}/{slugLopHoc}/dang-ky', [CourseController::class, 'confirmRegistration'])->name('confirm');
+        Route::post('/{slug}/{slugLopHoc}/xac-nhan-dang-ky', [CourseController::class, 'processRegistration'])->name('process');
     });
     Route::prefix('hoc-vien')->name('student.')->middleware('auth')->group(function () {
         Route::get('/', [StudentController::class, 'index'])->name('index');

@@ -3,10 +3,11 @@
     <div class="container">
         <div class="form_register_wrapper mx-auto">
             {{-- Form Laravel chuẩn --}}
-            <form action="{{-- route('tu-van.store') --}}" method="POST" class="register-sentence-form">
+            <form action="{{ route('home.contact.consultation.store') }}" method="POST" class="register-sentence-form">
                 @csrf
                 <img src="{{ asset('assets/images/form-corner.png') }}" class="form-decor position-absolute"
                     alt="">
+
                 <div class="title_animate mb-4 text-center position-relative animate-trigger">
                     {{-- SVG đã thêm class "draw-path" --}}
                     <svg width="574" height="97" viewBox="0 0 574 97" fill="none"
@@ -27,17 +28,18 @@
                 <div class="sentence-body">
                     <div class="line-group mb-3">
                         <span class="text">Xin chào! Mình là</span>
-                        <input type="text" name="fullname" class="input-inline" placeholder="Họ và tên" required>
+                        <input type="text" name="fullname" class="input-inline" placeholder="Họ và tên"
+                            value="{{ old('fullname') }}" required>
                         <span class="text">,</br></span>
                     </div>
 
                     <div class="line-group mb-3">
                         <span class="text">quan tâm đến khoá học</span>
                         {{-- Select dùng class tùy chỉnh "select-inline" --}}
-                        <select name="course" class="select-inline course-select" required>
+                        <select name="course" class="select-inline course-select">
                             <option value="" disabled selected>Chọn khóa học</option>
                             @foreach ($danhSachKhoaHoc as $khoaHoc)
-                                <option value="{{ $khoaHoc->slug }}">{{ $khoaHoc->tenKhoaHoc }}</option>
+                                <option value="{{ $khoaHoc->tenKhoaHoc }}">{{ $khoaHoc->tenKhoaHoc }}</option>
                             @endforeach
 
                         </select>
@@ -46,10 +48,12 @@
                     <div class="line-group mb-3">
                         <span class="text">tại cơ sở</span>
                         {{-- Select dùng class tùy chỉnh "select-inline" --}}
-                        <select name="course" class="select-inline course-select" required>
+                        <select name="facility" class="select-inline course-select">
                             <option value="" disabled selected>Chọn cơ sở</option>
                             @foreach ($danhSachCoSo as $coSo)
-                                <option value="{{ $coSo->slug }}">{{ $coSo->tenCoSo }}</option>
+                                <option value="{{ $coSo->tenCoSo }}"
+                                    {{ old('facility') == $coSo->tenCoSo ? 'selected' : '' }}>{{ $coSo->tenCoSo }}
+                                </option>
                             @endforeach
 
                         </select>
@@ -59,10 +63,10 @@
                     <div class="line-group">
                         <span class="text">Liên hệ với mình qua số</span>
                         <input type="tel" name="phone" class="input-inline phone-input"
-                            placeholder="Số điện thoại" required>
+                            placeholder="Số điện thoại" value="{{ old('phone') }}">
                         <span class="text">, Hoặc Email</span>
                         <input type="email" name="email" class="input-inline email-input"
-                            placeholder="Email của bạn" required>
+                            placeholder="Email của bạn" value="{{ old('email') }}">
                         <span class="text">. ❤️</span>
                     </div>
                 </div>
