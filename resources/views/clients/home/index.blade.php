@@ -187,7 +187,8 @@
                     <h2 class="section-title text-start mb-2">Khóa Học Nổi Bật</h2>
                     <p class="text-muted mt-4">Lộ trình bài bản, cam kết đầu ra theo tiêu chuẩn quốc tế.</p>
                 </div>
-                <a href="#" class="btn btn-outline-primary-genius d-none d-md-block">Xem tất cả khóa học</a>
+                <a href="{{ route('home.courses.index') }}" class="btn btn-outline-primary-genius d-none d-md-block">Xem
+                    tất cả khóa học</a>
             </div>
 
             <div class="row g-4">
