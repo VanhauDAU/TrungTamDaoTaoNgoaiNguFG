@@ -3,7 +3,7 @@
 @section('title', 'Về Chúng Tôi - Five Genius English Center')
 
 @section('stylesheet')
-    <link rel="stylesheet" href="{{ asset('assets/client/css/about.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/client/css/aboutUs.css') }}">
 @endsection
 
 @section('content')
@@ -15,14 +15,6 @@
                     <div class="text-center">
                         {{-- Animated Title --}}
                         <div class="title_animate px-5 mb-lg-5 mb-4">
-                            <svg width="377" height="117" viewBox="0 0 377 117" fill="none"
-                                xmlns="http://www.w3.org/2000/svg" class="active">
-                                <g opacity="0.5">
-                                    <path
-                                        d="M41.9234 42.5535C137.854 9.43906 258.635 21.1999 307.035 31.2197C230.669 34.998 5.91113 88.8754 5.91113 88.8754C5.91113 88.8754 221.602 27.2786 349.177 88.8754"
-                                        stroke="#B8D3D9" stroke-width="40.8987" stroke-linecap="square"></path>
-                                </g>
-                            </svg>
                             <h1 class="fs-48 ff-title cl-green mb-0">Five Genius<br>English Center</h1>
                             <div class="title_icon no-1">
                                 <img src="{{ asset('assets/images/star-title.png') }}" class="img-fluid" alt="">
@@ -100,14 +92,6 @@
         <div class="container">
             <div class="text-center mb-5">
                 <div class="title_animate px-5 mb-lg-5 mb-4">
-                    <svg width="567" height="115" viewBox="0 0 567 115" fill="none" xmlns="http://www.w3.org/2000/svg"
-                        class="active">
-                        <g opacity="0.5">
-                            <path
-                                d="M60.2197 42.5534C210.232 9.439 399.105 21.1999 474.79 31.2196C355.372 34.9979 3.90527 88.8754 3.90527 88.8754C3.90527 88.8754 341.193 27.2786 540.69 88.8754"
-                                stroke="#B8D3D9" stroke-width="40.8987" stroke-linecap="square"></path>
-                        </g>
-                    </svg>
                     <h2 class="fs-48 ff-title cl-green mb-0">Các Chương Trình<br>Đào Tạo</h2>
                     <div class="title_icon">
                         <img src="{{ asset('assets/images/star-title.png') }}" class="img-fluid" alt="">
@@ -131,10 +115,12 @@
                                     <li><i class="bi bi-check-circle-fill text-success me-2"></i>Cam kết đầu ra IELTS 6.5+
                                     </li>
                                     <li><i class="bi bi-check-circle-fill text-success me-2"></i>Giảng viên 8.0+ IELTS</li>
-                                    <li><i class="bi bi-check-circle-fill text-success me-2"></i>Lớp học 10-15 học viên</li>
+                                    <li><i class="bi bi-check-circle-fill text-success me-2"></i>Lớp học 10-15 học viên
+                                    </li>
                                 </ul>
                             </div>
-                            <a href="#" class="btn btn-red mt-3">Tìm Hiểu Thêm <i class="fas fa-arrow-right ms-2"></i></a>
+                            <a href="#" class="btn btn-red mt-3">Tìm Hiểu Thêm <i
+                                    class="fas fa-arrow-right ms-2"></i></a>
                         </div>
                         <div class="col-lg-7">
                             <figure>
@@ -161,7 +147,8 @@
                                     <li><i class="bi bi-check-circle-fill text-success me-2"></i>Thi thử hàng tuần</li>
                                 </ul>
                             </div>
-                            <a href="#" class="btn btn-red mt-3">Tìm Hiểu Thêm <i class="fas fa-arrow-right ms-2"></i></a>
+                            <a href="#" class="btn btn-red mt-3">Tìm Hiểu Thêm <i
+                                    class="fas fa-arrow-right ms-2"></i></a>
                         </div>
                         <div class="col-lg-7">
                             <figure>
@@ -188,7 +175,8 @@
                                     <li><i class="bi bi-check-circle-fill text-success me-2"></i>Lớp học sinh động</li>
                                 </ul>
                             </div>
-                            <a href="#" class="btn btn-red mt-3">Tìm Hiểu Thêm <i class="fas fa-arrow-right ms-2"></i></a>
+                            <a href="#" class="btn btn-red mt-3">Tìm Hiểu Thêm <i
+                                    class="fas fa-arrow-right ms-2"></i></a>
                         </div>
                         <div class="col-lg-7">
                             <figure>
@@ -203,169 +191,67 @@
     </section>
 
     {{-- ===== FACILITIES SECTION ===== --}}
-    <section class="facilities-section">
-        <div class="container">
-            <div class="text-center mb-5">
-                <div class="title_animate px-5 mb-lg-5 mb-4">
-                    <svg width="377" height="117" viewBox="0 0 377 117" fill="none" xmlns="http://www.w3.org/2000/svg"
-                        class="active">
-                        <g opacity="0.5">
-                            <path
-                                d="M41.9234 42.5535C137.854 9.43906 258.635 21.1999 307.035 31.2197C230.669 34.998 5.91113 88.8754 5.91113 88.8754C5.91113 88.8754 221.602 27.2786 349.177 88.8754"
-                                stroke="#B8D3D9" stroke-width="40.8987" stroke-linecap="square"></path>
-                        </g>
-                    </svg>
-                    <h2 class="fs-48 ff-title cl-green mb-0">Hệ Thống<br>Cơ Sở</h2>
-                    <div class="title_icon">
-                        <img src="{{ asset('assets/images/star-title.png') }}" class="img-fluid" alt="">
-                    </div>
+    <section class="system_location pt-100 pb-100">
+        <div class="text-center">
+            <div class="title_animate px-5 mb-lg-5 mb-4">
+                <h3 class="fs-48 ff-title cl-green mb-0 textSkewUp">
+                    Hệ thống </br> trung tâm
+                </h3>
+                <div class="title_icon">
+                    <img src="https://theforumcenter.com/wp-content/themes/the-forum/assets/images/cookieicon.svg"
+                        class="img-fluid" alt="">
                 </div>
             </div>
+        </div>
+        <div class="system_locate pt-40">
+            {{-- Menu lọc tỉnh thành --}}
+            <ul class="system_filter mb-3">
+                <li class="active"><a href="#" data-filter="all">Tất cả</a></li>
+                @foreach ($provinces as $province)
+                    {{-- Dùng ID để làm filter để đảm bảo tính duy nhất --}}
+                    <li><a href="#"
+                            data-filter="province-{{ $province->tinhThanhId }}">{{ $province->tenTinhThanh }}</a></li>
+                @endforeach
+            </ul>
 
-            {{-- Gallery --}}
-            <div class="facility-gallery mb-5" data-aos="fade-up">
-                <div class="item">
-                    <img src="https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=400" alt="Classroom 1"
-                        loading="lazy">
+            <div class="locate_wrapper">
+                {{-- Nút điều hướng --}}
+                <div class="nav-arrow nav-prev">
+                    <a href="javascript:void(0)"><img
+                            src="https://theforumcenter.com/wp-content/themes/the-forum/assets/images/prev.png"
+                            alt="Prev"></a>
                 </div>
-                <div class="item">
-                    <img src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=400" alt="Classroom 2"
-                        loading="lazy">
+                <div class="nav-arrow nav-next">
+                    <a href="javascript:void(0)"><img
+                            src="https://theforumcenter.com/wp-content/themes/the-forum/assets/images/next.png"
+                            alt="Next"></a>
                 </div>
-                <div class="item">
-                    <img src="https://images.unsplash.com/photo-1606761568499-6d2451b23c66?w=400" alt="Library"
-                        loading="lazy">
-                </div>
-                <div class="item">
-                    <img src="https://images.unsplash.com/photo-1562774053-701939374585?w=400" alt="Campus" loading="lazy">
-                </div>
-                <div class="item">
-                    <img src="https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=400" alt="Study Area"
-                        loading="lazy">
-                </div>
-            </div>
 
-            {{-- Locations --}}
-            <div class="row g-4 mt-4">
-                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="100">
-                    <div class="location-card">
-                        <figure>
-                            <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=500" alt="Cơ sở 1"
-                                loading="lazy">
-                        </figure>
-                        <div class="card-content">
-                            <span class="city-tag">TP. Hồ Chí Minh</span>
-                            <h4><a href="#">Cơ Sở Quận 1</a></h4>
+                {{-- Danh sách cơ sở --}}
+                <div class="slider_locate">
+                    @foreach ($branches as $branch)
+                        {{-- Thêm class province-ID để JS có thể lọc --}}
+                        <div class="item province-{{ $branch->tinhThanhId }}">
+                            <figure>
+                                <a href="{{ $branch->banDoGoogle ?? '#' }}" target="_blank">
+                                    <img src="{{ asset('storage/' . $branch->hinhAnh) }}" alt="{{ $branch->tenCoSo }}"
+                                        onerror="this.src='https://theforumcenter.com/wp-content/uploads/2025/05/brand-500x400.jpg'">
+                                </a>
+                            </figure>
+                            <div class="city">{{ $branch->tinhThanh->tenTinhThanh ?? 'N/A' }}</div>
+                            <h4>
+                                <a href="{{ $branch->link_map ?? '#' }}" target="_blank">
+                                    {{ $branch->tenCoSo }}
+                                </a>
+                            </h4>
                             <div class="address">
-                                <i class="fas fa-map-marker-alt me-2 text-danger"></i>
-                                123 Nguyễn Huệ, Quận 1, TP.HCM
+                                <i class="fas fa-map-marker-alt"></i> {{ $branch->diaChi }}
                             </div>
-                            <div class="mt-2">
-                                <i class="fas fa-phone me-2 text-success"></i>
-                                <a href="tel:0777464347">0777.46.43.47</a>
+                            <div class="mail">
+                                <i class="fas fa-envelope"></i> {{ $branch->email }}
                             </div>
                         </div>
-                    </div>
-                </div>
-                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="200">
-                    <div class="location-card">
-                        <figure>
-                            <img src="https://images.unsplash.com/photo-1562774053-701939374585?w=500" alt="Cơ sở 2"
-                                loading="lazy">
-                        </figure>
-                        <div class="card-content">
-                            <span class="city-tag">TP. Hồ Chí Minh</span>
-                            <h4><a href="#">Cơ Sở Tân Bình</a></h4>
-                            <div class="address">
-                                <i class="fas fa-map-marker-alt me-2 text-danger"></i>
-                                456 Lê Văn Sỹ, Quận Tân Bình, TP.HCM
-                            </div>
-                            <div class="mt-2">
-                                <i class="fas fa-phone me-2 text-success"></i>
-                                <a href="tel:0777464347">0777.46.43.47</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="200">
-                    <div class="location-card">
-                        <figure>
-                            <img src="https://images.unsplash.com/photo-1562774053-701939374585?w=500" alt="Cơ sở 2"
-                                loading="lazy">
-                        </figure>
-                        <div class="card-content">
-                            <span class="city-tag">TP. Hồ Chí Minh</span>
-                            <h4><a href="#">Cơ Sở Tân Bình</a></h4>
-                            <div class="address">
-                                <i class="fas fa-map-marker-alt me-2 text-danger"></i>
-                                456 Lê Văn Sỹ, Quận Tân Bình, TP.HCM
-                            </div>
-                            <div class="mt-2">
-                                <i class="fas fa-phone me-2 text-success"></i>
-                                <a href="tel:0777464347">0777.46.43.47</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="200">
-                    <div class="location-card">
-                        <figure>
-                            <img src="https://images.unsplash.com/photo-1562774053-701939374585?w=500" alt="Cơ sở 2"
-                                loading="lazy">
-                        </figure>
-                        <div class="card-content">
-                            <span class="city-tag">TP. Hồ Chí Minh</span>
-                            <h4><a href="#">Cơ Sở Tân Bình</a></h4>
-                            <div class="address">
-                                <i class="fas fa-map-marker-alt me-2 text-danger"></i>
-                                456 Lê Văn Sỹ, Quận Tân Bình, TP.HCM
-                            </div>
-                            <div class="mt-2">
-                                <i class="fas fa-phone me-2 text-success"></i>
-                                <a href="tel:0777464347">0777.46.43.47</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="200">
-                    <div class="location-card">
-                        <figure>
-                            <img src="https://images.unsplash.com/photo-1562774053-701939374585?w=500" alt="Cơ sở 2"
-                                loading="lazy">
-                        </figure>
-                        <div class="card-content">
-                            <span class="city-tag">TP. Hồ Chí Minh</span>
-                            <h4><a href="#">Cơ Sở Tân Bình</a></h4>
-                            <div class="address">
-                                <i class="fas fa-map-marker-alt me-2 text-danger"></i>
-                                456 Lê Văn Sỹ, Quận Tân Bình, TP.HCM
-                            </div>
-                            <div class="mt-2">
-                                <i class="fas fa-phone me-2 text-success"></i>
-                                <a href="tel:0777464347">0777.46.43.47</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="300">
-                    <div class="location-card">
-                        <figure>
-                            <img src="https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=500" alt="Cơ sở 3"
-                                loading="lazy">
-                        </figure>
-                        <div class="card-content">
-                            <span class="city-tag">TP. Hồ Chí Minh</span>
-                            <h4><a href="#">Cơ Sở Bình Thạnh</a></h4>
-                            <div class="address">
-                                <i class="fas fa-map-marker-alt me-2 text-danger"></i>
-                                789 Điện Biên Phủ, Quận Bình Thạnh, TP.HCM
-                            </div>
-                            <div class="mt-2">
-                                <i class="fas fa-phone me-2 text-success"></i>
-                                <a href="tel:0777464347">0777.46.43.47</a>
-                            </div>
-                        </div>
-                    </div>
+                    @endforeach
                 </div>
             </div>
         </div>
@@ -376,14 +262,6 @@
         <div class="container">
             <div class="text-center mb-5">
                 <div class="title_animate px-5 mb-lg-5 mb-4">
-                    <svg width="400" height="115" viewBox="0 0 567 115" fill="none" xmlns="http://www.w3.org/2000/svg"
-                        class="active">
-                        <g opacity="0.5">
-                            <path
-                                d="M60.2197 42.5534C210.232 9.439 399.105 21.1999 474.79 31.2196C355.372 34.9979 3.90527 88.8754 3.90527 88.8754C3.90527 88.8754 341.193 27.2786 540.69 88.8754"
-                                stroke="#B8D3D9" stroke-width="40.8987" stroke-linecap="square"></path>
-                        </g>
-                    </svg>
                     <h2 class="fs-48 ff-title cl-green mb-0">Đội Ngũ<br>Giảng Viên</h2>
                     <div class="title_icon">
                         <img src="{{ asset('assets/images/star-title.png') }}" class="img-fluid" alt="">
@@ -399,7 +277,7 @@
                         <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="{{ $loop->index * 100 }}">
                             <div class="team-card">
                                 <div class="avatar">
-                                    <img src="{{ $giaoVien->hoSoNguoiDung && $giaoVien->hoSoNguoiDung->anhDaiDien ? asset('storage/teachers/' . $giaoVien->hoSoNguoiDung->anhDaiDien) : asset('assets/images/default-teacher.jpeg') }}"
+                                    <img src="{{ $giaoVien->hoSoNguoiDung && $giaoVien->hoSoNguoiDung->anhDaiDien ? asset('storage/avatars/' . $giaoVien->hoSoNguoiDung->anhDaiDien) : asset('assets/images/default-teacher.jpeg') }}"
                                         alt="{{ $giaoVien->hoSoNguoiDung->hoTen ?? 'Giảng viên' }}" loading="lazy">
                                 </div>
                                 <div class="info">
@@ -415,8 +293,8 @@
                     <div class="col-lg-3 col-md-6" data-aos="fade-up">
                         <div class="team-card">
                             <div class="avatar">
-                                <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400" alt="Teacher 1"
-                                    loading="lazy">
+                                <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400"
+                                    alt="Teacher 1" loading="lazy">
                             </div>
                             <div class="info">
                                 <h4>Nguyễn Văn A</h4>
@@ -428,8 +306,8 @@
                     <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="100">
                         <div class="team-card">
                             <div class="avatar">
-                                <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400" alt="Teacher 2"
-                                    loading="lazy">
+                                <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400"
+                                    alt="Teacher 2" loading="lazy">
                             </div>
                             <div class="info">
                                 <h4>Trần Văn B</h4>
@@ -441,8 +319,8 @@
                     <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="200">
                         <div class="team-card">
                             <div class="avatar">
-                                <img src="https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400" alt="Teacher 3"
-                                    loading="lazy">
+                                <img src="https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400"
+                                    alt="Teacher 3" loading="lazy">
                             </div>
                             <div class="info">
                                 <h4>Lê Thị C</h4>
@@ -454,8 +332,8 @@
                     <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="300">
                         <div class="team-card">
                             <div class="avatar">
-                                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400" alt="Teacher 4"
-                                    loading="lazy">
+                                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400"
+                                    alt="Teacher 4" loading="lazy">
                             </div>
                             <div class="info">
                                 <h4>Phạm Văn D</h4>
@@ -473,13 +351,52 @@
     <x-client.register-advice />
 
 @endsection
-
 @section('script')
     <script>
-        // Initialize AOS
         AOS.init({
             duration: 800,
             once: true
+        });
+        $(document).ready(function() {
+            // 1. Khởi tạo Slick Slider
+            var $slider = $('.slider_locate').slick({
+                rows: 0, // Quan trọng để tránh lỗi dư thừa div
+                slidesToShow: 4,
+                slidesToScroll: 1,
+                infinite: false,
+                arrows: true,
+                prevArrow: $('.nav-prev a'), // Kết nối nút HTML với Slick
+                nextArrow: $('.nav-next a'),
+                responsive: [{
+                        breakpoint: 1024,
+                        settings: {
+                            slidesToShow: 2
+                        }
+                    },
+                    {
+                        breakpoint: 600,
+                        settings: {
+                            slidesToShow: 1
+                        }
+                    }
+                ]
+            });
+
+            // 2. Xử lý Filter
+            $('.system_filter a').on('click', function(e) {
+                e.preventDefault(); // Chặn load lại trang
+
+                $('.system_filter li').removeClass('active');
+                $(this).parent().addClass('active');
+
+                var filter = $(this).data('filter');
+
+                $slider.slick('slickUnfilter'); // Xóa bộ lọc cũ
+                if (filter !== 'all') {
+                    // Slick filter sử dụng class (ví dụ .tp-vung-tau)
+                    $slider.slick('slickFilter', '.' + filter);
+                }
+            });
         });
     </script>
 @endsection

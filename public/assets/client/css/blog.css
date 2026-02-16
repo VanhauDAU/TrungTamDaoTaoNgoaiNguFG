@@ -1,8 +1,9 @@
 /* --- TỔNG QUAN --- */
 .blog_page {
-    background-color: #fff;
     padding-bottom: 80px;
     padding-top: 80px;
+    background: var(--background-color);
+    min-height: 100vh;
 }
 
 /* --- THANH DANH MỤC (SCROLL NGANG) --- */
@@ -30,7 +31,7 @@
 .cate_menu li a {
     display: inline-block;
     padding: 8px 20px;
-    background: #f8f9fa;
+    background: white;
     color: #10454F;
     border-radius: 50px;
     text-decoration: none;
@@ -77,6 +78,10 @@
 .post_item {
     margin-bottom: 40px;
     transition: 0.3s;
+    background: white;
+    padding: 10px;
+    border-radius: 20px;
+    border: 1px solid #eee;
 }
 
 .post_item figure {

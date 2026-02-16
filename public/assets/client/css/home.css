@@ -1,10 +1,3 @@
-/* Variables & Fonts */
-:root {
-    --cl-red: #E32D2D;
-    --cl-green: #154345;
-    --bg-card: #E7F0F2;
-    --ff-title: 'Lexend', sans-serif;
-}
 
 /* Home Banner */
 .home-banner {
@@ -54,12 +47,6 @@
     color: white;
     opacity: 0.8;
 
-}
-
-/* 2. SVG Decoration */
-.title_animate {
-    position: relative;
-    display: inline-block;
 }
 
 .svg-bg {
@@ -220,17 +207,6 @@
     position: relative;
     display: inline-block;
 }
-
-.title_animate svg {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 1;
-    width: 100%;
-    max-width: 500px;
-}
-
 .title_animate h3 {
     position: relative;
     z-index: 2;
@@ -540,29 +516,6 @@
     overflow: hidden;
 }
 
-/* --- TIÊU ĐỀ ANIMATE --- */
-.title_animate {
-    position: relative;
-    display: inline-block;
-}
-
-.title_animate svg {
-    position: absolute;
-    bottom: -5px;
-    left: -10px;
-    z-index: 0;
-    width: 110%;
-    pointer-events: none;
-}
-
-.title_animate h3 {
-    position: relative;
-    z-index: 1;
-    font-weight: 800;
-    color: #10454F;
-    /* Màu đặc trưng của Five Genius */
-}
-
 .title_icon {
     position: absolute;
     top: -20px;
@@ -741,10 +694,6 @@
 /* END NEWS */
 
 /* list course feature */
-:root {
-    --primary-color: #e32c2d;
-    --accent-color: #FFB800;
-}
 
 .courses-section {
     background-color: #fcfcfc;
@@ -910,3 +859,112 @@
 }
 
 /* end list course feature */
+/* ===== TOAST NOTIFICATION STYLES ===== */
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+}
+
+.toast {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: white;
+    border-radius: 12px;
+    padding: 16px 20px;
+    min-width: 320px;
+    max-width: 400px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    transform: translateX(400px);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    pointer-events: all;
+    border-left: 4px solid;
+}
+
+.toast.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.toast-success {
+    border-left-color: #10b981;
+    background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
+}
+
+.toast-error {
+    border-left-color: #ef4444;
+    background: linear-gradient(135deg, #fef2f2 0%, #ffffff 100%);
+}
+
+.toast-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-size: 18px;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.toast-success .toast-icon {
+    background: #10b981;
+    color: white;
+}
+
+.toast-error .toast-icon {
+    background: #ef4444;
+    color: white;
+}
+
+.toast-message {
+    flex: 1;
+    color: #1f2937;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.5;
+}
+
+.toast-close {
+    background: transparent;
+    border: none;
+    color: #6b7280;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
+    flex-shrink: 0;
+}
+
+.toast-close:hover {
+    color: #1f2937;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .toast-container {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+    }
+    
+    .toast {
+        min-width: auto;
+        max-width: 100%;
+    }
+}
+/* ===== END TOAST NOTIFICATION STYLES ===== */

@@ -146,54 +146,211 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.querySelector('.register-sentence-form');
-    const inputs = form.querySelectorAll('.input-inline, .select-inline');
+    if (!form) return; // Thoát nếu không tìm thấy form
 
-    // Các quy tắc Validate
+    const fullnameInput = form.querySelector('input[name="fullname"]');
+    const phoneInput = form.querySelector('input[name="phone"]');
+    const emailInput = form.querySelector('input[name="email"]');
+    
+    // Các quy tắc validate cho từng trường
     const validators = {
         fullname: (value) => value.trim().length >= 2,
-        course: (value) => value !== "",
-        phone: (value) => /(0[3|5|7|8|9])+([0-9]{8})\b/g.test(value), // Regex số ĐT VN
-        email: (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+        phone: (value) => {
+            // Chỉ validate nếu có giá trị
+            if (!value || value.trim() === '') return true;
+            return /(0[3|5|7|8|9])+([0-9]{8})\b/g.test(value);
+        },
+        email: (value) => {
+            // Chỉ validate nếu có giá trị
+            if (!value || value.trim() === '') return true;
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+        }
     };
 
     // Hàm kiểm tra từng Input
-    function validateInput(input) {
+    function validateInput(input, showError = true) {
         const name = input.getAttribute('name');
         const value = input.value;
         let isValid = true;
 
+        // Validate theo quy tắc của từng trường
         if (validators[name]) {
             isValid = validators[name](value);
         }
 
-        if (!isValid) {
-            input.classList.add('is-invalid');
-        } else {
-            input.classList.remove('is-invalid');
+        if (showError) {
+            if (!isValid) {
+                input.classList.add('is-invalid');
+            } else {
+                input.classList.remove('is-invalid');
+            }
         }
+        
         return isValid;
     }
 
-    // Validate ngay khi người dùng nhập (Real-time)
-    inputs.forEach(input => {
-        input.addEventListener('input', () => validateInput(input));
-        input.addEventListener('blur', () => validateInput(input)); // Khi rời khỏi input
-    });
+    // Kiểm tra ít nhất 1 trong 2: email hoặc phone
+    function validateContactFields() {
+        const phoneValue = phoneInput ? phoneInput.value.trim() : '';
+        const emailValue = emailInput ? emailInput.value.trim() : '';
+        
+        // Ít nhất 1 trong 2 phải có giá trị
+        const hasContact = phoneValue !== '' || emailValue !== '';
+        
+        if (!hasContact) {
+            if (phoneInput) phoneInput.classList.add('is-invalid');
+            if (emailInput) emailInput.classList.add('is-invalid');
+            return false;
+        }
+        
+        // Nếu có giá trị, validate format
+        let isValid = true;
+        
+        if (phoneValue !== '' && phoneInput) {
+            const phoneValid = validators.phone(phoneValue);
+            if (!phoneValid) {
+                phoneInput.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                phoneInput.classList.remove('is-invalid');
+            }
+        } else if (phoneInput) {
+            phoneInput.classList.remove('is-invalid');
+        }
+        
+        if (emailValue !== '' && emailInput) {
+            const emailValid = validators.email(emailValue);
+            if (!emailValid) {
+                emailInput.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                emailInput.classList.remove('is-invalid');
+            }
+        } else if (emailInput) {
+            emailInput.classList.remove('is-invalid');
+        }
+        
+        return isValid;
+    }
 
-    // Chặn gửi Form nếu còn lỗi
+    // Validate real-time cho fullname
+    if (fullnameInput) {
+        fullnameInput.addEventListener('input', () => validateInput(fullnameInput));
+        fullnameInput.addEventListener('blur', () => validateInput(fullnameInput));
+    }
+
+    // Validate real-time cho phone và email (kiểm tra cả 2 cùng lúc)
+    if (phoneInput) {
+        phoneInput.addEventListener('input', validateContactFields);
+        phoneInput.addEventListener('blur', validateContactFields);
+    }
+    
+    if (emailInput) {
+        emailInput.addEventListener('input', validateContactFields);
+        emailInput.addEventListener('blur', validateContactFields);
+    }
+
+    // Hàm hiển thị toast notification
+    function showToast(message, type = 'success') {
+        // Tạo toast container nếu chưa có
+        let toastContainer = document.querySelector('.toast-container');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.className = 'toast-container';
+            document.body.appendChild(toastContainer);
+        }
+
+        // Tạo toast element
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        
+        const icon = type === 'success' ? '✓' : '✕';
+        toast.innerHTML = `
+            <div class="toast-icon">${icon}</div>
+            <div class="toast-message">${message}</div>
+            <button class="toast-close" onclick="this.parentElement.remove()">×</button>
+        `;
+
+        toastContainer.appendChild(toast);
+
+        // Animation vào
+        setTimeout(() => toast.classList.add('show'), 10);
+
+        // Tự động ẩn sau 5s
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }, 5000);
+    }
+
+    // AJAX Form Submit
     form.addEventListener('submit', function(e) {
+        e.preventDefault(); // Ngăn submit mặc định
+        
         let isFormValid = true;
 
-        inputs.forEach(input => {
-            if (!validateInput(input)) {
-                isFormValid = false;
-            }
-        });
-
-        if (!isFormValid) {
-            e.preventDefault(); // Ngừng gửi form
-            alert('Vui lòng kiểm tra lại thông tin đăng ký!');
+        // 1. Kiểm tra fullname
+        if (fullnameInput && !validateInput(fullnameInput, true)) {
+            isFormValid = false;
         }
+
+        // 2. Kiểm tra email HOẶC phone (ít nhất 1 trong 2)
+        if (!validateContactFields()) {
+            isFormValid = false;
+        }
+
+        // Nếu form không hợp lệ, dừng lại
+        if (!isFormValid) {
+            showToast('Vui lòng kiểm tra lại thông tin đăng ký!', 'error');
+            return;
+        }
+
+        // Lấy dữ liệu form
+        const formData = new FormData(form);
+        const submitButton = form.querySelector('button[type="submit"]');
+        
+        // Disable button để tránh submit nhiều lần
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Đang gửi...';
+
+        // Gửi AJAX request
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message, 'success');
+                // Reset form sau khi thành công
+                form.reset();
+                // Xóa các class invalid
+                form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            } else {
+                // Hiển thị lỗi validation
+                let errorMessage = data.message || 'Có lỗi xảy ra!';
+                if (data.errors) {
+                    const firstError = Object.values(data.errors)[0];
+                    if (firstError && firstError.length > 0) {
+                        errorMessage = firstError[0];
+                    }
+                }
+                showToast(errorMessage, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Có lỗi xảy ra! Vui lòng thử lại sau.', 'error');
+        })
+        .finally(() => {
+            // Enable lại button
+            submitButton.disabled = false;
+            submitButton.innerHTML = 'GỬI YÊU CẦU TƯ VẤN<i class="bi bi-send-fill ms-2"></i>';
+        });
     });
 });
 // end register-sentence animation

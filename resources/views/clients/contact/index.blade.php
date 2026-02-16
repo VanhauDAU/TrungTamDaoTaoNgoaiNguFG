@@ -1,11 +1,13 @@
 @extends('layouts.client')
 
 @section('title', 'Liên hệ - Trung tâm Anh ngữ Five Genius')
+@section('stylesheet')
+    <link rel="stylesheet" href="{{ asset('assets/client/css/contact.css') }}">
+@endsection
 @section('content')
     <div class="contact_page py-80">
         <div class="container">
             <div class="title_animate mb-4 pe-5 mb-lg-5">
-                <x-svg.title-accent class="active" />
                 <h1 class="fs-48 ff-title cl-green mb-0">Có thắc mắc hoặc<br>
                     cần thêm thông tin?</h1>
                 <div class="title_icon">
@@ -50,19 +52,21 @@
             <div class="map_section_container mt-5 position-relative">
                 <div class="map_nav_box">
                     <button class="nav-btn btn-prev">
-                        <img src="https://theforumcenter.com/wp-content/themes/the-forum/assets/images/prev.png" alt="Prev">
+                        <img src="https://theforumcenter.com/wp-content/themes/the-forum/assets/images/prev.png"
+                            alt="Prev">
                     </button>
                     <button class="nav-btn btn-next">
-                        <img src="https://theforumcenter.com/wp-content/themes/the-forum/assets/images/next.png" alt="Next">
+                        <img src="https://theforumcenter.com/wp-content/themes/the-forum/assets/images/next.png"
+                            alt="Next">
                     </button>
                 </div>
                 <div class="map_main_slider">
                     {{-- ITEM 1: Cơ sở Vũng Tàu --}}
-                    @foreach($coSoDaoTao as $coSo)
+                    @foreach ($coSoDaoTao as $coSo)
                         <div class="map_slide_item">
                             <div class="iframe_box">
-                                <iframe src="{{ $coSo->banDoGoogle }}" 
-                                    width="100%" height="500" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+                                <iframe src="{{ $coSo->banDoGoogle }}" width="100%" height="500" style="border:0;"
+                                    allowfullscreen="" loading="lazy"></iframe>
                             </div>
                             <div class="meta_info_box shadow-lg">
                                 <div class="city_label fs-12 mb-2">{{ $coSo->tinhThanh->tenTinhThanh }}</div>
@@ -82,4 +86,27 @@
         </div>
     </div>
     <x-client.register-advice />
+@endsection
+@section('script')
+    <script>
+        $(document).ready(function() {
+            $('.map_main_slider').slick({
+                infinite: true,
+                slidesToShow: 1,
+                slidesToScroll: 1,
+                arrows: true,
+                fade: true, // Hiệu ứng mượt mà cho bản đồ
+                cssEase: 'linear',
+                // Liên kết nút bấm tùy chỉnh của bạn
+                prevArrow: $('.btn-prev'),
+                nextArrow: $('.btn-next'),
+                responsive: [{
+                    breakpoint: 768,
+                    settings: {
+                        adaptiveHeight: true
+                    }
+                }]
+            });
+        });
+    </script>
 @endsection

@@ -6,11 +6,16 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Models\Auth\HoSoNguoiDung;
+use App\Models\Auth\NhanSu;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
+
+    protected $table = 'taikhoan';
+    protected $primaryKey = 'taiKhoanId';
 
     /**
      * The attributes that are mass assignable.
@@ -18,9 +23,10 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
+        'taiKhoan',
         'name',
         'email',
-        'password',
+        'matKhau',
     ];
 
     /**
@@ -29,7 +35,7 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $hidden = [
-        'password',
+        'matKhau',
         'remember_token',
     ];
 
@@ -42,7 +48,22 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
-            'password' => 'hashed',
+            'matKhau' => 'hashed',
         ];
+    }
+
+    public function getAuthPassword()
+    {
+        return $this->matKhau;
+    }
+
+    public function hoSoNguoiDung()
+    {
+        return $this->hasOne(HoSoNguoiDung::class, 'taiKhoanId', 'id');
+    }
+
+    public function nhanSu()
+    {
+        return $this->hasOne(NhanSu::class, 'taiKhoanId', 'id');
     }
 }

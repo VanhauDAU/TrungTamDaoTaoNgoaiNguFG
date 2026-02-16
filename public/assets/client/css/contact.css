@@ -1,24 +1,12 @@
-:root {
-    /* Brand Colors */
-    --primary-navy: #10454F;
-    --accent-red: #E31E24;
-    --accent-teal: #27C4B5;
-    /* Backgrounds */
-    --bg-pink: #FFF0F1;
-    --bg-cream: #F9F5EE;
-    --bg-cyan: #E8F3F5;
-    /* Common Properties */
-    --radius-xl: 30px;
-    --radius-lg: 24px;
-    --radius-md: 20px;
-    --shadow: 0 10px 30px rgba(0,0,0,0.1);
-    --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+/* --- TỔNG QUAN & RESET --- */
+.contact_page {
+    background: var(--background-color);
+    overflow: hidden;
+    min-height: 100vh;
 }
 
-/* --- TỔNG QUAN & RESET --- */
-.contact_page { background: #fff; overflow: hidden; }
-
-.contact_btn, .nav-btn {
+.contact_btn,
+.nav-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -29,24 +17,20 @@
 }
 
 /* --- TIÊU ĐỀ ANIMATE --- */
-.title_animate { position: relative; display: inline-block; }
-
-.title_animate svg {
-    position: absolute;
-    width: 100%;
-    height: auto;
-    top: 55%;
-    left: 0;
-    transform: translateY(-50%);
-    pointer-events: none;
+.title_animate {
+    position: relative;
+    display: inline-block;
 }
+
 .title_animate .title-style-1 {
     stroke-dasharray: 2000;
     stroke-dashoffset: 2000;
     transition: 2s ease-in-out;
 }
 
-.title_animate svg.active .title-style-1 { stroke-dashoffset: 0; }
+.title_animate svg.active .title-style-1 {
+    stroke-dashoffset: 0;
+}
 
 /* --- CONTACT CARDS --- */
 .contact_item {
@@ -56,14 +40,39 @@
     transition: var(--transition);
 }
 
-.contact_item:hover { transform: translateY(-10px); }
-.item_1 { background: var(--bg-pink); }
-.item_2 { background: var(--bg-cream); }
-.item_3 { background: var(--bg-cyan); }
+.contact_item:hover {
+    transform: translateY(-10px);
+}
 
-.contact_btn { gap: 10px; color: var(--primary-navy); font-weight: 700; font-size: 14px; text-transform: uppercase; background: none; }
-.contact_btn img { height: 12px; transition: var(--transition); }
-.contact_btn:hover img { transform: translateX(5px); }
+.item_1 {
+    background: var(--bg-pink);
+}
+
+.item_2 {
+    background: var(--bg-cream);
+}
+
+.item_3 {
+    background: var(--bg-cyan);
+}
+
+.contact_btn {
+    gap: 10px;
+    color: var(--primary-navy);
+    font-weight: 700;
+    font-size: 14px;
+    text-transform: uppercase;
+    background: none;
+}
+
+.contact_btn img {
+    height: 12px;
+    transition: var(--transition);
+}
+
+.contact_btn:hover img {
+    transform: translateX(5px);
+}
 
 /* --- MAP SLIDER CONTAINER --- */
 .map_section_container {
@@ -72,7 +81,10 @@
     margin-top: 60px;
 }
 
-.map_slide_item { position: relative; outline: none; }
+.map_slide_item {
+    position: relative;
+    outline: none;
+}
 
 .iframe_box {
     border-radius: var(--radius-xl);
@@ -120,12 +132,20 @@
     background: var(--accent-teal);
 }
 
-.nav-btn:hover { background: var(--primary-navy); }
+.nav-btn:hover {
+    background: var(--primary-navy);
+}
 
 /* --- RESPONSIVE --- */
 @media (max-width: 991.98px) {
-    .contact_item { padding: 30px; }
-    .meta_info_box { width: 320px; padding: 25px; }
+    .contact_item {
+        padding: 30px;
+    }
+
+    .meta_info_box {
+        width: 320px;
+        padding: 25px;
+    }
 }
 
 @media (max-width: 767.98px) {
@@ -136,6 +156,14 @@
         box-shadow: none;
         border: 1px solid #eee;
     }
-    .map_nav_box { bottom: auto; top: 20px; right: 20px; }
-    .iframe_box iframe { height: 400px; }
+
+    .map_nav_box {
+        bottom: auto;
+        top: 20px;
+        right: 20px;
+    }
+
+    .iframe_box iframe {
+        height: 400px;
+    }
 }

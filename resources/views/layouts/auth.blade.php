@@ -11,12 +11,6 @@
     {{-- CSS Cơ bản --}}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    {{-- CSS Riêng cho Auth --}}
-    <link rel="stylesheet" href="{{ asset('assets/client/css/login.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/client/css/register.css') }}">
-
-
     @yield('stylesheet')
 </head>
 
