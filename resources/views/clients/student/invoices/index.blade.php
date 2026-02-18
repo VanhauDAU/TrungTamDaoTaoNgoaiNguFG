@@ -4,6 +4,7 @@
 @section('stylesheet')
     <link rel="stylesheet" href="{{ asset('assets/client/css/accountInfo/account.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/client/css/invoices.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/client/css/breadcrumb.css') }}">
 @endsection
 
 @section('content')
@@ -14,6 +15,12 @@
 
                 <div class="col-lg-9">
                     <div class="account-content">
+                        {{-- Breadcrumb --}}
+                        <x-client.account-breadcrumb :items="[
+                            ['label' => 'Trang chủ', 'url' => route('home.index'), 'icon' => 'fas fa-home'],
+                            ['label' => 'Tài khoản', 'url' => route('home.student.index')],
+                            ['label' => 'Hóa đơn thanh toán'],
+                        ]" />
                         <div class="content-header">
                             <h2 class="page-title">
                                 <i class="fas fa-file-invoice me-2"></i>Hóa đơn thanh toán

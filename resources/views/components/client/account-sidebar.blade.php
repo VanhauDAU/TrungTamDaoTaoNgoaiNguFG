@@ -29,9 +29,10 @@
                 </a>
             </li>
             <li class="menu-item">
-                <a href="#" class="menu-link">
+                <a href="{{ route('home.student.classes') }}"
+                    class="menu-link {{ request()->routeIs('home.student.classes') ? 'active' : '' }}">
                     <i class="fas fa-graduation-cap"></i>
-                    <span>Khóa học của tôi</span>
+                    <span>Lớp học của tôi</span>
                 </a>
             </li>
             <li class="menu-item">
