@@ -258,7 +258,7 @@
     </section>
 
     {{-- ===== TEAM SECTION ===== --}}
-    <section class="team-section">
+    <section class="team-section py-5">
         <div class="container">
             <div class="text-center mb-5">
                 <div class="title_animate px-5 mb-lg-5 mb-4">
@@ -274,7 +274,7 @@
             <div class="row g-4">
                 @if (isset($topGiaoVien) && count($topGiaoVien) > 0)
                     @foreach ($topGiaoVien as $giaoVien)
-                        <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="{{ $loop->index * 100 }}">
+                        <div class="col-lg-3 col-md-6">
                             <div class="team-card">
                                 <div class="avatar">
                                     <img src="{{ $giaoVien->hoSoNguoiDung && $giaoVien->hoSoNguoiDung->anhDaiDien ? asset('storage/avatars/' . $giaoVien->hoSoNguoiDung->anhDaiDien) : asset('assets/images/default-teacher.jpeg') }}"
@@ -290,7 +290,7 @@
                     @endforeach
                 @else
                     {{-- Default team members if no data --}}
-                    <div class="col-lg-3 col-md-6" data-aos="fade-up">
+                    <div class="col-lg-3 col-md-6">
                         <div class="team-card">
                             <div class="avatar">
                                 <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400"
@@ -303,7 +303,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="100">
+                    <div class="col-lg-3 col-md-6">
                         <div class="team-card">
                             <div class="avatar">
                                 <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400"
@@ -316,7 +316,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="200">
+                    <div class="col-lg-3 col-md-6">
                         <div class="team-card">
                             <div class="avatar">
                                 <img src="https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400"
@@ -329,7 +329,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="300">
+                    <div class="col-lg-3 col-md-6">
                         <div class="team-card">
                             <div class="avatar">
                                 <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400"
