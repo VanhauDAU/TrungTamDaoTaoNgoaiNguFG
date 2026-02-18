@@ -37,6 +37,7 @@ Route::prefix('/')->name('home.')->group(function () {
         Route::post('/doi-mat-khau', [StudentController::class, 'updatePassword'])->name('update-password');
         Route::get('/hoa-don', [StudentController::class, 'invoices'])->name('invoices');
         Route::get('/hoa-don/{id}', [StudentController::class, 'invoiceDetail'])->name('invoices.show');
+        Route::get('/lop-hoc', [StudentController::class, 'myClasses'])->name('classes');
     });
 });
 Auth::routes();

@@ -111,7 +111,7 @@
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end dropdown-menu-user border-0 shadow-lg rounded-4">
                                 <li><a class="dropdown-item py-2" href="{{ route('home.student.index') }}"><i
-                                            class="far fa-user-circle me-2 text-primary"></i> Hồ sơ</a></li>
+                                            class="far fa-user-circle me-2 text-primary"></i>Tài khoản cá nhân</a></li>
                                 <li><a class="dropdown-item py-2" href="#"><i
                                             class="fas fa-graduation-cap me-2 text-primary"></i> Khóa học của tôi</a></li>
                                 <li>

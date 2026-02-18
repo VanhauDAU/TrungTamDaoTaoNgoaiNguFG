@@ -3,6 +3,7 @@
 
 @section('stylesheet')
     <link rel="stylesheet" href="{{ asset('assets/client/css/accountInfo/account.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/client/css/breadcrumb.css') }}">
 @endsection
 
 @section('content')
@@ -15,6 +16,13 @@
                 {{-- MAIN CONTENT --}}
                 <div class="col-lg-9">
                     <div class="account-content">
+                        {{-- Breadcrumb --}}
+                        <x-client.account-breadcrumb :items="[
+                            ['label' => 'Trang chủ', 'url' => route('home.index'), 'icon' => 'fas fa-home'],
+                            ['label' => 'Tài khoản', 'url' => route('home.student.index')],
+                            ['label' => 'Đổi mật khẩu'],
+                        ]" />
+
                         <h2 class="content-title">
                             <i class="fas fa-lock me-2"></i> Đổi mật khẩu
                         </h2>

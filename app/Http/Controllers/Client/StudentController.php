@@ -66,4 +66,20 @@ class StudentController extends Controller
         
         return view('clients.student.invoices.show', compact('invoice'));
     }
+
+    public function myClasses()
+    {
+        $classes = \App\Models\Education\DangKyLopHoc::where('taiKhoanId', auth()->user()->taiKhoanId)
+            ->whereIn('trangThai', [1, 2]) // Chờ thanh toán hoặc đã xác nhận
+            ->with([
+                'lopHoc.khoaHoc',
+                'lopHoc.coSo',
+                'lopHoc.taiKhoan.hoSoNguoiDung', // Giảng viên
+                'lopHoc.buoiHocs.caHoc'
+            ])
+            ->orderBy('ngayDangKy', 'desc')
+            ->get();
+        
+        return view('clients.student.classes.index', compact('classes'));
+    }
 }

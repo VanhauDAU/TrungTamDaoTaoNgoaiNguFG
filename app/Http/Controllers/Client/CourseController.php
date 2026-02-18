@@ -153,7 +153,6 @@ class CourseController extends Controller
                 return back()->with('error', 'Có lỗi xảy ra: Không thể tạo hóa đơn');
             }
             DB::commit();
-
             // Todo: Handle Online Payment redirect here
 
             return redirect()->route('home.classes.show', ['slug' => $class->khoaHoc->slug, 'slugLopHoc' => $class->slug])
