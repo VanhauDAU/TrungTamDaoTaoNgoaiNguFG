@@ -2,7 +2,7 @@
 
 @section('title', 'Blog - Trung tâm Anh ngữ Five Genius')
 @section('stylesheet')
-    <link rel="stylesheet" href="{{ asset('assets/client/css/blog.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/client/css/pages/blog.css') }}">
 @endsection
 @section('content')
     <div class="blog_page pt-80">

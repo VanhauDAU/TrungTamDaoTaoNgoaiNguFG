@@ -3,7 +3,7 @@
 @section('title', $course->tenKhoaHoc . ' - Five Genius')
 
 @section('stylesheet')
-    <link rel="stylesheet" href="{{ asset('assets/client/css/courseDetail.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/client/css/pages/courseDetail.css') }}">
 @endsection
 
 @section('content')

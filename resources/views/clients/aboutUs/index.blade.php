@@ -3,7 +3,7 @@
 @section('title', 'Về Chúng Tôi - Five Genius English Center')
 
 @section('stylesheet')
-    <link rel="stylesheet" href="{{ asset('assets/client/css/aboutUs.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/client/css/pages/about.css') }}">
 @endsection
 
 @section('content')

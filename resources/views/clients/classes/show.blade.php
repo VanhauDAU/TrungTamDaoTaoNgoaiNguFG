@@ -3,8 +3,8 @@
 @section('title', $class->tenLopHoc . ' - ' . $class->khoaHoc->tenKhoaHoc)
 
 @section('stylesheet')
-    <link rel="stylesheet" href="{{ asset('assets/client/css/classesDetail.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/client/css/courseDetail.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/client/css/pages/classesDetail.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/client/css/pages/courseDetail.css') }}">
 @endsection
 
 @section('content')
@@ -199,13 +199,13 @@
                                         {{ $class->taiKhoan->email }}</p>
                                     {{-- chuyên môn --}}
                                     <p class="mb-0 text-muted small"><i class="fas fa-briefcase me-1"></i>
-                                        {{ $class->taiKhoan->nhanSu->chuyenMon }}</p>
+                                        {{ optional($class->taiKhoan->nhanSu)->chuyenMon ?? 'Chưa cập nhật' }}</p>
                                     {{-- bằng cấp --}}
                                     <p class="mb-0 text-muted small"><i class="fas fa-graduation-cap me-1"></i>
-                                        {{ $class->taiKhoan->nhanSu->bangCap }}</p>
+                                        {{ optional($class->taiKhoan->nhanSu)->bangCap ?? 'Chưa cập nhật' }}</p>
                                     {{-- Học vị --}}
                                     <p class="mb-0 text-muted small"><i class="fas fa-graduation-cap me-1"></i>
-                                        {{ $class->taiKhoan->nhanSu->hocVi }}</p>
+                                        {{ optional($class->taiKhoan->nhanSu)->hocVi ?? 'Chưa cập nhật' }}</p>
                                 </div>
                             </div>
                         </div>

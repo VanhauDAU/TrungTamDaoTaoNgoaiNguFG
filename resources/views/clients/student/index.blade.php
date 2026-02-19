@@ -2,8 +2,8 @@
 @section('title', 'Hồ sơ học viên')
 
 @section('stylesheet')
-    <link rel="stylesheet" href="{{ asset('assets/client/css/accountInfo/account.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/client/css/breadcrumb.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/client/css/pages/account.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/client/css/pages/breadcrumb.css') }}">
 @endsection
 
 @section('content')
