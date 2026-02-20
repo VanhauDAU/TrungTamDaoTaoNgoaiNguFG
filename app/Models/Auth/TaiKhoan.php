@@ -25,6 +25,7 @@ class TaiKhoan extends Authenticatable
         'email',
         'matKhau',
         'role',
+        'nhomQuyenId',
         'trangThai',
         'remember_token',
         'lastLogin'
@@ -34,8 +35,9 @@ class TaiKhoan extends Authenticatable
         'remember_token',
     ];
     protected $casts = [
-        'role'      => 'integer',
-        'trangThai' => 'integer',
+        'role'        => 'integer',
+        'trangThai'   => 'integer',
+        'nhomQuyenId' => 'integer',
     ];
     public function username()
     {
@@ -84,5 +86,45 @@ class TaiKhoan extends Authenticatable
     public function dangKyLopHocs()
     {
         return $this->hasMany(DangKyLopHoc::class, 'taiKhoanId', 'taiKhoanId');
+    }
+
+    /** Nhóm quyền được gán cho tài khoản này */
+    public function nhomQuyen()
+    {
+        return $this->belongsTo(NhomQuyen::class, 'nhomQuyenId', 'nhomQuyenId');
+    }
+
+    /**
+     * Kiểm tra user có quyền thực hiện action trên tính năng không.
+     *
+     * @param string $feature  VD: 'khoa_hoc', 'tai_chinh'
+     * @param string $action   'xem' | 'them' | 'sua' | 'xoa'
+     */
+    public function canDo(string $feature, string $action = 'xem'): bool
+    {
+        // Admin luôn có toàn quyền
+        if ($this->isAdmin()) {
+            return true;
+        }
+
+        // Chưa gắn nhóm quyền → không có quyền
+        if (!$this->nhomQuyen) {
+            return false;
+        }
+
+        $colMap = [
+            'xem'  => 'coXem',
+            'them' => 'coThem',
+            'sua'  => 'coSua',
+            'xoa'  => 'coXoa',
+        ];
+
+        $col = $colMap[$action] ?? 'coXem';
+
+        $pq = $this->nhomQuyen->phanQuyens()
+                ->where('tinhNang', $feature)
+                ->first();
+
+        return $pq ? (bool) $pq->{$col} : false;
     }
 }

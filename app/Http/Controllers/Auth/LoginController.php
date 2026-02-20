@@ -57,6 +57,10 @@ class LoginController extends Controller
      */
     protected function authenticated(Request $request, $user)
     {
+        // Cập nhật thời gian đăng nhập cuối
+        $user->lastLogin = now();
+        $user->save();
+
         if ($user->isStaff()) {
             return redirect()->route('admin.dashboard');
         }

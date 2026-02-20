@@ -7,6 +7,7 @@ use App\Http\Controllers\Client\AboutController;
 use App\Http\Controllers\Client\CourseController;
 use App\Http\Controllers\Client\StudentController;
 use App\Http\Controllers\Admin\HomeController as AdminHomeController;
+use App\Http\Controllers\Admin\NhomQuyenController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
@@ -46,6 +47,16 @@ Route::prefix('/')->name('home.')->group(function () {
 // ─── ADMIN ROUTES ────────────────────────────────────────────────────────────
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(function () {
     Route::get('/dashboard', [AdminHomeController::class, 'index'])->name('dashboard');
+
+    // ── Phân quyền (chỉ Admin role=3 mới vào được) ──────────────────────────
+    Route::prefix('phan-quyen')->name('phan-quyen.')->group(function () {
+        Route::get('/',           [NhomQuyenController::class, 'index'])->name('index');
+        Route::get('/tao-moi',    [NhomQuyenController::class, 'create'])->name('create');
+        Route::post('/',          [NhomQuyenController::class, 'store'])->name('store');
+        Route::get('/{id}/sua',   [NhomQuyenController::class, 'edit'])->name('edit');
+        Route::put('/{id}',       [NhomQuyenController::class, 'update'])->name('update');
+        Route::delete('/{id}',    [NhomQuyenController::class, 'destroy'])->name('destroy');
+    });
 });
 
 // ─── AUTH ROUTES ─────────────────────────────────────────────────────────────
