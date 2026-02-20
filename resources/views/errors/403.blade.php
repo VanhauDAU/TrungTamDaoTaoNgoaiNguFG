@@ -1,11 +1,10 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="vi">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>404 - Trang không tồn tại</title>
-
+    <title>403 - Không có quyền truy cập</title>
     <link rel="stylesheet" href="{{ asset('assets/client/css/pages/errors/error.css') }}">
 </head>
 
@@ -19,13 +18,13 @@
                 </div>
 
                 <div style="margin-top: 14px;">
-                    <div class="code">404</div>
+                    <div class="code">403</div>
                     <h1 class="title">
-                        Trang bạn tìm <span class="highlight">không tồn tại</span> hoặc đã bị di chuyển.
+                        Bạn không có quyền truy cập trang này.
                     </h1>
                     <p class="description">
-                        Có thể bạn đã gõ sai đường dẫn, trang đã bị xóa hoặc tạm thời không khả dụng. Bạn có thể quay
-                        lại trang chủ hoặc tiếp tục khám phá những nội dung khác trên website.
+                        Bạn không có quyền truy cập trang này. Vui lòng kiểm tra lại quyền truy cập hoặc liên hệ với
+                        quản trị viên để được hỗ trợ.
                     </p>
                 </div>
 
@@ -41,13 +40,14 @@
                 </div>
 
                 <form class="search" action="{{ url('/') }}" method="get">
-                    <input type="text" name="q" placeholder="Thử tìm kiếm khóa học, bài viết hoặc nội dung bạn cần..." />
+                    <input type="text" name="q"
+                        placeholder="Thử tìm kiếm khóa học, bài viết hoặc nội dung bạn cần..." />
                     <button class="search-button" type="submit">Tìm kiếm</button>
                 </form>
 
                 <div class="meta">
                     <span>Gợi ý:</span>
-                    <span class="meta-tag">Kiểm tra lại đường dẫn</span>
+                    <span class="meta-tag">Kiểm tra lại quyền truy cập</span>
                     <span class="meta-tag">Quay về trang chủ</span>
                     <span class="meta-tag">Liên hệ hỗ trợ nếu cần</span>
                 </div>
@@ -70,7 +70,7 @@
                             <div style="font-size: 11px; color: #e5e7eb;">Online • 24/7</div>
                         </div>
 
-                        <h3>Bạn đang đi lạc?</h3>
+                        <h3>Bạn không có quyền truy cập trang này.</h3>
                         <p>
                             Đừng lo, hãy quay lại trang chủ để tiếp tục hành trình học tập và khám phá những điều thú
                             vị cùng chúng tôi.

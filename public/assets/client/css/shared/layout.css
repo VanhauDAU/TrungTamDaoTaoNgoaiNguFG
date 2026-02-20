@@ -450,7 +450,7 @@
 /* --- TỔNG QUAN FOOTER --- */
 .custom-container {
     --bs-gutter-x: 1.5rem;
-    max-width: calc(100vw - 128px + 1.5rem);
+    max-width: calc(100vw - 228px + 1.5rem);
     padding-right: calc(var(--bs-gutter-x) * 0.5);
     padding-left: calc(var(--bs-gutter-x) * 0.5);
     margin-right: auto;

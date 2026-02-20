@@ -2,9 +2,9 @@
 @section('title', 'Hóa đơn thanh toán')
 
 @section('stylesheet')
-    <link rel="stylesheet" href="{{ asset('assets/client/css/accountInfo/account.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/client/css/invoices.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/client/css/breadcrumb.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/client/css/pages/account.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/client/css/pages/invoices.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/client/css/pages/breadcrumb.css') }}">
 @endsection
 
 @section('content')

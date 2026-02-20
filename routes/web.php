@@ -6,9 +6,11 @@ use App\Http\Controllers\Client\HomeController;
 use App\Http\Controllers\Client\AboutController;
 use App\Http\Controllers\Client\CourseController;
 use App\Http\Controllers\Client\StudentController;
+use App\Http\Controllers\Admin\HomeController as AdminHomeController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
+// ─── CLIENT ROUTES ──────────────────────────────────────────────────────────
 Route::prefix('/')->name('home.')->group(function () {
     Route::get('/', [HomeController::class, 'index'])->name('index');
     Route::prefix('lien-he')->name('contact.')->group(function () {
@@ -40,6 +42,13 @@ Route::prefix('/')->name('home.')->group(function () {
         Route::get('/lop-hoc', [StudentController::class, 'myClasses'])->name('classes');
     });
 });
+
+// ─── ADMIN ROUTES ────────────────────────────────────────────────────────────
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(function () {
+    Route::get('/dashboard', [AdminHomeController::class, 'index'])->name('dashboard');
+});
+
+// ─── AUTH ROUTES ─────────────────────────────────────────────────────────────
 Auth::routes();
 
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');

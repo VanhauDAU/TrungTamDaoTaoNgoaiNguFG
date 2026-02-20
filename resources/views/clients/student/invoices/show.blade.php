@@ -2,9 +2,9 @@
 @section('title', 'Chi tiết hóa đơn #' . str_pad($invoice->hoaDonId, 6, '0', STR_PAD_LEFT))
 
 @section('stylesheet')
-    <link rel="stylesheet" href="{{ asset('assets/client/css/invoices.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/client/css/accountInfo/account.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/client/css/breadcrumb.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/client/css/pages/invoices.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/client/css/pages/account.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/client/css/pages/breadcrumb.css') }}">
 @endsection
 
 @section('content')

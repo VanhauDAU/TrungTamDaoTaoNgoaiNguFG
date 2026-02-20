@@ -2,8 +2,8 @@
 @section('title', 'Xác nhận đăng ký - ' . $class->tenLopHoc)
 
 @section('stylesheet')
-    <link rel="stylesheet" href="{{ asset('assets/client/css/courseDetail.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/client/css/classesDetail.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/client/css/pages/course-detail.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/client/css/pages/classes-detail.css') }}">
     <style>
         .checkout-page {
             padding: 60px 0;

@@ -19,12 +19,13 @@
 <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css" />
 <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick-theme.css" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-{{-- Css --}}
-<link rel="stylesheet" href="{{ asset('assets/client/css/base.css') }}">
-<link rel="stylesheet" href="{{ asset('assets/client/css/layout.css') }}">
-<link rel="stylesheet" href="{{ asset('assets/client/css/home.css') }}">
-<link rel="stylesheet" href="{{ asset('assets/client/css/responsive.css') }}">
-<link rel="stylesheet" href="{{ asset('assets/client/css/floating-contact.css') }}">
-<link rel="stylesheet" href="{{ asset('assets/client/css/courses.css') }}">
+{{-- Css shared (toàn client) --}}
+<link rel="stylesheet" href="{{ asset('assets/client/css/shared/base.css') }}">
+<link rel="stylesheet" href="{{ asset('assets/client/css/shared/layout.css') }}">
+<link rel="stylesheet" href="{{ asset('assets/client/css/shared/responsive.css') }}">
+<link rel="stylesheet" href="{{ asset('assets/client/css/shared/floating-contact.css') }}">
+{{-- Pages CSS --}}
+<link rel="stylesheet" href="{{ asset('assets/client/css/pages/home.css') }}">
+<link rel="stylesheet" href="{{ asset('assets/client/css/pages/courses.css') }}">
 
 @yield('stylesheet')

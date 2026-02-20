@@ -2,9 +2,9 @@
 @section('title', 'Lớp học của tôi')
 
 @section('stylesheet')
-    <link rel="stylesheet" href="{{ asset('assets/client/css/accountInfo/account.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/client/css/my-classes.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/client/css/breadcrumb.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/client/css/pages/account.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/client/css/pages/my-classes.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/client/css/pages/breadcrumb.css') }}">
 @endsection
 
 @section('content')

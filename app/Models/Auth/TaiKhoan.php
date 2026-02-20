@@ -8,10 +8,18 @@ use Illuminate\Notifications\Notifiable;
 
 class TaiKhoan extends Authenticatable
 {
+    // Constants cho role
+    const ROLE_HOC_VIEN  = 0;
+    const ROLE_GIAO_VIEN = 1;
+    const ROLE_NHAN_VIEN = 2;
+    const ROLE_ADMIN     = 3;
+
     //
     use Notifiable;
     protected $table = 'taikhoan';
     protected $primaryKey = 'taiKhoanId';
+    protected $keyType    = 'int';
+    public    $incrementing = true;
     protected $fillable = [
         'taiKhoan',
         'email',
@@ -25,9 +33,41 @@ class TaiKhoan extends Authenticatable
         'matKhau',
         'remember_token',
     ];
+    protected $casts = [
+        'role'      => 'integer',
+        'trangThai' => 'integer',
+    ];
     public function username()
     {
         return 'taiKhoan';
+    }
+
+    /** Kiểm tra có phải Admin (role = 3) không */
+    public function isAdmin(): bool
+    {
+        return $this->role === self::ROLE_ADMIN;
+    }
+
+    /** Kiểm tra có phải nhân sự (giáo viên/nhân viên/admin) không */
+    public function isStaff(): bool
+    {
+        return in_array($this->role, [
+            self::ROLE_GIAO_VIEN,
+            self::ROLE_NHAN_VIEN,
+            self::ROLE_ADMIN,
+        ]);
+    }
+
+    /** Trả về nhãn tên role */
+    public function getRoleLabel(): string
+    {
+        return match ($this->role) {
+            self::ROLE_HOC_VIEN  => 'Học viên',
+            self::ROLE_GIAO_VIEN => 'Giáo viên',
+            self::ROLE_NHAN_VIEN => 'Nhân viên',
+            self::ROLE_ADMIN     => 'Admin',
+            default              => 'Không xác định',
+        };
     }
     public function getAuthPassword()
     {

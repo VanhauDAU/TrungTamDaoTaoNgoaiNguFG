@@ -227,15 +227,20 @@
                                         Chưa có tài khoản? <a href="{{ route('register') }}" class="ff-title cl-green">Đăng
                                             ký ngay!</a>
                                     </div>
+                                    @if ($errors->any() && !$errors->has('taiKhoan') && !$errors->has('password'))
+                                        <div class="alert alert-danger py-2 mb-3" style="font-size:0.88rem">
+                                            <i class="fas fa-exclamation-circle me-1"></i> {{ $errors->first() }}
+                                        </div>
+                                    @endif
 
-                                    {{-- Email --}}
+                                    {{-- Tài khoản --}}
                                     <input type="hidden" name="login_attempt" value="1">
                                     <div class="mb-3">
-                                        <input type="email" id="email" name="email"
-                                            class="form-control @error('email') is-invalid @enderror"
-                                            value="{{ old('email') }}" required autocomplete="email" autofocus
-                                            placeholder="Email đăng nhập">
-                                        @error('email')
+                                        <input type="text" id="taiKhoan" name="taiKhoan"
+                                            class="form-control @error('taiKhoan') is-invalid @enderror"
+                                            value="{{ old('taiKhoan') }}" required autocomplete="username" autofocus
+                                            placeholder="Tên tài khoản">
+                                        @error('taiKhoan')
                                             <div class="invalid-feedback d-block text-danger mt-1">
                                                 <i class="fas fa-exclamation-triangle me-1"></i> {{ $message }}
                                             </div>

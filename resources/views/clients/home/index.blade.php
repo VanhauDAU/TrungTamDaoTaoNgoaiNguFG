@@ -76,8 +76,9 @@
                             @foreach ($topGiaoVien as $giaoVien)
                                 <div class="item">
                                     <h4 class="cl-green fw-bold">{{ $giaoVien->hoSoNguoiDung->hoTen }}</h4>
-                                    <p class="text-muted">Tốt nghiệp {{ $giaoVien->nhanSu->hocVi }} - với bằng cấp
-                                        {{ $giaoVien->nhanSu->bangCap }}</p>
+                                    <p class="text-muted">Tốt nghiệp {{ optional($giaoVien->nhanSu)->hocVi ?? 'N/A' }} - với
+                                        bằng cấp
+                                        {{ optional($giaoVien->nhanSu)->bangCap ?? 'N/A' }}</p>
                                 </div>
                             @endforeach
                         </div>
