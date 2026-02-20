@@ -197,7 +197,8 @@
         <div>
             <div class="welcome-title">
                 Xin chào,
-                {{ auth()->user()->hoSoNguoiDung->hoTen ?? (auth()->user()->nhanSu->hoTen ?? auth()->user()->taiKhoan) }}! 👋
+                {{ auth()->user()->hoSoNguoiDung->hoTen ?? (auth()->user()->nhanSu->hoTen ?? auth()->user()->taiKhoan) }}!
+                👋
             </div>
             <div class="welcome-sub">
                 Hôm nay là {{ \Carbon\Carbon::now()->isoFormat('dddd, D/M/YYYY') }}. Chào mừng bạn trở lại hệ thống quản
@@ -218,7 +219,7 @@
                     <i class="fas fa-user-graduate"></i>
                 </div>
                 <div>
-                    <div class="stat-value">—</div>
+                    <div class="stat-value">{{ $totalStudent }}</div>
                     <div class="stat-label">Tổng học viên</div>
                 </div>
             </div>

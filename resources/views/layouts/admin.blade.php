@@ -322,38 +322,60 @@
             </a>
 
             <div class="sidebar-section">Học vụ</div>
-            <a href="#" class="nav-item {{ Request::is('admin/khoa-hoc*') ? 'active' : '' }}">
-                <i class="fas fa-book-open"></i> Khoá học
-            </a>
-            <a href="#" class="nav-item {{ Request::is('admin/lop-hoc*') ? 'active' : '' }}">
-                <i class="fas fa-chalkboard-teacher"></i> Lớp học
-            </a>
-            <a href="#" class="nav-item {{ Request::is('admin/hoc-vien*') ? 'active' : '' }}">
-                <i class="fas fa-user-graduate"></i> Học viên
-            </a>
-            <a href="#" class="nav-item {{ Request::is('admin/giao-vien*') ? 'active' : '' }}">
-                <i class="fas fa-chalkboard"></i> Giáo viên
-            </a>
+            @if (auth()->user()->canDo('khoa_hoc', 'xem'))
+                <a href="#" class="nav-item {{ Request::is('admin/khoa-hoc*') ? 'active' : '' }}">
+                    <i class="fas fa-book-open"></i> Khoá học
+                </a>
+            @endif
+            @if (auth()->user()->canDo('lop_hoc', 'xem'))
+                <a href="#" class="nav-item {{ Request::is('admin/lop-hoc*') ? 'active' : '' }}">
+                    <i class="fas fa-chalkboard-teacher"></i> Lớp học
+                </a>
+            @endif
+            @if (auth()->user()->canDo('hoc_vien', 'xem'))
+                <a href="#" class="nav-item {{ Request::is('admin/hoc-vien*') ? 'active' : '' }}">
+                    <i class="fas fa-user-graduate"></i> Học viên
+                </a>
+            @endif
+            @if (auth()->user()->canDo('giao_vien', 'xem'))
+                <a href="#" class="nav-item {{ Request::is('admin/giao-vien*') ? 'active' : '' }}">
+                    <i class="fas fa-chalkboard"></i> Giáo viên
+                </a>
+            @endif
 
             <div class="sidebar-section">Vận hành</div>
-            <a href="#" class="nav-item {{ Request::is('admin/nhan-vien*') ? 'active' : '' }}">
-                <i class="fas fa-users-cog"></i> Nhân viên
-            </a>
-            <a href="#" class="nav-item {{ Request::is('admin/tai-chinh*') ? 'active' : '' }}">
-                <i class="fas fa-wallet"></i> Tài chính
-            </a>
-            <a href="#" class="nav-item {{ Request::is('admin/dang-ky*') ? 'active' : '' }}">
-                <i class="fas fa-clipboard-list"></i> Đăng ký học
-            </a>
+            @if (auth()->user()->canDo('nhan_vien', 'xem'))
+                <a href="#" class="nav-item {{ Request::is('admin/nhan-vien*') ? 'active' : '' }}">
+                    <i class="fas fa-users-cog"></i> Nhân viên
+                </a>
+            @endif
+            @if (auth()->user()->canDo('tai_chinh', 'xem'))
+                <a href="#" class="nav-item {{ Request::is('admin/tai-chinh*') ? 'active' : '' }}">
+                    <i class="fas fa-wallet"></i> Tài chính
+                </a>
+            @endif
+            @if (auth()->user()->canDo('dang_ky', 'xem'))
+                <a href="#" class="nav-item {{ Request::is('admin/dang-ky*') ? 'active' : '' }}">
+                    <i class="fas fa-clipboard-list"></i> Đăng ký học
+                </a>
+            @endif
 
             @if (auth()->user()->isAdmin())
                 <div class="sidebar-section">Hệ thống</div>
-                <a href="#" class="nav-item {{ Request::is('admin/tai-khoan*') ? 'active' : '' }}">
-                    <i class="fas fa-user-shield"></i> Tài khoản
+                <a href="{{ route('admin.phan-quyen.index') }}"
+                    class="nav-item {{ Request::is('admin/phan-quyen*') ? 'active' : '' }}">
+                    <i class="fas fa-shield-alt"></i> Phân quyền
                 </a>
-                <a href="#" class="nav-item {{ Request::is('admin/cai-dat*') ? 'active' : '' }}">
-                    <i class="fas fa-cog"></i> Cài đặt
-                </a>
+                @if (auth()->user()->canDo('tai_khoan', 'xem'))
+                    <a href="#" class="nav-item {{ Request::is('admin/tai-khoan*') ? 'active' : '' }}">
+                        <i class="fas fa-user-shield"></i> Tài khoản
+                    </a>
+                @endif
+                @if (auth()->user()->canDo('cai_dat', 'xem'))
+                    <a href="#" class="nav-item {{ Request::is('admin/cai-dat*') ? 'active' : '' }}">
+                        <i class="fas fa-cog"></i> Cài đặt
+                    </a>
+                @endif
             @endif
         </nav>
 
@@ -369,9 +391,9 @@
                     </div>
                     <div class="user-role">{{ auth()->user()->getRoleLabel() }}</div>
                 </div>
-                <form action="{{ route('logout') }}" method="POST">
+                <form id="admin-logout-form" action="{{ route('logout') }}" method="POST">
                     @csrf
-                    <button type="submit" class="btn-logout" title="Đăng xuất">
+                    <button type="button" class="btn-logout" id="btn-logout-admin" title="Đăng xuất">
                         <i class="fas fa-sign-out-alt"></i>
                     </button>
                 </form>
@@ -426,6 +448,7 @@
 
     {{-- Bootstrap JS (cho alert dismiss + dropdown) --}}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
         // Toggle sidebar trên mobile
@@ -441,6 +464,26 @@
                 el.classList.remove('show');
                 setTimeout(() => el.remove(), 300);
             }, 4000);
+        });
+
+        // Xác nhận đăng xuất bằng SweetAlert2
+        document.getElementById('btn-logout-admin')?.addEventListener('click', function() {
+            Swal.fire({
+                title: 'Đăng xuất?',
+                text: 'Bạn có chắc muốn đăng xuất khỏi hệ thống?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: '<i class="fas fa-sign-out-alt me-1"></i> Đăng xuất',
+                cancelButtonText: 'Hủy',
+                confirmButtonColor: '#e31e24',
+                cancelButtonColor: '#6c757d',
+                reverseButtons: true,
+                focusCancel: true,
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('admin-logout-form').submit();
+                }
+            });
         });
     </script>
 

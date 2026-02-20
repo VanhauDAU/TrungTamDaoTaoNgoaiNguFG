@@ -17,7 +17,6 @@ class IsAdmin
         if (!auth()->check()) {
             return redirect()->route('login');
         }
-
         if (!auth()->user()->isStaff()) {
             abort(403, 'Bạn không có quyền truy cập trang này.');
         }
