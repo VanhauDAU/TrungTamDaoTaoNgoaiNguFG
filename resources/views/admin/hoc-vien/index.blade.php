@@ -16,9 +16,21 @@
             <i class="fas fa-user-graduate me-2" style="color:#27c4b5"></i>Danh sách học viên
             <span>{{ $hocViens->total() }} kết quả</span>
         </div>
-        <a href="{{ route('admin.hoc-vien.create') }}" class="btn-add-student">
-            <i class="fas fa-plus"></i> Thêm học viên
-        </a>
+        <div style="display:flex;gap:10px;align-items:center">
+            @php $soXoa = \App\Models\Auth\TaiKhoan::onlyTrashed()->where('role', \App\Models\Auth\TaiKhoan::ROLE_HOC_VIEN)->count(); @endphp
+            <a href="{{ route('admin.hoc-vien.trash') }}" class="btn-add-student"
+                style="background:#fee2e2;color:#dc2626;border-color:#fca5a5" title="Thùng rác">
+                <i class="fas fa-trash-can"></i> Thùng rác
+                @if ($soXoa > 0)
+                    <span
+                        style="background:#dc2626;color:#fff;border-radius:20px;padding:1px 7px;
+                                 font-size:.72rem;margin-left:4px">{{ $soXoa }}</span>
+                @endif
+            </a>
+            <a href="{{ route('admin.hoc-vien.create') }}" class="btn-add-student">
+                <i class="fas fa-plus"></i> Thêm học viên
+            </a>
+        </div>
     </div>
 
     {{-- ── Stats strip ────────────────────────────────────────────── --}}
@@ -83,7 +95,7 @@
     {{-- ── Table card ─────────────────────────────────────────────── --}}
     <div class="hv-card">
         <div class="hv-table-header">
-            <div class="hv-table-title"><i class="fas fa-list me-2"></i>Danh sách học viên</div>
+            <div class="hv-table-title"><i class="fas fa-list me-2"></i> Danh sách học viên</div>
             <div class="hv-table-count">
                 Hiển thị {{ $hocViens->firstItem() ?? 0 }}–{{ $hocViens->lastItem() ?? 0 }}
                 / {{ $hocViens->total() }} bản ghi
@@ -208,10 +220,8 @@
 
                                 <td>
                                     <div class="hv-actions">
-                                        <a href="#" class="btn-action btn-action-view" title="Xem chi tiết">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        <a href="#" class="btn-action btn-action-edit" title="Chỉnh sửa">
+                                        <a href="{{ route('admin.hoc-vien.edit', $hv->taiKhoan) }}"
+                                            class="btn-action btn-action-edit" title="Chỉnh sửa">
                                             <i class="fas fa-pen"></i>
                                         </a>
                                         <button type="button" class="btn-action btn-action-del" title="Xóa"
@@ -240,12 +250,19 @@
 
 @endsection
 
+{{-- Hidden DELETE form --}}
+<form id="delete-form" method="POST" style="display:none">
+    @csrf
+    @method('DELETE')
+</form>
+
 @section('script')
     <script>
         function confirmDelete(id, name) {
             Swal.fire({
                 title: 'Xóa học viên?',
-                html: `Bạn có chắc muốn xóa học viên <strong>${name}</strong>? Hành động này không thể hoàn tác.`,
+                html: `Bạn có chắc muốn xóa học viên <strong>${name}</strong>?<br>
+                       <small style="color:#8899a6">Dữ liệu lớp học và hóa đơn vẫn được giữ nguyên.</small>`,
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonText: '<i class="fas fa-trash me-1"></i> Xóa',
@@ -256,8 +273,9 @@
                 focusCancel: true,
             }).then(result => {
                 if (result.isConfirmed) {
-                    // TODO: submit delete form khi có route
-                    Swal.fire('Đã ghi nhận!', 'Chức năng xóa sẽ được triển khai sớm.', 'info');
+                    const form = document.getElementById('delete-form');
+                    form.action = `/admin/hoc-vien/${id}`;
+                    form.submit();
                 }
             });
         }

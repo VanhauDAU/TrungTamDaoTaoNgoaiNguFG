@@ -5,6 +5,7 @@ namespace App\Models\Auth;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Education\DangKyLopHoc;
 
 class TaiKhoan extends Authenticatable
@@ -16,7 +17,7 @@ class TaiKhoan extends Authenticatable
     const ROLE_ADMIN     = 3;
 
     //
-    use Notifiable;
+    use Notifiable, SoftDeletes;
     protected $table = 'taikhoan';
     protected $primaryKey = 'taiKhoanId';
     protected $keyType    = 'int';

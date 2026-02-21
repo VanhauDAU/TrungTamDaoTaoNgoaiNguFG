@@ -61,9 +61,14 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
 
     // ── Học viên ─────────────────────────────────────────────────────────────
     Route::prefix('hoc-vien')->name('hoc-vien.')->group(function () {
-        Route::get('/',          [AdminHocVienController::class, 'index'])->name('index');
-        Route::get('/tao-moi',   [AdminHocVienController::class, 'create'])->name('create');
-        Route::post('/',         [AdminHocVienController::class, 'store'])->name('store');
+        Route::get('/',                    [AdminHocVienController::class, 'index'])->name('index');
+        Route::get('/tao-moi',             [AdminHocVienController::class, 'create'])->name('create');
+        Route::post('/',                   [AdminHocVienController::class, 'store'])->name('store');
+        Route::get('/thung-rac',           [AdminHocVienController::class, 'trash'])->name('trash');
+        Route::patch('/{id}/khoi-phuc',    [AdminHocVienController::class, 'restore'])->name('restore');
+        Route::get('/{taiKhoan}/sua',      [AdminHocVienController::class, 'edit'])->name('edit');
+        Route::put('/{taiKhoan}',          [AdminHocVienController::class, 'update'])->name('update');
+        Route::delete('/{taiKhoan}',       [AdminHocVienController::class, 'destroy'])->name('destroy');
     });
 });
 
