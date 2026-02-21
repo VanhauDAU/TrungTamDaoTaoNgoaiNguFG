@@ -7,6 +7,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Education\DangKyLopHoc;
+use App\Models\Facility\CoSoDaoTao;
 
 class TaiKhoan extends Authenticatable
 {
@@ -89,7 +90,6 @@ class TaiKhoan extends Authenticatable
     {
         return $this->hasMany(DangKyLopHoc::class, 'taiKhoanId', 'taiKhoanId');
     }
-
     /** Nhóm quyền được gán cho tài khoản này */
     public function nhomQuyen()
     {

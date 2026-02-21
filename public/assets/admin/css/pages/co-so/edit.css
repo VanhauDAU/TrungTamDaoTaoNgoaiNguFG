@@ -1,0 +1,156 @@
+.cs-form-wrap {
+    max-width: 800px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    padding: 30px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.cs-form-header {
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.cs-form-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1e293b;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    color: #475569;
+    background: #f1f5f9;
+    text-decoration: none;
+    transition: .2s;
+}
+
+.btn-back:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.form-group.full {
+    grid-column: 1 / -1;
+}
+
+.form-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #334155;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.form-label .req {
+    color: #ef4444;
+}
+
+.form-control {
+    width: 100%;
+    border: 1px solid #cbd5e1;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    outline: none;
+    transition: .2s;
+}
+
+.form-control:focus {
+    border-color: #f59e0b;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
+}
+
+.is-invalid {
+    border-color: #ef4444 !important;
+}
+
+.invalid-feedback {
+    font-size: 0.8rem;
+    color: #ef4444;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.btn-save {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #f59e0b;
+    color: #fff;
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    border: none;
+    cursor: pointer;
+    transition: .2s;
+    margin-top: 10px;
+}
+
+.btn-save:hover {
+    background: #d97706;
+    transform: translateY(-1px);
+}
+
+.map-hint {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-top: 6px;
+}
+
+/* ── Cascade dropdown ── */
+.select-loading-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.select-loading-wrap .form-control {
+    flex: 1;
+}
+
+.select-spinner {
+    position: absolute;
+    right: 12px;
+    color: #f59e0b;
+    font-size: 14px;
+    pointer-events: none;
+    display: inline-flex;
+    align-items: center;
+}
+
+.hint-link {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #f59e0b;
+    text-decoration: none;
+    margin-left: 8px;
+}
+
+.hint-link:hover {
+    text-decoration: underline;
+}

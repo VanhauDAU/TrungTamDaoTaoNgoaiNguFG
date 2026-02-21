@@ -5,15 +5,24 @@ namespace App\Http\Controllers\Client;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Facility\CoSoDaoTao;
+use App\Models\Facility\TinhThanh;
 use App\Models\Interaction\LienHe;
 use Illuminate\Support\Facades\Validator;
 
 class ContactController extends Controller
 {
-    //
     public function index(){
-        $coSoDaoTao = CoSoDaoTao::with('tinhThanh')->get();
-        return view('clients.contact.index', compact('coSoDaoTao'));
+        // Danh sách cơ sở đang hoạt động
+        $coSoDaoTao = CoSoDaoTao::with('tinhThanh')
+            ->where('trangThai', 1)
+            ->get();
+
+        // Chỉ lấy tỉnh có cơ sở đang hoạt động
+        $tinhThanhs = TinhThanh::whereHas('coSoDaoTao', fn($q) => $q->where('trangThai', 1))
+            ->orderBy('tenTinhThanh')
+            ->get();
+
+        return view('clients.contact.index', compact('coSoDaoTao', 'tinhThanhs'));
     }
 
     /**

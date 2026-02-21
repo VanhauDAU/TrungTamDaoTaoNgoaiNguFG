@@ -1,4 +1,4 @@
-/* --- TỔNG QUAN & RESET --- */
+/* ─── TỔNG QUAN ────────────────────────────────────────────────────────────── */
 .contact_page {
     background: var(--background-color);
     overflow: hidden;
@@ -16,23 +16,8 @@
     cursor: pointer;
 }
 
-/* --- TIÊU ĐỀ ANIMATE --- */
-.title_animate {
-    position: relative;
-    display: inline-block;
-}
 
-.title_animate .title-style-1 {
-    stroke-dasharray: 2000;
-    stroke-dashoffset: 2000;
-    transition: 2s ease-in-out;
-}
-
-.title_animate svg.active .title-style-1 {
-    stroke-dashoffset: 0;
-}
-
-/* --- CONTACT CARDS --- */
+/* ─── CONTACT CARDS ─────────────────────────────────────────────────────────── */
 .contact_item {
     padding: 40px;
     border-radius: var(--radius-lg);
@@ -74,96 +59,421 @@
     transform: translateX(5px);
 }
 
-/* --- MAP SLIDER CONTAINER --- */
-.map_section_container {
-    position: relative;
-    border-radius: var(--radius-xl);
+/* ─── BRANCH SECTION ────────────────────────────────────────────────────────── */
+.branch_section {
     margin-top: 60px;
 }
 
-.map_slide_item {
-    position: relative;
-    outline: none;
-}
-
-.iframe_box {
-    border-radius: var(--radius-xl);
-    overflow: hidden;
-    line-height: 0;
-    filter: grayscale(0.2);
-}
-
-/* --- META INFO (Bảng thông tin nổi) --- */
-.meta_info_box {
-    position: absolute;
-    bottom: 40px;
-    left: 40px;
-    background: #fff;
-    padding: 30px;
-    border-radius: var(--radius-md);
-    width: 350px;
-    z-index: 10;
-    box-shadow: var(--shadow);
-}
-
-.city_label {
-    display: inline-block;
-    padding: 3px 12px;
-    background: var(--bg-pink);
-    color: var(--accent-red);
-    border-radius: 5px;
-    font-weight: 700;
-}
-
-/* --- NAVIGATION BUTTONS --- */
-.map_nav_box {
-    position: absolute;
-    bottom: 40px;
-    right: 40px;
-    z-index: 20;
+.branch_section_header {
     display: flex;
-    gap: 15px;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
 }
 
-.nav-btn {
-    width: 45px;
-    height: 45px;
-    border-radius: 50%;
-    background: var(--accent-teal);
+.branch_count_badge {
+    background: var(--accent-teal, #27c4b5);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 4px 14px;
+    border-radius: 20px;
 }
 
-.nav-btn:hover {
-    background: var(--primary-navy);
+/* ─── FILTER BAR ─────────────────────────────────────────────────────────────── */
+.branch_filter_bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+    background: #fff;
+    padding: 16px 20px;
+    border-radius: 14px;
+    box-shadow: 0 2px 16px rgba(0, 0, 0, .07);
 }
 
-/* --- RESPONSIVE --- */
-@media (max-width: 991.98px) {
-    .contact_item {
-        padding: 30px;
+.filter_item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f5f7fb;
+    border-radius: 10px;
+    padding: 0 14px;
+    flex: 1;
+    min-width: 180px;
+    height: 44px;
+}
+
+.filter_item.filter_search {
+    min-width: 220px;
+}
+
+.filter_icon {
+    color: #27c4b5;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.filter_item input,
+.filter_item select {
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 14px;
+    width: 100%;
+    color: #333;
+    cursor: pointer;
+}
+
+.filter_reset_btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    border: none;
+    background: #fee2e2;
+    color: #ef4444;
+    font-size: 16px;
+    cursor: pointer;
+    transition: .2s;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.filter_reset_btn:hover {
+    background: #ef4444;
+    color: #fff;
+}
+
+/* ─── BRANCH LAYOUT ─────────────────────────────────────────────────────────── */
+.branch_layout {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 24px;
+    align-items: start;
+    min-height: 520px;
+}
+
+/* ─── BRANCH LIST ────────────────────────────────────────────────────────────── */
+.branch_list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    max-height: 600px;
+    overflow-y: auto;
+    padding-right: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: #27c4b5 #f0f0f0;
+}
+
+.branch_list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.branch_list::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-radius: 3px;
+}
+
+.branch_list::-webkit-scrollbar-thumb {
+    background: #27c4b5;
+    border-radius: 3px;
+}
+
+.branch_card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 18px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, .06);
+    border: 2px solid transparent;
+    transition: all .25s ease;
+    cursor: default;
+}
+
+.branch_card:hover {
+    border-color: #27c4b5;
+    box-shadow: 0 4px 20px rgba(39, 196, 181, .15);
+}
+
+.branch_card.active {
+    border-color: #27c4b5;
+    background: #f0fdfb;
+}
+
+.branch_card_header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.branch_icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #27c4b5, #1a9b8e);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.branch_name {
+    font-weight: 700;
+    font-size: 15px;
+    color: #1a2d4f;
+    line-height: 1.3;
+}
+
+.branch_province {
+    font-size: 12px;
+    color: #27c4b5;
+    margin-top: 2px;
+    font-weight: 600;
+}
+
+.branch_province i {
+    margin-right: 4px;
+}
+
+.branch_card_body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.branch_info {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 13px;
+    color: #555;
+    line-height: 1.4;
+}
+
+.branch_info i {
+    color: #27c4b5;
+    width: 14px;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.branch_info a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.branch_info a:hover {
+    color: #27c4b5;
+}
+
+.branch_card_footer {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    border-top: 1px solid #f0f0f0;
+    padding-top: 10px;
+}
+
+.btn_view_map,
+.btn_contact {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    transition: .2s;
+}
+
+.btn_view_map {
+    background: #e0faf8;
+    color: #27c4b5;
+}
+
+.btn_view_map:hover {
+    background: #27c4b5;
+    color: #fff;
+}
+
+.btn_contact {
+    background: #e8f0fe;
+    color: #1a2d4f;
+}
+
+.btn_contact:hover {
+    background: #1a2d4f;
+    color: #fff;
+}
+
+.branch_empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 40px 20px;
+    color: #aaa;
+    background: #fafafa;
+    border-radius: 14px;
+    font-size: 14px;
+}
+
+.branch_empty i {
+    font-size: 40px;
+    color: #ddd;
+}
+
+/* ─── MAP ────────────────────────────────────────────────────────────────────── */
+.branch_map_wrap {
+    position: sticky;
+    top: 20px;
+}
+
+#branchMap {
+    width: 100%;
+    height: 560px;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, .1);
+    z-index: 1;
+}
+
+.map_hint_text {
+    text-align: center;
+    margin-top: 10px;
+    font-size: 12px;
+    color: #aaa;
+}
+
+.map_hint_text i {
+    margin-right: 4px;
+}
+
+/* Leaflet custom marker */
+.custom-marker {
+    background: transparent;
+    border: none;
+}
+
+.marker-pin {
+    width: 36px;
+    height: 44px;
+    background: linear-gradient(135deg, #1a2d4f, #27c4b5);
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, .25);
+    transition: transform .2s;
+}
+
+.marker-pin.active {
+    background: linear-gradient(135deg, #27c4b5, #0ea595);
+    transform: rotate(-45deg) scale(1.15);
+    box-shadow: 0 4px 16px rgba(39, 196, 181, .5);
+}
+
+.marker-pin i {
+    color: #fff;
+    font-size: 14px;
+    transform: rotate(45deg);
+}
+
+/* Leaflet popup */
+.branch-popup .leaflet-popup-content-wrapper {
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, .15);
+    padding: 0;
+}
+
+.branch-popup .leaflet-popup-content {
+    margin: 0;
+}
+
+.popup-content {
+    padding: 14px 16px;
+    min-width: 180px;
+}
+
+.popup-content strong {
+    display: block;
+    font-size: 14px;
+    font-weight: 700;
+    color: #1a2d4f;
+    margin-bottom: 6px;
+}
+
+.popup-ward,
+.popup-addr,
+.popup-phone {
+    font-size: 12px;
+    color: #555;
+    margin-top: 4px;
+}
+
+.popup-ward i,
+.popup-addr i,
+.popup-phone i {
+    color: #27c4b5;
+    margin-right: 4px;
+}
+
+.popup-phone a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.popup-phone a:hover {
+    color: #27c4b5;
+}
+
+/* ─── RESPONSIVE ────────────────────────────────────────────────────────────── */
+@media (max-width: 1100px) {
+    .branch_layout {
+        grid-template-columns: 320px 1fr;
+    }
+}
+
+@media (max-width: 900px) {
+    .branch_layout {
+        grid-template-columns: 1fr;
     }
 
-    .meta_info_box {
-        width: 320px;
-        padding: 25px;
-    }
-}
-
-@media (max-width: 767.98px) {
-    .meta_info_box {
+    .branch_map_wrap {
         position: static;
-        width: 100%;
-        margin-top: -20px;
-        box-shadow: none;
-        border: 1px solid #eee;
     }
 
-    .map_nav_box {
-        bottom: auto;
-        top: 20px;
-        right: 20px;
+    #branchMap {
+        height: 380px;
     }
 
-    .iframe_box iframe {
-        height: 400px;
+    .branch_list {
+        max-height: 400px;
+    }
+}
+
+@media (max-width: 600px) {
+    .contact_item {
+        padding: 28px 20px;
+    }
+
+    .branch_filter_bar {
+        gap: 8px;
+        padding: 14px;
+    }
+
+    .filter_item {
+        min-width: 140px;
     }
 }

@@ -20,6 +20,13 @@
 </head>
 
 <body>
+    {{-- Global Admin Page Loader --}}
+    <div id="admin-global-loader" class="admin-global-loader">
+        <div class="loader-content">
+            <div class="loader-spinner"></div>
+            <p class="loader-text">Đang tải...</p>
+        </div>
+    </div>
 
     {{-- ──────────────────────── SIDEBAR ──────────────────────── --}}
     <x-admin.sidebar />
@@ -142,6 +149,54 @@
             if (activeLink) {
                 const group = activeLink.closest('.nav-group');
                 if (group) group.classList.add('open');
+            }
+        });
+
+        // ── GLOBAL LOADER ──────────────────────────
+        const globalLoader = document.getElementById('admin-global-loader');
+        let loaderTimeout;
+
+        function showLoader() {
+            if (globalLoader) {
+                globalLoader.classList.add('active');
+                // Auto hide after 10s fallback
+                loaderTimeout = setTimeout(() => hideLoader(), 10000);
+            }
+        }
+
+        function hideLoader() {
+            if (globalLoader) {
+                globalLoader.classList.remove('active');
+                clearTimeout(loaderTimeout);
+            }
+        }
+
+        // Hiện loader khi user click link chuyển trang (trừ những link có thuộc tính target="_blank" hoặc href "#")
+        document.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                const href = this.getAttribute('href');
+                const target = this.getAttribute('target');
+                if (href && href !== '#' && !href.startsWith('javascript:') && target !== '_blank' && !e
+                    .ctrlKey && !e.metaKey) {
+                    showLoader();
+                }
+            });
+        });
+
+        // Hiện loader khi submit form truyền thống (không phải ajax)
+        document.querySelectorAll('form:not(.ajax-form)').forEach(form => {
+            form.addEventListener('submit', function() {
+                showLoader();
+            });
+        });
+
+        // Ẩn loader khi trang load xong
+        window.addEventListener('load', hideLoader);
+
+        // Đề phòng user back lại bằng browser thì tắt loader (safari bfcache)
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted) {
+                hideLoader();
             }
         });
     </script>
