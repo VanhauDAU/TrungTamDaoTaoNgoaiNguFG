@@ -8,13 +8,16 @@ class PhongHoc extends Model
 {
     //
     protected $primaryKey = 'phongHocId';
-    protected $table = 'phongHoc';
+    protected $table = 'phonghoc';
     protected $fillable = [
-        'phongHocId',
         'tenPhong',
         'sucChua',
         'trangThietBi',
         'coSoId',
         'trangThai'
     ];
+    public function coSoDaoTao()
+    {
+        return $this->belongsTo(CoSoDaoTao::class, 'coSoId', 'coSoId');
+    }
 }
