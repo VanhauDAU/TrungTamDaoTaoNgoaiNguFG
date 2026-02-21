@@ -9,8 +9,18 @@ use App\Http\Controllers\Client\StudentController;
 use App\Http\Controllers\Admin\HomeController as AdminHomeController;
 use App\Http\Controllers\Admin\NhomQuyenController;
 use App\Http\Controllers\Admin\HocVien\HocVienController as AdminHocVienController;
+use App\Http\Controllers\Admin\Facility\CoSoController;
+use App\Http\Controllers\Admin\Facility\PhongHocController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+
+// ─── API ROUTES (Public) ────────────────────────────────────────────────────
+Route::prefix('api')->name('api.')->group(function () {
+    // Lấy danh sách phường/xã theo tỉnh (từ provinces.open-api.vn proxy)
+    Route::get('/phuong-xa/{maTinh}', [CoSoController::class, 'getPhuongXa'])->name('phuongxa');
+    // Danh sách cơ sở có filter (dùng cho client contact page)
+    Route::get('/co-so', [CoSoController::class, 'apiList'])->name('coso');
+});
 
 // ─── CLIENT ROUTES ──────────────────────────────────────────────────────────
 Route::prefix('/')->name('home.')->group(function () {
@@ -69,6 +79,24 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
         Route::get('/{taiKhoan}/sua',      [AdminHocVienController::class, 'edit'])->name('edit');
         Route::put('/{taiKhoan}',          [AdminHocVienController::class, 'update'])->name('update');
         Route::delete('/{taiKhoan}',       [AdminHocVienController::class, 'destroy'])->name('destroy');
+    });
+
+    // ── Cơ sở Đào tạo ────────────────────────────────────────────────────────
+    Route::prefix('co-so')->name('co-so.')->group(function () {
+        Route::get('/',           [CoSoController::class, 'index'])->name('index');
+        Route::get('/tao-moi',    [CoSoController::class, 'create'])->name('create');
+        Route::post('/',          [CoSoController::class, 'store'])->name('store');
+        Route::get('/{id}',       [CoSoController::class, 'show'])->name('show');
+        Route::get('/{id}/sua',   [CoSoController::class, 'edit'])->name('edit');
+        Route::put('/{id}',       [CoSoController::class, 'update'])->name('update');
+        Route::delete('/{id}',    [CoSoController::class, 'destroy'])->name('destroy');
+    });
+
+    // ── Phòng Học ─────────────────────────────────────────────────────────────
+    Route::prefix('phong-hoc')->name('phong-hoc.')->group(function () {
+        Route::post('/',       [PhongHocController::class, 'store'])->name('store');
+        Route::put('/{id}',    [PhongHocController::class, 'update'])->name('update');
+        Route::delete('/{id}', [PhongHocController::class, 'destroy'])->name('destroy');
     });
 });
 

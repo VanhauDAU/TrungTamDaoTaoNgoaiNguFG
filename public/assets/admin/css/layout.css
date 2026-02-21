@@ -367,3 +367,91 @@ body {
         margin-left: 0;
     }
 }
+
+/* ============================================
+   GLOBAL ADMIN LOADER
+============================================ */
+.admin-global-loader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+    background: rgba(255, 255, 255, 0.85);
+    /* Semi-transparent white */
+    backdrop-filter: blur(4px);
+    display: none;
+}
+
+.admin-global-loader.active {
+    display: flex;
+}
+
+.loader-spinner {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto;
+    border: 4px solid rgba(0, 0, 0, 0.05);
+    /* very light trail */
+    border-top-color: #E31E24;
+    border-right-color: #27C4B5;
+    border-radius: 50%;
+    animation: spin-admin 1s linear infinite;
+}
+
+@keyframes spin-admin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.loader-content {
+    text-align: center;
+    animation: fadeInUp 0.8s ease;
+}
+
+.loader-text {
+    color: #10454F;
+    font-size: 16px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    margin: 15px 0 0 0;
+    animation: dots 1.5s steps(4, end) infinite;
+}
+
+@keyframes dots {
+
+    0%,
+    20% {
+        content: 'Đang tải';
+    }
+
+    40% {
+        content: 'Đang tải.';
+    }
+
+    60% {
+        content: 'Đang tải..';
+    }
+
+    80%,
+    100% {
+        content: 'Đang tải...';
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

@@ -161,7 +161,8 @@
                             Tài Khoản
                         </a>
                     @endif
-                    <a href="#" class="nav-sub-item {{ Request::is('admin/co-so*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.co-so.index') }}"
+                        class="nav-sub-item {{ Request::is('admin/co-so*') ? 'active' : '' }}">
                         Cơ Sở & Phòng Học
                     </a>
                     @if (auth()->user()->canDo('cai_dat', 'xem'))
