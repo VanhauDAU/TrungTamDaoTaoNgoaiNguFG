@@ -1,0 +1,141 @@
+.form-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 28px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .05);
+    max-width: 900px;
+}
+
+.form-label-custom {
+    font-size: .85rem;
+    font-weight: 600;
+    color: #1a2b3c;
+    margin-bottom: 6px;
+    display: block;
+}
+
+.form-control-custom {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: .875rem;
+    outline: none;
+    transition: border .2s;
+}
+
+.form-control-custom:focus {
+    border-color: #27c4b5;
+}
+
+/* ── PERMISSION MATRIX ── */
+.matrix-wrap {
+    overflow-x: auto;
+    margin-top: 24px;
+}
+
+.matrix-title {
+    font-size: .9rem;
+    font-weight: 600;
+    color: #1a2b3c;
+    margin-bottom: 14px;
+}
+
+table.matrix {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.matrix thead th {
+    background: #f8fafc;
+    font-size: .72rem;
+    font-weight: 700;
+    color: #8899a6;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    padding: 10px 14px;
+    text-align: center;
+    border-bottom: 1px solid #f0f4f8;
+}
+
+.matrix thead th:first-child {
+    text-align: left;
+}
+
+.matrix tbody tr {
+    border-bottom: 1px solid #f7f9fb;
+}
+
+.matrix tbody tr:last-child {
+    border-bottom: none;
+}
+
+.matrix tbody tr:hover {
+    background: #f8fffe;
+}
+
+.matrix tbody td {
+    padding: 12px 14px;
+    font-size: .875rem;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.matrix tbody td:first-child {
+    text-align: left;
+    font-weight: 500;
+    color: #1a2b3c;
+}
+
+.cb-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cb-wrap input[type=checkbox] {
+    width: 18px;
+    height: 18px;
+    accent-color: #27c4b5;
+    cursor: pointer;
+}
+
+.action-icon {
+    font-size: .75rem;
+    color: #8899a6;
+    display: block;
+    margin-top: 3px;
+}
+
+.action-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 28px;
+}
+
+.btn-save {
+    background: #27c4b5;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 24px;
+    font-size: .875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .2s;
+}
+
+.btn-save:hover {
+    background: #1eafa0;
+}
+
+.btn-back {
+    color: #8899a6;
+    text-decoration: none;
+    font-size: .85rem;
+}
+
+.btn-back:hover {
+    color: #1a2b3c;
+}

@@ -13,11 +13,19 @@ class HoSoNguoiDung extends Model
         'taiKhoanId',
         'hoTen',
         'soDienThoai',
+        'zalo',
         'ngaySinh',
         'gioiTinh',
         'diaChi',
         'cccd',
-        'anhDaiDien'
+        'anhDaiDien',
+        'nguoiGiamHo',
+        'sdtGuardian',
+        'moiQuanHe',
+        'trinhDoHienTai',
+        'ngonNguMucTieu',
+        'nguonBietDen',
+        'ghiChu',
     ];
 
     public function taiKhoan()
