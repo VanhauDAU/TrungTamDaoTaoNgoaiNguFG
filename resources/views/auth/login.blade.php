@@ -239,7 +239,7 @@
                                         <input type="text" id="taiKhoan" name="taiKhoan"
                                             class="form-control @error('taiKhoan') is-invalid @enderror"
                                             value="{{ old('taiKhoan') }}" required autocomplete="username" autofocus
-                                            placeholder="Tên tài khoản">
+                                            placeholder="Tài khoản hoặc email">
                                         @error('taiKhoan')
                                             <div class="invalid-feedback d-block text-danger mt-1">
                                                 <i class="fas fa-exclamation-triangle me-1"></i> {{ $message }}

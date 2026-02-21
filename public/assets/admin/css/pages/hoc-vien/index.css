@@ -1,0 +1,468 @@
+/* ─── STUDENT LIST PAGE ───────────────────────────────────────── */
+
+/* Header */
+.hv-page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.hv-page-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1a2b3c;
+}
+
+.hv-page-title span {
+    color: #8899a6;
+    font-size: 0.875rem;
+    font-weight: 400;
+    margin-left: 8px;
+}
+
+.btn-add-student {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #27c4b5;
+    color: #fff;
+    font-size: 0.875rem;
+    font-weight: 600;
+    padding: 9px 18px;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: all 0.2s;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-add-student:hover {
+    background: #1fab9e;
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(39, 196, 181, 0.35);
+}
+
+/* ── Stats strip ────────────────────────────────────────── */
+.hv-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.hv-stat-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 18px 22px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    border: 1px solid #e8edf2;
+}
+
+.hv-stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.hv-stat-icon.total {
+    background: #eff9f8;
+    color: #27c4b5;
+}
+
+.hv-stat-icon.active {
+    background: #eaf7ef;
+    color: #3dba73;
+}
+
+.hv-stat-icon.new {
+    background: #fff3e0;
+    color: #f77f00;
+}
+
+.hv-stat-value {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #1a2b3c;
+    line-height: 1;
+}
+
+.hv-stat-label {
+    font-size: 0.75rem;
+    color: #8899a6;
+    margin-top: 4px;
+}
+
+/* ── Filter bar ─────────────────────────────────────────── */
+.hv-filter-bar {
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+    border: 1px solid #e8edf2;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.hv-filter-bar .search-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 200px;
+}
+
+.hv-filter-bar .search-wrap i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #aab8c2;
+    font-size: 0.85rem;
+}
+
+.hv-filter-bar input,
+.hv-filter-bar select {
+    height: 38px;
+    border: 1px solid #dde3ea;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    color: #2d3748;
+    background: #fafbfc;
+    outline: none;
+    transition: border 0.2s;
+}
+
+.hv-filter-bar input:focus,
+.hv-filter-bar select:focus {
+    border-color: #27c4b5;
+    background: #fff;
+}
+
+.hv-filter-bar .search-input {
+    width: 100%;
+    padding: 0 12px 0 36px;
+}
+
+.hv-filter-bar select {
+    padding: 0 12px;
+    min-width: 150px;
+}
+
+.btn-filter {
+    height: 38px;
+    padding: 0 16px;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-filter-primary {
+    background: #27c4b5;
+    color: #fff;
+}
+
+.btn-filter-primary:hover {
+    background: #1fab9e;
+}
+
+.btn-filter-reset {
+    background: #f0f4f8;
+    color: #4a5568;
+    text-decoration: none;
+}
+
+.btn-filter-reset:hover {
+    background: #e2e8f0;
+    color: #1a2b3c;
+}
+
+/* ── Table card ─────────────────────────────────────────── */
+.hv-card {
+    background: #fff;
+    border-radius: 14px;
+    border: 1px solid #e8edf2;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+}
+
+.hv-table-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 24px;
+    border-bottom: 1px solid #f0f4f8;
+}
+
+.hv-table-title {
+    font-size: 0.925rem;
+    font-weight: 600;
+    color: #1a2b3c;
+}
+
+.hv-table-count {
+    font-size: 0.78rem;
+    color: #8899a6;
+}
+
+/* ── Table ───────────────────────────────────────────────── */
+.hv-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.hv-table thead tr {
+    background: #f8fafc;
+}
+
+.hv-table th {
+    padding: 12px 16px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-align: left;
+    border-bottom: 1px solid #e8edf2;
+    white-space: nowrap;
+}
+
+.hv-table td {
+    padding: 14px 16px;
+    font-size: 0.875rem;
+    color: #2d3748;
+    border-bottom: 1px solid #f0f4f8;
+    vertical-align: middle;
+}
+
+.hv-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.hv-table tbody tr:hover td {
+    background: #f8fafc;
+}
+
+/* Avatar */
+.hv-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #27c4b5, #1a9b8e);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.hv-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.hv-name {
+    font-weight: 600;
+    color: #1a2b3c;
+    font-size: 0.875rem;
+}
+
+.hv-username {
+    font-size: 0.75rem;
+    color: #8899a6;
+    margin-top: 1px;
+}
+
+/* Badges */
+.badge-active {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #eaf7ef;
+    color: #259a52;
+    font-size: 0.73rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+}
+
+.badge-inactive {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #fef2f2;
+    color: #dc2626;
+    font-size: 0.73rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+}
+
+.badge-classes {
+    display: inline-block;
+    background: #eff9f8;
+    color: #27c4b5;
+    font-size: 0.73rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    min-width: 32px;
+    text-align: center;
+}
+
+/* Actions */
+.hv-actions {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.btn-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-action-view {
+    background: #eff9f8;
+    color: #27c4b5;
+}
+
+.btn-action-edit {
+    background: #eff6ff;
+    color: #4f46e5;
+}
+
+.btn-action-del {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+.btn-action-view:hover {
+    background: #27c4b5;
+    color: #fff;
+}
+
+.btn-action-edit:hover {
+    background: #4f46e5;
+    color: #fff;
+}
+
+.btn-action-del:hover {
+    background: #dc2626;
+    color: #fff;
+}
+
+/* Empty state */
+.hv-empty {
+    text-align: center;
+    padding: 64px 24px;
+    color: #8899a6;
+}
+
+.hv-empty i {
+    font-size: 3rem;
+    margin-bottom: 16px;
+    color: #cbd5e1;
+    display: block;
+}
+
+.hv-empty p {
+    font-size: 0.925rem;
+    margin-bottom: 20px;
+}
+
+/* Pagination */
+.hv-pagination {
+    padding: 16px 24px;
+    border-top: 1px solid #f0f4f8;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.hv-pagination .pagination {
+    margin: 0;
+}
+
+.hv-pagination .page-link {
+    color: #4a5568;
+    border-color: #e2e8f0;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    padding: 5px 10px;
+    transition: all 0.15s;
+}
+
+.hv-pagination .page-item.active .page-link {
+    background: #27c4b5;
+    border-color: #27c4b5;
+}
+
+.hv-pagination .page-link:hover {
+    background: #f0f4f8;
+    color: #27c4b5;
+}
+
+.hv-pagination-info {
+    font-size: 0.8rem;
+    color: #8899a6;
+}
+
+/* ── Sort link helper ───────────────────────────────────── */
+.sort-link {
+    color: inherit;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.sort-link:hover {
+    color: #27c4b5;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .hv-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .hv-table th:nth-child(4),
+    .hv-table td:nth-child(4),
+    .hv-table th:nth-child(5),
+    .hv-table td:nth-child(5) {
+        display: none;
+    }
+}

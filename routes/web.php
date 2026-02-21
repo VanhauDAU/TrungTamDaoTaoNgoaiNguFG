@@ -8,6 +8,7 @@ use App\Http\Controllers\Client\CourseController;
 use App\Http\Controllers\Client\StudentController;
 use App\Http\Controllers\Admin\HomeController as AdminHomeController;
 use App\Http\Controllers\Admin\NhomQuyenController;
+use App\Http\Controllers\Admin\HocVien\HocVienController as AdminHocVienController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
@@ -56,6 +57,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
         Route::get('/{id}/sua',   [NhomQuyenController::class, 'edit'])->name('edit');
         Route::put('/{id}',       [NhomQuyenController::class, 'update'])->name('update');
         Route::delete('/{id}',    [NhomQuyenController::class, 'destroy'])->name('destroy');
+    });
+
+    // ── Học viên ─────────────────────────────────────────────────────────────
+    Route::prefix('hoc-vien')->name('hoc-vien.')->group(function () {
+        Route::get('/',          [AdminHocVienController::class, 'index'])->name('index');
+        Route::get('/tao-moi',   [AdminHocVienController::class, 'create'])->name('create');
+        Route::post('/',         [AdminHocVienController::class, 'store'])->name('store');
     });
 });
 
