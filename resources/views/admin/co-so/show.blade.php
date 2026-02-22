@@ -102,81 +102,145 @@
             @endif
         </div>
 
-        {{-- DANH SÁCH PHÒNG HỌC --}}
-        <div class="rooms-card">
-            <div class="rooms-header">
-                <div class="rooms-title">
-                    <i class="fas fa-chalkboard-user" style="color:#8b5cf6;"></i>
-                    Danh sách phòng học
+        <div style="display: flex; flex-direction: column; gap: 24px;">
+            {{-- DANH SÁCH PHÒNG HỌC --}}
+            <div class="rooms-card">
+                <div class="rooms-header">
+                    <div class="rooms-title">
+                        <i class="fas fa-chalkboard-user" style="color:#8b5cf6;"></i>
+                        Danh sách phòng học
+                    </div>
+                    <div class="rooms-count">{{ $coSo->phong_hocs_count ?? count($coSo->phongHocs) }} phòng</div>
                 </div>
-                <div class="rooms-count">{{ $coSo->phong_hocs_count ?? count($coSo->phongHocs) }} phòng</div>
+
+                @if (count($coSo->phongHocs) === 0)
+                    <div class="empty-rooms">
+                        <i class="fas fa-door-open"></i>
+                        <p>Cơ sở này chưa có phòng học nào.</p>
+                        <button class="btn-act add-room" style="display:inline-flex; width:auto; justify-content:center;"
+                            onclick="openRoomModal()"><i class="fas fa-plus"></i> Thêm phòng đầu tiên</button>
+                    </div>
+                @else
+                    <table class="rooms-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">#</th>
+                                <th>Tên phòng</th>
+                                <th>Sức chứa</th>
+                                <th>Trạng thái</th>
+                                <th>TTB / Ghi chú</th>
+                                <th style="text-align: right;">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($coSo->phongHocs as $index => $room)
+                                <tr id="room-row-{{ $room->phongHocId }}">
+                                    <td style="color:#64748b;" class="row-index">{{ $index + 1 }}</td>
+                                    <td>
+                                        <div class="room-name">
+                                            <i class="fas fa-door-closed" style="color:#cbd5e1;"></i>
+                                            {{ $room->tenPhong }}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="room-cap"><i class="fas fa-users"
+                                                style="color:#94a3b8; margin-right:4px;"></i>
+                                            {{ $room->sucChua ?? 0 }}</span>
+                                    </td>
+                                    <td>
+                                        @if ($room->trangThai == 1)
+                                            <div
+                                                style="display:flex; align-items:center; gap:6px; color:#16a34a; font-size:0.85rem; font-weight:600;">
+                                                <i class="fas fa-circle" style="font-size:0.5em;"></i> Sẵn sàng
+                                            </div>
+                                        @else
+                                            <div
+                                                style="display:flex; align-items:center; gap:6px; color:#dc2626; font-size:0.85rem; font-weight:600;">
+                                                <i class="fas fa-circle" style="font-size:0.5em;"></i> Bảo trì
+                                            </div>
+                                        @endif
+                                    </td>
+                                    <td style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size:0.85rem; color:#64748b;"
+                                        title="{{ $room->trangThietBi }}">
+                                        {{ $room->trangThietBi ?: '—' }}
+                                    </td>
+                                    <td style="text-align: right;">
+                                        <button class="btn-room-act edit" title="Sửa"
+                                            onclick="openRoomModal({{ $room->phongHocId }}, '{{ addslashes($room->tenPhong) }}', '{{ $room->sucChua }}', '{{ addslashes($room->trangThietBi) }}', {{ $room->trangThai }})">
+                                            <i class="fas fa-pen"></i>
+                                        </button>
+                                        <button class="btn-room-act del" title="Xóa"
+                                            onclick="confirmDeleteRoom(this, {{ $room->phongHocId }}, '{{ addslashes($room->tenPhong) }}')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                @endif
             </div>
 
-            @if (count($coSo->phongHocs) === 0)
-                <div class="empty-rooms">
-                    <i class="fas fa-door-open"></i>
-                    <p>Cơ sở này chưa có phòng học nào.</p>
-                    <button class="btn-act add-room" style="display:inline-flex; width:auto; justify-content:center;"
-                        onclick="openRoomModal()"><i class="fas fa-plus"></i> Thêm phòng đầu tiên</button>
+            {{-- DANH SÁCH NHÂN SỰ --}}
+            <div class="rooms-card">
+                <div class="rooms-header">
+                    <div class="rooms-title">
+                        <i class="fas fa-id-badge" style="color:#0ea5e9;"></i>
+                        Danh sách nhân sự
+                    </div>
+                    <div class="rooms-count">{{ count($coSo->nhanSus) }} nhân sự</div>
                 </div>
-            @else
-                <table class="rooms-table">
-                    <thead>
-                        <tr>
-                            <th style="width: 50px;">#</th>
-                            <th>Tên phòng</th>
-                            <th>Sức chứa</th>
-                            <th>Trạng thái</th>
-                            <th>TTB / Ghi chú</th>
-                            <th style="text-align: right;">Thao tác</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($coSo->phongHocs as $index => $room)
-                            <tr id="room-row-{{ $room->phongHocId }}">
-                                <td style="color:#64748b;" class="row-index">{{ $index + 1 }}</td>
-                                <td>
-                                    <div class="room-name">
-                                        <i class="fas fa-door-closed" style="color:#cbd5e1;"></i>
-                                        {{ $room->tenPhong }}
-                                    </div>
-                                </td>
-                                <td>
-                                    <span class="room-cap"><i class="fas fa-users"
-                                            style="color:#94a3b8; margin-right:4px;"></i> {{ $room->sucChua ?? 0 }}</span>
-                                </td>
-                                <td>
-                                    @if ($room->trangThai == 1)
-                                        <div
-                                            style="display:flex; align-items:center; gap:6px; color:#16a34a; font-size:0.85rem; font-weight:600;">
-                                            <i class="fas fa-circle" style="font-size:0.5em;"></i> Sẵn sàng
-                                        </div>
-                                    @else
-                                        <div
-                                            style="display:flex; align-items:center; gap:6px; color:#dc2626; font-size:0.85rem; font-weight:600;">
-                                            <i class="fas fa-circle" style="font-size:0.5em;"></i> Bảo trì
-                                        </div>
-                                    @endif
-                                </td>
-                                <td style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size:0.85rem; color:#64748b;"
-                                    title="{{ $room->trangThietBi }}">
-                                    {{ $room->trangThietBi ?: '—' }}
-                                </td>
-                                <td style="text-align: right;">
-                                    <button class="btn-room-act edit" title="Sửa"
-                                        onclick="openRoomModal({{ $room->phongHocId }}, '{{ addslashes($room->tenPhong) }}', '{{ $room->sucChua }}', '{{ addslashes($room->trangThietBi) }}', {{ $room->trangThai }})">
-                                        <i class="fas fa-pen"></i>
-                                    </button>
-                                    <button class="btn-room-act del" title="Xóa"
-                                        onclick="confirmDeleteRoom(this, {{ $room->phongHocId }}, '{{ addslashes($room->tenPhong) }}')">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </td>
+
+                @if (count($coSo->nhanSus) === 0)
+                    <div class="empty-rooms">
+                        <i class="fas fa-users-slash"></i>
+                        <p>Cơ sở này chưa có nhân sự nào được phân công.</p>
+                    </div>
+                @else
+                    <table class="rooms-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">#</th>
+                                <th>Nhân sự</th>
+                                <th>Mã NV</th>
+                                <th>Chức vụ</th>
+                                <th>Liên hệ</th>
                             </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            @endif
+                        </thead>
+                        <tbody>
+                            @foreach ($coSo->nhanSus as $index => $nhanSu)
+                                <tr>
+                                    <td style="color:#64748b;" class="row-index">{{ $index + 1 }}</td>
+                                    <td>
+                                        <div class="room-name">
+                                            <i class="fas fa-user-circle" style="color:#cbd5e1; font-size: 1.2rem;"></i>
+                                            {{ optional(optional($nhanSu->taiKhoan)->hoSoNguoiDung)->hoTen ?? (optional($nhanSu->taiKhoan)->name ?? 'Chưa cập nhật') }}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="room-cap">{{ $nhanSu->maNhanVien }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="status-badge" style="background:#e0f2fe; color:#0369a1;"><i
+                                                class="fas fa-briefcase"></i> {{ $nhanSu->chucVu }}</span>
+                                    </td>
+                                    <td style="font-size:0.85rem; color:#64748b; line-height:1.4;">
+                                        @if (optional($nhanSu->taiKhoan)->email)
+                                            <div><i class="fas fa-envelope" style="width:16px; text-align:center;"></i>
+                                                {{ $nhanSu->taiKhoan->email }}</div>
+                                        @endif
+                                        @if (optional(optional($nhanSu->taiKhoan)->hoSoNguoiDung)->soDienThoai)
+                                            <div style="margin-top:2px;"><i class="fas fa-phone"
+                                                    style="width:16px; text-align:center;"></i>
+                                                {{ $nhanSu->taiKhoan->hoSoNguoiDung->soDienThoai }}</div>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                @endif
+            </div>
         </div>
     </div>
 
@@ -185,7 +249,8 @@
         <div class="modal-content">
             <div class="modal-header">
                 <div class="modal-title" id="roomModalTitle">Thêm phòng học mới</div>
-                <button type="button" class="btn-close" onclick="closeRoomModal()"><i class="fas fa-times"></i></button>
+                <button type="button" class="btn-close" onclick="closeRoomModal()"><i
+                        class="fas fa-times"></i></button>
             </div>
 
             <form id="roomForm" method="POST" action="{{ route('admin.phong-hoc.store') }}">

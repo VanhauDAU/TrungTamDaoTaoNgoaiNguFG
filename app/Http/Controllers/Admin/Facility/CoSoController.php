@@ -81,7 +81,7 @@ class CoSoController extends Controller
     /** Trang chi tiết cơ sở + danh sách phòng */
     public function show(int $id)
     {
-        $coSo       = CoSoDaoTao::with(['tinhThanh', 'phongHocs'])->findOrFail($id);
+        $coSo       = CoSoDaoTao::with(['tinhThanh', 'phongHocs', 'nhanSus.taiKhoan.hoSoNguoiDung'])->findOrFail($id);
         $tinhThanhs = TinhThanh::orderBy('tenTinhThanh')->get();
         return view('admin.co-so.show', compact('coSo', 'tinhThanhs'));
     }
