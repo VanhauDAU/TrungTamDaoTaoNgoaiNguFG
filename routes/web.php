@@ -9,6 +9,7 @@ use App\Http\Controllers\Client\StudentController;
 use App\Http\Controllers\Admin\HomeController as AdminHomeController;
 use App\Http\Controllers\Admin\NhomQuyenController;
 use App\Http\Controllers\Admin\HocVien\HocVienController as AdminHocVienController;
+use App\Http\Controllers\Admin\Auth\TaiKhoanController;
 use App\Http\Controllers\Admin\Facility\CoSoController;
 use App\Http\Controllers\Admin\Facility\PhongHocController;
 use Illuminate\Support\Facades\Route;
@@ -67,6 +68,14 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
         Route::get('/{id}/sua',   [NhomQuyenController::class, 'edit'])->name('edit');
         Route::put('/{id}',       [NhomQuyenController::class, 'update'])->name('update');
         Route::delete('/{id}',    [NhomQuyenController::class, 'destroy'])->name('destroy');
+    });
+
+    // ── Danh sách Tài khoản Hệ thống ──────────────────────────────────────────
+    Route::prefix('tai-khoan')->name('tai-khoan.')->group(function () {
+        Route::get('/', [TaiKhoanController::class, 'index'])->name('index');
+        Route::post('/{id}/nhom-quyen', [TaiKhoanController::class, 'updateNhomQuyen'])->name('update-nhom-quyen');
+        Route::post('/{id}/toggle-status', [TaiKhoanController::class, 'toggleStatus'])->name('toggle-status');
+        Route::post('/{id}/reset-password', [TaiKhoanController::class, 'resetPassword'])->name('reset-password');
     });
 
     // ── Học viên ─────────────────────────────────────────────────────────────

@@ -157,8 +157,9 @@
                         Phân Quyền (Roles)
                     </a>
                     @if (auth()->user()->canDo('tai_khoan', 'xem'))
-                        <a href="#" class="nav-sub-item {{ Request::is('admin/tai-khoan*') ? 'active' : '' }}">
-                            Tài Khoản
+                        <a href="{{ route('admin.tai-khoan.index') }}"
+                            class="nav-sub-item {{ Request::is('admin/tai-khoan*') ? 'active' : '' }}">
+                            Tài Khoản Hệ Thống
                         </a>
                     @endif
                     <a href="{{ route('admin.co-so.index') }}"
