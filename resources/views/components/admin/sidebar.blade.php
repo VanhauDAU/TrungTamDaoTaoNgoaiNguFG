@@ -24,57 +24,68 @@
         </div>
 
         {{-- 2. Quản Lý Đào Tạo (Academic Management) --}}
-        <div class="sidebar-section">Academic Management</div>
-        <div
-            class="nav-group {{ Request::is('admin/khoa-hoc*', 'admin/lop-hoc*', 'admin/lich-hoc*', 'admin/ky-thi*') ? 'open' : '' }}">
-            <div class="nav-group-header">
-                <i class="fas fa-graduation-cap"></i> <span>Quản lý đào tạo</span>
-                <i class="fas fa-chevron-right"></i>
+        @php
+            $hasDaoTao = auth()->user()->canDo('khoa_hoc', 'xem') || auth()->user()->canDo('lop_hoc', 'xem');
+        @endphp
+        @if ($hasDaoTao)
+            <div class="sidebar-section">Academic Management</div>
+            <div
+                class="nav-group {{ Request::is('admin/khoa-hoc*', 'admin/lop-hoc*', 'admin/lich-hoc*', 'admin/ky-thi*') ? 'open' : '' }}">
+                <div class="nav-group-header">
+                    <i class="fas fa-graduation-cap"></i> <span>Quản lý đào tạo</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                <div class="nav-sub">
+                    @if (auth()->user()->canDo('khoa_hoc', 'xem'))
+                        <a href="#" class="nav-sub-item {{ Request::is('admin/khoa-hoc*') ? 'active' : '' }}">
+                            Khóa Học
+                        </a>
+                    @endif
+                    @if (auth()->user()->canDo('lop_hoc', 'xem'))
+                        <a href="#" class="nav-sub-item {{ Request::is('admin/lop-hoc*') ? 'active' : '' }}">
+                            Lớp Học
+                        </a>
+                        <a href="#" class="nav-sub-item {{ Request::is('admin/lich-hoc*') ? 'active' : '' }}">
+                            Lịch Học & Điểm Danh
+                        </a>
+                        <a href="#" class="nav-sub-item {{ Request::is('admin/ky-thi*') ? 'active' : '' }}">
+                            Kỳ Thi & Điểm Số
+                        </a>
+                    @endif
+                </div>
             </div>
-            <div class="nav-sub">
-                @if (auth()->user()->canDo('khoa_hoc', 'xem'))
-                    <a href="#" class="nav-sub-item {{ Request::is('admin/khoa-hoc*') ? 'active' : '' }}">
-                        Khóa Học
-                    </a>
-                @endif
-                @if (auth()->user()->canDo('lop_hoc', 'xem'))
-                    <a href="#" class="nav-sub-item {{ Request::is('admin/lop-hoc*') ? 'active' : '' }}">
-                        Lớp Học
-                    </a>
-                @endif
-                <a href="#" class="nav-sub-item {{ Request::is('admin/lich-hoc*') ? 'active' : '' }}">
-                    Lịch Học & Điểm Danh
-                </a>
-                <a href="#" class="nav-sub-item {{ Request::is('admin/ky-thi*') ? 'active' : '' }}">
-                    Kỳ Thi & Điểm Số
-                </a>
-            </div>
-        </div>
+        @endif
 
         {{-- 3. Quản Lý Học Viên (Student Management) --}}
-        <div class="sidebar-section">Student Management</div>
-        <div class="nav-group {{ Request::is('admin/hoc-vien*', 'admin/dang-ky*', 'admin/phan-hoi*') ? 'open' : '' }}">
-            <div class="nav-group-header">
-                <i class="fas fa-user-graduate"></i> <span>Quản lý học viên</span>
-                <i class="fas fa-chevron-right"></i>
+        @php
+            $hasHocVien = auth()->user()->canDo('hoc_vien', 'xem') || auth()->user()->canDo('dang_ky', 'xem');
+        @endphp
+        @if ($hasHocVien)
+            <div class="sidebar-section">Student Management</div>
+            <div
+                class="nav-group {{ Request::is('admin/hoc-vien*', 'admin/dang-ky*', 'admin/phan-hoi*') ? 'open' : '' }}">
+                <div class="nav-group-header">
+                    <i class="fas fa-user-graduate"></i> <span>Quản lý học viên</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                <div class="nav-sub">
+                    @if (auth()->user()->canDo('hoc_vien', 'xem'))
+                        <a href="{{ route('admin.hoc-vien.index') }}"
+                            class="nav-sub-item {{ Request::is('admin/hoc-vien*') ? 'active' : '' }}">
+                            Danh Sách Học Viên
+                        </a>
+                        <a href="#" class="nav-sub-item {{ Request::is('admin/phan-hoi*') ? 'active' : '' }}">
+                            Chăm Sóc & Phản Hồi
+                        </a>
+                    @endif
+                    @if (auth()->user()->canDo('dang_ky', 'xem'))
+                        <a href="#" class="nav-sub-item {{ Request::is('admin/dang-ky*') ? 'active' : '' }}">
+                            Đăng Ký Học
+                        </a>
+                    @endif
+                </div>
             </div>
-            <div class="nav-sub">
-                @if (auth()->user()->canDo('hoc_vien', 'xem'))
-                    <a href="{{ route('admin.hoc-vien.index') }}"
-                        class="nav-sub-item {{ Request::is('admin/hoc-vien*') ? 'active' : '' }}">
-                        Danh Sách Học Viên
-                    </a>
-                @endif
-                @if (auth()->user()->canDo('dang_ky', 'xem'))
-                    <a href="#" class="nav-sub-item {{ Request::is('admin/dang-ky*') ? 'active' : '' }}">
-                        Đăng Ký Học
-                    </a>
-                @endif
-                <a href="#" class="nav-sub-item {{ Request::is('admin/phan-hoi*') ? 'active' : '' }}">
-                    Chăm Sóc & Phản Hồi
-                </a>
-            </div>
-        </div>
+        @endif
 
         {{-- 4. Quản Lý Nhân Sự (Staff & HR) --}}
         <div class="sidebar-section">Staff & HR Management</div>
@@ -101,26 +112,30 @@
         </div>
 
         {{-- 5. Quản Lý Tài Chính (Finance Management) --}}
-        <div class="sidebar-section">Finance Management</div>
-        <div class="nav-group {{ Request::is('admin/tai-chinh*', 'admin/luong*', 'admin/hoc-phi*') ? 'open' : '' }}">
-            <div class="nav-group-header">
-                <i class="fas fa-wallet"></i> <span>Quản lý tài chính</span>
-                <i class="fas fa-chevron-right"></i>
-            </div>
-            <div class="nav-sub">
-                @if (auth()->user()->canDo('tai_chinh', 'xem'))
+        @php
+            $hasTaiChinh = auth()->user()->canDo('tai_chinh', 'xem');
+        @endphp
+        @if ($hasTaiChinh)
+            <div class="sidebar-section">Finance Management</div>
+            <div
+                class="nav-group {{ Request::is('admin/tai-chinh*', 'admin/luong*', 'admin/hoc-phi*') ? 'open' : '' }}">
+                <div class="nav-group-header">
+                    <i class="fas fa-wallet"></i> <span>Quản lý tài chính</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                <div class="nav-sub">
                     <a href="#" class="nav-sub-item {{ Request::is('admin/tai-chinh*') ? 'active' : '' }}">
                         Hóa Đơn & Phiếu Thu
                     </a>
-                @endif
-                <a href="#" class="nav-sub-item {{ Request::is('admin/luong*') ? 'active' : '' }}">
-                    Quản Lý Lương
-                </a>
-                <a href="#" class="nav-sub-item {{ Request::is('admin/hoc-phi*') ? 'active' : '' }}">
-                    Cấu Hình Học Phí
-                </a>
+                    <a href="#" class="nav-sub-item {{ Request::is('admin/luong*') ? 'active' : '' }}">
+                        Quản Lý Lương
+                    </a>
+                    <a href="#" class="nav-sub-item {{ Request::is('admin/hoc-phi*') ? 'active' : '' }}">
+                        Cấu Hình Học Phí
+                    </a>
+                </div>
             </div>
-        </div>
+        @endif
 
         {{-- 6. Nội Dung & Tương Tác (CMS & Interaction) --}}
         <div class="sidebar-section">CMS & Interaction</div>
@@ -143,7 +158,14 @@
         </div>
 
         {{-- 7. Cấu Hình Hệ Thống (System Settings) --}}
-        @if (auth()->user()->isAdmin())
+        @php
+            $canPhanQuyen = auth()->user()->isAdmin();
+            $canTaiKhoan = auth()->user()->canDo('tai_khoan', 'xem');
+            $canCaiDat = auth()->user()->canDo('cai_dat', 'xem');
+            // Assuming Co So is viewable by admin or those with cai_dat permissions.
+            $hasSystem = $canPhanQuyen || $canTaiKhoan || $canCaiDat;
+        @endphp
+        @if ($hasSystem)
             <div class="sidebar-section">System Settings</div>
             <div
                 class="nav-group {{ Request::is('admin/phan-quyen*', 'admin/tai-khoan*', 'admin/co-so*', 'admin/cai-dat*') ? 'open' : '' }}">
@@ -152,20 +174,25 @@
                     <i class="fas fa-chevron-right"></i>
                 </div>
                 <div class="nav-sub">
-                    <a href="{{ route('admin.phan-quyen.index') }}"
-                        class="nav-sub-item {{ Request::is('admin/phan-quyen*') ? 'active' : '' }}">
-                        Phân Quyền (Roles)
-                    </a>
-                    @if (auth()->user()->canDo('tai_khoan', 'xem'))
-                        <a href="#" class="nav-sub-item {{ Request::is('admin/tai-khoan*') ? 'active' : '' }}">
-                            Tài Khoản
+                    @if ($canPhanQuyen)
+                        <a href="{{ route('admin.phan-quyen.index') }}"
+                            class="nav-sub-item {{ Request::is('admin/phan-quyen*') ? 'active' : '' }}">
+                            Phân Quyền (Roles)
                         </a>
                     @endif
-                    <a href="{{ route('admin.co-so.index') }}"
-                        class="nav-sub-item {{ Request::is('admin/co-so*') ? 'active' : '' }}">
-                        Cơ Sở & Phòng Học
-                    </a>
-                    @if (auth()->user()->canDo('cai_dat', 'xem'))
+                    @if ($canTaiKhoan)
+                        <a href="{{ route('admin.tai-khoan.index') }}"
+                            class="nav-sub-item {{ Request::is('admin/tai-khoan*') ? 'active' : '' }}">
+                            Tài Khoản Hệ Thống
+                        </a>
+                    @endif
+                    @if ($canCaiDat || $canPhanQuyen)
+                        <a href="{{ route('admin.co-so.index') }}"
+                            class="nav-sub-item {{ Request::is('admin/co-so*') ? 'active' : '' }}">
+                            Cơ Sở & Phòng Học
+                        </a>
+                    @endif
+                    @if ($canCaiDat)
                         <a href="#" class="nav-sub-item {{ Request::is('admin/cai-dat*') ? 'active' : '' }}">
                             Cài Đặt Chung
                         </a>

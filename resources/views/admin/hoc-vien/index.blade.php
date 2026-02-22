@@ -18,18 +18,22 @@
         </div>
         <div style="display:flex;gap:10px;align-items:center">
             @php $soXoa = \App\Models\Auth\TaiKhoan::onlyTrashed()->where('role', \App\Models\Auth\TaiKhoan::ROLE_HOC_VIEN)->count(); @endphp
-            <a href="{{ route('admin.hoc-vien.trash') }}" class="btn-add-student"
-                style="background:#fee2e2;color:#dc2626;border-color:#fca5a5" title="Thùng rác">
-                <i class="fas fa-trash-can"></i> Thùng rác
-                @if ($soXoa > 0)
-                    <span
-                        style="background:#dc2626;color:#fff;border-radius:20px;padding:1px 7px;
+            @if (auth()->user()->canDo('hoc_vien', 'xoa'))
+                <a href="{{ route('admin.hoc-vien.trash') }}" class="btn-add-student"
+                    style="background:#fee2e2;color:#dc2626;border-color:#fca5a5" title="Thùng rác">
+                    <i class="fas fa-trash-can"></i> Thùng rác
+                    @if ($soXoa > 0)
+                        <span
+                            style="background:#dc2626;color:#fff;border-radius:20px;padding:1px 7px;
                                  font-size:.72rem;margin-left:4px">{{ $soXoa }}</span>
-                @endif
-            </a>
-            <a href="{{ route('admin.hoc-vien.create') }}" class="btn-add-student">
-                <i class="fas fa-plus"></i> Thêm học viên
-            </a>
+                    @endif
+                </a>
+            @endif
+            @if (auth()->user()->canDo('hoc_vien', 'them'))
+                <a href="{{ route('admin.hoc-vien.create') }}" class="btn-add-student">
+                    <i class="fas fa-plus"></i> Thêm học viên
+                </a>
+            @endif
         </div>
     </div>
 
@@ -220,14 +224,18 @@
 
                                 <td>
                                     <div class="hv-actions">
-                                        <a href="{{ route('admin.hoc-vien.edit', $hv->taiKhoan) }}"
-                                            class="btn-action btn-action-edit" title="Chỉnh sửa">
-                                            <i class="fas fa-pen"></i>
-                                        </a>
-                                        <button type="button" class="btn-action btn-action-del" title="Xóa"
-                                            onclick="confirmDelete({{ $hv->taiKhoanId }}, '{{ addslashes($hoTen) }}')">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
+                                        @if (auth()->user()->canDo('hoc_vien', 'sua'))
+                                            <a href="{{ route('admin.hoc-vien.edit', $hv->taiKhoan) }}"
+                                                class="btn-action btn-action-edit" title="Chỉnh sửa">
+                                                <i class="fas fa-pen"></i>
+                                            </a>
+                                        @endif
+                                        @if (auth()->user()->canDo('hoc_vien', 'xoa'))
+                                            <button type="button" class="btn-action btn-action-del" title="Xóa"
+                                                onclick="confirmDelete({{ $hv->taiKhoanId }}, '{{ addslashes($hoTen) }}')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>
