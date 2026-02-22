@@ -12,6 +12,14 @@ use Illuminate\Validation\Rule;
 
 class HocVienController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:hoc_vien,xem')->only('index', 'trash');
+        $this->middleware('permission:hoc_vien,them')->only('create', 'store', 'restore');
+        $this->middleware('permission:hoc_vien,sua')->only('edit', 'update');
+        $this->middleware('permission:hoc_vien,xoa')->only('destroy');
+    }
+
     /** Danh sách học viên */
     public function index(Request $request)
     {

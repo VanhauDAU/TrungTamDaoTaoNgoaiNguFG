@@ -11,6 +11,14 @@ use Illuminate\Validation\Rule;
 
 class TaiKhoanController extends Controller
 {
+    public function __construct()
+    {
+        // View accounts list
+        $this->middleware('permission:tai_khoan,xem')->only('index');
+        // Update role
+        $this->middleware('permission:tai_khoan,sua')->only('updateNhomQuyen', 'toggleStatus', 'resetPassword');
+    }
+
     /** Danh sách tài khoản hệ thống */
     public function index(Request $request)
     {
@@ -72,7 +80,7 @@ class TaiKhoanController extends Controller
         }
 
         $request->validate([
-            'nhomQuyenId' => 'required|exists:nhom_quyen,nhomQuyenId'
+            'nhomQuyenId' => 'required|exists:nhomquyen,nhomQuyenId'
         ]);
 
         $taiKhoan->update([

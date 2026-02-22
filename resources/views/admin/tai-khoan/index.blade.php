@@ -143,23 +143,25 @@
                             </div>
                         </td>
                         <td style="padding-right: 20px; text-align: right;">
-                            @if ($tk->isStaff() && $tk->taiKhoanId !== auth()->id())
-                                <button class="btn-icon quyen" title="Cấp nhóm quyền"
-                                    onclick="openQuyenModal({{ $tk->taiKhoanId }}, '{{ addslashes($tk->taiKhoan) }}', {{ $tk->nhomQuyenId ?? 'null' }})">
-                                    <i class="fas fa-user-shield"></i>
+                            @if (auth()->user()->canDo('tai_khoan', 'sua'))
+                                @if ($tk->isStaff() && $tk->taiKhoanId !== auth()->id())
+                                    <button class="btn-icon quyen" title="Cấp nhóm quyền"
+                                        onclick="openQuyenModal({{ $tk->taiKhoanId }}, '{{ addslashes($tk->taiKhoan) }}', {{ $tk->nhomQuyenId ?? 'null' }})">
+                                        <i class="fas fa-user-shield"></i>
+                                    </button>
+                                @endif
+                                <button class="btn-icon pass" title="Reset mật khẩu"
+                                    onclick="openPasswordModal({{ $tk->taiKhoanId }}, '{{ addslashes($tk->taiKhoan) }}')">
+                                    <i class="fas fa-key"></i>
                                 </button>
-                            @endif
-                            <button class="btn-icon pass" title="Reset mật khẩu"
-                                onclick="openPasswordModal({{ $tk->taiKhoanId }}, '{{ addslashes($tk->taiKhoan) }}')">
-                                <i class="fas fa-key"></i>
-                            </button>
 
-                            @if ($tk->taiKhoanId !== auth()->id())
-                                <button class="btn-icon {{ $tk->trangThai == 1 ? 'lock' : 'unlock' }}"
-                                    title="{{ $tk->trangThai == 1 ? 'Khóa tài khoản' : 'Mở khóa tài khoản' }}"
-                                    onclick="toggleStatus({{ $tk->taiKhoanId }}, '{{ addslashes($tk->taiKhoan) }}', {{ $tk->trangThai }})">
-                                    <i class="fas {{ $tk->trangThai == 1 ? 'fa-lock' : 'fa-unlock' }}"></i>
-                                </button>
+                                @if ($tk->taiKhoanId !== auth()->id())
+                                    <button class="btn-icon {{ $tk->trangThai == 1 ? 'lock' : 'unlock' }}"
+                                        title="{{ $tk->trangThai == 1 ? 'Khóa tài khoản' : 'Mở khóa tài khoản' }}"
+                                        onclick="toggleStatus({{ $tk->taiKhoanId }}, '{{ addslashes($tk->taiKhoan) }}', {{ $tk->trangThai }})">
+                                        <i class="fas {{ $tk->trangThai == 1 ? 'fa-lock' : 'fa-unlock' }}"></i>
+                                    </button>
+                                @endif
                             @endif
                         </td>
                     </tr>
