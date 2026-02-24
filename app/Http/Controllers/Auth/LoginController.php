@@ -73,16 +73,29 @@ class LoginController extends Controller
             $this->username() => 'required|string',
             'password'        => 'required|string|min:8',
         ], [
-            $this->username() . '.required' => 'Vui lòng nhập Tài khoản',
+            $this->username() . '.required' => 'Vui lòng nhập Email hoặc Tài khoản',
             'password.required'             => 'Vui lòng nhập Mật khẩu',
             'password.min'                  => 'Mật khẩu phải có ít nhất 8 ký tự',
         ]);
     }
 
+    protected function credentials(Request $request)
+    {
+        $loginInput = $request->input($this->username());
+        
+        // Kiểm tra xem chuỗi nhập vào có định dạng email không
+        $field = filter_var($loginInput, FILTER_VALIDATE_EMAIL) ? 'email' : 'taiKhoan';
+
+        return [
+            $field => $loginInput,
+            'password' => $request->input('password')
+        ];
+    }
+
     protected function sendFailedLoginResponse(Request $request)
     {
         throw \Illuminate\Validation\ValidationException::withMessages([
-            $this->username() => ['Thông tin đăng nhập không chính xác.'],
+            $this->username() => ['Tài khoản, email hoặc mật khẩu không chính xác.'],
         ]);
     }
 
