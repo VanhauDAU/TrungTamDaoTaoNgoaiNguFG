@@ -9,6 +9,7 @@ use App\Http\Controllers\Client\StudentController;
 use App\Http\Controllers\Admin\HomeController as AdminHomeController;
 use App\Http\Controllers\Admin\NhomQuyenController;
 use App\Http\Controllers\Admin\HocVien\HocVienController as AdminHocVienController;
+use App\Http\Controllers\Admin\GiaoVien\GiaoVienController as AdminGiaoVienController;
 use App\Http\Controllers\Admin\Facility\CoSoController;
 use App\Http\Controllers\Admin\Facility\PhongHocController;
 use Illuminate\Support\Facades\Route;
@@ -79,6 +80,18 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
         Route::get('/{taiKhoan}/sua',      [AdminHocVienController::class, 'edit'])->name('edit');
         Route::put('/{taiKhoan}',          [AdminHocVienController::class, 'update'])->name('update');
         Route::delete('/{taiKhoan}',       [AdminHocVienController::class, 'destroy'])->name('destroy');
+    });
+
+    // ── Giáo viên ────────────────────────────────────────────────────────────
+    Route::prefix('giao-vien')->name('giao-vien.')->group(function () {
+        Route::get('/',                    [AdminGiaoVienController::class, 'index'])->name('index');
+        Route::get('/tao-moi',             [AdminGiaoVienController::class, 'create'])->name('create');
+        Route::post('/',                   [AdminGiaoVienController::class, 'store'])->name('store');
+        Route::get('/thung-rac',           [AdminGiaoVienController::class, 'trash'])->name('trash');
+        Route::patch('/{id}/khoi-phuc',    [AdminGiaoVienController::class, 'restore'])->name('restore');
+        Route::get('/{taiKhoan}/sua',      [AdminGiaoVienController::class, 'edit'])->name('edit');
+        Route::put('/{taiKhoan}',          [AdminGiaoVienController::class, 'update'])->name('update');
+        Route::delete('/{taiKhoan}',       [AdminGiaoVienController::class, 'destroy'])->name('destroy');
     });
 
     // ── Cơ sở Đào tạo ────────────────────────────────────────────────────────

@@ -85,7 +85,8 @@
             </div>
             <div class="nav-sub">
                 @if (auth()->user()->canDo('giao_vien', 'xem'))
-                    <a href="#" class="nav-sub-item {{ Request::is('admin/giao-vien*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.giao-vien.index') }}"
+                        class="nav-sub-item {{ Request::is('admin/giao-vien*') ? 'active' : '' }}">
                         Giáo Viên
                     </a>
                 @endif
