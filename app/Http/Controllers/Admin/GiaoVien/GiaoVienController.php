@@ -8,6 +8,7 @@ use App\Models\Auth\HoSoNguoiDung;
 use App\Models\Auth\NhanSu;
 use App\Models\Auth\NhomQuyen;
 use App\Models\Facility\CoSoDaoTao;
+use App\Models\Facility\TinhThanh;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
@@ -74,7 +75,11 @@ class GiaoVienController extends Controller
             ->orderBy('tenCoSo')
             ->get();
 
-        return view('admin.giao-vien.create', compact('coSos'));
+        $tinhThanhs = TinhThanh::whereHas('coSoDaoTao', fn($q) => $q->where('trangThai', 1))
+            ->orderBy('tenTinhThanh')
+            ->get();
+
+        return view('admin.giao-vien.create', compact('coSos', 'tinhThanhs'));
     }
 
     /** Lưu giáo viên mới */
