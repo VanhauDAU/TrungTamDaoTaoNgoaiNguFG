@@ -27,7 +27,9 @@ class AboutController extends Controller
 
         // Lấy danh sách khóa học đang hoạt động
         $khoaHocs = KhoaHoc::where('trangThai', 1)->take(6)->get();
-        $provinces = TinhThanh::all();
+        $provinces = TinhThanh::whereHas('coSoDaoTao', function ($query) {
+            $query->where('trangThai', 1);
+        })->get();
         $branches = CoSoDaoTao::where('trangThai', 1)->with('tinhThanh')->get();
         return view('clients.aboutUs.index', compact('topGiaoVien', 'khoaHocs', 'provinces', 'branches'));
     }
