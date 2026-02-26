@@ -79,7 +79,19 @@ class GiaoVienController extends Controller
             ->orderBy('tenTinhThanh')
             ->get();
 
-        return view('admin.giao-vien.create', compact('coSos', 'tinhThanhs'));
+        // Pre-map to plain array so Blade @json() doesn't choke on complex closures
+        $coSosData = $coSos->map(function ($c) {
+            return [
+                'coSoId'      => $c->coSoId,
+                'tenCoSo'     => $c->tenCoSo,
+                'diaChi'      => $c->diaChi,
+                'tenPhuongXa' => $c->tenPhuongXa,
+                'tinhThanhId' => $c->tinhThanhId,
+                'maPhuongXa'  => $c->maPhuongXa,
+            ];
+        })->values()->toArray();
+
+        return view('admin.giao-vien.create', compact('coSos', 'coSosData', 'tinhThanhs'));
     }
 
     /** Lưu giáo viên mới */
