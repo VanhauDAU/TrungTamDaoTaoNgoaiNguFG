@@ -3,11 +3,12 @@
 namespace App\Models\Course;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Education\LopHoc;
 
 class KhoaHoc extends Model
 {
-    //
+    use SoftDeletes;
     protected $table = 'khoahoc'; 
     protected $primaryKey = 'khoaHocId'; 
     protected $fillable = [
@@ -20,7 +21,6 @@ class KhoaHoc extends Model
         'doiTuong',
         'yeuCauDauVao',
         'ketQuaDatDuoc',
-        'thoiLuong',
         'trangThai'
     ];
 

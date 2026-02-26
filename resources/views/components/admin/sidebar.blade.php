@@ -37,12 +37,14 @@
                 </div>
                 <div class="nav-sub">
                     @if (auth()->user()->canDo('khoa_hoc', 'xem'))
-                        <a href="#" class="nav-sub-item {{ Request::is('admin/khoa-hoc*') ? 'active' : '' }}">
+                        <a href="{{ route('admin.khoa-hoc.index') }}"
+                            class="nav-sub-item {{ Request::is('admin/khoa-hoc*') ? 'active' : '' }}">
                             Khóa Học
                         </a>
                     @endif
                     @if (auth()->user()->canDo('lop_hoc', 'xem'))
-                        <a href="#" class="nav-sub-item {{ Request::is('admin/lop-hoc*') ? 'active' : '' }}">
+                        <a href="{{ route('admin.lop-hoc.index') }}"
+                            class="nav-sub-item {{ Request::is('admin/lop-hoc*') ? 'active' : '' }}">
                             Lớp Học
                         </a>
                         <a href="#" class="nav-sub-item {{ Request::is('admin/lich-hoc*') ? 'active' : '' }}">

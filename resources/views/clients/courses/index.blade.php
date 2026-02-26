@@ -66,7 +66,7 @@
                                     <!-- Course Image with Overlay -->
                                     <div class="course-image">
 
-                                        <img src="{{ asset('storage/courses/' . $course->anhKhoaHoc) ?? asset('assets/client/images/default-course.jpg') }}"
+                                        <img src="{{ asset('storage/' . $course->anhKhoaHoc) ?? asset('assets/client/images/default-course.jpg') }}"
                                             alt="{{ $course->tenKhoaHoc }}">
                                         <div class="course-image-overlay"></div>
                                         <div class="course-tag-floating">

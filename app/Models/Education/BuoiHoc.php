@@ -3,6 +3,8 @@
 namespace App\Models\Education;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Facility\PhongHoc;
+use App\Models\Auth\TaiKhoan;
 
 class BuoiHoc extends Model
 {

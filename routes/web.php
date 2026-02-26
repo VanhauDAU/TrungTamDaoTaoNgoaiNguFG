@@ -13,6 +13,10 @@ use App\Http\Controllers\Admin\GiaoVien\GiaoVienController as AdminGiaoVienContr
 use App\Http\Controllers\Admin\Auth\TaiKhoanController;
 use App\Http\Controllers\Admin\Facility\CoSoController;
 use App\Http\Controllers\Admin\Facility\PhongHocController;
+use App\Http\Controllers\Admin\KhoaHoc\KhoaHocController as AdminKhoaHocController;
+use App\Http\Controllers\Admin\KhoaHoc\LopHocController as AdminLopHocController;
+use App\Http\Controllers\Admin\KhoaHoc\BuoiHocController as AdminBuoiHocController;
+use App\Http\Controllers\Admin\KhoaHoc\HocPhiController as AdminHocPhiController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
@@ -22,6 +26,10 @@ Route::prefix('api')->name('api.')->group(function () {
     Route::get('/phuong-xa/{maTinh}', [CoSoController::class, 'getPhuongXa'])->name('phuongxa');
     // Danh sách cơ sở có filter (dùng cho client contact page)
     Route::get('/co-so', [CoSoController::class, 'apiList'])->name('coso');
+    // Phòng học theo cơ sở (dùng cho form lớp học)
+    Route::get('/phong-hoc/{coSoId}', [AdminLopHocController::class, 'getPhongByCoso'])->name('phong-hoc-by-coso');
+    // Giáo viên theo cơ sở
+    Route::get('/giao-vien/{coSoId}', [AdminLopHocController::class, 'getGiaoVienByCoso'])->name('giao-vien-by-coso');
 });
 
 // ─── CLIENT ROUTES ──────────────────────────────────────────────────────────
@@ -114,11 +122,57 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
         Route::delete('/{id}',    [CoSoController::class, 'destroy'])->name('destroy');
     });
 
+    // ── API: Cascading location (Tỉnh → Phường → Cơ sở) ──────────────────────
+    Route::get('/api/phuong-xa-co-so/{tinhThanhId}', [CoSoController::class, 'getPhuongXaCoCoSo'])->name('api.phuong-xa-co-so');
+    Route::get('/api/co-so-by-location',             [CoSoController::class, 'getCoSoByLocation'])->name('api.co-so-by-location');
+
     // ── Phòng Học ─────────────────────────────────────────────────────────────
     Route::prefix('phong-hoc')->name('phong-hoc.')->group(function () {
         Route::post('/',       [PhongHocController::class, 'store'])->name('store');
         Route::put('/{id}',    [PhongHocController::class, 'update'])->name('update');
         Route::delete('/{id}', [PhongHocController::class, 'destroy'])->name('destroy');
+    });
+
+    // ── Khóa Học ─────────────────────────────────────────────────────────────
+    Route::prefix('khoa-hoc')->name('khoa-hoc.')->group(function () {
+        Route::get('/',           [AdminKhoaHocController::class, 'index'])->name('index');
+        Route::get('/tao-moi',    [AdminKhoaHocController::class, 'create'])->name('create');
+        Route::post('/',          [AdminKhoaHocController::class, 'store'])->name('store');
+        Route::get('/{id}',       [AdminKhoaHocController::class, 'show'])->name('show');
+        Route::get('/{id}/sua',   [AdminKhoaHocController::class, 'edit'])->name('edit');
+        Route::put('/{id}',       [AdminKhoaHocController::class, 'update'])->name('update');
+        Route::delete('/{id}',    [AdminKhoaHocController::class, 'destroy'])->name('destroy');
+        Route::patch('/{id}/khoi-phuc', [AdminKhoaHocController::class, 'restore'])->name('restore');
+    });
+
+    // ── Lớp Học ──────────────────────────────────────────────────────────────
+    Route::prefix('lop-hoc')->name('lop-hoc.')->group(function () {
+        Route::get('/',           [AdminLopHocController::class, 'index'])->name('index');
+        Route::get('/tao-moi',    [AdminLopHocController::class, 'create'])->name('create');
+        Route::post('/',          [AdminLopHocController::class, 'store'])->name('store');
+        Route::get('/{id}',       [AdminLopHocController::class, 'show'])->name('show');
+        Route::get('/{id}/sua',   [AdminLopHocController::class, 'edit'])->name('edit');
+        Route::put('/{id}',       [AdminLopHocController::class, 'update'])->name('update');
+        Route::delete('/{id}',    [AdminLopHocController::class, 'destroy'])->name('destroy');
+    });
+
+    // ── Buổi Học ──────────────────────────────────────────────────────────────
+    Route::prefix('buoi-hoc')->name('buoi-hoc.')->group(function () {
+        Route::post('/',                        [AdminBuoiHocController::class, 'store'])->name('store');
+        Route::put('/{id}',                     [AdminBuoiHocController::class, 'update'])->name('update');
+        Route::delete('/{id}',                  [AdminBuoiHocController::class, 'destroy'])->name('destroy');
+        Route::post('/tu-dong-tao/{lopHocId}',  [AdminBuoiHocController::class, 'autoGenerate'])->name('auto-generate');
+    });
+
+    // ── Học Phí (AJAX) ────────────────────────────────────────────────────────
+    Route::get('/api/hoc-phi/{khoaHocId}', [AdminLopHocController::class, 'getHocPhiByKhoaHoc'])->name('api.hoc-phi.by-khoa');
+
+    // ── Gói Học Phí (CRUD) ────────────────────────────────────────────────────
+    Route::prefix('hoc-phi')->name('hoc-phi.')->group(function () {
+        Route::post('/',                     [AdminHocPhiController::class, 'store'])->name('store');
+        Route::put('/{id}',                  [AdminHocPhiController::class, 'update'])->name('update');
+        Route::delete('/{id}',               [AdminHocPhiController::class, 'destroy'])->name('destroy');
+        Route::patch('/{id}/toggle-status',  [AdminHocPhiController::class, 'toggleStatus'])->name('toggle-status');
     });
 });
 

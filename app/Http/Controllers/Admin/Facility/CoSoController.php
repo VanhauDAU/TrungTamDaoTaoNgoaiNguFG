@@ -224,4 +224,46 @@ class CoSoController extends Controller
 
         return response()->json(['success' => true, 'coSos' => $coSos]);
     }
+
+    /**
+     * Lấy danh sách phường/xã có cơ sở theo tỉnh (dùng cho cascade selector)
+     * GET /admin/api/phuong-xa-co-so/{tinhThanhId}
+     */
+    public function getPhuongXaCoCoSo(int $tinhThanhId)
+    {
+        $phuongXas = CoSoDaoTao::where('tinhThanhId', $tinhThanhId)
+            ->where('trangThai', 1)
+            ->whereNotNull('maPhuongXa')
+            ->select('maPhuongXa', 'tenPhuongXa')
+            ->groupBy('maPhuongXa', 'tenPhuongXa')
+            ->orderBy('tenPhuongXa')
+            ->get();
+
+        return response()->json(['success' => true, 'phuongXas' => $phuongXas]);
+    }
+
+    /**
+     * Lấy cơ sở theo tỉnh + phường (dùng cho cascade selector)
+     * GET /admin/api/co-so-by-location?tinhThanhId=&maPhuongXa=
+     */
+    public function getCoSoByLocation(Request $request)
+    {
+        $query = CoSoDaoTao::where('trangThai', 1);
+
+        if ($request->filled('tinhThanhId')) {
+            $query->where('tinhThanhId', $request->tinhThanhId);
+        }
+        if ($request->filled('maPhuongXa')) {
+            $query->where('maPhuongXa', $request->maPhuongXa);
+        }
+
+        $coSos = $query->orderBy('tenCoSo')->get()->map(fn($c) => [
+            'coSoId'      => $c->coSoId,
+            'tenCoSo'     => $c->tenCoSo,
+            'diaChi'      => $c->diaChi,
+            'tenPhuongXa' => $c->tenPhuongXa,
+        ]);
+
+        return response()->json(['success' => true, 'coSos' => $coSos]);
+    }
 }

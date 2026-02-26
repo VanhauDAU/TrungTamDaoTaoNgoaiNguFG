@@ -13,15 +13,14 @@ class LopHoc extends Model
 {
     //
     protected $table = 'lophoc';
-    protected $primarykey = 'lopHocId';
+    protected $primaryKey = 'lopHocId';
     protected $fillable = [
-        'lopHocId',
         'slug',
         'khoaHocId',
         'tenLopHoc',
         'phongHocId',
         'taiKhoanId',
-        'hocPhiId',
+        'hocPhiId', 
         'ngayBatDau',
         'ngayKetThuc',
         'soBuoiDuKien',
