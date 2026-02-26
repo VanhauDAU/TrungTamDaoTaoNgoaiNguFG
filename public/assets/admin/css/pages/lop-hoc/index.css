@@ -1,0 +1,100 @@
+/* =========================================================
+   Lớp Học – Index CSS (reuses kh- patterns with lh- prefix)
+   ========================================================= */
+
+:root {
+    --lh-primary:  #7c3aed;
+    --lh-primary2: #a78bfa;
+    --lh-dark:     #4c1d95;
+    --lh-accent:   #f5f3ff;
+    --lh-border:   #e2e8f0;
+    --lh-text:     #1e293b;
+    --lh-muted:    #64748b;
+    --lh-shadow:   0 1px 3px rgba(0,0,0,.08), 0 4px 16px rgba(124,58,237,.05);
+    --lh-radius:   12px;
+}
+
+.lh-page-header {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px; margin-bottom: 24px;
+}
+.lh-page-title {
+    font-size: 1.45rem; font-weight: 700; color: var(--lh-dark);
+    display: flex; align-items: center; gap: 10px;
+}
+.lh-page-title span {
+    font-size: .78rem; font-weight: 500;
+    background: #ede9fe; color: var(--lh-primary);
+    padding: 2px 10px; border-radius: 20px;
+}
+.btn-add-lh {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 9px 18px;
+    background: linear-gradient(135deg, var(--lh-primary), var(--lh-primary2));
+    color: #fff; border: none; border-radius: 8px;
+    font-size: .88rem; font-weight: 600; text-decoration: none;
+    transition: all .2s; box-shadow: 0 2px 8px rgba(124,58,237,.3);
+}
+.btn-add-lh:hover { background: linear-gradient(135deg, var(--lh-dark), var(--lh-primary)); color: #fff; transform: translateY(-1px); }
+
+/* Stats */
+.lh-stats { display: grid; grid-template-columns: repeat(auto-fit,minmax(155px,1fr)); gap: 14px; margin-bottom: 22px; }
+.lh-stat-card {
+    background: #fff; border-radius: var(--lh-radius); padding: 16px 18px;
+    display: flex; align-items: center; gap: 14px;
+    box-shadow: var(--lh-shadow); border: 1px solid var(--lh-border);
+}
+.lh-stat-icon { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; }
+.lh-stat-icon.total   { background: #f5f3ff; color: var(--lh-primary); }
+.lh-stat-icon.active  { background: #f0fdf4; color: #16a34a; }
+.lh-stat-icon.soon    { background: #fff7ed; color: #d97706; }
+.lh-stat-value { font-size: 1.6rem; font-weight: 700; color: var(--lh-text); line-height: 1; }
+.lh-stat-label { font-size: .76rem; color: var(--lh-muted); margin-top: 3px; }
+
+/* Filter */
+.lh-filter-bar {
+    background: #fff; border: 1px solid var(--lh-border); border-radius: var(--lh-radius);
+    padding: 14px 16px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+    margin-bottom: 22px; box-shadow: var(--lh-shadow);
+}
+.lh-filter-bar .search-wrap { position: relative; flex: 1 1 220px; }
+.lh-filter-bar .search-wrap i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--lh-muted); font-size: .85rem; }
+.lh-filter-bar .search-input { width: 100%; padding: 8px 12px 8px 36px; border: 1px solid var(--lh-border); border-radius: 7px; font-size: .875rem; outline: none; }
+.lh-filter-bar .search-input:focus { border-color: var(--lh-primary2); }
+.lh-filter-bar select { padding: 8px 12px; border: 1px solid var(--lh-border); border-radius: 7px; font-size: .875rem; outline: none; background: #fff; }
+.lh-btn-filter { padding: 8px 16px; border-radius: 7px; font-size: .875rem; font-weight: 500; border: none; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: all .2s; }
+.lh-btn-filter-primary { background: var(--lh-primary); color: #fff; }
+.lh-btn-filter-primary:hover { background: var(--lh-dark); }
+.lh-btn-filter-reset { background: #f1f5f9; color: var(--lh-muted); }
+.lh-btn-filter-reset:hover { background: #e2e8f0; color: var(--lh-text); }
+
+/* Table */
+.lh-card { background: #fff; border-radius: var(--lh-radius); border: 1px solid var(--lh-border); box-shadow: var(--lh-shadow); }
+.lh-table-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--lh-border); }
+.lh-table-title { font-size: .9rem; font-weight: 700; color: var(--lh-text); }
+
+.lh-table { width: 100%; border-collapse: collapse; font-size: .875rem; }
+.lh-table th { background: #f8fafc; padding: 10px 14px; text-align: left; font-size: .75rem; font-weight: 700; color: var(--lh-muted); text-transform: uppercase; letter-spacing: .4px; border-bottom: 2px solid var(--lh-border); white-space: nowrap; }
+.lh-table td { padding: 11px 14px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+.lh-table tr:last-child td { border-bottom: none; }
+.lh-table tr:hover td { background: #fafcff; }
+
+/* Badges */
+.lh-tt { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: .72rem; font-weight: 600; }
+.lh-tt-0 { background: #fff7ed; color: #c2410c; }
+.lh-tt-1 { background: #eff6ff; color: #1d4ed8; }
+.lh-tt-2 { background: #f8fafc; color: #64748b; }
+.lh-tt-3 { background: #fff1f2; color: #be123c; }
+.lh-tt-4 { background: #f0fdf4; color: #15803d; }
+
+/* Actions */
+.lh-actions { display: flex; gap: 5px; justify-content: center; }
+.lh-btn-action { width: 30px; height: 30px; border-radius: 7px; border: 1px solid var(--lh-border); background: #fff; display: flex; align-items: center; justify-content: center; font-size: .78rem; text-decoration: none; cursor: pointer; transition: all .15s; }
+.lh-btn-view:hover { background: #f5f3ff; color: var(--lh-primary); border-color: transparent; }
+.lh-btn-edit:hover { background: #eff6ff; color: #2563eb; border-color: transparent; }
+.lh-btn-del:hover  { background: #fee2e2; color: #dc2626; border-color: transparent; }
+
+.lh-empty { text-align: center; padding: 50px 20px; color: var(--lh-muted); }
+.lh-empty i { font-size: 2.5rem; opacity: .25; margin-bottom: 14px; display: block; }
+.lh-pagination { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; padding: 12px 18px; border-top: 1px solid var(--lh-border); }
+.lh-pagination-info { font-size: .82rem; color: var(--lh-muted); }
