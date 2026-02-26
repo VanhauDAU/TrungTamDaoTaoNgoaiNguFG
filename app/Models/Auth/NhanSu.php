@@ -10,6 +10,7 @@ class NhanSu extends Model
     protected $table = 'nhansu';
     protected $primaryKey = 'taiKhoanId';
     protected $fillable = [
+        'taiKhoanId',
         'maNhanVien',
         'chucVu',
         'luongCoBan',
