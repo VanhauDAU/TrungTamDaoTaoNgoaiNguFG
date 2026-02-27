@@ -132,7 +132,7 @@
                         <label>Tỉnh / Thành phố <span class="req">*</span></label>
                         <select id="tinhThanhSel" onchange="loadPhuongXa(this.value)">
                             <option value="">-- Chọn tỉnh --</option>
-                            @foreach($tinhThanhs as $tt)
+                            @foreach ($tinhThanhs as $tt)
                                 <option value="{{ $tt->tinhThanhId }}"
                                     {{ optional($currentCoSo)->tinhThanhId == $tt->tinhThanhId ? 'selected' : '' }}>
                                     {{ $tt->tenTinhThanh }}
@@ -150,8 +150,7 @@
 
                     <div class="kf-form-group">
                         <label>Cơ sở đào tạo <span class="req">*</span></label>
-                        <select name="coSoId" id="coSoSel"
-                            onchange="loadPhongVaGV(this.value)" disabled>
+                        <select name="coSoId" id="coSoSel" onchange="loadPhongVaGV(this.value)" disabled>
                             <option value="">-- Chọn phường/xã trước --</option>
                         </select>
                     </div>
@@ -203,7 +202,8 @@
                             </label>
                         @endforeach
                     </div>
-                    <input type="hidden" name="lichHoc" id="lichHocInput" value="{{ old('lichHoc', $lopHoc->lichHoc) }}">
+                    <input type="hidden" name="lichHoc" id="lichHocInput"
+                        value="{{ old('lichHoc', $lopHoc->lichHoc) }}">
                 </div>
             </div>
 
@@ -333,9 +333,9 @@
             const pSel = document.getElementById('phuongXaSel');
             const cSel = document.getElementById('coSoSel');
             pSel.innerHTML = '<option value="">Đang tải...</option>';
-            pSel.disabled  = true;
+            pSel.disabled = true;
             cSel.innerHTML = '<option value="">-- Chọn phường/xã trước --</option>';
-            cSel.disabled  = true;
+            cSel.disabled = true;
             if (!tinhThanhId) {
                 pSel.innerHTML = '<option value="">-- Chọn tỉnh trước --</option>';
                 return;
@@ -344,7 +344,9 @@
             if (res.success && res.phuongXas.length) {
                 const oldPhuong = '{{ optional($currentCoSo)->maPhuongXa }}';
                 pSel.innerHTML = '<option value="">-- Chọn phường/xã --</option>' +
-                    res.phuongXas.map(p => `<option value="${p.maPhuongXa}" ${String(p.maPhuongXa) === oldPhuong ? 'selected' : ''}>${p.tenPhuongXa}</option>`).join('');
+                    res.phuongXas.map(p =>
+                        `<option value="${p.maPhuongXa}" ${String(p.maPhuongXa) === oldPhuong ? 'selected' : ''}>${p.tenPhuongXa}</option>`
+                        ).join('');
                 pSel.disabled = false;
                 // Auto-load cơ sở if old value exists
                 if (oldPhuong && pSel.value) loadCoSo();
@@ -354,18 +356,23 @@
         }
 
         async function loadCoSo() {
-            const tinhId   = document.getElementById('tinhThanhSel').value;
+            const tinhId = document.getElementById('tinhThanhSel').value;
             const phuongId = document.getElementById('phuongXaSel').value;
-            const cSel     = document.getElementById('coSoSel');
+            const cSel = document.getElementById('coSoSel');
             cSel.innerHTML = '<option value="">Đang tải...</option>';
-            cSel.disabled  = true;
+            cSel.disabled = true;
             if (!phuongId) return;
-            const params = new URLSearchParams({ tinhThanhId: tinhId, maPhuongXa: phuongId });
+            const params = new URLSearchParams({
+                tinhThanhId: tinhId,
+                maPhuongXa: phuongId
+            });
             const res = await fetch(`/admin/api/co-so-by-location?${params}`).then(r => r.json());
-            const oldCoSo = '{{ old("coSoId", $lopHoc->coSoId) }}';
+            const oldCoSo = '{{ old('coSoId', $lopHoc->coSoId) }}';
             if (res.success && res.coSos.length) {
                 cSel.innerHTML = '<option value="">-- Chọn cơ sở --</option>' +
-                    res.coSos.map(c => `<option value="${c.coSoId}" ${String(c.coSoId) === oldCoSo ? 'selected' : ''}>${c.tenCoSo}${c.tenPhuongXa ? ' — ' + c.tenPhuongXa : ''}</option>`).join('');
+                    res.coSos.map(c =>
+                        `<option value="${c.coSoId}" ${String(c.coSoId) === oldCoSo ? 'selected' : ''}>${c.tenCoSo}${c.tenPhuongXa ? ' — ' + c.tenPhuongXa : ''}</option>`
+                        ).join('');
                 cSel.disabled = false;
                 // Trigger room/teacher load if coSo is pre-selected
                 if (cSel.value) loadPhongVaGV(cSel.value);
@@ -382,6 +389,10 @@
             }
         });
 
+        // Giá trị đã lưu từ DB – dùng để pre-select sau khi cascade load xong
+        const _savedPhong = '{{ old('phongHocId', $lopHoc->phongHocId) }}';
+        const _savedGV = '{{ old('taiKhoanId', $lopHoc->taiKhoanId) }}';
+
         async function loadPhongVaGV(coSoId) {
             const ps = document.getElementById('phongHocSel');
             const gs = document.getElementById('giaoVienSel');
@@ -394,10 +405,65 @@
                 fetch(`/api/phong-hoc/${coSoId}`).then(r => r.json()),
                 fetch(`/api/giao-vien/${coSoId}`).then(r => r.json()),
             ]);
-            ps.innerHTML = '<option value="">-- Chọn phòng --</option>' +
-                phongs.map(p => `<option value="${p.phongHocId}">${p.tenPhong} (${p.sucChua} chỗ)</option>`).join('');
+
+            // Build phòng options – lưu sucChua vào data-attr để validate sĩ số
+            ps.innerHTML = '<option value="">-- Chọn phòng (tùy chọn) --</option>' +
+                phongs.map(p =>
+                    `<option value="${p.phongHocId}" data-suc-chua="${p.sucChua}"
+                        ${String(p.phongHocId) === _savedPhong ? 'selected' : ''}>
+                        ${p.tenPhong} (sức chứa: ${p.sucChua} chỗ)
+                    </option>`
+                ).join('');
+
             gs.innerHTML = '<option value="">-- Không có --</option>' +
-                gvs.map(g => `<option value="${g.taiKhoanId}">${g.hoTen}</option>`).join('');
+                gvs.map(g =>
+                    `<option value="${g.taiKhoanId}" ${String(g.taiKhoanId) === _savedGV ? 'selected' : ''}>
+                        ${g.hoTen}
+                    </option>`
+                ).join('');
+
+            // Cập nhật hint sức chứa ngay sau khi render
+            updateSucChuaHint();
         }
+
+        // ── Validation sĩ số ≤ sức chứa phòng ──────────────────
+        function updateSucChuaHint() {
+            const ps = document.getElementById('phongHocSel');
+            const opt = ps.options[ps.selectedIndex];
+            const sucChua = opt ? parseInt(opt.dataset.sucChua || 0) : 0;
+            const siSoInput = document.querySelector('[name="soHocVienToiDa"]');
+            let hint = document.getElementById('sucChuaHint');
+            if (!hint) {
+                hint = document.createElement('div');
+                hint.id = 'sucChuaHint';
+                hint.style.cssText = 'font-size:.78rem;margin-top:4px';
+                siSoInput?.parentNode?.appendChild(hint);
+            }
+            if (sucChua > 0) {
+                siSoInput?.setAttribute('max', sucChua);
+                hint.style.color = '#7c3aed';
+                hint.innerHTML =
+                    `<i class="fas fa-info-circle me-1"></i> Phòng đã chọn sức chứa <strong>${sucChua}</strong> chỗ. Sĩ số tối đa không được vượt quá giới hạn này.`;
+            } else {
+                siSoInput?.removeAttribute('max');
+                hint.innerHTML = '';
+            }
+        }
+
+        document.getElementById('phongHocSel')?.addEventListener('change', updateSucChuaHint);
+
+        // Client-side guard trước khi submit
+        document.querySelector('form')?.addEventListener('submit', function(e) {
+            const ps = document.getElementById('phongHocSel');
+            const opt = ps?.options[ps.selectedIndex];
+            const sucChua = opt ? parseInt(opt.dataset.sucChua || 0) : 0;
+            const siSoInput = document.querySelector('[name="soHocVienToiDa"]');
+            const siSo = parseInt(siSoInput?.value || 0);
+            if (sucChua > 0 && siSo > sucChua) {
+                e.preventDefault();
+                alert(`Sĩ số tối đa (${siSo}) không được vượt sức chứa phòng học (${sucChua} chỗ).`);
+                siSoInput.focus();
+            }
+        });
     </script>
 @endsection

@@ -218,17 +218,32 @@
                             </div>
 
                             <div class="summary-row">
-                                <span>Học phí gốc</span>
-                                <span>{{ number_format($class->hocPhi->donGia ?? 0, 0, ',', '.') }}đ</span>
+                                <span>Học phí</span>
+                                @if ($class->hocPhi)
+                                    <span>{{ number_format($class->hocPhi->tongHocPhi, 0, ',', '.') }}đ</span>
+                                @else
+                                    <span>Liên hệ</span>
+                                @endif
                             </div>
-                            <div class="summary-row">
-                                <span>Giảm giá</span>
-                                <span>0đ</span>
-                            </div>
+                            @if ($class->hocPhi)
+                                <div class="summary-row">
+                                    <span class="text-muted small">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        {{ $class->hocPhi->soBuoi }} buổi &times;
+                                        {{ number_format($class->hocPhi->donGia, 0, ',', '.') }}đ
+                                    </span>
+                                    <span></span>
+                                </div>
+                            @endif
                             <div class="summary-row total">
                                 <span>Tổng thanh toán</span>
-                                <span
-                                    class="text-danger">{{ number_format($class->hocPhi->donGia ?? 0, 0, ',', '.') }}đ</span>
+                                <span class="text-danger">
+                                    @if ($class->hocPhi)
+                                        {{ number_format($class->hocPhi->tongHocPhi, 0, ',', '.') }}đ
+                                    @else
+                                        Liên hệ
+                                    @endif
+                                </span>
                             </div>
                             {{-- errors --}}
                             @if ($errors->any())

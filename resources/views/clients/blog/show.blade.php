@@ -10,13 +10,14 @@
     <div class="blog-detail-hero">
         <div class="blog-detail-hero-overlay"></div>
         <div class="blog-detail-hero-img"
-            style="background-image:url('{{ asset('storage/blogs/' . ($blog->anhDaiDien ?? 'default.jpg')) }}')">
+            style="background-image:url('{{ $blog->anhDaiDien ? asset('storage/' . $blog->anhDaiDien) : asset('assets/images/default-course.jpg') }}')">
         </div>
         <div class="container position-relative" style="z-index:2">
             <div class="blog-detail-hero-content">
                 <div class="blog-detail-categories mb-3">
                     @foreach ($blog->danhMucs as $dm)
-                        <a href="{{ route('home.blog.index', ['category' => $dm->slug]) }}" class="blog-detail-category-badge">
+                        <a href="{{ route('home.blog.index', ['category' => $dm->slug]) }}"
+                            class="blog-detail-category-badge">
                             {{ $dm->tenDanhMuc }}
                         </a>
                     @endforeach
@@ -110,7 +111,7 @@
                                         <a href="{{ route('home.blog.show', ['slug' => $related->slug]) }}"
                                             class="blog-related-card">
                                             <div class="blog-related-card-img">
-                                                <img src="{{ asset('storage/blogs/' . ($related->anhDaiDien ?? 'default.jpg')) }}"
+                                                <img src="{{ $related->anhDaiDien ? asset('storage/' . $related->anhDaiDien) : asset('assets/images/default-course.jpg') }}"
                                                     alt="{{ $related->tieuDe }}">
                                             </div>
                                             <div class="blog-related-card-body">
@@ -151,7 +152,8 @@
                                 @if ($blog->taiKhoan && $blog->taiKhoan->hoSoNguoiDung)
                                     <div class="blog-sidebar-author-avatar">
                                         @if ($blog->taiKhoan->hoSoNguoiDung->anhDaiDien)
-                                            <img src="{{ asset('storage/' . $blog->taiKhoan->hoSoNguoiDung->anhDaiDien) }}" alt="">
+                                            <img src="{{ asset('storage/' . $blog->taiKhoan->hoSoNguoiDung->anhDaiDien) }}"
+                                                alt="">
                                         @else
                                             <div class="blog-sidebar-author-initial">
                                                 {{ mb_substr($blog->taiKhoan->hoSoNguoiDung->hoTen, 0, 1) }}
@@ -236,7 +238,7 @@
             });
         }
 
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
             // Fade in article
             const article = document.querySelector('.blog-detail-article');
             if (article) {
@@ -262,7 +264,9 @@
                             obs.unobserve(entry.target);
                         }
                     });
-                }, { threshold: 0.1 });
+                }, {
+                    threshold: 0.1
+                });
                 obs.observe(el);
             });
         });

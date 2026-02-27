@@ -122,13 +122,13 @@
                 <div class="form-hint" style="margin:-10px 0 16px 0">
                     Chọn địa điểm để hệ thống tự động tải danh sách Phòng học và Giáo viên phù hợp.
                 </div>
-                
+
                 <div class="kf-form-row">
                     <div class="kf-form-group">
                         <label>Tỉnh / Thành phố <span class="req">*</span></label>
                         <select id="tinhThanhSel" onchange="loadPhuongXa(this.value)">
                             <option value="">-- Chọn tỉnh --</option>
-                            @foreach($tinhThanhs as $tt)
+                            @foreach ($tinhThanhs as $tt)
                                 <option value="{{ $tt->tinhThanhId }}">{{ $tt->tenTinhThanh }}</option>
                             @endforeach
                         </select>
@@ -143,8 +143,7 @@
 
                     <div class="kf-form-group">
                         <label>Cơ sở đào tạo <span class="req">*</span></label>
-                        <select name="coSoId" id="coSoSel"
-                            class="{{ $errors->has('coSoId') ? 'is-invalid' : '' }}"
+                        <select name="coSoId" id="coSoSel" class="{{ $errors->has('coSoId') ? 'is-invalid' : '' }}"
                             onchange="loadPhongVaGV(this.value)" disabled>
                             <option value="">-- Chọn phường/xã trước --</option>
                         </select>
@@ -275,11 +274,6 @@
                                 HV</div>
                             <div style="font-size:1.4rem;font-weight:700;color:#fde68a" id="prev-tong">—</div>
                         </div>
-                        <div id="prev-diff-wrap">
-                            <div style="font-size:.7rem;font-weight:700;opacity:.8;text-transform:uppercase">Chênh lệch (HV
-                                – GV)</div>
-                            <div style="font-size:1.4rem;font-weight:700;color:#a7f3d0" id="prev-diff">—</div>
-                        </div>
                     </div>
                     {{-- Cảnh báo lệch số buổi --}}
                     <div id="hp-mismatch-warn"
@@ -406,9 +400,9 @@
             const pSel = document.getElementById('phuongXaSel');
             const cSel = document.getElementById('coSoSel');
             pSel.innerHTML = '<option value="">Đang tải...</option>';
-            pSel.disabled  = true;
+            pSel.disabled = true;
             cSel.innerHTML = '<option value="">-- Chọn phường/xã trước --</option>';
-            cSel.disabled  = true;
+            cSel.disabled = true;
             if (!tinhThanhId) {
                 pSel.innerHTML = '<option value="">-- Chọn tỉnh trước --</option>';
                 return;
@@ -424,17 +418,22 @@
         }
 
         async function loadCoSo() {
-            const tinhId   = document.getElementById('tinhThanhSel').value;
+            const tinhId = document.getElementById('tinhThanhSel').value;
             const phuongId = document.getElementById('phuongXaSel').value;
-            const cSel     = document.getElementById('coSoSel');
+            const cSel = document.getElementById('coSoSel');
             cSel.innerHTML = '<option value="">Đang tải...</option>';
-            cSel.disabled  = true;
+            cSel.disabled = true;
             if (!phuongId) return;
-            const params = new URLSearchParams({ tinhThanhId: tinhId, maPhuongXa: phuongId });
+            const params = new URLSearchParams({
+                tinhThanhId: tinhId,
+                maPhuongXa: phuongId
+            });
             const res = await fetch(`/admin/api/co-so-by-location?${params}`).then(r => r.json());
             if (res.success && res.coSos.length) {
                 cSel.innerHTML = '<option value="">-- Chọn cơ sở --</option>' +
-                    res.coSos.map(c => `<option value="${c.coSoId}">${c.tenCoSo}${c.tenPhuongXa ? ' — ' + c.tenPhuongXa : ''}</option>`).join('');
+                    res.coSos.map(c =>
+                        `<option value="${c.coSoId}">${c.tenCoSo}${c.tenPhuongXa ? ' — ' + c.tenPhuongXa : ''}</option>`
+                    ).join('');
                 cSel.disabled = false;
             } else {
                 cSel.innerHTML = '<option value="">Không tìm thấy cơ sở</option>';
@@ -461,11 +460,55 @@
             ]);
 
             phongSel.innerHTML = '<option value="">-- Chọn phòng (tùy chọn) --</option>' +
-                phongs.map(p => `<option value="${p.phongHocId}">${p.tenPhong} (${p.sucChua} chỗ)</option>`).join('');
+                phongs.map(p =>
+                    `<option value="${p.phongHocId}" data-suc-chua="${p.sucChua}">
+                        ${p.tenPhong} (sức chứa: ${p.sucChua} chỗ)
+                    </option>`
+                ).join('');
 
             gvSel.innerHTML = '<option value="">-- Chọn giáo viên (tùy chọn) --</option>' +
                 gvs.map(g => `<option value="${g.taiKhoanId}">${g.hoTen}</option>`).join('');
         }
+
+        // ── Validation sĩ số ≤ sức chứa phòng ──────────────────
+        function updateSucChuaHint() {
+            const ps = document.getElementById('phongHocSel');
+            const opt = ps.options[ps.selectedIndex];
+            const sucChua = opt ? parseInt(opt.dataset.sucChua || 0) : 0;
+            const siSoInput = document.querySelector('[name="soHocVienToiDa"]');
+            let hint = document.getElementById('sucChuaHint');
+            if (!hint) {
+                hint = document.createElement('div');
+                hint.id = 'sucChuaHint';
+                hint.style.cssText = 'font-size:.78rem;margin-top:4px';
+                siSoInput?.parentNode?.appendChild(hint);
+            }
+            if (sucChua > 0) {
+                siSoInput?.setAttribute('max', sucChua);
+                hint.style.color = '#7c3aed';
+                hint.innerHTML =
+                    `<i class="fas fa-info-circle me-1"></i> Phòng đã chọn sức chứa <strong>${sucChua}</strong> chỗ. Sĩ số tối đa không được vượt quá.`;
+            } else {
+                siSoInput?.removeAttribute('max');
+                hint.innerHTML = '';
+            }
+        }
+
+        document.getElementById('phongHocSel')?.addEventListener('change', updateSucChuaHint);
+
+        // Client-side guard trước khi submit
+        document.querySelector('form')?.addEventListener('submit', function(e) {
+            const ps = document.getElementById('phongHocSel');
+            const opt = ps?.options[ps.selectedIndex];
+            const sucChua = opt ? parseInt(opt.dataset.sucChua || 0) : 0;
+            const siSoInput = document.querySelector('[name="soHocVienToiDa"]');
+            const siSo = parseInt(siSoInput?.value || 0);
+            if (sucChua > 0 && siSo > sucChua) {
+                e.preventDefault();
+                alert(`Sĩ số tối đa (${siSo}) không được vượt sức chứa phòng học (${sucChua} chỗ).`);
+                siSoInput.focus();
+            }
+        });
 
         // ── AJAX: HocPhi theo khóa học ──────────────────
         async function loadHocPhi(khoaHocId) {

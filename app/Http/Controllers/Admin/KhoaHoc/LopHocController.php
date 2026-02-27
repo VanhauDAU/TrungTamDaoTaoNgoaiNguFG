@@ -122,6 +122,16 @@ class LopHocController extends Controller
         ]);
 
         $data['slug'] = $this->generateUniqueSlug($request->tenLopHoc);
+
+        // Kiểm tra sĩ số không vượt sức chứa phòng học
+        if (!empty($data['phongHocId']) && !empty($data['soHocVienToiDa'])) {
+            $phong = PhongHoc::find($data['phongHocId']);
+            if ($phong && $data['soHocVienToiDa'] > $phong->sucChua) {
+                return back()->withInput()
+                    ->withErrors(['soHocVienToiDa' => 'Sĩ số tối đa (' . $data['soHocVienToiDa'] . ') không được vượt quá sức chứa phòng học ' . $phong->tenPhong . ' (' . $phong->sucChua . ' chỗ).']);
+            }
+        }
+
         LopHoc::create($data);
 
         return redirect()->route('admin.lop-hoc.index')
@@ -204,6 +214,15 @@ class LopHocController extends Controller
             'lichHoc'        => 'nullable|string|max:20',
             'trangThai'      => 'required|in:0,1,2,3,4',
         ]);
+
+        // Kiểm tra sĩ số không vượt sức chứa phòng học
+        if (!empty($data['phongHocId']) && !empty($data['soHocVienToiDa'])) {
+            $phong = PhongHoc::find($data['phongHocId']);
+            if ($phong && $data['soHocVienToiDa'] > $phong->sucChua) {
+                return back()->withInput()
+                    ->withErrors(['soHocVienToiDa' => 'Sĩ số tối đa (' . $data['soHocVienToiDa'] . ') không được vượt quá sức chứa phòng học ' . $phong->tenPhong . ' (' . $phong->sucChua . ' chỗ).']);
+            }
+        }
 
         $lopHoc->update($data);
 
