@@ -48,12 +48,20 @@
                                 {{ $class->khoaHoc->loaiKhoaHoc->tenLoai ?? 'Khóa học' }}
                             </span>
 
-                            @if ($class->trangThai == 1)
+                            @if ($class->trangThai == 0)
+                                <span class="status-badge" style="background:#e3f2fd;color:#1565c0"><i
+                                        class="fas fa-hourglass-start me-1"></i> Sắp mở</span>
+                            @elseif ($class->trangThai == 1)
                                 <span class="status-badge status-open"><i class="fas fa-check-circle me-1"></i> Đang mở đăng
                                     ký</span>
+                            @elseif ($class->trangThai == 4)
+                                <span class="status-badge" style="background:#e8f5e9;color:#2e7d32"><i
+                                        class="fas fa-chalkboard-teacher me-1"></i> Đang học</span>
+                            @elseif ($class->trangThai == 3)
+                                <span class="status-badge status-closed"><i class="fas fa-ban me-1"></i> Đã hủy</span>
                             @else
-                                <span class="status-badge status-closed"><i class="fas fa-clock me-1"></i> Đã
-                                    đóng/Đầy</span>
+                                <span class="status-badge status-closed"><i class="fas fa-lock me-1"></i> Đã đóng đăng
+                                    ký</span>
                             @endif
                         </div>
 
@@ -217,22 +225,63 @@
                     <div class="sidebar-sticky" style="top: 100px">
                         {{-- HỌC PHÍ CARD --}}
                         <div class="sidebar-card p-4 text-center mb-4">
-                            <p class="text-muted mb-2">Học phí khóa học</p>
-                            <h2 class="text-primary fw-bold mb-3">
-                                {{ number_format($class->hocPhi->donGia ?? 0, 0, ',', '.') }}đ
-                            </h2>
+                            <p class="text-muted mb-1">Học phí khóa học</p>
+                            @if ($class->hocPhi)
+                                <h2 class="text-primary fw-bold mb-1">
+                                    {{ number_format($class->hocPhi->tongHocPhi, 0, ',', '.') }}đ
+                                </h2>
+                                <p class="text-muted small mb-3">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    {{ $class->hocPhi->soBuoi }} buổi &times;
+                                    {{ number_format($class->hocPhi->donGia, 0, ',', '.') }}đ/buổi
+                                </p>
+                            @else
+                                <h2 class="text-muted fw-bold mb-3">Liên hệ</h2>
+                            @endif
 
                             @if ($class->trangThai == 1)
-                                <a href="{{ route('home.classes.confirm', ['slug' => $class->khoaHoc->slug, 'slugLopHoc' => $class->slug]) }}"
-                                    class="btn btn-primary w-100 py-3 rounded-3 fw-bold mb-3 d-flex align-items-center justify-content-center text-decoration-none"
-                                    style="background: linear-gradient(135deg, #10454F 0%, #27C4B5 100%); border: none;">
-                                    ĐĂNG KÝ NGAY
-                                </a>
-                                <p class="small text-muted mb-0"><i class="fas fa-shield-alt me-1"></i> Cam kết hoàn tiền
-                                    trong 7 ngày</p>
+                                @auth
+                                    @if (auth()->user()->role === \App\Models\Auth\TaiKhoan::ROLE_HOC_VIEN)
+                                        <a href="{{ route('home.classes.confirm', ['slug' => $class->khoaHoc->slug, 'slugLopHoc' => $class->slug]) }}"
+                                            class="btn btn-primary w-100 py-3 rounded-3 fw-bold mb-3 d-flex align-items-center justify-content-center text-decoration-none"
+                                            style="background: linear-gradient(135deg, #10454F 0%, #27C4B5 100%); border: none;">
+                                            <i class="fas fa-user-plus me-2"></i> ĐĂNG KÝ NGAY
+                                        </a>
+                                        <p class="small text-muted mb-0"><i class="fas fa-shield-alt me-1"></i> Cam kết hoàn
+                                            tiền trong 7 ngày</p>
+                                    @else
+                                        <div class="alert alert-warning py-2 mb-0 small">
+                                            <i class="fas fa-info-circle me-1"></i> Chỉ học viên mới có thể đăng ký lớp học.
+                                        </div>
+                                    @endif
+                                @else
+                                    <a href="{{ route('login') }}"
+                                        class="btn btn-primary w-100 py-3 rounded-3 fw-bold mb-3 d-flex align-items-center justify-content-center text-decoration-none"
+                                        style="background: linear-gradient(135deg, #10454F 0%, #27C4B5 100%); border: none;">
+                                        <i class="fas fa-sign-in-alt me-2"></i> ĐĂNG NHẬP ĐỂ ĐĂNG KÝ
+                                    </a>
+                                @endauth
+                            @elseif ($class->trangThai == 0)
+                                <button class="btn w-100 py-3 rounded-3 fw-bold disabled"
+                                    style="background:#e3f2fd;color:#1565c0;border:none;">
+                                    <i class="fas fa-hourglass-start me-2"></i> SẮP MỞ ĐĂNG KÝ
+                                </button>
+                                <p class="small text-muted mb-0 mt-2"><i class="fas fa-bell me-1"></i> Lớp học chưa mở
+                                    đăng ký</p>
+                            @elseif ($class->trangThai == 4)
+                                <button class="btn w-100 py-3 rounded-3 fw-bold disabled"
+                                    style="background:#e8f5e9;color:#2e7d32;border:none;">
+                                    <i class="fas fa-chalkboard-teacher me-2"></i> ĐANG DIỄN RA
+                                </button>
+                                <p class="small text-muted mb-0 mt-2"><i class="fas fa-info-circle me-1"></i> Lớp học đang
+                                    trong quá trình học</p>
+                            @elseif ($class->trangThai == 3)
+                                <button class="btn btn-danger w-100 py-3 rounded-3 fw-bold disabled opacity-75">
+                                    <i class="fas fa-ban me-2"></i> LỚP ĐÃ HỦY
+                                </button>
                             @else
                                 <button class="btn btn-secondary w-100 py-3 rounded-3 fw-bold disabled">
-                                    ĐÃ ĐÓNG ĐĂNG KÝ
+                                    <i class="fas fa-lock me-2"></i> ĐÃ ĐÓNG ĐĂNG KÝ
                                 </button>
                             @endif
                         </div>

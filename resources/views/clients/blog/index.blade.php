@@ -32,10 +32,10 @@
                         <div class="search_post mb-3 mb-lg-0">
                             <form action="{{ route('home.blog.index') }}" method="get">
                                 {{-- Giữ lại danh mục đang lọc --}}
-                                @if(request('category'))
+                                @if (request('category'))
                                     <input type="hidden" name="category" value="{{ request('category') }}">
                                 @endif
-                                @if(request('sort'))
+                                @if (request('sort'))
                                     <input type="hidden" name="sort" value="{{ request('sort') }}">
                                 @endif
                                 <div class="input-group">
@@ -52,11 +52,14 @@
                         {{-- Thanh danh mục cuộn ngang --}}
                         <ul class="cate_menu">
                             <li class="{{ !request('category') ? 'active' : '' }}">
-                                <a href="{{ route('home.blog.index', array_filter(['s' => request('s'), 'sort' => request('sort')])) }}">Tất cả</a>
+                                <a
+                                    href="{{ route('home.blog.index', array_filter(['s' => request('s'), 'sort' => request('sort')])) }}">Tất
+                                    cả</a>
                             </li>
                             @foreach ($categories as $cate)
                                 <li class="{{ request('category') == $cate->slug ? 'active' : '' }}">
-                                    <a href="{{ route('home.blog.index', array_filter(['category' => $cate->slug, 's' => request('s'), 'sort' => request('sort')])) }}">
+                                    <a
+                                        href="{{ route('home.blog.index', array_filter(['category' => $cate->slug, 's' => request('s'), 'sort' => request('sort')])) }}">
                                         {{ $cate->tenDanhMuc }}
                                     </a>
                                 </li>
@@ -71,17 +74,17 @@
                         <span class="blog-filter-count">
                             <i class="fas fa-file-alt me-1"></i>
                             <strong>{{ $blogs->total() }}</strong> bài viết
-                            @if(request('s'))
+                            @if (request('s'))
                                 cho "<em>{{ request('s') }}</em>"
                             @endif
-                            @if(request('category'))
+                            @if (request('category'))
                                 @php $activeCat = $categories->firstWhere('slug', request('category')); @endphp
-                                @if($activeCat)
+                                @if ($activeCat)
                                     trong <strong>{{ $activeCat->tenDanhMuc }}</strong>
                                 @endif
                             @endif
                         </span>
-                        @if(request('s') || request('category') || request('sort'))
+                        @if (request('s') || request('category') || request('sort'))
                             <a href="{{ route('home.blog.index') }}" class="blog-filter-clear">
                                 <i class="fas fa-times me-1"></i>Xóa bộ lọc
                             </a>
@@ -92,16 +95,16 @@
                         @php
                             $currentSort = request('sort', 'latest');
                             $sortOptions = [
-                                'latest'  => 'Mới nhất',
-                                'oldest'  => 'Cũ nhất',
+                                'latest' => 'Mới nhất',
+                                'oldest' => 'Cũ nhất',
                                 'popular' => 'Xem nhiều nhất',
-                                'az'      => 'Tên A → Z',
+                                'az' => 'Tên A → Z',
                             ];
                             $baseParams = array_filter(['category' => request('category'), 's' => request('s')]);
                         @endphp
-                        @foreach($sortOptions as $key => $label)
+                        @foreach ($sortOptions as $key => $label)
                             <a href="{{ route('home.blog.index', array_merge($baseParams, ['sort' => $key])) }}"
-                               class="blog-sort-btn {{ $currentSort === $key ? 'active' : '' }}">
+                                class="blog-sort-btn {{ $currentSort === $key ? 'active' : '' }}">
                                 {{ $label }}
                             </a>
                         @endforeach
@@ -116,8 +119,8 @@
                                 <figure>
                                     <a href="{{ route('home.blog.show', ['slug' => $blog->slug]) }}">
                                         <img width="600" height="450"
-                                            src="{{ asset('storage/' . $blog->anhDaiDien ?? '') }}"
-                                            class="img-fluid wp-post-image" alt="" decoding="async"
+                                            src="{{ $blog->anhDaiDien ? asset('storage/' . $blog->anhDaiDien) : asset('assets/images/default-course.jpg') }}"
+                                            class="img-fluid wp-post-image" alt="{{ $blog->tieuDe }}" decoding="async"
                                             fetchpriority="high"> </a>
                                 </figure>
                                 <div class="meta_post">

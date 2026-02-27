@@ -29,8 +29,8 @@ class CourseController extends Controller
             });
         }
         
-        // Lấy danh sách khóa học với pagination và giữ query parameters
-        $listCourses = $query->with('loaiKhoaHoc')->paginate(6)->withQueryString();
+        // Lấy danh sách khóa học có ít nhất 1 lớp học với pagination và giữ query parameters
+        $listCourses = $query->with('loaiKhoaHoc')->whereHas('lopHoc')->paginate(6)->withQueryString();
         
         return view('clients.courses.index', compact('listTypeCourses', 'listCourses'));
     }
@@ -86,12 +86,18 @@ class CourseController extends Controller
 
         $user = auth()->user();
 
-        // 2. Get Class Info
+        // 2. Chỉ học viên (role = 0) mới được đăng ký
+        if ($user->role !== \App\Models\Auth\TaiKhoan::ROLE_HOC_VIEN) {
+            return redirect()->route('home.classes.show', ['slug' => $slug, 'slugLopHoc' => $slugLopHoc])
+                ->with('error', 'Chỉ học viên mới có thể đăng ký lớp học.');
+        }
+
+        // 3. Get Class Info
         $class = LopHoc::where('slug', $slugLopHoc)
             ->with(['buoiHocs.caHoc', 'dangKyLopHocs', 'hocPhi', 'khoaHoc'])
             ->firstOrFail();
 
-        // 3. Validation Logic (Reusable)
+        // 4. Validation Logic (Reusable)
         $validation = $this->validateClassRegistration($user, $class);
         if ($validation !== true) {
             return redirect()->route('home.classes.show', ['slug' => $class->khoaHoc->slug, 'slugLopHoc' => $class->slug])
@@ -108,7 +114,14 @@ class CourseController extends Controller
         }
 
         $user = auth()->user();
-        $class = LopHoc::where('slug', $slugLopHoc)->firstOrFail();
+
+        // Chỉ học viên (role = 0) mới được đăng ký
+        if ($user->role !== \App\Models\Auth\TaiKhoan::ROLE_HOC_VIEN) {
+            return redirect()->route('home.classes.show', ['slug' => $slug, 'slugLopHoc' => $slugLopHoc])
+                ->with('error', 'Chỉ học viên mới có thể đăng ký lớp học.');
+        }
+
+        $class = LopHoc::where('slug', $slugLopHoc)->with(['hocPhi', 'khoaHoc', 'dangKyLopHocs', 'buoiHocs.caHoc', 'coSo'])->firstOrFail();
         // Re-validate
         $validation = $this->validateClassRegistration($user, $class);
         if ($validation !== true) {
@@ -134,15 +147,16 @@ class CourseController extends Controller
                 'trangThai' => 1 // 1: Chờ thanh toán
             ]);
             // 2. Create Invoice
+            // tongHocPhi = soBuoi × donGia (tổng tiền học viên phải đóng)
+            $tongTien = $class->hocPhi ? $class->hocPhi->tongHocPhi : 0;
             $invoice = HoaDon::create([
                 'ngayLap' => now(),
-                'tongTien' => $class->hocPhi->donGia ?? 0,
+                'tongTien' => $tongTien,
                 'daTra' => 0,
                 'taiKhoanId' => $user->taiKhoanId,
                 'dangKyLopHocId' => $registration->dangKyLopHocId,
-                // đổi lại phuongThucThanhToan trên db là kiểu int
                 // 1: tiền mặt, 2: chuyển khoản, 3: vnpay
-                'phuongThucThanhToan' => $request->payment_method, 
+                'phuongThucThanhToan' => $request->payment_method,
                 'coSoId' => $class->coSoId,
                 'trangThai' => 0, // 0: Chưa thanh toán
                 'ghiChu' => 'Đăng ký lớp ' . $class->tenLopHoc
@@ -166,8 +180,13 @@ class CourseController extends Controller
 
     private function validateClassRegistration($user, $class)
     {
+        // Check class is open for registration
+        if ($class->trangThai !== 1) {
+            return 'Lớp học hiện không nhận đăng ký.';
+        }
+
         // Check Capacity
-        $currentStudents = $class->dangKyLopHocs->where('trangThai', '!=', 0)->count(); 
+        $currentStudents = $class->dangKyLopHocs->where('trangThai', '!=', 0)->count();
         if ($currentStudents >= $class->soHocVienToiDa) {
             return 'Lớp học đã đủ sĩ số.';
         }
