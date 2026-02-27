@@ -57,6 +57,8 @@ Route::prefix('/')->name('home.')->group(function () {
     });
     Route::prefix('hoc-vien')->name('student.')->middleware('auth')->group(function () {
         Route::get('/', [StudentController::class, 'index'])->name('index');
+        Route::post('/', [StudentController::class, 'updateProfile'])->name('update-profile');
+        Route::post('/anh-dai-dien', [StudentController::class, 'updateAvatar'])->name('update-avatar');
         Route::get('/doi-mat-khau', [StudentController::class, 'changePassword'])->name('change-password');
         Route::post('/doi-mat-khau', [StudentController::class, 'updatePassword'])->name('update-password');
         Route::get('/hoa-don', [StudentController::class, 'invoices'])->name('invoices');
@@ -71,12 +73,12 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
 
     // ── Phân quyền (chỉ Admin role=3 mới vào được) ──────────────────────────
     Route::prefix('phan-quyen')->name('phan-quyen.')->group(function () {
-        Route::get('/',           [NhomQuyenController::class, 'index'])->name('index');
-        Route::get('/tao-moi',    [NhomQuyenController::class, 'create'])->name('create');
-        Route::post('/',          [NhomQuyenController::class, 'store'])->name('store');
-        Route::get('/{id}/sua',   [NhomQuyenController::class, 'edit'])->name('edit');
-        Route::put('/{id}',       [NhomQuyenController::class, 'update'])->name('update');
-        Route::delete('/{id}',    [NhomQuyenController::class, 'destroy'])->name('destroy');
+        Route::get('/', [NhomQuyenController::class, 'index'])->name('index');
+        Route::get('/tao-moi', [NhomQuyenController::class, 'create'])->name('create');
+        Route::post('/', [NhomQuyenController::class, 'store'])->name('store');
+        Route::get('/{id}/sua', [NhomQuyenController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [NhomQuyenController::class, 'update'])->name('update');
+        Route::delete('/{id}', [NhomQuyenController::class, 'destroy'])->name('destroy');
     });
 
     // ── Danh sách Tài khoản Hệ thống ──────────────────────────────────────────
@@ -89,79 +91,79 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
 
     // ── Học viên ─────────────────────────────────────────────────────────────
     Route::prefix('hoc-vien')->name('hoc-vien.')->group(function () {
-        Route::get('/',                    [AdminHocVienController::class, 'index'])->name('index');
-        Route::get('/tao-moi',             [AdminHocVienController::class, 'create'])->name('create');
-        Route::post('/',                   [AdminHocVienController::class, 'store'])->name('store');
-        Route::get('/thung-rac',           [AdminHocVienController::class, 'trash'])->name('trash');
-        Route::patch('/{id}/khoi-phuc',    [AdminHocVienController::class, 'restore'])->name('restore');
-        Route::get('/{taiKhoan}/sua',      [AdminHocVienController::class, 'edit'])->name('edit');
-        Route::put('/{taiKhoan}',          [AdminHocVienController::class, 'update'])->name('update');
-        Route::delete('/{taiKhoan}',       [AdminHocVienController::class, 'destroy'])->name('destroy');
+        Route::get('/', [AdminHocVienController::class, 'index'])->name('index');
+        Route::get('/tao-moi', [AdminHocVienController::class, 'create'])->name('create');
+        Route::post('/', [AdminHocVienController::class, 'store'])->name('store');
+        Route::get('/thung-rac', [AdminHocVienController::class, 'trash'])->name('trash');
+        Route::patch('/{id}/khoi-phuc', [AdminHocVienController::class, 'restore'])->name('restore');
+        Route::get('/{taiKhoan}/sua', [AdminHocVienController::class, 'edit'])->name('edit');
+        Route::put('/{taiKhoan}', [AdminHocVienController::class, 'update'])->name('update');
+        Route::delete('/{taiKhoan}', [AdminHocVienController::class, 'destroy'])->name('destroy');
     });
 
     // ── Giáo viên ────────────────────────────────────────────────────────────
     Route::prefix('giao-vien')->name('giao-vien.')->group(function () {
-        Route::get('/',                    [AdminGiaoVienController::class, 'index'])->name('index');
-        Route::get('/tao-moi',             [AdminGiaoVienController::class, 'create'])->name('create');
-        Route::post('/',                   [AdminGiaoVienController::class, 'store'])->name('store');
-        Route::get('/thung-rac',           [AdminGiaoVienController::class, 'trash'])->name('trash');
-        Route::patch('/{id}/khoi-phuc',    [AdminGiaoVienController::class, 'restore'])->name('restore');
-        Route::get('/{taiKhoan}/sua',      [AdminGiaoVienController::class, 'edit'])->name('edit');
-        Route::put('/{taiKhoan}',          [AdminGiaoVienController::class, 'update'])->name('update');
-        Route::delete('/{taiKhoan}',       [AdminGiaoVienController::class, 'destroy'])->name('destroy');
+        Route::get('/', [AdminGiaoVienController::class, 'index'])->name('index');
+        Route::get('/tao-moi', [AdminGiaoVienController::class, 'create'])->name('create');
+        Route::post('/', [AdminGiaoVienController::class, 'store'])->name('store');
+        Route::get('/thung-rac', [AdminGiaoVienController::class, 'trash'])->name('trash');
+        Route::patch('/{id}/khoi-phuc', [AdminGiaoVienController::class, 'restore'])->name('restore');
+        Route::get('/{taiKhoan}/sua', [AdminGiaoVienController::class, 'edit'])->name('edit');
+        Route::put('/{taiKhoan}', [AdminGiaoVienController::class, 'update'])->name('update');
+        Route::delete('/{taiKhoan}', [AdminGiaoVienController::class, 'destroy'])->name('destroy');
     });
 
     // ── Cơ sở Đào tạo ────────────────────────────────────────────────────────
     Route::prefix('co-so')->name('co-so.')->group(function () {
-        Route::get('/',           [CoSoController::class, 'index'])->name('index');
-        Route::get('/tao-moi',    [CoSoController::class, 'create'])->name('create');
-        Route::post('/',          [CoSoController::class, 'store'])->name('store');
-        Route::get('/{id}',       [CoSoController::class, 'show'])->name('show');
-        Route::get('/{id}/sua',   [CoSoController::class, 'edit'])->name('edit');
-        Route::put('/{id}',       [CoSoController::class, 'update'])->name('update');
-        Route::delete('/{id}',    [CoSoController::class, 'destroy'])->name('destroy');
+        Route::get('/', [CoSoController::class, 'index'])->name('index');
+        Route::get('/tao-moi', [CoSoController::class, 'create'])->name('create');
+        Route::post('/', [CoSoController::class, 'store'])->name('store');
+        Route::get('/{id}', [CoSoController::class, 'show'])->name('show');
+        Route::get('/{id}/sua', [CoSoController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [CoSoController::class, 'update'])->name('update');
+        Route::delete('/{id}', [CoSoController::class, 'destroy'])->name('destroy');
     });
 
     // ── API: Cascading location (Tỉnh → Phường → Cơ sở) ──────────────────────
     Route::get('/api/phuong-xa-co-so/{tinhThanhId}', [CoSoController::class, 'getPhuongXaCoCoSo'])->name('api.phuong-xa-co-so');
-    Route::get('/api/co-so-by-location',             [CoSoController::class, 'getCoSoByLocation'])->name('api.co-so-by-location');
+    Route::get('/api/co-so-by-location', [CoSoController::class, 'getCoSoByLocation'])->name('api.co-so-by-location');
 
     // ── Phòng Học ─────────────────────────────────────────────────────────────
     Route::prefix('phong-hoc')->name('phong-hoc.')->group(function () {
-        Route::post('/',       [PhongHocController::class, 'store'])->name('store');
-        Route::put('/{id}',    [PhongHocController::class, 'update'])->name('update');
+        Route::post('/', [PhongHocController::class, 'store'])->name('store');
+        Route::put('/{id}', [PhongHocController::class, 'update'])->name('update');
         Route::delete('/{id}', [PhongHocController::class, 'destroy'])->name('destroy');
     });
 
     // ── Khóa Học ─────────────────────────────────────────────────────────────
     Route::prefix('khoa-hoc')->name('khoa-hoc.')->group(function () {
-        Route::get('/',           [AdminKhoaHocController::class, 'index'])->name('index');
-        Route::get('/tao-moi',    [AdminKhoaHocController::class, 'create'])->name('create');
-        Route::post('/',          [AdminKhoaHocController::class, 'store'])->name('store');
-        Route::get('/{id}',       [AdminKhoaHocController::class, 'show'])->name('show');
-        Route::get('/{id}/sua',   [AdminKhoaHocController::class, 'edit'])->name('edit');
-        Route::put('/{id}',       [AdminKhoaHocController::class, 'update'])->name('update');
-        Route::delete('/{id}',    [AdminKhoaHocController::class, 'destroy'])->name('destroy');
+        Route::get('/', [AdminKhoaHocController::class, 'index'])->name('index');
+        Route::get('/tao-moi', [AdminKhoaHocController::class, 'create'])->name('create');
+        Route::post('/', [AdminKhoaHocController::class, 'store'])->name('store');
+        Route::get('/{id}', [AdminKhoaHocController::class, 'show'])->name('show');
+        Route::get('/{id}/sua', [AdminKhoaHocController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [AdminKhoaHocController::class, 'update'])->name('update');
+        Route::delete('/{id}', [AdminKhoaHocController::class, 'destroy'])->name('destroy');
         Route::patch('/{id}/khoi-phuc', [AdminKhoaHocController::class, 'restore'])->name('restore');
     });
 
     // ── Lớp Học ──────────────────────────────────────────────────────────────
     Route::prefix('lop-hoc')->name('lop-hoc.')->group(function () {
-        Route::get('/',           [AdminLopHocController::class, 'index'])->name('index');
-        Route::get('/tao-moi',    [AdminLopHocController::class, 'create'])->name('create');
-        Route::post('/',          [AdminLopHocController::class, 'store'])->name('store');
-        Route::get('/{id}',       [AdminLopHocController::class, 'show'])->name('show');
-        Route::get('/{id}/sua',   [AdminLopHocController::class, 'edit'])->name('edit');
-        Route::put('/{id}',       [AdminLopHocController::class, 'update'])->name('update');
-        Route::delete('/{id}',    [AdminLopHocController::class, 'destroy'])->name('destroy');
+        Route::get('/', [AdminLopHocController::class, 'index'])->name('index');
+        Route::get('/tao-moi', [AdminLopHocController::class, 'create'])->name('create');
+        Route::post('/', [AdminLopHocController::class, 'store'])->name('store');
+        Route::get('/{id}', [AdminLopHocController::class, 'show'])->name('show');
+        Route::get('/{id}/sua', [AdminLopHocController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [AdminLopHocController::class, 'update'])->name('update');
+        Route::delete('/{id}', [AdminLopHocController::class, 'destroy'])->name('destroy');
     });
 
     // ── Buổi Học ──────────────────────────────────────────────────────────────
     Route::prefix('buoi-hoc')->name('buoi-hoc.')->group(function () {
-        Route::post('/',                        [AdminBuoiHocController::class, 'store'])->name('store');
-        Route::put('/{id}',                     [AdminBuoiHocController::class, 'update'])->name('update');
-        Route::delete('/{id}',                  [AdminBuoiHocController::class, 'destroy'])->name('destroy');
-        Route::post('/tu-dong-tao/{lopHocId}',  [AdminBuoiHocController::class, 'autoGenerate'])->name('auto-generate');
+        Route::post('/', [AdminBuoiHocController::class, 'store'])->name('store');
+        Route::put('/{id}', [AdminBuoiHocController::class, 'update'])->name('update');
+        Route::delete('/{id}', [AdminBuoiHocController::class, 'destroy'])->name('destroy');
+        Route::post('/tu-dong-tao/{lopHocId}', [AdminBuoiHocController::class, 'autoGenerate'])->name('auto-generate');
     });
 
     // ── Học Phí (AJAX) ────────────────────────────────────────────────────────
@@ -169,10 +171,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
 
     // ── Gói Học Phí (CRUD) ────────────────────────────────────────────────────
     Route::prefix('hoc-phi')->name('hoc-phi.')->group(function () {
-        Route::post('/',                     [AdminHocPhiController::class, 'store'])->name('store');
-        Route::put('/{id}',                  [AdminHocPhiController::class, 'update'])->name('update');
-        Route::delete('/{id}',               [AdminHocPhiController::class, 'destroy'])->name('destroy');
-        Route::patch('/{id}/toggle-status',  [AdminHocPhiController::class, 'toggleStatus'])->name('toggle-status');
+        Route::post('/', [AdminHocPhiController::class, 'store'])->name('store');
+        Route::put('/{id}', [AdminHocPhiController::class, 'update'])->name('update');
+        Route::delete('/{id}', [AdminHocPhiController::class, 'destroy'])->name('destroy');
+        Route::patch('/{id}/toggle-status', [AdminHocPhiController::class, 'toggleStatus'])->name('toggle-status');
     });
 });
 
