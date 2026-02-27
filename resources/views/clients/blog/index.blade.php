@@ -30,13 +30,19 @@
                 <div class="row align-items-center">
                     <div class="col-lg-4 order-lg-1">
                         <div class="search_post mb-3 mb-lg-0">
-                            <form action="/" method="get">
+                            <form action="{{ route('home.blog.index') }}" method="get">
+                                {{-- Giữ lại danh mục đang lọc --}}
+                                @if(request('category'))
+                                    <input type="hidden" name="category" value="{{ request('category') }}">
+                                @endif
+                                @if(request('sort'))
+                                    <input type="hidden" name="sort" value="{{ request('sort') }}">
+                                @endif
                                 <div class="input-group">
-                                    <input type="text" name="s" value="" class="form-control"
-                                        placeholder="Nhập nội dung tìm kiếm">
+                                    <input type="text" name="s" value="{{ request('s') }}" class="form-control"
+                                        placeholder="Tìm kiếm bài viết...">
                                     <button class="btn btn-outline-secondary" type="submit">
-                                        <img src="https://theforumcenter.com/wp-content/themes/the-forum/assets/images/search.png"
-                                            class="img-fluid" alt="">
+                                        <i class="fas fa-search"></i>
                                     </button>
                                 </div>
                             </form>
@@ -46,11 +52,11 @@
                         {{-- Thanh danh mục cuộn ngang --}}
                         <ul class="cate_menu">
                             <li class="{{ !request('category') ? 'active' : '' }}">
-                                <a href="{{ route('home.blog.index') }}">Tất cả</a>
+                                <a href="{{ route('home.blog.index', array_filter(['s' => request('s'), 'sort' => request('sort')])) }}">Tất cả</a>
                             </li>
                             @foreach ($categories as $cate)
                                 <li class="{{ request('category') == $cate->slug ? 'active' : '' }}">
-                                    <a href="{{ route('home.blog.index', ['category' => $cate->slug]) }}">
+                                    <a href="{{ route('home.blog.index', array_filter(['category' => $cate->slug, 's' => request('s'), 'sort' => request('sort')])) }}">
                                         {{ $cate->tenDanhMuc }}
                                     </a>
                                 </li>
@@ -58,8 +64,51 @@
                         </ul>
                     </div>
                 </div>
+
+                {{-- Thanh sắp xếp + thông tin kết quả --}}
+                <div class="blog-filter-bar">
+                    <div class="blog-filter-info">
+                        <span class="blog-filter-count">
+                            <i class="fas fa-file-alt me-1"></i>
+                            <strong>{{ $blogs->total() }}</strong> bài viết
+                            @if(request('s'))
+                                cho "<em>{{ request('s') }}</em>"
+                            @endif
+                            @if(request('category'))
+                                @php $activeCat = $categories->firstWhere('slug', request('category')); @endphp
+                                @if($activeCat)
+                                    trong <strong>{{ $activeCat->tenDanhMuc }}</strong>
+                                @endif
+                            @endif
+                        </span>
+                        @if(request('s') || request('category') || request('sort'))
+                            <a href="{{ route('home.blog.index') }}" class="blog-filter-clear">
+                                <i class="fas fa-times me-1"></i>Xóa bộ lọc
+                            </a>
+                        @endif
+                    </div>
+                    <div class="blog-sort-group">
+                        <span class="blog-sort-label"><i class="fas fa-sort-amount-down me-1"></i>Sắp xếp:</span>
+                        @php
+                            $currentSort = request('sort', 'latest');
+                            $sortOptions = [
+                                'latest'  => 'Mới nhất',
+                                'oldest'  => 'Cũ nhất',
+                                'popular' => 'Xem nhiều nhất',
+                                'az'      => 'Tên A → Z',
+                            ];
+                            $baseParams = array_filter(['category' => request('category'), 's' => request('s')]);
+                        @endphp
+                        @foreach($sortOptions as $key => $label)
+                            <a href="{{ route('home.blog.index', array_merge($baseParams, ['sort' => $key])) }}"
+                               class="blog-sort-btn {{ $currentSort === $key ? 'active' : '' }}">
+                                {{ $label }}
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
             </div>
-            <div class="news_wrapper mt-60">
+            <div class="news_wrapper mt-4">
                 <div class="row">
                     @foreach ($blogs as $blog)
                         <div class="col-lg-4">
@@ -67,7 +116,7 @@
                                 <figure>
                                     <a href="{{ route('home.blog.show', ['slug' => $blog->slug]) }}">
                                         <img width="600" height="450"
-                                            src="{{ asset('storage/blogs/' . $blog->anhDaiDien ?? '') }}"
+                                            src="{{ asset('storage/' . $blog->anhDaiDien ?? '') }}"
                                             class="img-fluid wp-post-image" alt="" decoding="async"
                                             fetchpriority="high"> </a>
                                 </figure>

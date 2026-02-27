@@ -8,6 +8,10 @@ class BaiVietDanhMuc extends Model
 {
     //
     protected $table = 'baiviet_danhmuc';
+    protected $fillable = [
+        'baiVietId',
+        'danhMucId',
+    ];
     public function baiViet()
     {
         return $this->belongsTo(BaiViet::class, 'baiVietId', 'baiVietId');

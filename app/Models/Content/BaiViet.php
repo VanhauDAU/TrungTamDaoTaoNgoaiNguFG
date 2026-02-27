@@ -9,6 +9,16 @@ class BaiViet extends Model
     //
     protected $table = 'baiviet';
     protected $primaryKey = 'baiVietId';
+    protected $fillable = [
+        'tieuDe',
+        'slug',
+        'tomTat',
+        'noiDung',
+        'anhDaiDien',
+        'taiKhoanId',
+        'luotXem',
+        'trangThai',
+    ];
     public function danhMucs()
     {
         return $this->belongsToMany(
@@ -27,5 +37,10 @@ class BaiViet extends Model
             'baiVietId',
             'tagId'
         );
+    }
+
+    public function taiKhoan()
+    {
+        return $this->belongsTo(\App\Models\Auth\TaiKhoan::class, 'taiKhoanId', 'taiKhoanId');
     }
 }
