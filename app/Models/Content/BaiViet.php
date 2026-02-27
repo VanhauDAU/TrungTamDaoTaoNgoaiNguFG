@@ -8,7 +8,7 @@ class BaiViet extends Model
 {
     //
     protected $table = 'baiviet';
-    protected $primaryKey = 'baiVietId';
+    protected $primaryKey = 'baiVietId'; 
     public function danhMucs()
     {
         return $this->belongsToMany(
