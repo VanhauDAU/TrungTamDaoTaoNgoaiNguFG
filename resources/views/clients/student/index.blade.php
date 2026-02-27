@@ -18,10 +18,10 @@
                     <div class="account-content">
                         {{-- Breadcrumb --}}
                         <x-client.account-breadcrumb :items="[
-                            ['label' => 'Trang chủ', 'url' => route('home.index'), 'icon' => 'fas fa-home'],
-                            ['label' => 'Tài khoản', 'url' => route('home.student.index')],
-                            ['label' => 'Thông tin cá nhân'],
-                        ]" />
+            ['label' => 'Trang chủ', 'url' => route('home.index'), 'icon' => 'fas fa-home'],
+            ['label' => 'Tài khoản', 'url' => route('home.student.index')],
+            ['label' => 'Thông tin cá nhân'],
+        ]" />
 
                         <h2 class="content-title">
                             <i class="fas fa-edit me-2"></i> Thông tin cá nhân
@@ -35,13 +35,12 @@
                                     <div class="d-flex align-items-center">
                                         <div class="me-4">
                                             @if (Auth::user()->hoSoNguoiDung && Auth::user()->hoSoNguoiDung->anhDaiDien)
-                                                <img src="{{ asset('storage/avatars/' . Auth::user()->hoSoNguoiDung->anhDaiDien) }}"
+                                                <img src="{{ asset('storage/' . Auth::user()->hoSoNguoiDung->anhDaiDien) }}"
                                                     class="rounded-circle" width="100" height="100"
                                                     style="object-fit: cover; border: 3px solid #f0f0f0;">
                                             @else
-                                                <img src="{{ asset('assets/images/user-default.png') }}"
-                                                    class="rounded-circle" width="100" height="100"
-                                                    style="object-fit: cover;">
+                                                <img src="{{ asset('assets/images/user-default.png') }}" class="rounded-circle"
+                                                    width="100" height="100" style="object-fit: cover;">
                                             @endif
                                         </div>
                                         <div>
@@ -83,7 +82,8 @@
                                 </div>
                                 <div class="col-12">
                                     <label class="form-label-custom">Giới thiệu bản thân</label>
-                                    <textarea class="form-control form-control-custom" rows="4" placeholder="Viết đôi dòng về bạn...">{{ Auth::user()->hoSoNguoiDung->gioiThieu ?? '' }}</textarea>
+                                    <textarea class="form-control form-control-custom" rows="4"
+                                        placeholder="Viết đôi dòng về bạn...">{{ Auth::user()->hoSoNguoiDung->gioiThieu ?? '' }}</textarea>
                                 </div>
 
                                 <div class="col-12 text-end mt-4">

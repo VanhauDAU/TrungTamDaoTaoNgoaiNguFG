@@ -119,8 +119,7 @@
                                     </li>
                                 </ul>
                             </div>
-                            <a href="#" class="btn btn-red mt-3">Tìm Hiểu Thêm <i
-                                    class="fas fa-arrow-right ms-2"></i></a>
+                            <a href="#" class="btn btn-red mt-3">Tìm Hiểu Thêm <i class="fas fa-arrow-right ms-2"></i></a>
                         </div>
                         <div class="col-lg-7">
                             <figure>
@@ -147,8 +146,7 @@
                                     <li><i class="bi bi-check-circle-fill text-success me-2"></i>Thi thử hàng tuần</li>
                                 </ul>
                             </div>
-                            <a href="#" class="btn btn-red mt-3">Tìm Hiểu Thêm <i
-                                    class="fas fa-arrow-right ms-2"></i></a>
+                            <a href="#" class="btn btn-red mt-3">Tìm Hiểu Thêm <i class="fas fa-arrow-right ms-2"></i></a>
                         </div>
                         <div class="col-lg-7">
                             <figure>
@@ -175,8 +173,7 @@
                                     <li><i class="bi bi-check-circle-fill text-success me-2"></i>Lớp học sinh động</li>
                                 </ul>
                             </div>
-                            <a href="#" class="btn btn-red mt-3">Tìm Hiểu Thêm <i
-                                    class="fas fa-arrow-right ms-2"></i></a>
+                            <a href="#" class="btn btn-red mt-3">Tìm Hiểu Thêm <i class="fas fa-arrow-right ms-2"></i></a>
                         </div>
                         <div class="col-lg-7">
                             <figure>
@@ -209,8 +206,7 @@
                 <li class="active"><a href="#" data-filter="all">Tất cả</a></li>
                 @foreach ($provinces as $province)
                     {{-- Dùng ID để làm filter để đảm bảo tính duy nhất --}}
-                    <li><a href="#"
-                            data-filter="province-{{ $province->tinhThanhId }}">{{ $province->tenTinhThanh }}</a></li>
+                    <li><a href="#" data-filter="province-{{ $province->tinhThanhId }}">{{ $province->tenTinhThanh }}</a></li>
                 @endforeach
             </ul>
 
@@ -277,7 +273,7 @@
                         <div class="col-lg-3 col-md-6">
                             <div class="team-card">
                                 <div class="avatar">
-                                    <img src="{{ $giaoVien->hoSoNguoiDung && $giaoVien->hoSoNguoiDung->anhDaiDien ? asset('storage/avatars/' . $giaoVien->hoSoNguoiDung->anhDaiDien) : asset('assets/images/default-teacher.jpeg') }}"
+                                    <img src="{{ $giaoVien->hoSoNguoiDung && $giaoVien->hoSoNguoiDung->anhDaiDien ? asset('storage/' . $giaoVien->hoSoNguoiDung->anhDaiDien) : asset('assets/images/default-teacher.jpeg') }}"
                                         alt="{{ $giaoVien->hoSoNguoiDung->hoTen ?? 'Giảng viên' }}" loading="lazy">
                                 </div>
                                 <div class="info">
@@ -293,8 +289,8 @@
                     <div class="col-lg-3 col-md-6">
                         <div class="team-card">
                             <div class="avatar">
-                                <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400"
-                                    alt="Teacher 1" loading="lazy">
+                                <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400" alt="Teacher 1"
+                                    loading="lazy">
                             </div>
                             <div class="info">
                                 <h4>Nguyễn Văn A</h4>
@@ -306,8 +302,8 @@
                     <div class="col-lg-3 col-md-6">
                         <div class="team-card">
                             <div class="avatar">
-                                <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400"
-                                    alt="Teacher 2" loading="lazy">
+                                <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400" alt="Teacher 2"
+                                    loading="lazy">
                             </div>
                             <div class="info">
                                 <h4>Trần Văn B</h4>
@@ -319,8 +315,8 @@
                     <div class="col-lg-3 col-md-6">
                         <div class="team-card">
                             <div class="avatar">
-                                <img src="https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400"
-                                    alt="Teacher 3" loading="lazy">
+                                <img src="https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400" alt="Teacher 3"
+                                    loading="lazy">
                             </div>
                             <div class="info">
                                 <h4>Lê Thị C</h4>
@@ -332,8 +328,8 @@
                     <div class="col-lg-3 col-md-6">
                         <div class="team-card">
                             <div class="avatar">
-                                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400"
-                                    alt="Teacher 4" loading="lazy">
+                                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400" alt="Teacher 4"
+                                    loading="lazy">
                             </div>
                             <div class="info">
                                 <h4>Phạm Văn D</h4>
@@ -357,7 +353,7 @@
             duration: 800,
             once: true
         });
-        $(document).ready(function() {
+        $(document).ready(function () {
             // 1. Khởi tạo Slick Slider
             var $slider = $('.slider_locate').slick({
                 rows: 0, // Quan trọng để tránh lỗi dư thừa div
@@ -368,22 +364,22 @@
                 prevArrow: $('.nav-prev a'), // Kết nối nút HTML với Slick
                 nextArrow: $('.nav-next a'),
                 responsive: [{
-                        breakpoint: 1024,
-                        settings: {
-                            slidesToShow: 2
-                        }
-                    },
-                    {
-                        breakpoint: 600,
-                        settings: {
-                            slidesToShow: 1
-                        }
+                    breakpoint: 1024,
+                    settings: {
+                        slidesToShow: 2
                     }
+                },
+                {
+                    breakpoint: 600,
+                    settings: {
+                        slidesToShow: 1
+                    }
+                }
                 ]
             });
 
             // 2. Xử lý Filter
-            $('.system_filter a').on('click', function(e) {
+            $('.system_filter a').on('click', function (e) {
                 e.preventDefault(); // Chặn load lại trang
 
                 $('.system_filter li').removeClass('active');

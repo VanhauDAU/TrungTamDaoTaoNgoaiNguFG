@@ -3,7 +3,7 @@
         <div class="sidebar-user-info">
             <div class="user-avatar-wrapper">
                 @if (Auth::user()->hoSoNguoiDung && Auth::user()->hoSoNguoiDung->anhDaiDien)
-                    <img src="{{ asset('storage/avatars/' . Auth::user()->hoSoNguoiDung->anhDaiDien) }}" alt="Avatar"
+                    <img src="{{ asset('storage/' . Auth::user()->hoSoNguoiDung->anhDaiDien) }}" alt="Avatar"
                         class="sidebar-avatar">
                 @else
                     <img src="{{ asset('assets/images/user-default.png') }}" alt="Avatar" class="sidebar-avatar">

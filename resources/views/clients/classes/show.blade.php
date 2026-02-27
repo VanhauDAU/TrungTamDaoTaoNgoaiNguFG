@@ -190,7 +190,7 @@
                         <div class="class-detail-card">
                             <h4 class="mb-3 fw-bold">Giảng viên phụ trách</h4>
                             <div class="teacher-card">
-                                <img src="{{ asset('storage/avatars/' . $class->taiKhoan->hoSoNguoiDung->anhDaiDien) }}"
+                                <img src="{{ asset('storage/' . $class->taiKhoan->hoSoNguoiDung->anhDaiDien) }}"
                                     onerror="this.src='{{ asset('assets/images/user-default.png') }}'" alt="Teacher"
                                     class="teacher-avatar">
                                 <div>

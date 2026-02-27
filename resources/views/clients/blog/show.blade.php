@@ -16,8 +16,7 @@
             <div class="blog-detail-hero-content">
                 <div class="blog-detail-categories mb-3">
                     @foreach ($blog->danhMucs as $dm)
-                        <a href="{{ route('home.blog.index', ['category' => $dm->slug]) }}"
-                            class="blog-detail-category-badge">
+                        <a href="{{ route('home.blog.index', ['category' => $dm->slug]) }}" class="blog-detail-category-badge">
                             {{ $dm->tenDanhMuc }}
                         </a>
                     @endforeach
@@ -122,8 +121,10 @@
                                                 </div>
                                                 <h4 class="blog-related-card-title">{{ $related->tieuDe }}</h4>
                                                 <div class="blog-related-card-meta">
-                                                    <span><i class="far fa-calendar-alt me-1"></i>{{ $related->created_at?->format('d/m/Y') ?? '' }}</span>
-                                                    <span><i class="far fa-eye me-1"></i>{{ number_format($related->luotXem ?? 0, 0, ',', '.') }}</span>
+                                                    <span><i
+                                                            class="far fa-calendar-alt me-1"></i>{{ $related->created_at?->format('d/m/Y') ?? '' }}</span>
+                                                    <span><i
+                                                            class="far fa-eye me-1"></i>{{ number_format($related->luotXem ?? 0, 0, ',', '.') }}</span>
                                                 </div>
                                             </div>
                                         </a>
@@ -150,8 +151,7 @@
                                 @if ($blog->taiKhoan && $blog->taiKhoan->hoSoNguoiDung)
                                     <div class="blog-sidebar-author-avatar">
                                         @if ($blog->taiKhoan->hoSoNguoiDung->anhDaiDien)
-                                            <img src="{{ asset('storage/avatars/' . $blog->taiKhoan->hoSoNguoiDung->anhDaiDien) }}"
-                                                alt="">
+                                            <img src="{{ asset('storage/' . $blog->taiKhoan->hoSoNguoiDung->anhDaiDien) }}" alt="">
                                         @else
                                             <div class="blog-sidebar-author-initial">
                                                 {{ mb_substr($blog->taiKhoan->hoSoNguoiDung->hoTen, 0, 1) }}
@@ -161,7 +161,8 @@
                                     <div>
                                         <div class="blog-sidebar-author-label">Tác giả</div>
                                         <div class="blog-sidebar-author-name">
-                                            {{ $blog->taiKhoan->hoSoNguoiDung->hoTen }}</div>
+                                            {{ $blog->taiKhoan->hoSoNguoiDung->hoTen }}
+                                        </div>
                                     </div>
                                 @endif
                             </div>
@@ -235,7 +236,7 @@
             });
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             // Fade in article
             const article = document.querySelector('.blog-detail-article');
             if (article) {

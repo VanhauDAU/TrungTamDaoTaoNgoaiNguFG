@@ -29,8 +29,7 @@
 
                         <a href="#" class="btn btn-red mb-5">
                             Đăng ký ngay <img
-                                src="https://theforumcenter.com/wp-content/themes/the-forum/assets/images/right.png"
-                                alt="">
+                                src="https://theforumcenter.com/wp-content/themes/the-forum/assets/images/right.png" alt="">
                         </a>
 
                         <div class="partners">
@@ -52,7 +51,7 @@
                             @foreach ($topGiaoVien as $giaoVien)
                                 <div class="item">
                                     <div class="blob-frame">
-                                        <img src="{{ $giaoVien->hoSoNguoiDung->anhDaiDien ? asset('storage/avatars/' . $giaoVien->hoSoNguoiDung->anhDaiDien) : asset('assets/images/default-teacher.jpeg') }}"
+                                        <img src="{{ $giaoVien->hoSoNguoiDung->anhDaiDien ? asset('storage/' . $giaoVien->hoSoNguoiDung->anhDaiDien) : asset('assets/images/default-teacher.jpeg') }}"
                                             alt="{{ $giaoVien->hoSoNguoiDung->hoTen }}">
                                     </div>
                                 </div>
@@ -78,7 +77,8 @@
                                     <h4 class="cl-green fw-bold">{{ $giaoVien->hoSoNguoiDung->hoTen }}</h4>
                                     <p class="text-muted">Tốt nghiệp {{ optional($giaoVien->nhanSu)->hocVi ?? 'N/A' }} - với
                                         bằng cấp
-                                        {{ optional($giaoVien->nhanSu)->bangCap ?? 'N/A' }}</p>
+                                        {{ optional($giaoVien->nhanSu)->bangCap ?? 'N/A' }}
+                                    </p>
                                 </div>
                             @endforeach
                         </div>

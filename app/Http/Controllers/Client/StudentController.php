@@ -85,19 +85,17 @@ class StudentController extends Controller
         $user = auth()->user();
         $hoSo = $user->hoSoNguoiDung;
 
-        // Xóa ảnh cũ (nếu có và không phải ảnh mặc định)
-        if ($hoSo && $hoSo->anhDaiDien) {
-            Storage::disk('public')->delete('avatars/' . $hoSo->anhDaiDien);
+        // Xóa ảnh cũ (nếu có)
+        if ($hoSo && $hoSo->anhDaiDien && Storage::disk('public')->exists($hoSo->anhDaiDien)) {
+            Storage::disk('public')->delete($hoSo->anhDaiDien);
         }
 
-        // Lưu ảnh mới
-        $file = $request->file('anhDaiDien');
-        $filename = 'avatar_' . $user->taiKhoanId . '_' . time() . '.' . $file->getClientOriginalExtension();
-        $file->storeAs('avatars', $filename, 'public');
+        // Lưu ảnh mới (giống logic khóa học: DB lưu 'avatars/RandomName.jpg')
+        $path = $request->file('anhDaiDien')->store('avatars', 'public');
 
         $user->hoSoNguoiDung()->updateOrCreate(
             ['taiKhoanId' => $user->taiKhoanId],
-            ['anhDaiDien' => $filename]
+            ['anhDaiDien' => $path]
         );
 
         return back()->with('success_avatar', 'Cập nhật ảnh đại diện thành công!');

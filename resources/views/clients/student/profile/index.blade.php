@@ -67,7 +67,7 @@
                                     <div class="avatar-preview" id="avatarPreviewWrap">
                                         @if (Auth::user()->hoSoNguoiDung && Auth::user()->hoSoNguoiDung->anhDaiDien)
                                             <img id="avatarPreview"
-                                                src="{{ asset('storage/avatars/' . Auth::user()->hoSoNguoiDung->anhDaiDien) }}"
+                                                src="{{ asset('storage/' . Auth::user()->hoSoNguoiDung->anhDaiDien) }}"
                                                 alt="Ảnh đại diện">
                                         @else
                                             <img id="avatarPreview" src="{{ asset('assets/images/user-default.png') }}"
