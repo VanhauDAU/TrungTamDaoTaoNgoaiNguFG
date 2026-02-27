@@ -8,6 +8,13 @@ class DanhMucBaiViet extends Model
 {
     //
     protected $table = 'danhmucbaiviet';
+    protected $fillable = [
+        'danhMucId',
+        'tenDanhMuc',
+        'slug',
+        'moTa',
+        'trangThai',
+    ];
     protected $primaryKey = 'danhMucId';
     public function baiViets()
     {

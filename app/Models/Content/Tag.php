@@ -8,6 +8,11 @@ class Tag extends Model
 {
     //
     protected $table = 'tags';
+    protected $fillable = [
+        'tagId',
+        'tenTag',
+        'slug',
+    ];
     protected $primaryKey = 'tagId';
     public function baiViets()
     {
