@@ -59,7 +59,7 @@ class BlogController extends Controller
         $categories = DanhMucBaiViet::all();
         $totalPosts = BaiViet::where('trangThai', 1)->count();
 
-        return view('clients.blog.index', compact('blogs', 'categories', 'totalPosts'));
+        return view('clients.bai-viet.index', compact('blogs', 'categories', 'totalPosts'));
     }
 
     public function show($slug)
@@ -100,6 +100,6 @@ class BlogController extends Controller
             ->take(6)
             ->get();
 
-        return view('clients.blog.show', compact('blog', 'relatedPosts', 'otherPosts', 'categories'));
+        return view('clients.bai-viet.show', compact('blog', 'relatedPosts', 'otherPosts', 'categories'));
     }
 }

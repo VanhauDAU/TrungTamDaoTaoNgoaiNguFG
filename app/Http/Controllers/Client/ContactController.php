@@ -11,7 +11,8 @@ use Illuminate\Support\Facades\Validator;
 
 class ContactController extends Controller
 {
-    public function index(){
+    public function index()
+    {
         // Danh sách cơ sở đang hoạt động
         $coSoDaoTao = CoSoDaoTao::with('tinhThanh')
             ->where('trangThai', 1)
@@ -22,7 +23,7 @@ class ContactController extends Controller
             ->orderBy('tenTinhThanh')
             ->get();
 
-        return view('clients.contact.index', compact('coSoDaoTao', 'tinhThanhs'));
+        return view('clients.lien-he.index', compact('coSoDaoTao', 'tinhThanhs'));
     }
 
     /**
@@ -56,7 +57,7 @@ class ContactController extends Controller
                     'errors' => $validator->errors()
                 ], 422);
             }
-            
+
             return redirect()->back()
                 ->withErrors($validator)
                 ->withInput();

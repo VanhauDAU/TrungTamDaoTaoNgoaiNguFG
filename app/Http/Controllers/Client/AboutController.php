@@ -15,7 +15,7 @@ class AboutController extends Controller
      * Display the About Us page
      */
     public function index()
-    {               
+    {
         // Lấy top giảng viên với eager loading, chỉ lấy những tài khoản có đủ thông tin
         $topGiaoVien = TaiKhoan::with(['hoSoNguoiDung', 'nhanSu'])
             ->where('role', 1)
@@ -29,6 +29,6 @@ class AboutController extends Controller
         $khoaHocs = KhoaHoc::where('trangThai', 1)->take(6)->get();
         $provinces = TinhThanh::all();
         $branches = CoSoDaoTao::where('trangThai', 1)->with('tinhThanh')->get();
-        return view('clients.aboutUs.index', compact('topGiaoVien', 'khoaHocs', 'provinces', 'branches'));
+        return view('clients.gioi-thieu.index', compact('topGiaoVien', 'khoaHocs', 'provinces', 'branches'));
     }
 }

@@ -13,7 +13,7 @@ class StudentController extends Controller
     /** Trang thông tin cá nhân */
     public function index()
     {
-        return view('clients.student.profile.index');
+        return view('clients.hoc-vien.profile.index');
     }
 
     /** Cập nhật thông tin cá nhân */
@@ -103,7 +103,7 @@ class StudentController extends Controller
 
     public function changePassword()
     {
-        return view('clients.student.change-password');
+        return view('clients.hoc-vien.change-password');
     }
 
     public function updatePassword(Request $request)
@@ -138,7 +138,7 @@ class StudentController extends Controller
             ->orderBy('ngayLap', 'desc')
             ->paginate(10);
 
-        return view('clients.student.invoices.index', compact('invoices'));
+        return view('clients.hoc-vien.invoices.index', compact('invoices'));
     }
 
     public function invoiceDetail($id)
@@ -152,7 +152,7 @@ class StudentController extends Controller
             ])
             ->firstOrFail();
 
-        return view('clients.student.invoices.show', compact('invoice'));
+        return view('clients.hoc-vien.invoices.show', compact('invoice'));
     }
 
     public function myClasses()
@@ -168,6 +168,6 @@ class StudentController extends Controller
             ->orderBy('ngayDangKy', 'desc')
             ->get();
 
-        return view('clients.student.classes.index', compact('classes'));
+        return view('clients.hoc-vien.classes.index', compact('classes'));
     }
 }

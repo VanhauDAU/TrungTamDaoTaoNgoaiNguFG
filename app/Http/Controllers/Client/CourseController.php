@@ -17,35 +17,35 @@ class CourseController extends Controller
     public function index(Request $request)
     {
         $listTypeCourses = LoaiKhoaHoc::all();
-        
+
         // Tạo query builder với điều kiện cơ bản
         $query = KhoaHoc::where('trangThai', 1);
-        
+
         // Lọc theo category nếu có
         if ($request->has('category')) {
             $categorySlug = $request->input('category');
-            $query->whereHas('loaiKhoaHoc', function($q) use ($categorySlug) {
+            $query->whereHas('loaiKhoaHoc', function ($q) use ($categorySlug) {
                 $q->where('slug', $categorySlug);
             });
         }
-        
+
         // Lấy danh sách khóa học có ít nhất 1 lớp học với pagination và giữ query parameters
         $listCourses = $query->with('loaiKhoaHoc')->whereHas('lopHoc')->paginate(6)->withQueryString();
-        
-        return view('clients.courses.index', compact('listTypeCourses', 'listCourses'));
+
+        return view('clients.khoa-hoc.index', compact('listTypeCourses', 'listCourses'));
     }
     public function show($slug)
     {
         $course = KhoaHoc::where('slug', $slug)
             ->with([
-                'loaiKhoaHoc', 
+                'loaiKhoaHoc',
                 'lopHoc.coSo.tinhThanh',  // Load cơ sở và tỉnh thành
                 'lopHoc.phongHoc',
                 'lopHoc.taiKhoan',
                 'hocPhis'
             ])
             ->first();
-        
+
         // Lấy 3 khóa học liên quan cùng loại, khác khóa hiện tại
         $relatedCourses = KhoaHoc::where('loaiKhoaHocId', $course->loaiKhoaHocId)
             ->where('khoaHocId', '!=', $course->khoaHocId)
@@ -53,12 +53,12 @@ class CourseController extends Controller
             ->with('loaiKhoaHoc', 'lopHoc')
             ->take(4)
             ->get();
-        
-        return view('clients.courses.show', compact('course', 'relatedCourses'));
+
+        return view('clients.khoa-hoc.show', compact('course', 'relatedCourses'));
     }
     public function showClass($slug, $slugLopHoc)
     {
-        
+
         $class = LopHoc::where('slug', $slugLopHoc)
             ->with([
                 'khoaHoc.loaiKhoaHoc', // Để lấy breadcrumb
@@ -74,7 +74,7 @@ class CourseController extends Controller
             abort(404);
         }
 
-        return view('clients.classes.show', compact('class'));
+        return view('clients.lop-hoc.show', compact('class'));
     }
 
     public function confirmRegistration(Request $request, $slug, $slugLopHoc)
@@ -104,7 +104,7 @@ class CourseController extends Controller
                 ->with('error', $validation);
         }
 
-        return view('clients.classes.checkout', compact('class', 'user'));
+        return view('clients.lop-hoc.checkout', compact('class', 'user'));
     }
 
     public function processRegistration(Request $request, $slug, $slugLopHoc)
@@ -125,7 +125,7 @@ class CourseController extends Controller
         // Re-validate
         $validation = $this->validateClassRegistration($user, $class);
         if ($validation !== true) {
-             return redirect()->route('home.classes.show', ['slug' => $class->khoaHoc->slug, 'slugLopHoc' => $class->slug])
+            return redirect()->route('home.classes.show', ['slug' => $class->khoaHoc->slug, 'slugLopHoc' => $class->slug])
                 ->with('error', $validation);
         }
 
@@ -192,9 +192,9 @@ class CourseController extends Controller
         }
 
         // Check Duplicate
-        $isRegistered = DangKyLopHoc::where('taiKhoanId', $user->taiKhoanId) 
+        $isRegistered = DangKyLopHoc::where('taiKhoanId', $user->taiKhoanId)
             ->where('lopHocId', $class->lopHocId)
-            ->whereIn('trangThai', [1, 2]) 
+            ->whereIn('trangThai', [1, 2])
             ->exists();
 
         if ($isRegistered) {
@@ -211,7 +211,8 @@ class CourseController extends Controller
 
         foreach ($userActiveRegistrations as $reg) {
             $existingClass = $reg->lopHoc;
-            if ($existingClass->trangThai == 3 || $existingClass->trangThai == 0) continue;
+            if ($existingClass->trangThai == 3 || $existingClass->trangThai == 0)
+                continue;
 
             foreach ($existingClass->buoiHocs as $existingSession) {
                 foreach ($newClassSchedule as $newSession) {
