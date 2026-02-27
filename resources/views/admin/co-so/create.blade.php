@@ -123,7 +123,7 @@
                     </label>
                     <input type="number" step="any" id="viDo" name="viDo"
                         class="form-control @error('viDo') is-invalid @enderror" value="{{ old('viDo') }}"
-                        placeholder="Tự động cập nhật khi dán link Google Maps" readonly>
+                        placeholder="VD: 10.7769" autocomplete="off">
                     @error('viDo')
                         <div class="invalid-feedback"><i class="fas fa-exclamation-circle"></i> {{ $message }}</div>
                     @enderror
@@ -133,7 +133,7 @@
                     <label class="form-label" for="kinhDo">Kinh độ (Longitude)</label>
                     <input type="number" step="any" id="kinhDo" name="kinhDo"
                         class="form-control @error('kinhDo') is-invalid @enderror" value="{{ old('kinhDo') }}"
-                        placeholder="Tự động cập nhật khi dán link Google Maps" readonly>
+                        placeholder="VD: 106.6951" autocomplete="off">
                     @error('kinhDo')
                         <div class="invalid-feedback"><i class="fas fa-exclamation-circle"></i> {{ $message }}</div>
                     @enderror
@@ -247,32 +247,66 @@
                 loadPhuongXa(selectedOpt.dataset.maApi, '{{ old('maPhuongXa') }}');
             }
 
-            // Tự động xử lý link Google Map / Iframe
+            // ── Tự động xử lý link Google Map / Iframe ──────────────────────
             const banDoInput = document.getElementById('banDoGoogle');
             const viDoInput = document.getElementById('viDo');
             const kinhDoInput = document.getElementById('kinhDo');
 
+            function parseLatLng(rawVal) {
+                let val = rawVal.trim();
+
+                // Nếu là thẻ iframe, bóc tách src
+                const iframeMatch = val.match(/<iframe\s+[^>]*src=["']([^"']+)["']/i);
+                if (iframeMatch && iframeMatch[1]) {
+                    val = iframeMatch[1];
+                    banDoInput.value = val; // cập nhật textarea về URL sạch
+                }
+
+                // Reset trước mỗi lần parse
+                viDoInput.value = '';
+                kinhDoInput.value = '';
+
+                // Định dạng 1: !2d<lng>!3d<lat> (link share Google Maps)
+                const lngMatch1 = val.match(/!2d(-?\d+\.?\d*)/);
+                const latMatch1 = val.match(/!3d(-?\d+\.?\d*)/);
+                if (latMatch1 && lngMatch1) {
+                    viDoInput.value = latMatch1[1];
+                    kinhDoInput.value = lngMatch1[1];
+                    return;
+                }
+
+                // Định dạng 2: @lat,lng (link có @)
+                const atMatch = val.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+                if (atMatch) {
+                    viDoInput.value = atMatch[1];
+                    kinhDoInput.value = atMatch[2];
+                    return;
+                }
+
+                // Định dạng 3: ?q=lat,lng hoặc ll=lat,lng
+                const qMatch = val.match(/[?&](?:q|ll)=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+                if (qMatch) {
+                    viDoInput.value = qMatch[1];
+                    kinhDoInput.value = qMatch[2];
+                    return;
+                }
+
+                // Định dạng 4: destination=lat,lng
+                const destMatch = val.match(/destination=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+                if (destMatch) {
+                    viDoInput.value = destMatch[1];
+                    kinhDoInput.value = destMatch[2];
+                }
+            }
+
             if (banDoInput) {
+                // Bắt cả input và paste để đảm bảo hoạt động trên mọi trình duyệt/os
                 banDoInput.addEventListener('input', function() {
-                    let val = this.value.trim();
-
-                    // Nếu nhập vào là thẻ iframe, bóc tách lấy src=""
-                    const iframeMatch = val.match(/<iframe\s+[^>]*src=["']([^"']+)["']/i);
-                    if (iframeMatch && iframeMatch[1]) {
-                        val = iframeMatch[1];
-                        this.value = val;
-                    }
-
-                    // Tìm vĩ độ (!3d) và kinh độ (!2d)
-                    const lngMatch = val.match(/!2d(-?\d+\.\d+)/);
-                    const latMatch = val.match(/!3d(-?\d+\.\d+)/);
-
-                    if (latMatch && latMatch[1]) {
-                        viDoInput.value = latMatch[1];
-                    }
-                    if (lngMatch && lngMatch[1]) {
-                        kinhDoInput.value = lngMatch[1];
-                    }
+                    parseLatLng(this.value);
+                });
+                banDoInput.addEventListener('paste', function(e) {
+                    // Với paste, nội dung chưa vào DOM ngay → dùng setTimeout
+                    setTimeout(() => parseLatLng(this.value), 50);
                 });
             }
         })();
