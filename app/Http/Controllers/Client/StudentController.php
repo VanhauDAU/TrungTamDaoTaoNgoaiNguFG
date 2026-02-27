@@ -91,7 +91,7 @@ class StudentController extends Controller
         }
 
         // Lưu ảnh mới (giống logic khóa học: DB lưu 'avatars/RandomName.jpg')
-        $path = $request->file('anhDaiDien')->store('avatars', 'public');
+        $path = $request->file('anhDaiDien')->store('anh-dai-dien', 'public');
 
         $user->hoSoNguoiDung()->updateOrCreate(
             ['taiKhoanId' => $user->taiKhoanId],

@@ -20,10 +20,10 @@
 
                         {{-- Breadcrumb --}}
                         <x-client.account-breadcrumb :items="[
-            ['label' => 'Trang chủ', 'url' => route('home.index'), 'icon' => 'fas fa-home'],
-            ['label' => 'Tài khoản', 'url' => route('home.student.index')],
-            ['label' => 'Thông tin cá nhân'],
-        ]" />
+                            ['label' => 'Trang chủ', 'url' => route('home.index'), 'icon' => 'fas fa-home'],
+                            ['label' => 'Tài khoản', 'url' => route('home.student.index')],
+                            ['label' => 'Thông tin cá nhân'],
+                        ]" />
 
                         <h2 class="content-title">
                             <i class="fas fa-user-circle me-2"></i> Thông tin cá nhân
@@ -206,8 +206,9 @@
                                         <label class="form-label-custom">Trình độ hiện tại</label>
                                         <select name="trinhDoHienTai" class="form-control form-control-custom">
                                             <option value="">-- Chọn trình độ --</option>
-                                            @foreach(['Mất gốc', 'Elementary (Sơ cấp)', 'Pre-Intermediate', 'Intermediate (Trung cấp)', 'Upper-Intermediate', 'Advanced (Cao cấp)'] as $td)
-                                                <option value="{{ $td }}" @selected(old('trinhDoHienTai', Auth::user()->hoSoNguoiDung->trinhDoHienTai ?? '') == $td)>{{ $td }}</option>
+                                            @foreach (['Mất gốc', 'Elementary (Sơ cấp)', 'Pre-Intermediate', 'Intermediate (Trung cấp)', 'Upper-Intermediate', 'Advanced (Cao cấp)'] as $td)
+                                                <option value="{{ $td }}" @selected(old('trinhDoHienTai', Auth::user()->hoSoNguoiDung->trinhDoHienTai ?? '') == $td)>
+                                                    {{ $td }}</option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -215,8 +216,9 @@
                                         <label class="form-label-custom">Ngôn ngữ mục tiêu</label>
                                         <select name="ngonNguMucTieu" class="form-control form-control-custom">
                                             <option value="">-- Chọn ngôn ngữ --</option>
-                                            @foreach(['Tiếng Anh', 'Tiếng Nhật', 'Tiếng Hàn', 'Tiếng Trung', 'Tiếng Pháp', 'Tiếng Đức', 'Khác'] as $nn)
-                                                <option value="{{ $nn }}" @selected(old('ngonNguMucTieu', Auth::user()->hoSoNguoiDung->ngonNguMucTieu ?? '') == $nn)>{{ $nn }}</option>
+                                            @foreach (['Tiếng Anh', 'Tiếng Nhật', 'Tiếng Hàn', 'Tiếng Trung', 'Tiếng Pháp', 'Tiếng Đức', 'Khác'] as $nn)
+                                                <option value="{{ $nn }}" @selected(old('ngonNguMucTieu', Auth::user()->hoSoNguoiDung->ngonNguMucTieu ?? '') == $nn)>
+                                                    {{ $nn }}</option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -224,8 +226,9 @@
                                         <label class="form-label-custom">Biết đến trung tâm qua</label>
                                         <select name="nguonBietDen" class="form-control form-control-custom">
                                             <option value="">-- Chọn nguồn --</option>
-                                            @foreach(['Bạn bè giới thiệu', 'Facebook', 'Google', 'Zalo', 'Banner/Tờ rơi', 'Youtube', 'Khác'] as $nb)
-                                                <option value="{{ $nb }}" @selected(old('nguonBietDen', Auth::user()->hoSoNguoiDung->nguonBietDen ?? '') == $nb)>{{ $nb }}</option>
+                                            @foreach (['Bạn bè giới thiệu', 'Facebook', 'Google', 'Zalo', 'Banner/Tờ rơi', 'Youtube', 'Khác'] as $nb)
+                                                <option value="{{ $nb }}" @selected(old('nguonBietDen', Auth::user()->hoSoNguoiDung->nguonBietDen ?? '') == $nb)>
+                                                    {{ $nb }}</option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -254,8 +257,9 @@
                                         <label class="form-label-custom">Mối quan hệ</label>
                                         <select name="moiQuanHe" class="form-control form-control-custom">
                                             <option value="">-- Chọn --</option>
-                                            @foreach(['Bố/Mẹ', 'Anh/Chị', 'Vợ/Chồng', 'Người thân khác'] as $mq)
-                                                <option value="{{ $mq }}" @selected(old('moiQuanHe', Auth::user()->hoSoNguoiDung->moiQuanHe ?? '') == $mq)>{{ $mq }}</option>
+                                            @foreach (['Bố/Mẹ', 'Anh/Chị', 'Vợ/Chồng', 'Người thân khác'] as $mq)
+                                                <option value="{{ $mq }}" @selected(old('moiQuanHe', Auth::user()->hoSoNguoiDung->moiQuanHe ?? '') == $mq)>
+                                                    {{ $mq }}</option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -288,11 +292,11 @@
 @section('script')
     <script>
         // Preview ảnh khi chọn file
-        document.getElementById('avatarInput')?.addEventListener('change', function (e) {
+        document.getElementById('avatarInput')?.addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
             const reader = new FileReader();
-            reader.onload = function (evt) {
+            reader.onload = function(evt) {
                 document.getElementById('avatarPreview').src = evt.target.result;
                 // Hiện nút Tải lên
                 const btn = document.getElementById('avatarSubmitBtn');
