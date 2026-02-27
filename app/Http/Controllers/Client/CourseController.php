@@ -178,20 +178,35 @@ class CourseController extends Controller
         }
     }
 
-    private function validateClassRegistration($user, $class)
+    /**
+     * Kiểm tra hợp lệ trước khi đăng ký lớp học.
+     * Trả về true nếu hợp lệ, hoặc chuỗi thông báo lỗi nếu không.
+     *
+     * Các kiểm tra (theo thứ tự):
+     *  1. Trạng thái lớp phải là "Đang mở đăng ký" (trangThai = 1)
+     *  2. Sĩ số tối đa (nếu có đặt) chưa đầy
+     *  3. Học viên chưa đăng ký lớp này
+     *  4a. Tầng 1 - Nếu lớp mới đã có buổi học: so sánh từng buổi cụ thể
+     *  4b. Tầng 2 - Fallback: so sánh lịch tổng quát (thứ + ca + khoảng ngày)
+     */
+    private function validateClassRegistration($user, $class): bool|string
     {
-        // Check class is open for registration
-        if ($class->trangThai !== 1) {
+        // 1. Trạng thái lớp phải là "Đang mở đăng ký" (trangThai = 1)
+        if ((int) $class->trangThai !== 1) {
             return 'Lớp học hiện không nhận đăng ký.';
         }
 
-        // Check Capacity
-        $currentStudents = $class->dangKyLopHocs->where('trangThai', '!=', 0)->count();
-        if ($currentStudents >= $class->soHocVienToiDa) {
-            return 'Lớp học đã đủ sĩ số.';
+        // 2. Sĩ số tối đa - chỉ đếm đăng ký còn hiệu lực: 1=chờ thanh toán, 2=đã xác nhận
+        if ($class->soHocVienToiDa !== null) {
+            $currentStudents = $class->dangKyLopHocs
+                ->whereIn('trangThai', [1, 2])
+                ->count();
+            if ($currentStudents >= (int) $class->soHocVienToiDa) {
+                return 'Lớp học đã đủ sĩ số (' . $currentStudents . '/' . (int) $class->soHocVienToiDa . ' học viên).';
+            }
         }
 
-        // Check Duplicate
+        // 3. Kiểm tra đăng ký trùng
         $isRegistered = DangKyLopHoc::where('taiKhoanId', $user->taiKhoanId)
             ->where('lopHocId', $class->lopHocId)
             ->whereIn('trangThai', [1, 2])
@@ -201,34 +216,99 @@ class CourseController extends Controller
             return 'Bạn đã đăng ký lớp học này rồi.';
         }
 
-        // Check Schedule Conflict
-        $userActiveRegistrations = DangKyLopHoc::where('taiKhoanId', $user->taiKhoanId)
+        // 4. Kiểm tra trùng lịch học
+        // Lấy các lớp đang hoạt động của học viên (chờ thanh toán + đã xác nhận)
+        $activeRegistrations = DangKyLopHoc::where('taiKhoanId', $user->taiKhoanId)
             ->whereIn('trangThai', [1, 2])
             ->with('lopHoc.buoiHocs.caHoc')
             ->get();
 
-        $newClassSchedule = $class->buoiHocs;
+        $newSessions = $class->buoiHocs;
 
-        foreach ($userActiveRegistrations as $reg) {
-            $existingClass = $reg->lopHoc;
-            if ($existingClass->trangThai == 3 || $existingClass->trangThai == 0)
-                continue;
+        // TẦNG 1: Nếu lớp mới đã có buổi học -> so sánh từng buổi cụ thể
+        if ($newSessions && $newSessions->count() > 0) {
+            foreach ($activeRegistrations as $reg) {
+                $existingClass = $reg->lopHoc;
+                if ($existingClass->trangThai == 3 || $existingClass->trangThai == 0)
+                    continue;
 
-            foreach ($existingClass->buoiHocs as $existingSession) {
-                foreach ($newClassSchedule as $newSession) {
-                    if ($existingSession->ngayHoc == $newSession->ngayHoc) {
-                        $start1 = strtotime($existingSession->caHoc->gioBatDau);
-                        $end1 = strtotime($existingSession->caHoc->gioKetThuc);
-                        $start2 = strtotime($newSession->caHoc->gioBatDau);
-                        $end2 = strtotime($newSession->caHoc->gioKetThuc);
+                $existingSessions = $existingClass->buoiHocs;
+                foreach ($existingSessions as $existingSession) {
+                    foreach ($newSessions as $newSession) {
+                        if ($existingSession->ngayHoc !== $newSession->ngayHoc) {
+                            continue;
+                        }
+                        $s1 = strtotime($existingSession->caHoc->gioBatDau);
+                        $e1 = strtotime($existingSession->caHoc->gioKetThuc);
+                        $s2 = strtotime($newSession->caHoc->gioBatDau);
+                        $e2 = strtotime($newSession->caHoc->gioKetThuc);
 
-                        if ($start1 < $end2 && $start2 < $end1) {
-                            return 'Lịch học bị trùng với lớp ' . $existingClass->tenLopHoc . ' vào ngày ' . date('d/m/Y', strtotime($newSession->ngayHoc));
+                        if ($s1 < $e2 && $s2 < $e1) {
+                            $conflictDate = \Carbon\Carbon::parse($newSession->ngayHoc)->format('d/m/Y');
+                            $conflictTime = $newSession->caHoc->gioBatDau . '-' . $newSession->caHoc->gioKetThuc;
+                            return "Lịch học bị trùng với lớp {$existingClass->tenLopHoc} "
+                                . "vào ngày {$conflictDate} ({$conflictTime}).";
                         }
                     }
                 }
             }
+            return true;
         }
+
+        // TẦNG 2: fallback - kiểm tra lịch tổng quát
+        // Dùng khi lớp mới chưa có buổi học nào
+        if (!$class->lichHoc || !$class->ngayBatDau || !$class->ngayKetThuc || !$class->caHocId) {
+            return true;
+        }
+
+        $newDays = array_map('trim', explode(',', $class->lichHoc));
+        $newCaId = (int) $class->caHocId;
+        $newStart = \Carbon\Carbon::parse($class->ngayBatDau);
+        $newEnd = \Carbon\Carbon::parse($class->ngayKetThuc);
+
+        foreach ($activeRegistrations as $reg) {
+            $existingClass = $reg->lopHoc;
+
+            if (
+                !$existingClass->lichHoc || !$existingClass->ngayBatDau ||
+                !$existingClass->ngayKetThuc || !$existingClass->caHocId
+            ) {
+                continue;
+            }
+
+            if ((int) $existingClass->caHocId !== $newCaId) {
+                continue;
+            }
+
+            $exStart = \Carbon\Carbon::parse($existingClass->ngayBatDau);
+            $exEnd = \Carbon\Carbon::parse($existingClass->ngayKetThuc);
+
+            if ($newStart->gt($exEnd) || $newEnd->lt($exStart)) {
+                continue;
+            }
+
+            $existingDays = array_map('trim', explode(',', $existingClass->lichHoc));
+            $commonDays = array_intersect($newDays, $existingDays);
+
+            if (!empty($commonDays)) {
+                $thuLabels = [
+                    '2' => 'Thứ 2',
+                    '3' => 'Thứ 3',
+                    '4' => 'Thứ 4',
+                    '5' => 'Thứ 5',
+                    '6' => 'Thứ 6',
+                    '7' => 'Thứ 7',
+                    'CN' => 'Chủ nhật',
+                ];
+                $commonStr = implode(', ', array_map(fn($d) => $thuLabels[$d] ?? $d, $commonDays));
+                $exStartStr = $exStart->format('d/m/Y');
+                $exEndStr = $exEnd->format('d/m/Y');
+
+                return "Lịch học bị trùng với lớp {$existingClass->tenLopHoc} "
+                    . "({$commonStr}, cùng ca học, từ {$exStartStr} đến {$exEndStr}).";
+            }
+        }
+
         return true;
     }
 }

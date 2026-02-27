@@ -248,7 +248,7 @@
 
                                 <td style="text-align:center">
                                     <button type="button" class="btn-restore"
-                                        onclick="confirmRestore({{ $hv->taiKhoanId }}, '{{ addslashes($hoTen) }}')">
+                                        onclick="confirmRestore('{{ addslashes($hv->taiKhoan) }}', '{{ addslashes($hoTen) }}')">
                                         <i class="fas fa-rotate-left"></i> Khôi phục
                                     </button>
                                 </td>

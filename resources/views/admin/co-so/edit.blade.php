@@ -125,7 +125,7 @@
                     </label>
                     <input type="number" step="any" id="viDo" name="viDo"
                         class="form-control @error('viDo') is-invalid @enderror" value="{{ old('viDo', $coSo->viDo) }}"
-                        placeholder="VD: 10.776889" readonly>
+                        placeholder="VD: 10.776889" autocomplete="off">
                     @error('viDo')
                         <div class="invalid-feedback"><i class="fas fa-exclamation-circle"></i> {{ $message }}</div>
                     @enderror
@@ -135,7 +135,7 @@
                     <label class="form-label" for="kinhDo">Kinh độ (Longitude)</label>
                     <input type="number" step="any" id="kinhDo" name="kinhDo"
                         class="form-control @error('kinhDo') is-invalid @enderror"
-                        value="{{ old('kinhDo', $coSo->kinhDo) }}" placeholder="VD: 106.700980" readonly>
+                        value="{{ old('kinhDo', $coSo->kinhDo) }}" placeholder="VD: 106.700980" autocomplete="off">
                     @error('kinhDo')
                         <div class="invalid-feedback"><i class="fas fa-exclamation-circle"></i> {{ $message }}</div>
                     @enderror
@@ -250,33 +250,47 @@
                 loadPhuongXa(selectedOpt.dataset.maApi, currentMaPhuongXa);
             }
 
-            // Tự động xử lý link Google Map / Iframe
+            // ── Tự động xử lý link Google Map / Iframe ──────────────────────────
             const banDoInput = document.getElementById('banDoGoogle');
             const viDoInput = document.getElementById('viDo');
             const kinhDoInput = document.getElementById('kinhDo');
 
+            function parseLatLng(rawVal) {
+                let val = rawVal.trim();
+                const iframeMatch = val.match(/<iframe\s+[^>]*src=["']([^"']+)["']/i);
+                if (iframeMatch && iframeMatch[1]) {
+                    val = iframeMatch[1];
+                    banDoInput.value = val;
+                }
+                // Reset
+                viDoInput.value = '';
+                kinhDoInput.value = '';
+                // Dạng 1: !2d<lng>!3d<lat>
+                const lngM = val.match(/!2d(-?\d+\.?\d*)/);
+                const latM = val.match(/!3d(-?\d+\.?\d*)/);
+                if (latM && lngM) {
+                    viDoInput.value = latM[1];
+                    kinhDoInput.value = lngM[1];
+                    return;
+                }
+                // Dạng 2: @lat,lng
+                const atM = val.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+                if (atM) {
+                    viDoInput.value = atM[1];
+                    kinhDoInput.value = atM[2];
+                    return;
+                }
+                // Dạng 3: ?q=lat,lng
+                const qM = val.match(/[?&](?:q|ll)=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+                if (qM) {
+                    viDoInput.value = qM[1];
+                    kinhDoInput.value = qM[2];
+                }
+            }
+
             if (banDoInput) {
-                banDoInput.addEventListener('input', function() {
-                    let val = this.value.trim();
-
-                    // Nếu nhập vào là thẻ iframe, bóc tách lấy src=""
-                    const iframeMatch = val.match(/<iframe\s+[^>]*src=["']([^"']+)["']/i);
-                    if (iframeMatch && iframeMatch[1]) {
-                        val = iframeMatch[1];
-                        this.value = val;
-                    }
-
-                    // Tìm vĩ độ (!3d) và kinh độ (!2d)
-                    const lngMatch = val.match(/!2d(-?\d+\.\d+)/);
-                    const latMatch = val.match(/!3d(-?\d+\.\d+)/);
-
-                    if (latMatch && latMatch[1]) {
-                        viDoInput.value = latMatch[1];
-                    }
-                    if (lngMatch && lngMatch[1]) {
-                        kinhDoInput.value = lngMatch[1];
-                    }
-                });
+                banDoInput.addEventListener('input', () => parseLatLng(banDoInput.value));
+                banDoInput.addEventListener('paste', () => setTimeout(() => parseLatLng(banDoInput.value), 50));
             }
         })();
     </script>
