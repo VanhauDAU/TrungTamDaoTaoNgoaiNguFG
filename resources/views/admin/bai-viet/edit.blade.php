@@ -161,7 +161,7 @@
                 <div class="bf-card-title"><i class="fas fa-sliders-h"></i> Trạng thái xuất bản</div>
                 <div class="bf-toggle-group">
                     <label class="bf-toggle">
-                        <input type="hidden" name="trangThai" value="0">
+                        <input type="hidden" name="trangThai" value="{{ old('trangThai', $baiViet->trangThai) }}">
                         <input type="checkbox" id="trangThaiToggle" value="1" {{ old('trangThai', $baiViet->trangThai) ? 'checked' : '' }}
                             onchange="document.querySelector('input[name=trangThai]').value = this.checked ? 1 : 0">
                         <span class="bf-toggle-slider"></span>
@@ -252,11 +252,19 @@
                 this.checked ? 'Xuất bản ngay' : 'Lưu bản nháp';
         });
 
-        // ── Tag input system ───────────────────────────
+        // ── Tag input system with autocomplete ──────
         const tagWrap = document.getElementById('tag-input-wrap');
         const tagInput = document.getElementById('tag-input');
         const tagHidden = document.getElementById('tagNamesHidden');
         let currentTags = tagHidden.value ? tagHidden.value.split(',').map(t => t.trim()).filter(Boolean) : [];
+        let debounceTimer = null;
+
+        // Tạo dropdown gợi ý
+        const suggestBox = document.createElement('div');
+        suggestBox.className = 'bf-tag-suggest';
+        suggestBox.style.display = 'none';
+        tagWrap.style.position = 'relative';
+        tagWrap.appendChild(suggestBox);
 
         function renderTags() {
             tagWrap.querySelectorAll('.bf-tag-chip').forEach(c => c.remove());
@@ -269,21 +277,68 @@
             tagHidden.value = currentTags.join(',');
         }
 
+        function addTag(name) {
+            const val = name.trim();
+            if (val && !currentTags.includes(val)) {
+                currentTags.push(val);
+                renderTags();
+            }
+            tagInput.value = '';
+            hideSuggestions();
+        }
+
+        function hideSuggestions() {
+            suggestBox.style.display = 'none';
+            suggestBox.innerHTML = '';
+        }
+
+        function fetchSuggestions(query) {
+            if (!query || query.length < 1) { hideSuggestions(); return; }
+            fetch(`{{ route('admin.api.tags.index') }}?q=${encodeURIComponent(query)}`, {
+                headers: { 'Accept': 'application/json' },
+            })
+                .then(r => r.json())
+                .then(tags => {
+                    const filtered = tags.filter(t => !currentTags.includes(t.tenTag));
+                    if (filtered.length === 0) { hideSuggestions(); return; }
+
+                    suggestBox.innerHTML = filtered.slice(0, 8).map(t =>
+                        `<div class="bf-tag-suggest-item" data-name="${t.tenTag}">
+                                    <i class="fas fa-tag" style="color:var(--bf-primary);font-size:.7rem;opacity:.5"></i>
+                                    <span>${t.tenTag}</span>
+                                    <small style="color:var(--bf-muted);margin-left:auto">${t.bai_viets_count || 0} bài</small>
+                                </div>`
+                    ).join('');
+                    suggestBox.style.display = 'block';
+
+                    suggestBox.querySelectorAll('.bf-tag-suggest-item').forEach(item => {
+                        item.addEventListener('mousedown', (e) => {
+                            e.preventDefault();
+                            addTag(item.dataset.name);
+                        });
+                    });
+                })
+                .catch(() => hideSuggestions());
+            }
+
+        tagInput.addEventListener('input', function () {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => fetchSuggestions(this.value.trim()), 250);
+        });
+
         tagInput.addEventListener('keydown', function (e) {
             if (e.key === 'Enter' || e.key === ',') {
                 e.preventDefault();
-                const val = this.value.trim().replace(/,/g, '');
-                if (val && !currentTags.includes(val)) {
-                    currentTags.push(val);
-                    renderTags();
-                }
-                this.value = '';
+                addTag(this.value.replace(/,/g, ''));
             }
             if (e.key === 'Backspace' && !this.value && currentTags.length) {
                 currentTags.pop();
                 renderTags();
             }
+            if (e.key === 'Escape') hideSuggestions();
         });
+
+        tagInput.addEventListener('blur', () => setTimeout(hideSuggestions, 200));
 
         tagWrap.addEventListener('click', function (e) {
             const removeBtn = e.target.closest('.remove-tag');
