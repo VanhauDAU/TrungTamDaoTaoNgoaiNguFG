@@ -106,7 +106,7 @@
                         <th>Tên danh mục</th>
                         <th>Slug</th>
                         <th>Mô tả</th>
-                        <th style="width:90px">Bài viết</th>
+                        <th style="width:90px">Số bài viết</th>
                         <th style="width:100px">Trạng thái</th>
                         <th style="width:90px">Thao tác</th>
                     </tr>
@@ -177,7 +177,7 @@
                 Swal.fire({
                     title: 'Không thể xóa!',
                     html: `Danh mục <strong>${name}</strong> còn <strong>${soBaiViet} bài viết</strong>.<br>
-                               <small style="color:#64748b">Hãy chuyển bài viết sang danh mục khác trước khi xóa.</small>`,
+                                   <small style="color:#64748b">Hãy chuyển bài viết sang danh mục khác trước khi xóa.</small>`,
                     icon: 'error',
                     confirmButtonText: 'Đã hiểu',
                     confirmButtonColor: '#1d4ed8',

@@ -191,20 +191,15 @@
 @endsection
 
 @section('script')
-    {{-- TinyMCE CDN --}}
-    <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+    {{-- TinyMCE CDN (cdnjs - không cần API key) --}}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.3/tinymce.min.js" referrerpolicy="origin"></script>
     <script>
         // ── TinyMCE Init ──────────────────────────────
         tinymce.init({
             selector: '#noiDung-editor',
             height: 500,
             menubar: 'file edit view insert format tools table',
-            plugins: [
-                'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
-                'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-                'insertdatetime', 'media', 'table', 'help', 'wordcount', 'emoticons',
-                'codesample'
-            ],
+            plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code fullscreen insertdatetime media table help wordcount emoticons codesample',
             toolbar: 'undo redo | blocks | ' +
                 'bold italic backcolor forecolor | alignleft aligncenter ' +
                 'alignright alignjustify | bullist numlist outdent indent | ' +
@@ -216,12 +211,6 @@
             file_picker_types: 'image',
             relative_urls: false,
             remove_script_host: false,
-            setup: function (editor) {
-                editor.on('init', function () {
-                    // Add CSRF token to upload requests
-                    editor.getDoc().cookie = 'XSRF-TOKEN={{ csrf_token() }}';
-                });
-            },
             images_upload_handler: function (blobInfo) {
                 return new Promise(function (resolve, reject) {
                     var formData = new FormData();
@@ -239,7 +228,6 @@
                         .catch(() => reject('Upload ảnh thất bại.'));
                 });
             },
-            language: 'vi',
             branding: false,
             promotion: false,
         });

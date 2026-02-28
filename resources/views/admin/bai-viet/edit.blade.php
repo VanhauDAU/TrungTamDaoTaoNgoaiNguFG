@@ -187,19 +187,14 @@
 @endsection
 
 @section('script')
-    <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.3/tinymce.min.js" referrerpolicy="origin"></script>
     <script>
         // ── TinyMCE Init ──────────────────────────────
         tinymce.init({
             selector: '#noiDung-editor',
             height: 500,
             menubar: 'file edit view insert format tools table',
-            plugins: [
-                'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
-                'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-                'insertdatetime', 'media', 'table', 'help', 'wordcount', 'emoticons',
-                'codesample'
-            ],
+            plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code fullscreen insertdatetime media table help wordcount emoticons codesample',
             toolbar: 'undo redo | blocks | ' +
                 'bold italic backcolor forecolor | alignleft aligncenter ' +
                 'alignright alignjustify | bullist numlist outdent indent | ' +
@@ -225,7 +220,6 @@
                         .catch(() => reject('Upload ảnh thất bại.'));
                 });
             },
-            language: 'vi',
             branding: false,
             promotion: false,
         });
