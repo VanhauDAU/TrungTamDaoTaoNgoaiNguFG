@@ -99,10 +99,11 @@
                             <a class="user-pill d-flex align-items-center gap-2" href="#" data-bs-toggle="dropdown">
                                 @if (Auth::user()->hoSoNguoiDung && Auth::user()->hoSoNguoiDung->anhDaiDien)
                                     <img src="{{ asset('storage/' . Auth::user()->hoSoNguoiDung->anhDaiDien) }}"
-                                        class="rounded-circle shadow-sm" width="38" height="38" style="object-fit: cover;">
+                                        class="rounded-circle shadow-sm" width="38" height="38"
+                                        style="object-fit: cover;">
                                 @else
-                                    <img src="{{ asset('assets/images/user-default.png') }}" class="rounded-circle shadow-sm"
-                                        width="38" height="38">
+                                    <img src="{{ asset('assets/images/user-default.png') }}"
+                                        class="rounded-circle shadow-sm" width="38" height="38">
                                 @endif
                                 <span
                                     class="fw-semibold d-none d-md-block">{{ Auth::user()->hoSoNguoiDung->hoTen ?? Auth::user()->name }}</span>
@@ -111,8 +112,6 @@
                             <ul class="dropdown-menu dropdown-menu-end dropdown-menu-user border-0 shadow-lg rounded-4">
                                 <li><a class="dropdown-item py-2" href="{{ route('home.student.index') }}"><i
                                             class="far fa-user-circle me-2 text-primary"></i>Tài khoản cá nhân</a></li>
-                                <li><a class="dropdown-item py-2" href="#"><i
-                                            class="fas fa-graduation-cap me-2 text-primary"></i> Khóa học của tôi</a></li>
                                 <li>
                                     <hr class="dropdown-divider">
                                 </li>
@@ -136,3 +135,19 @@
         </div>
     </nav>
 </header>
+<ul class="dropdown-menu dropdown-menu-end dropdown-menu-user border-0 shadow-lg rounded-4">
+    <li><a class="dropdown-item py-2" href="{{ route('home.student.index') }}"><i
+                class="far fa-user-circle me-2 text-primary"></i>Tài khoản cá nhân</a></li>
+    <li><a class="dropdown-item py-2" href="#"><i class="fas fa-graduation-cap me-2 text-primary"></i> Khóa học
+            của tôi</a></li>
+    <li>
+        <hr class="dropdown-divider">
+    </li>
+    <li>
+        <form method="POST" action="{{ route('logout') }}">
+            @csrf
+            <button class="dropdown-item text-danger py-2"><i class="fas fa-power-off me-2"></i>
+                Đăng xuất</button>
+        </form>
+    </li>
+</ul>
