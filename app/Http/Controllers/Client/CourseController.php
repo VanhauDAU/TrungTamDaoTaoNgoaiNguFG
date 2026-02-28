@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Client;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Models\Course\LoaiKhoaHoc;
+use App\Models\Course\DanhMucKhoaHoc;
 use App\Models\Course\KhoaHoc;
 use App\Models\Education\LopHoc;
 use App\Models\Education\DangKyLopHoc;
@@ -16,7 +16,7 @@ class CourseController extends Controller
 {
     public function index(Request $request)
     {
-        $listTypeCourses = LoaiKhoaHoc::all();
+        $listTypeCourses = DanhMucKhoaHoc::all();
 
         // Tạo query builder với điều kiện cơ bản
         $query = KhoaHoc::where('trangThai', 1);
@@ -24,13 +24,13 @@ class CourseController extends Controller
         // Lọc theo category nếu có
         if ($request->has('category')) {
             $categorySlug = $request->input('category');
-            $query->whereHas('loaiKhoaHoc', function ($q) use ($categorySlug) {
+            $query->whereHas('danhMuc', function ($q) use ($categorySlug) {
                 $q->where('slug', $categorySlug);
             });
         }
 
         // Lấy danh sách khóa học có ít nhất 1 lớp học với pagination và giữ query parameters
-        $listCourses = $query->with('loaiKhoaHoc')->whereHas('lopHoc')->paginate(6)->withQueryString();
+        $listCourses = $query->with('danhMuc')->whereHas('lopHoc')->paginate(6)->withQueryString();
 
         return view('clients.khoa-hoc.index', compact('listTypeCourses', 'listCourses'));
     }
@@ -38,7 +38,7 @@ class CourseController extends Controller
     {
         $course = KhoaHoc::where('slug', $slug)
             ->with([
-                'loaiKhoaHoc',
+                'danhMuc',
                 'lopHoc.coSo.tinhThanh',  // Load cơ sở và tỉnh thành
                 'lopHoc.phongHoc',
                 'lopHoc.taiKhoan',
@@ -47,10 +47,10 @@ class CourseController extends Controller
             ->first();
 
         // Lấy 3 khóa học liên quan cùng loại, khác khóa hiện tại
-        $relatedCourses = KhoaHoc::where('loaiKhoaHocId', $course->loaiKhoaHocId)
+        $relatedCourses = KhoaHoc::where('danhMucId', $course->danhMucId)
             ->where('khoaHocId', '!=', $course->khoaHocId)
             ->where('trangThai', 1)
-            ->with('loaiKhoaHoc', 'lopHoc')
+            ->with('danhMuc', 'lopHoc')
             ->take(4)
             ->get();
 
@@ -61,11 +61,11 @@ class CourseController extends Controller
 
         $class = LopHoc::where('slug', $slugLopHoc)
             ->with([
-                'khoaHoc.loaiKhoaHoc', // Để lấy breadcrumb
-                'coSo.tinhThanh',      // Địa điểm
-                'phongHoc',            // Phòng học
-                'taiKhoan.hoSoNguoiDung', // Giảng viên
-                'hocPhi',               // Học phí
+                'khoaHoc.danhMuc',
+                'coSo.tinhThanh',
+                'phongHoc',
+                'taiKhoan.hoSoNguoiDung',
+                'hocPhi',
                 'dangKyLopHocs'
             ])
             ->firstOrFail();

@@ -197,7 +197,7 @@
                     <div class="col-xl-3 col-lg-4 col-md-6">
                         <div class="course-card">
                             {{-- Badge Loại khóa học --}}
-                            <div class="course-badge">{{ $khoaHoc->loaiKhoaHoc->tenLoai ?? 'Ngoại ngữ' }}</div>
+                            <div class="course-badge">{{ $khoaHoc->danhMuc->tenDanhMuc ?? 'Ngoại ngữ' }}</div>
 
                             {{-- Hình ảnh & Nút yêu thích --}}
                             <div class="course-image-wrapper">

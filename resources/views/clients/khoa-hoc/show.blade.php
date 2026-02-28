@@ -17,8 +17,8 @@
                             <a href="{{ route('home.courses.index') }}">Khóa học</a>
                         </li>
                         <li class="breadcrumb-item">
-                            <a href="{{ route('home.courses.index', ['loai' => $course->loaiKhoaHoc->slug]) }}">
-                                {{ $course->loaiKhoaHoc->tenLoai }}
+                            <a href="{{ route('home.courses.index', ['loai' => $course->danhMuc->slug]) }}">
+                                {{ $course->danhMuc->tenDanhMuc }}
                             </a>
                         </li>
                         <li class="breadcrumb-item active" aria-current="page">
@@ -197,7 +197,7 @@
                                                 @endif
                                                 <div class="related-course-overlay"></div>
                                                 <div class="related-course-tag">
-                                                    <span>{{ $relatedCourse->loaiKhoaHoc->tenLoai }}</span>
+                                                    <span>{{ $relatedCourse->danhMuc->tenDanhMuc }}</span>
                                                 </div>
                                             </div>
 
@@ -256,7 +256,7 @@
                             <div class="course-category mb-3">
                                 <span class="badge bg-gradient-primary">
                                     <i class="fas fa-folder-open me-1"></i>
-                                    {{ $course->loaiKhoaHoc->tenLoai }}
+                                    {{ $course->danhMuc->tenDanhMuc }}
                                 </span>
                             </div>
 

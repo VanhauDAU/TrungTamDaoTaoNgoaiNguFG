@@ -81,17 +81,17 @@
 
                 <div class="kf-form-row">
                     <div class="kf-form-group">
-                        <label>Loại khóa học <span class="req">*</span></label>
-                        <select name="loaiKhoaHocId">
-                            <option value="">-- Chọn loại --</option>
-                            @foreach ($loaiKhoaHocs as $loai)
-                                <option value="{{ $loai->loaiKhoaHocId }}"
-                                    {{ old('loaiKhoaHocId', $khoaHoc->loaiKhoaHocId) == $loai->loaiKhoaHocId ? 'selected' : '' }}>
-                                    {{ $loai->tenLoai ?? 'Loại ' . $loai->loaiKhoaHocId }}
+                        <label>Danh mục khóa học <span class="req">*</span></label>
+                        <select name="danhMucId" class="{{ $errors->has('danhMucId') ? 'is-invalid' : '' }}">
+                            <option value="">-- Chọn danh mục --</option>
+                            @foreach ($danhMucs as $dm)
+                                <option value="{{ $dm->danhMucId }}"
+                                    {{ old('danhMucId', $khoaHoc->danhMucId) == $dm->danhMucId ? 'selected' : '' }}>
+                                    {{ $dm->tenDanhMuc }}
                                 </option>
                             @endforeach
                         </select>
-                        @error('loaiKhoaHocId')
+                        @error('danhMucId')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>

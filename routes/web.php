@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\KhoaHoc\KhoaHocController as AdminKhoaHocControll
 use App\Http\Controllers\Admin\KhoaHoc\LopHocController as AdminLopHocController;
 use App\Http\Controllers\Admin\KhoaHoc\BuoiHocController as AdminBuoiHocController;
 use App\Http\Controllers\Admin\KhoaHoc\HocPhiController as AdminHocPhiController;
+use App\Http\Controllers\Admin\KhoaHoc\DanhMucKhoaHocController as AdminDanhMucKhoaHocController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
@@ -133,6 +134,16 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
         Route::post('/', [PhongHocController::class, 'store'])->name('store');
         Route::put('/{id}', [PhongHocController::class, 'update'])->name('update');
         Route::delete('/{id}', [PhongHocController::class, 'destroy'])->name('destroy');
+    });
+
+    // ── Danh Mục Khóa Học ────────────────────────────────────────────────────
+    Route::prefix('danh-muc-khoa-hoc')->name('danh-muc-khoa-hoc.')->group(function () {
+        Route::get('/',          [AdminDanhMucKhoaHocController::class, 'index'])->name('index');
+        Route::get('/tao-moi',  [AdminDanhMucKhoaHocController::class, 'create'])->name('create');
+        Route::post('/',         [AdminDanhMucKhoaHocController::class, 'store'])->name('store');
+        Route::get('/{id}/sua', [AdminDanhMucKhoaHocController::class, 'edit'])->name('edit');
+        Route::put('/{id}',     [AdminDanhMucKhoaHocController::class, 'update'])->name('update');
+        Route::delete('/{id}',  [AdminDanhMucKhoaHocController::class, 'destroy'])->name('destroy');
     });
 
     // ── Khóa Học ─────────────────────────────────────────────────────────────

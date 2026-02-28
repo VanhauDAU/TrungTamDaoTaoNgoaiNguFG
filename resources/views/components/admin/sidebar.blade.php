@@ -37,6 +37,10 @@
                 </div>
                 <div class="nav-sub">
                     @if (auth()->user()->canDo('khoa_hoc', 'xem'))
+                        <a href="{{ route('admin.danh-muc-khoa-hoc.index') }}"
+                            class="nav-sub-item {{ Request::is('admin/danh-muc-khoa-hoc*') ? 'active' : '' }}">
+                            Danh Mục Khóa Học
+                        </a>
                         <a href="{{ route('admin.khoa-hoc.index') }}"
                             class="nav-sub-item {{ Request::is('admin/khoa-hoc*') ? 'active' : '' }}">
                             Khóa Học

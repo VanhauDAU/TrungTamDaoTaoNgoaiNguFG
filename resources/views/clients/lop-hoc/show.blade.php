@@ -45,7 +45,7 @@
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <span class="badge bg-gradient-primary mb-2">
                                 <i class="fas fa-layer-group me-1"></i>
-                                {{ $class->khoaHoc->loaiKhoaHoc->tenLoai ?? 'Khóa học' }}
+                                {{ $class->khoaHoc->danhMuc->tenDanhMuc ?? 'Khóa học' }}
                             </span>
 
                             @if ($class->trangThai == 0)

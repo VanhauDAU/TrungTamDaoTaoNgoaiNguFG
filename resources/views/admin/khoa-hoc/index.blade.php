@@ -69,12 +69,11 @@
                 value="{{ request('q') }}" autocomplete="off">
         </div>
 
-        <select name="loaiKhoaHocId" onchange="this.form.submit()">
-            <option value="">Tất cả loại</option>
-            @foreach ($loaiKhoaHocs as $loai)
-                <option value="{{ $loai->loaiKhoaHocId }}"
-                    {{ request('loaiKhoaHocId') == $loai->loaiKhoaHocId ? 'selected' : '' }}>
-                    {{ $loai->tenLoai ?? 'Loại ' . $loai->loaiKhoaHocId }}
+        <select name="danhMucId" onchange="this.form.submit()">
+            <option value="">Tất cả danh mục</option>
+            @foreach ($danhMucs as $dm)
+                <option value="{{ $dm->danhMucId }}" {{ request('danhMucId') == $dm->danhMucId ? 'selected' : '' }}>
+                    {{ $dm->tenDanhMuc }}
                 </option>
             @endforeach
         </select>
@@ -104,7 +103,7 @@
         <div class="kh-empty">
             <i class="fas fa-book-open"></i>
             <p>Không tìm thấy khóa học nào.</p>
-            @if (request()->anyFilled(['q', 'loaiKhoaHocId', 'trangThai']))
+            @if (request()->anyFilled(['q', 'danhMucId', 'trangThai']))
                 <a href="{{ route('admin.khoa-hoc.index') }}" class="kh-btn-filter kh-btn-filter-reset"
                     style="margin-top:12px;display:inline-flex">
                     Xóa bộ lọc
@@ -128,8 +127,8 @@
                     </div>
 
                     <div class="kh-card-body">
-                        @if ($kh->loaiKhoaHoc)
-                            <span class="kh-card-loai">{{ $kh->loaiKhoaHoc->tenLoai ?? 'Chương trình học' }}</span>
+                        @if ($kh->danhMuc)
+                            <span class="kh-card-loai">{{ $kh->danhMuc->tenDanhMuc }}</span>
                         @endif
                         <div class="kh-card-title" title="{{ $kh->tenKhoaHoc }}">{{ $kh->tenKhoaHoc }}</div>
 
