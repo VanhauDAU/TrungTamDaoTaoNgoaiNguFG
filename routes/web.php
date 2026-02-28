@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\HocVien\HocVienController as AdminHocVienControll
 use App\Http\Controllers\Admin\GiaoVien\GiaoVienController as AdminGiaoVienController;
 use App\Http\Controllers\Admin\NhanVien\NhanVienController as AdminNhanVienController;
 use App\Http\Controllers\Admin\Auth\TaiKhoanController;
+use App\Http\Controllers\Admin\LienHe\LienHeController as AdminLienHeController;
 use App\Http\Controllers\Admin\Facility\CoSoController;
 use App\Http\Controllers\Admin\Facility\PhongHocController;
 use App\Http\Controllers\Admin\KhoaHoc\KhoaHocController as AdminKhoaHocController;
@@ -128,6 +129,15 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
         Route::get('/{taiKhoan}/sua', [AdminNhanVienController::class, 'edit'])->name('edit');
         Route::put('/{taiKhoan}', [AdminNhanVienController::class, 'update'])->name('update');
         Route::delete('/{taiKhoan}', [AdminNhanVienController::class, 'destroy'])->name('destroy');
+    });
+
+
+    // ── Liên Hệ (Leads) ─────────────────────────────────────────────────────────
+    Route::prefix('lien-he')->name('lien-he.')->group(function () {
+        Route::get('/', [AdminLienHeController::class, 'index'])->name('index');
+        Route::get('/{id}/sua', [AdminLienHeController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [AdminLienHeController::class, 'update'])->name('update');
+        Route::delete('/{id}', [AdminLienHeController::class, 'destroy'])->name('destroy');
     });
 
     // ── Cơ sở Đào tạo ────────────────────────────────────────────────────────
