@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\HomeController as AdminHomeController;
 use App\Http\Controllers\Admin\NhomQuyenController;
 use App\Http\Controllers\Admin\HocVien\HocVienController as AdminHocVienController;
 use App\Http\Controllers\Admin\GiaoVien\GiaoVienController as AdminGiaoVienController;
+use App\Http\Controllers\Admin\NhanVien\NhanVienController as AdminNhanVienController;
 use App\Http\Controllers\Admin\Auth\TaiKhoanController;
 use App\Http\Controllers\Admin\Facility\CoSoController;
 use App\Http\Controllers\Admin\Facility\PhongHocController;
@@ -101,6 +102,18 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
         Route::get('/{taiKhoan}/sua',      [AdminGiaoVienController::class, 'edit'])->name('edit');
         Route::put('/{taiKhoan}',          [AdminGiaoVienController::class, 'update'])->name('update');
         Route::delete('/{taiKhoan}',       [AdminGiaoVienController::class, 'destroy'])->name('destroy');
+    });
+
+    // ── Nhân viên ─────────────────────────────────────────────────────────────
+    Route::prefix('nhan-vien')->name('nhan-vien.')->group(function () {
+        Route::get('/',                    [AdminNhanVienController::class, 'index'])->name('index');
+        Route::get('/tao-moi',             [AdminNhanVienController::class, 'create'])->name('create');
+        Route::post('/',                   [AdminNhanVienController::class, 'store'])->name('store');
+        Route::get('/thung-rac',           [AdminNhanVienController::class, 'trash'])->name('trash');
+        Route::patch('/{id}/khoi-phuc',    [AdminNhanVienController::class, 'restore'])->name('restore');
+        Route::get('/{taiKhoan}/sua',      [AdminNhanVienController::class, 'edit'])->name('edit');
+        Route::put('/{taiKhoan}',          [AdminNhanVienController::class, 'update'])->name('update');
+        Route::delete('/{taiKhoan}',       [AdminNhanVienController::class, 'destroy'])->name('destroy');
     });
 
     // ── Cơ sở Đào tạo ────────────────────────────────────────────────────────

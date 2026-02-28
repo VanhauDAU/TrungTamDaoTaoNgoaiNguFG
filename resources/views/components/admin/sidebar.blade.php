@@ -102,7 +102,8 @@
                     </a>
                 @endif
                 @if (auth()->user()->canDo('nhan_vien', 'xem'))
-                    <a href="#" class="nav-sub-item {{ Request::is('admin/nhan-vien*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.nhan-vien.index') }}"
+                        class="nav-sub-item {{ Request::is('admin/nhan-vien*') ? 'active' : '' }}">
                         Nhân Viên
                     </a>
                 @endif
