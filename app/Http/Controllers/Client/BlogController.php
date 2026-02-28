@@ -56,7 +56,15 @@ class BlogController extends Controller
         }
 
         $blogs = $query->with(['danhMucs', 'tags'])->paginate(9)->withQueryString();
-        $categories = DanhMucBaiViet::all();
+        $categories = DanhMucBaiViet::where('trangThai', 1)
+            ->withCount([
+                'baiViets' => function ($q) {
+                    $q->where('trangThai', 1);
+                }
+            ])
+            ->having('bai_viets_count', '>', 0)
+            ->orderBy('tenDanhMuc')
+            ->get();
         $totalPosts = BaiViet::where('trangThai', 1)->count();
 
         return view('clients.bai-viet.index', compact('blogs', 'categories', 'totalPosts'));
