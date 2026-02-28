@@ -68,8 +68,7 @@
         @endphp
         @if ($hasHocVien)
             <div class="sidebar-section">Student Management</div>
-            <div
-                class="nav-group {{ Request::is('admin/hoc-vien*', 'admin/dang-ky*', 'admin/phan-hoi*') ? 'open' : '' }}">
+            <div class="nav-group {{ Request::is('admin/hoc-vien*', 'admin/dang-ky*', 'admin/phan-hoi*') ? 'open' : '' }}">
                 <div class="nav-group-header">
                     <i class="fas fa-user-graduate"></i> <span>Quản lý học viên</span>
                     <i class="fas fa-chevron-right"></i>
@@ -125,8 +124,7 @@
         @endphp
         @if ($hasTaiChinh)
             <div class="sidebar-section">Finance Management</div>
-            <div
-                class="nav-group {{ Request::is('admin/tai-chinh*', 'admin/luong*', 'admin/hoc-phi*') ? 'open' : '' }}">
+            <div class="nav-group {{ Request::is('admin/tai-chinh*', 'admin/luong*', 'admin/hoc-phi*') ? 'open' : '' }}">
                 <div class="nav-group-header">
                     <i class="fas fa-wallet"></i> <span>Quản lý tài chính</span>
                     <i class="fas fa-chevron-right"></i>
@@ -147,14 +145,20 @@
 
         {{-- 6. Nội Dung & Tương Tác (CMS & Interaction) --}}
         <div class="sidebar-section">CMS & Interaction</div>
-        <div class="nav-group {{ Request::is('admin/tin-tuc*', 'admin/thong-bao*', 'admin/lien-he*') ? 'open' : '' }}">
+        <div
+            class="nav-group {{ Request::is('admin/bai-viet*', 'admin/danh-muc-bai-viet*', 'admin/thong-bao*', 'admin/lien-he*') ? 'open' : '' }}">
             <div class="nav-group-header">
                 <i class="fas fa-newspaper"></i> <span>Nội dung & Tương tác</span>
                 <i class="fas fa-chevron-right"></i>
             </div>
             <div class="nav-sub">
-                <a href="#" class="nav-sub-item {{ Request::is('admin/tin-tuc*') ? 'active' : '' }}">
-                    Tin Tức / Blog
+                <a href="{{ route('admin.danh-muc-bai-viet.index') }}"
+                    class="nav-sub-item {{ Request::is('admin/danh-muc-bai-viet*') ? 'active' : '' }}">
+                    Danh Mục Bài Viết
+                </a>
+                <a href="{{ route('admin.bai-viet.index') }}"
+                    class="nav-sub-item {{ Request::is('admin/bai-viet*') ? 'active' : '' }}">
+                    Bài Viết / Blog
                 </a>
                 <a href="#" class="nav-sub-item {{ Request::is('admin/thong-bao*') ? 'active' : '' }}">
                     Thông Báo

@@ -6,8 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class DanhMucBaiViet extends Model
 {
-    //
     protected $table = 'danhmucbaiviet';
+    protected $primaryKey = 'danhMucId';
     protected $fillable = [
         'danhMucId',
         'tenDanhMuc',
@@ -15,7 +15,20 @@ class DanhMucBaiViet extends Model
         'moTa',
         'trangThai',
     ];
-    protected $primaryKey = 'danhMucId';
+
+    protected $casts = [
+        'trangThai' => 'integer',
+    ];
+
+    /* ── Scopes ─────────────────────────────────────────────── */
+
+    public function scopeActive($query)
+    {
+        return $query->where('trangThai', 1);
+    }
+
+    /* ── Relationships ──────────────────────────────────────── */
+
     public function baiViets()
     {
         return $this->belongsToMany(
@@ -25,5 +38,4 @@ class DanhMucBaiViet extends Model
             'baiVietId'
         );
     }
-
 }
