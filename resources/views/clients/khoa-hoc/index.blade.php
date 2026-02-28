@@ -24,7 +24,7 @@
                         @foreach ($listTypeCourses as $typeCourse)
                             <a href="{{ route('home.courses.index', ['category' => $typeCourse->slug]) }}"
                                 class="{{ request()->input('category') == $typeCourse->slug ? 'active' : '' }}">
-                                {{ $typeCourse->tenLoai }}
+                                {{ $typeCourse->tenDanhMuc }}
                             </a>
                         @endforeach
                     </div>
@@ -70,7 +70,7 @@
                                             alt="{{ $course->tenKhoaHoc }}">
                                         <div class="course-image-overlay"></div>
                                         <div class="course-tag-floating">
-                                            <span>{{ $course->loaiKhoaHoc->tenLoai }}</span>
+                                            <span>{{ $course->danhMuc->tenDanhMuc }}</span>
                                         </div>
                                     </div>
 

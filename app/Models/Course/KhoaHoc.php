@@ -13,7 +13,7 @@ class KhoaHoc extends Model
     protected $primaryKey = 'khoaHocId'; 
     protected $fillable = [
         'khoaHocId',
-        'loaiKhoaHocId',
+        'danhMucId',
         'tenKhoaHoc',
         'slug',
         'anhKhoaHoc',
@@ -24,8 +24,9 @@ class KhoaHoc extends Model
         'trangThai'
     ];
 
-    public function loaiKhoaHoc(){
-        return $this->belongsTo(LoaiKhoaHoc::class, 'loaiKhoaHocId', 'loaiKhoaHocId');
+    public function danhMuc()
+    {
+        return $this->belongsTo(DanhMucKhoaHoc::class, 'danhMucId', 'danhMucId');
     }
     public function lopHoc(){
         return $this->hasMany(LopHoc::class, 'khoaHocId', 'khoaHocId');

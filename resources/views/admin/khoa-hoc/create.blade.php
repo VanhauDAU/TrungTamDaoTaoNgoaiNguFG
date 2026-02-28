@@ -77,17 +77,17 @@
 
                 <div class="kf-form-row">
                     <div class="kf-form-group">
-                        <label>Loại khóa học <span class="req">*</span></label>
-                        <select name="loaiKhoaHocId" class="{{ $errors->has('loaiKhoaHocId') ? 'is-invalid' : '' }}">
-                            <option value="">-- Chọn loại --</option>
-                            @foreach ($loaiKhoaHocs as $loai)
-                                <option value="{{ $loai->loaiKhoaHocId }}"
-                                    {{ old('loaiKhoaHocId') == $loai->loaiKhoaHocId ? 'selected' : '' }}>
-                                    {{ $loai->tenLoai ?? 'Loại ' . $loai->loaiKhoaHocId }}
+                        <label>Danh mục khóa học <span class="req">*</span></label>
+                        <select name="danhMucId" class="{{ $errors->has('danhMucId') ? 'is-invalid' : '' }}">
+                            <option value="">-- Chọn danh mục --</option>
+                            @foreach ($danhMucs as $dm)
+                                <option value="{{ $dm->danhMucId }}"
+                                    {{ old('danhMucId') == $dm->danhMucId ? 'selected' : '' }}>
+                                    {{ $dm->tenDanhMuc }}
                                 </option>
                             @endforeach
                         </select>
-                        @error('loaiKhoaHocId')
+                        @error('danhMucId')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
@@ -212,7 +212,7 @@
         });
 
         // ── Jump to tab with errors ────────────────────
-        @if ($errors->has('tenKhoaHoc') || $errors->has('loaiKhoaHocId') || $errors->has('anhKhoaHoc'))
+        @if ($errors->has('tenKhoaHoc') || $errors->has('danhMucId') || $errors->has('anhKhoaHoc'))
             document.querySelector('[data-tab="tab-thongtin"]').click();
         @elseif ($errors->has('moTa') || $errors->has('yeuCauDauVao') || $errors->has('ketQuaDatDuoc'))
             document.querySelector('[data-tab="tab-mota"]').click();

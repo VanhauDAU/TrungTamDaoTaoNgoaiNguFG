@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin\KhoaHoc;
 
 use App\Http\Controllers\Controller;
 use App\Models\Course\KhoaHoc;
-use App\Models\Course\LoaiKhoaHoc;
+use App\Models\Course\DanhMucKhoaHoc;
 use App\Models\Course\HocPhi;
 use App\Models\Education\LopHoc;
 use Illuminate\Http\Request;
@@ -16,7 +16,7 @@ class KhoaHocController extends Controller
     /** Danh sách khóa học */
     public function index(Request $request)
     {
-        $query = KhoaHoc::with(['loaiKhoaHoc', 'lopHoc']);
+        $query = KhoaHoc::with(['danhMuc', 'lopHoc']);
 
         // ── Tìm kiếm ──────────────────────────────────────────
         if ($search = $request->q) {
@@ -27,9 +27,9 @@ class KhoaHocController extends Controller
             });
         }
 
-        // ── Lọc loại khóa học ─────────────────────────────────
-        if ($request->filled('loaiKhoaHocId')) {
-            $query->where('loaiKhoaHocId', $request->loaiKhoaHocId);
+        // ── Lọc danh mục khóa học ───────────────────────────────────
+        if ($request->filled('danhMucId')) {
+            $query->where('danhMucId', $request->danhMucId);
         }
 
         // ── Lọc trạng thái ────────────────────────────────────
@@ -50,22 +50,22 @@ class KhoaHocController extends Controller
         $tongSo       = KhoaHoc::count();
         $dangHoatDong = KhoaHoc::where('trangThai', 1)->count();
         $tongLopHoc   = LopHoc::count();
-        $loaiKhoaHocs = LoaiKhoaHoc::orderBy('loaiKhoaHocId')->get();
+        $danhMucs     = DanhMucKhoaHoc::orderBy('tenDanhMuc')->get();
 
         return view('admin.khoa-hoc.index', compact(
             'khoaHocs',
             'tongSo',
             'dangHoatDong',
             'tongLopHoc',
-            'loaiKhoaHocs'
+            'danhMucs'
         ));
     }
 
     /** Form thêm khóa học mới */
     public function create()
     {
-        $loaiKhoaHocs = LoaiKhoaHoc::orderBy('loaiKhoaHocId')->get();
-        return view('admin.khoa-hoc.create', compact('loaiKhoaHocs'));
+        $danhMucs = DanhMucKhoaHoc::orderBy('tenDanhMuc')->get();
+        return view('admin.khoa-hoc.create', compact('danhMucs'));
     }
 
     /** Lưu khóa học mới */
@@ -73,7 +73,7 @@ class KhoaHocController extends Controller
     {
         $data = $request->validate([
             'tenKhoaHoc'    => 'required|string|max:255',
-            'loaiKhoaHocId' => 'required|exists:loaikhoahoc,loaiKhoaHocId',
+            'danhMucId' => 'required|exists:danhmuckhoahoc,danhMucId',
             'anhKhoaHoc'    => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'moTa'          => 'nullable|string',
             'doiTuong'      => 'nullable|string|max:255',
@@ -82,8 +82,8 @@ class KhoaHocController extends Controller
             'trangThai'     => 'required|in:0,1',
         ], [
             'tenKhoaHoc.required'    => 'Vui lòng nhập tên khóa học.',
-            'loaiKhoaHocId.required' => 'Vui lòng chọn loại khóa học.',
-            'loaiKhoaHocId.exists'   => 'Loại khóa học không hợp lệ.',
+            'danhMucId.required' => 'Vui lòng chọn danh mục khóa học.',
+            'danhMucId.exists'   => 'Danh mục khóa học không hợp lệ.',
             'anhKhoaHoc.image'       => 'File phải là ảnh.',
             'anhKhoaHoc.max'         => 'Ảnh không được vượt quá 2MB.',
         ]);
@@ -106,7 +106,7 @@ class KhoaHocController extends Controller
     public function show(int $id)
     {
         $khoaHoc = KhoaHoc::with([
-            'loaiKhoaHoc',
+            'danhMuc',
             'lopHoc.coSo',
             'lopHoc.caHoc',
             'lopHoc.taiKhoan.hoSoNguoiDung',
@@ -133,8 +133,8 @@ class KhoaHocController extends Controller
     public function edit(int $id)
     {
         $khoaHoc      = KhoaHoc::findOrFail($id);
-        $loaiKhoaHocs = LoaiKhoaHoc::orderBy('loaiKhoaHocId')->get();
-        return view('admin.khoa-hoc.edit', compact('khoaHoc', 'loaiKhoaHocs'));
+        $danhMucs = DanhMucKhoaHoc::orderBy('tenDanhMuc')->get();
+        return view('admin.khoa-hoc.edit', compact('khoaHoc', 'danhMucs'));
     }
 
     /** Cập nhật khóa học */
@@ -144,7 +144,7 @@ class KhoaHocController extends Controller
 
         $data = $request->validate([
             'tenKhoaHoc'    => 'required|string|max:255',
-            'loaiKhoaHocId' => 'required|exists:loaikhoahoc,loaiKhoaHocId',
+            'danhMucId' => 'required|exists:danhmuckhoahoc,danhMucId',
             'anhKhoaHoc'    => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'moTa'          => 'nullable|string',
             'doiTuong'      => 'nullable|string|max:255',
@@ -153,7 +153,7 @@ class KhoaHocController extends Controller
             'trangThai'     => 'required|in:0,1',
         ], [
             'tenKhoaHoc.required'    => 'Vui lòng nhập tên khóa học.',
-            'loaiKhoaHocId.required' => 'Vui lòng chọn loại khóa học.',
+            'danhMucId.required' => 'Vui lòng chọn danh mục khóa học.',
         ]);
 
         // Upload ảnh mới (xóa ảnh cũ)

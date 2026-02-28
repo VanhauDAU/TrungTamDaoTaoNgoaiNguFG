@@ -237,10 +237,10 @@
         </div>
         <div class="kh-show-info">
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
-                @if ($khoaHoc->loaiKhoaHoc)
+                @if ($khoaHoc->danhMuc)
                     <span
                         style="background:rgba(255,255,255,.2);padding:2px 10px;border-radius:20px;font-size:.72rem;font-weight:600">
-                        {{ $khoaHoc->loaiKhoaHoc->tenLoai ?? 'Chương trình học' }}
+                        {{ $khoaHoc->danhMuc->tenDanhMuc }}
                     </span>
                 @endif
                 @if ($khoaHoc->trangThai)
