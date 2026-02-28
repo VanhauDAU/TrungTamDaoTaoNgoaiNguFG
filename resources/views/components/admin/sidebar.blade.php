@@ -159,7 +159,8 @@
                 <a href="#" class="nav-sub-item {{ Request::is('admin/thong-bao*') ? 'active' : '' }}">
                     Thông Báo
                 </a>
-                <a href="#" class="nav-sub-item {{ Request::is('admin/lien-he*') ? 'active' : '' }}">
+                <a href="{{ route('admin.lien-he.index') }}"
+                    class="nav-sub-item {{ Request::is('admin/lien-he*') ? 'active' : '' }}">
                     Liên Hệ (Leads)
                 </a>
             </div>
