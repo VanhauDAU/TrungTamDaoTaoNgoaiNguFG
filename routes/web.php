@@ -209,12 +209,17 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
         Route::get('/', [AdminBaiVietController::class, 'index'])->name('index');
         Route::get('/tao-moi', [AdminBaiVietController::class, 'create'])->name('create');
         Route::post('/', [AdminBaiVietController::class, 'store'])->name('store');
+        Route::get('/thung-rac', [AdminBaiVietController::class, 'trash'])->name('trash');
+        Route::post('/xoa-nhieu', [AdminBaiVietController::class, 'bulkDestroy'])->name('bulk-destroy');
+        Route::post('/khoi-phuc-nhieu', [AdminBaiVietController::class, 'bulkRestore'])->name('bulk-restore');
         Route::get('/{id}', [AdminBaiVietController::class, 'show'])->name('show');
         Route::get('/{id}/sua', [AdminBaiVietController::class, 'edit'])->name('edit');
         Route::put('/{id}', [AdminBaiVietController::class, 'update'])->name('update');
         Route::delete('/{id}', [AdminBaiVietController::class, 'destroy'])->name('destroy');
         Route::patch('/{id}/toggle-status', [AdminBaiVietController::class, 'toggleStatus'])->name('toggle-status');
         Route::post('/upload-image', [AdminBaiVietController::class, 'uploadImage'])->name('upload-image');
+        Route::post('/{id}/khoi-phuc', [AdminBaiVietController::class, 'restore'])->name('restore');
+        Route::delete('/{id}/xoa-vinh-vien', [AdminBaiVietController::class, 'forceDestroy'])->name('force-destroy');
     });
 
     // ── Danh Mục Bài Viết ────────────────────────────────────────

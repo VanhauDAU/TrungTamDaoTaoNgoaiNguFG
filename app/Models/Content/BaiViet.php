@@ -3,10 +3,13 @@
 namespace App\Models\Content;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
 class BaiViet extends Model
 {
+    use SoftDeletes;
+
     protected $table = 'baiviet';
     protected $primaryKey = 'baiVietId';
     protected $fillable = [

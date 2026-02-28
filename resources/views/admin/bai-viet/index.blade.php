@@ -18,6 +18,14 @@
             <span>{{ $baiViets->total() }} kết quả</span>
         </div>
         <div style="display:flex;gap:10px;align-items:center">
+            @if ($daXoa > 0)
+                <a href="{{ route('admin.bai-viet.trash') }}" class="btn-add-bv"
+                    style="background:linear-gradient(135deg,#dc2626,#f87171)">
+                    <i class="fas fa-trash-alt"></i> Thùng rác
+                    <span
+                        style="background:rgba(255,255,255,.25);padding:1px 8px;border-radius:12px;font-size:.75rem">{{ $daXoa }}</span>
+                </a>
+            @endif
             <a href="{{ route('admin.danh-muc-bai-viet.index') }}" class="btn-add-bv"
                 style="background:linear-gradient(135deg,#7c3aed,#a78bfa)">
                 <i class="fas fa-folder-open"></i> Danh mục
@@ -25,6 +33,19 @@
             <a href="{{ route('admin.bai-viet.create') }}" class="btn-add-bv">
                 <i class="fas fa-plus"></i> Thêm bài viết
             </a>
+        </div>
+    </div>
+
+    {{-- ── Bulk action bar (hidden by default) ──────────────────── --}}
+    <div class="bv-bulk-bar" id="bulk-bar" style="display:none">
+        <div class="bv-bulk-bar-inner">
+            <span id="bulk-count">0</span> bài viết đã chọn
+            <button type="button" class="bv-bulk-btn bv-bulk-btn-danger" onclick="bulkDelete()">
+                <i class="fas fa-trash"></i> Xóa đã chọn
+            </button>
+            <button type="button" class="bv-bulk-btn bv-bulk-btn-cancel" onclick="clearSelection()">
+                <i class="fas fa-times"></i> Bỏ chọn
+            </button>
         </div>
     </div>
 
@@ -123,6 +144,12 @@
             <table class="bv-table">
                 <thead>
                     <tr>
+                        <th style="width:40px">
+                            <label class="bv-checkbox-wrap">
+                                <input type="checkbox" id="select-all">
+                                <span class="bv-checkbox-custom"></span>
+                            </label>
+                        </th>
                         <th style="width:60px">Ảnh</th>
                         <th>Tiêu đề</th>
                         <th>Danh mục</th>
@@ -135,7 +162,13 @@
                 </thead>
                 <tbody>
                     @foreach ($baiViets as $bv)
-                        <tr>
+                        <tr data-id="{{ $bv->baiVietId }}">
+                            <td>
+                                <label class="bv-checkbox-wrap">
+                                    <input type="checkbox" class="bv-row-check" value="{{ $bv->baiVietId }}">
+                                    <span class="bv-checkbox-custom"></span>
+                                </label>
+                            </td>
                             <td>
                                 @if ($bv->anhDaiDien)
                                     <img src="{{ asset('storage/' . $bv->anhDaiDien) }}" alt="" class="bv-row-thumb">
@@ -228,20 +261,106 @@
 
 @section('script')
     <script>
-        // Toggle trạng thái AJAX
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+        // ── Select all / individual checkboxes ─────────────────────
+        const selectAll = document.getElementById('select-all');
+        const bulkBar = document.getElementById('bulk-bar');
+        const bulkCount = document.getElementById('bulk-count');
+
+        function getCheckedIds() {
+            return [...document.querySelectorAll('.bv-row-check:checked')].map(el => parseInt(el.value));
+        }
+
+        function updateBulkBar() {
+            const ids = getCheckedIds();
+            if (ids.length > 0) {
+                bulkBar.style.display = 'block';
+                bulkCount.textContent = ids.length;
+            } else {
+                bulkBar.style.display = 'none';
+            }
+            // Update "select all" state
+            const allChecks = document.querySelectorAll('.bv-row-check');
+            if (selectAll) {
+                selectAll.checked = allChecks.length > 0 && ids.length === allChecks.length;
+                selectAll.indeterminate = ids.length > 0 && ids.length < allChecks.length;
+            }
+        }
+
+        if (selectAll) {
+            selectAll.addEventListener('change', function () {
+                document.querySelectorAll('.bv-row-check').forEach(cb => cb.checked = this.checked);
+                updateBulkBar();
+            });
+        }
+
+        document.querySelectorAll('.bv-row-check').forEach(cb => {
+            cb.addEventListener('change', updateBulkBar);
+        });
+
+        function clearSelection() {
+            document.querySelectorAll('.bv-row-check').forEach(cb => cb.checked = false);
+            if (selectAll) selectAll.checked = false;
+            updateBulkBar();
+        }
+
+        // ── Bulk delete (soft) ─────────────────────────────────────
+        function bulkDelete() {
+            const ids = getCheckedIds();
+            if (ids.length === 0) return;
+
+            Swal.fire({
+                title: 'Xóa nhiều bài viết?',
+                html: `Chuyển <strong>${ids.length} bài viết</strong> vào thùng rác?<br>
+                           <small style="color:#64748b">Bạn có thể khôi phục sau từ thùng rác.</small>`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: `<i class="fas fa-trash me-1"></i> Xóa ${ids.length} bài viết`,
+                cancelButtonText: 'Hủy',
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6c757d',
+                reverseButtons: true,
+                focusCancel: true,
+            }).then(result => {
+                if (!result.isConfirmed) return;
+
+                fetch('{{ route("admin.bai-viet.bulk-destroy") }}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ ids }),
+                })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.success) {
+                            Toast.fire({ icon: 'success', title: data.message });
+                            // Remove rows from DOM
+                            ids.forEach(id => {
+                                const row = document.querySelector(`tr[data-id="${id}"]`);
+                                if (row) row.remove();
+                            });
+                            clearSelection();
+                            // Reload after short delay to update stats
+                            setTimeout(() => location.reload(), 1200);
+                        }
+                    })
+                    .catch(() => Toast.fire({ icon: 'error', title: 'Có lỗi xảy ra.' }));
+            });
+        }
+
+        // ── Toggle trạng thái AJAX ─────────────────────────────────
         function toggleBaiViet(id, el) {
             fetch(`/admin/bai-viet/${id}/toggle-status`, {
                 method: 'PATCH',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                    'Accept': 'application/json',
-                },
+                headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
             })
                 .then(r => r.json())
                 .then(data => {
-                    if (data.success) {
-                        Toast.fire({ icon: 'success', title: data.message });
-                    }
+                    if (data.success) Toast.fire({ icon: 'success', title: data.message });
                 })
                 .catch(() => {
                     el.checked = !el.checked;
@@ -249,11 +368,12 @@
                 });
         }
 
-        // Xác nhận xóa
+        // ── Xác nhận xóa đơn ──────────────────────────────────────
         function confirmDeleteBV(id, name) {
             Swal.fire({
                 title: 'Xóa bài viết?',
-                html: `Xóa <strong>${name}</strong>?<br><small style="color:#64748b">Hành động này không thể hoàn tác.</small>`,
+                html: `Chuyển <strong>${name}</strong> vào thùng rác?<br>
+                           <small style="color:#64748b">Bạn có thể khôi phục sau từ thùng rác.</small>`,
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonText: '<i class="fas fa-trash me-1"></i> Xóa',
@@ -271,7 +391,7 @@
             });
         }
 
-        // Search on Enter
+        // ── Search on Enter ────────────────────────────────────────
         document.querySelector('.search-input')?.addEventListener('keydown', e => {
             if (e.key === 'Enter') document.getElementById('bv-filter-form').submit();
         });

@@ -56,6 +56,7 @@ class BaiVietController extends Controller
         $daXuatBan = BaiViet::active()->count();
         $banNhap = BaiViet::draft()->count();
         $tongLuotXem = BaiViet::sum('luotXem');
+        $daXoa = BaiViet::onlyTrashed()->count();
         $danhMucs = DanhMucBaiViet::orderBy('tenDanhMuc')->get();
         $tagList = Tag::orderBy('tenTag')->get();
 
@@ -65,6 +66,7 @@ class BaiVietController extends Controller
             'daXuatBan',
             'banNhap',
             'tongLuotXem',
+            'daXoa',
             'danhMucs',
             'tagList'
         ));
@@ -189,29 +191,96 @@ class BaiVietController extends Controller
             ->with('success', 'Đã cập nhật bài viết «' . $baiViet->tieuDe . '» thành công.');
     }
 
-    /** Xóa bài viết */
+    /** Xóa mềm bài viết (chuyển vào thùng rác) */
     public function destroy(int $id)
     {
         try {
             $baiViet = BaiViet::findOrFail($id);
             $ten = $baiViet->tieuDe;
-
-            // Xóa ảnh
-            if ($baiViet->anhDaiDien && Storage::disk('public')->exists($baiViet->anhDaiDien)) {
-                Storage::disk('public')->delete($baiViet->anhDaiDien);
-            }
-
-            // Detach relationships
-            $baiViet->danhMucs()->detach();
-            $baiViet->tags()->detach();
-            $baiViet->delete();
+            $baiViet->delete(); // SoftDeletes: chỉ set deleted_at
 
             return redirect()->route('admin.bai-viet.index')
-                ->with('success', "Đã xóa bài viết «{$ten}» thành công.");
+                ->with('success', "Đã chuyển bài viết «{$ten}» vào thùng rác.");
         } catch (\Exception $e) {
             return redirect()->route('admin.bai-viet.index')
                 ->with('error', 'Đã xảy ra lỗi: ' . $e->getMessage());
         }
+    }
+
+    /** Xóa mềm nhiều bài viết cùng lúc (AJAX) */
+    public function bulkDestroy(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'integer|exists:baiviet,baiVietId',
+        ]);
+
+        $count = BaiViet::whereIn('baiVietId', $request->ids)->count();
+        BaiViet::whereIn('baiVietId', $request->ids)->delete(); // soft delete
+
+        return response()->json([
+            'success' => true,
+            'message' => "Đã chuyển {$count} bài viết vào thùng rác.",
+        ]);
+    }
+
+    /** Danh sách thùng rác */
+    public function trash(Request $request)
+    {
+        $baiViets = BaiViet::onlyTrashed()
+            ->with(['danhMucs', 'tags', 'taiKhoan.hoSoNguoiDung'])
+            ->search($request->q)
+            ->orderBy('deleted_at', 'desc')
+            ->paginate(12)
+            ->withQueryString();
+
+        return view('admin.bai-viet.trash', compact('baiViets'));
+    }
+
+    /** Khôi phục 1 bài viết */
+    public function restore(int $id)
+    {
+        $baiViet = BaiViet::onlyTrashed()->findOrFail($id);
+        $baiViet->restore();
+
+        return redirect()->route('admin.bai-viet.trash')
+            ->with('success', "Đã khôi phục bài viết «{$baiViet->tieuDe}».");
+    }
+
+    /** Khôi phục nhiều bài viết (AJAX) */
+    public function bulkRestore(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'integer',
+        ]);
+
+        $count = BaiViet::onlyTrashed()->whereIn('baiVietId', $request->ids)->count();
+        BaiViet::onlyTrashed()->whereIn('baiVietId', $request->ids)->restore();
+
+        return response()->json([
+            'success' => true,
+            'message' => "Đã khôi phục {$count} bài viết.",
+        ]);
+    }
+
+    /** Xóa vĩnh viễn (force delete) */
+    public function forceDestroy(int $id)
+    {
+        $baiViet = BaiViet::onlyTrashed()->findOrFail($id);
+        $ten = $baiViet->tieuDe;
+
+        // Xóa ảnh
+        if ($baiViet->anhDaiDien && Storage::disk('public')->exists($baiViet->anhDaiDien)) {
+            Storage::disk('public')->delete($baiViet->anhDaiDien);
+        }
+
+        $baiViet->danhMucs()->detach();
+        $baiViet->tags()->detach();
+        $baiViet->forceDelete();
+
+        return redirect()->route('admin.bai-viet.trash')
+            ->with('success', "Đã xóa vĩnh viễn bài viết «{$ten}».");
     }
 
     /** Toggle trạng thái xuất bản (AJAX) */
