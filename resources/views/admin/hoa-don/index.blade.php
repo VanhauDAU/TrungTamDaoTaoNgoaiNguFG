@@ -55,6 +55,20 @@
                 <div class="hd-stat-label">Tổng đã thu</div>
             </div>
         </div>
+        <div class="hd-stat-card">
+            <div class="hd-stat-icon warning"><i class="fas fa-exclamation-triangle"></i></div>
+            <div>
+                <div class="hd-stat-value">{{ number_format($sapHetHan) }}</div>
+                <div class="hd-stat-label">Sắp hết hạn TT</div>
+            </div>
+        </div>
+        <div class="hd-stat-card">
+            <div class="hd-stat-icon overdue"><i class="fas fa-ban"></i></div>
+            <div>
+                <div class="hd-stat-value">{{ number_format($quaHan) }}</div>
+                <div class="hd-stat-label">Quá hạn TT</div>
+            </div>
+        </div>
     </div>
 
     {{-- ── Filter bar ─────────────────────────────────────────────── --}}
@@ -87,6 +101,15 @@
         {{-- Khoảng ngày --}}
         <input type="date" name="tuNgay" value="{{ request('tuNgay') }}" title="Từ ngày">
         <input type="date" name="denNgay" value="{{ request('denNgay') }}" title="Đến ngày">
+
+        {{-- Hạn thanh toán --}}
+        <select name="hanThanhToan" onchange="this.form.submit()">
+            <option value="">Tất cả hạn TT</option>
+            <option value="sap_het_han" {{ request('hanThanhToan') === 'sap_het_han' ? 'selected' : '' }}>⚠️ Sắp hết hạn
+                (≤7 ngày)</option>
+            <option value="qua_han" {{ request('hanThanhToan') === 'qua_han' ? 'selected' : '' }}>🔴 Đã quá hạn
+            </option>
+        </select>
 
         {{-- Buttons --}}
         <button type="submit" class="btn-filter btn-filter-primary">
@@ -162,6 +185,7 @@
                                     @endif
                                 </a>
                             </th>
+                            <th>Hạn TT</th>
                             <th style="text-align:center">Thao tác</th>
                         </tr>
                     </thead>
@@ -172,7 +196,7 @@
                                 $hoTen = $profile->hoTen ?? ($hd->taiKhoan->taiKhoan ?? '—');
                                 $initials = mb_strtoupper(mb_substr($hoTen, 0, 1));
                                 $conNo = max(0, $hd->tongTien - $hd->giamGia - $hd->daTra);
-                                $maHD = $hd->maHoaDon ?: ('HD-' . str_pad($hd->hoaDonId, 6, '0', STR_PAD_LEFT));
+                                $maHD = $hd->maHoaDon ?: 'HD-' . str_pad($hd->hoaDonId, 6, '0', STR_PAD_LEFT);
                             @endphp
                             <tr>
                                 <td style="color:#8899a6;font-size:0.78rem">
@@ -227,6 +251,30 @@
 
                                 <td style="color:#8899a6;font-size:0.8rem;white-space:nowrap">
                                     {{ $hd->ngayLap ? \Carbon\Carbon::parse($hd->ngayLap)->format('d/m/Y') : '—' }}
+                                </td>
+
+                                {{-- Cột Hạn TT --}}
+                                <td style="white-space:nowrap">
+                                    @if ($hd->ngayHetHan)
+                                        @php
+                                            $han = \Carbon\Carbon::parse($hd->ngayHetHan);
+                                            $isQuaHan = $hd->isQuaHan;
+                                            $isSapHHan = $hd->isSapHetHan;
+                                        @endphp
+                                        <div style="font-size:0.82rem">{{ $han->format('d/m/Y') }}</div>
+                                        @if ($isQuaHan)
+                                            <span class="badge-han badge-han-danger">
+                                                <i class="fas fa-ban" style="font-size:.55em"></i> Quá hạn
+                                            </span>
+                                        @elseif ($isSapHHan)
+                                            <span class="badge-han badge-han-warning">
+                                                <i class="fas fa-exclamation-triangle" style="font-size:.55em"></i>
+                                                {{ $hd->tinhTrangHanLabel }}
+                                            </span>
+                                        @endif
+                                    @else
+                                        <span style="color:#8899a6">—</span>
+                                    @endif
                                 </td>
 
                                 <td>
