@@ -110,7 +110,8 @@
                             <a class="user-pill d-flex align-items-center gap-2" href="#" data-bs-toggle="dropdown">
                                 @if (Auth::user()->hoSoNguoiDung && Auth::user()->hoSoNguoiDung->anhDaiDien)
                                     <img src="{{ asset('storage/' . Auth::user()->hoSoNguoiDung->anhDaiDien) }}"
-                                        class="rounded-circle shadow-sm" width="38" height="38" style="object-fit: cover;">
+                                        class="rounded-circle shadow-sm" width="38" height="38"
+                                        style="object-fit: cover;">
                                 @else
                                     <img src="{{ asset('assets/images/user-default.png') }}"
                                         class="rounded-circle shadow-sm" width="38" height="38">
