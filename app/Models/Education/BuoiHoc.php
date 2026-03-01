@@ -24,6 +24,10 @@ class BuoiHoc extends Model
         'trangThai'
     ];
 
+    protected $casts = [
+        'trangThai' => 'integer',
+    ];
+
     public function lopHoc()
     {
         return $this->belongsTo(LopHoc::class, 'lopHocId', 'lopHocId');

@@ -72,6 +72,21 @@ Route::prefix('/')->name('home.')->group(function () {
         Route::get('/hoa-don', [StudentController::class, 'invoices'])->name('invoices');
         Route::get('/hoa-don/{id}', [StudentController::class, 'invoiceDetail'])->name('invoices.show');
         Route::get('/lop-hoc', [StudentController::class, 'myClasses'])->name('classes');
+        Route::get('/lich-hoc', [StudentController::class, 'schedule'])->name('schedule');
+    });
+
+    // ── Thông báo client (auth required) ────────────────────────────────────
+    Route::prefix('thong-bao')->name('thong-bao.')->middleware('auth')->group(function () {
+        Route::get('/',               [ClientThongBaoController::class, 'index'])->name('index');
+    });
+
+    // ── Thông báo client API (auth, JSON) ────────────────────────────────────
+    Route::prefix('api/thong-bao')->name('api.thong-bao.')->middleware('auth')->group(function () {
+        Route::get('/stream',          [ClientThongBaoController::class, 'stream'])->name('stream');
+        Route::get('/dropdown',        [ClientThongBaoController::class, 'getDropdown'])->name('dropdown');
+        Route::get('/chua-doc',        [ClientThongBaoController::class, 'getUnreadCount'])->name('unread-count');
+        Route::patch('/{id}/da-doc',   [ClientThongBaoController::class, 'markRead'])->name('mark-read');
+        Route::patch('/da-doc-tat-ca', [ClientThongBaoController::class, 'markAllRead'])->name('mark-all-read');
     });
 
     // ── Thông báo client (auth required) ────────────────────────────────────
