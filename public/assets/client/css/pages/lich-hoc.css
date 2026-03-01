@@ -1,0 +1,496 @@
+/* ============================================================
+   LỊCH HỌC - THỜI KHÓA BIỂU TUẦN
+   File: public/assets/client/css/pages/lich-hoc.css
+   ============================================================ */
+
+/* ── TOOLBAR ──────────────────────────────────────────────── */
+.schedule-toolbar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    background: #fff;
+    border-radius: 14px;
+    padding: 14px 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
+}
+
+.schedule-toolbar .toolbar-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1a2b4a;
+    flex: 1;
+    min-width: 160px;
+}
+
+.schedule-toolbar .toolbar-title span {
+    color: #3b7dd8;
+}
+
+.toolbar-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-nav {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 7px 15px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    text-decoration: none;
+}
+
+.btn-nav.btn-today {
+    background: linear-gradient(135deg, #3b7dd8, #5b9bf2);
+    color: #fff;
+    box-shadow: 0 3px 10px rgba(59, 125, 216, 0.35);
+}
+.btn-nav.btn-today:hover {
+    background: linear-gradient(135deg, #2d6abf, #4a8ce0);
+    transform: translateY(-1px);
+    box-shadow: 0 5px 15px rgba(59, 125, 216, 0.45);
+}
+
+.btn-nav.btn-prev,
+.btn-nav.btn-next {
+    background: #f0f4f8;
+    color: #4a5568;
+}
+.btn-nav.btn-prev:hover,
+.btn-nav.btn-next:hover {
+    background: #e2e8f0;
+    color: #1a2b4a;
+    transform: translateY(-1px);
+}
+
+.toolbar-week-info {
+    font-size: 0.85rem;
+    color: #64748b;
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 6px 14px;
+    border: 1px solid #e2e8f0;
+}
+
+/* ── BẢNG THỜI KHÓA BIỂU ─────────────────────────────────── */
+.schedule-table-wrapper {
+    overflow-x: auto;
+    border-radius: 14px;
+    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.08);
+    background: #fff;
+}
+
+.schedule-table {
+    width: 100%;
+    min-width: 780px;
+    border-collapse: collapse;
+}
+
+/* ── Header hàng ngày ────── */
+.schedule-table thead th {
+    padding: 14px 8px;
+    text-align: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: 2px solid #e8edf3;
+    background: #f8fafc;
+    color: #64748b;
+    vertical-align: bottom;
+    white-space: nowrap;
+}
+
+.schedule-table thead th.col-ca {
+    color: #1a2b4a;
+    background: #f0f4f8;
+    min-width: 80px;
+    font-size: 0.75rem;
+}
+
+.schedule-table thead th .day-label {
+    display: block;
+    font-weight: 700;
+    color: #1a2b4a;
+    font-size: 0.85rem;
+}
+
+.schedule-table thead th .day-date {
+    display: inline-block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #64748b;
+    margin-top: 4px;
+    padding: 2px 8px;
+    border-radius: 20px;
+}
+
+/* Ngày hôm nay nổi bật */
+.schedule-table thead th.today .day-date {
+    background: linear-gradient(135deg, #3b7dd8, #5b9bf2);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(59, 125, 216, 0.4);
+}
+.schedule-table thead th.today .day-label {
+    color: #3b7dd8;
+}
+
+/* ── Body ─────────────────── */
+.schedule-table tbody td {
+    border: 1px solid #edf2f7;
+    padding: 6px;
+    vertical-align: top;
+    min-width: 110px;
+    min-height: 90px;
+}
+
+.schedule-table tbody td.col-ca-label {
+    background: linear-gradient(180deg, #f8fafc, #f0f4f8);
+    text-align: center;
+    vertical-align: middle;
+    min-width: 80px;
+    border-right: 2px solid #e2e8f0;
+}
+
+.ca-label-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #1a2b4a, #2d4a7a);
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+}
+
+.ca-time-label {
+    display: block;
+    font-size: 0.7rem;
+    color: #718096;
+    white-space: nowrap;
+}
+
+.cell-empty {
+    height: 72px;
+    background: repeating-linear-gradient(
+        -45deg,
+        transparent,
+        transparent 5px,
+        rgba(0, 0, 0, 0.012) 5px,
+        rgba(0, 0, 0, 0.012) 10px
+    );
+}
+
+/* ── Card buổi học ─────────── */
+.lesson-card {
+    border-radius: 10px;
+    padding: 9px 10px;
+    margin-bottom: 5px;
+    cursor: pointer;
+    transition:
+        transform 0.18s,
+        box-shadow 0.18s;
+    position: relative;
+    overflow: hidden;
+    border-left: 4px solid transparent;
+}
+
+.lesson-card:last-child {
+    margin-bottom: 0;
+}
+
+.lesson-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    opacity: 0.08;
+    transform: translate(10px, -10px);
+}
+
+.lesson-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.14);
+    z-index: 1;
+}
+
+/* Màu loại lớp */
+.lesson-card.ly-thuyet {
+    background: #f0f4f8;
+    border-left-color: #718096;
+    color: #1a2b4a;
+}
+.lesson-card.ly-thuyet::before {
+    background: #718096;
+}
+
+.lesson-card.thuc-hanh {
+    background: linear-gradient(135deg, #d4edda, #c3e6cb);
+    border-left-color: #28a745;
+    color: #155724;
+}
+.lesson-card.thuc-hanh::before {
+    background: #28a745;
+}
+
+.lesson-card.truc-tuyen {
+    background: linear-gradient(135deg, #d1ecf1, #bee5eb);
+    border-left-color: #17a2b8;
+    color: #0c5460;
+}
+.lesson-card.truc-tuyen::before {
+    background: #17a2b8;
+}
+
+.lesson-card.lich-thi {
+    background: linear-gradient(135deg, #fff3cd, #ffeeba);
+    border-left-color: #ffc107;
+    color: #856404;
+}
+.lesson-card.lich-thi::before {
+    background: #ffc107;
+}
+
+.lesson-card.tam-ngung {
+    background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+    border-left-color: #dc3545;
+    color: #721c24;
+    opacity: 0.85;
+}
+.lesson-card.tam-ngung::before {
+    background: #dc3545;
+}
+
+.lesson-title {
+    font-weight: 700;
+    font-size: 0.78rem;
+    line-height: 1.35;
+    margin-bottom: 4px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.lesson-meta {
+    font-size: 0.7rem;
+    opacity: 0.85;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.lesson-meta span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lesson-meta i {
+    font-size: 0.65rem;
+    opacity: 0.7;
+    flex-shrink: 0;
+}
+
+/* ── LEGEND ──────────────────────────────────────────────── */
+.schedule-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    background: #fff;
+    border-radius: 12px;
+    padding: 14px 20px;
+    margin-top: 16px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.8rem;
+    color: #4a5568;
+    font-weight: 500;
+}
+
+.legend-dot {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+.legend-dot.ly-thuyet {
+    background: #b0bec5;
+}
+.legend-dot.thuc-hanh {
+    background: #28a745;
+}
+.legend-dot.truc-tuyen {
+    background: #17a2b8;
+}
+.legend-dot.lich-thi {
+    background: #ffc107;
+}
+.legend-dot.tam-ngung {
+    background: #dc3545;
+}
+
+/* ── MODAL CHI TIẾT ─────────────────────────────────────── */
+.lesson-modal .modal-content {
+    border: none;
+    border-radius: 18px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+}
+
+.lesson-modal .modal-header {
+    background: linear-gradient(135deg, #1a2b4a, #2d4a7a);
+    color: #fff;
+    border: none;
+    padding: 20px 24px;
+}
+
+.lesson-modal .modal-title {
+    font-weight: 700;
+    font-size: 1.05rem;
+}
+
+.lesson-modal .btn-close {
+    filter: invert(1);
+    opacity: 0.8;
+}
+
+.lesson-modal .modal-body {
+    padding: 24px;
+}
+
+.modal-detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+@media (max-width: 576px) {
+    .modal-detail-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.modal-detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.modal-detail-item .detail-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #718096;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.modal-detail-item .detail-value {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #1a2b4a;
+}
+
+.modal-detail-item .detail-value i {
+    color: #3b7dd8;
+    margin-right: 5px;
+}
+
+.modal-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.modal-badge.ly-thuyet {
+    background: #e2e8f0;
+    color: #1a2b4a;
+}
+.modal-badge.thuc-hanh {
+    background: #d4edda;
+    color: #155724;
+}
+.modal-badge.truc-tuyen {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+.modal-badge.lich-thi {
+    background: #fff3cd;
+    color: #856404;
+}
+.modal-badge.tam-ngung {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.modal-divider {
+    border: none;
+    border-top: 1px solid #edf2f7;
+    margin: 16px 0;
+}
+
+/* ── TRỐNG TUẦN ─────────────────────────────────────────── */
+.no-schedule {
+    text-align: center;
+    padding: 50px 20px;
+    color: #718096;
+}
+.no-schedule i {
+    font-size: 3rem;
+    color: #cbd5e0;
+    margin-bottom: 16px;
+    display: block;
+}
+.no-schedule p {
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+/* ── In lịch ────────────────────────────────────────────── */
+@media print {
+    .schedule-toolbar .toolbar-nav,
+    .lesson-modal {
+        display: none !important;
+    }
+    .schedule-table-wrapper {
+        box-shadow: none;
+    }
+}
+
+/* ── Responsive ─────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .schedule-toolbar {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .toolbar-nav {
+        width: 100%;
+        justify-content: flex-start;
+    }
+}

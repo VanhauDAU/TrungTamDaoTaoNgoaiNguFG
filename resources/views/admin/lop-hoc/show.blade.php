@@ -347,6 +347,32 @@
         .add-bh-form select:focus {
             border-color: #7c3aed;
         }
+
+        /* ── trangThai badges ─────────────────────────────── */
+        .bh-tt-ly-thuyet {
+            background: #eff6ff;
+            color: #1d4ed8;
+        }
+
+        .bh-tt-thuc-hanh {
+            background: #f0fdf4;
+            color: #15803d;
+        }
+
+        .bh-tt-truc-tuyen {
+            background: #f5f3ff;
+            color: #7c3aed;
+        }
+
+        .bh-tt-lich-thi {
+            background: #fff7ed;
+            color: #c2410c;
+        }
+
+        .bh-tt-tam-ngung {
+            background: #f8fafc;
+            color: #64748b;
+        }
     </style>
 @endsection
 
@@ -781,10 +807,49 @@
                                 @if ($bh->daDiemDanh)
                                     <span class="bh-badge bh-att"><i class="fas fa-clipboard-check"></i> Điểm danh</span>
                                 @endif
+                                @php
+                                    $ttBuoi = [
+                                        0 => [
+                                            'cls' => 'bh-tt-ly-thuyet',
+                                            'icon' => 'fa-book-open',
+                                            'lbl' => 'Lý thuyết',
+                                        ],
+                                        1 => ['cls' => 'bh-tt-thuc-hanh', 'icon' => 'fa-flask', 'lbl' => 'Thực hành'],
+                                        2 => ['cls' => 'bh-tt-truc-tuyen', 'icon' => 'fa-wifi', 'lbl' => 'Trực tuyến'],
+                                        3 => [
+                                            'cls' => 'bh-tt-lich-thi',
+                                            'icon' => 'fa-pencil-alt',
+                                            'lbl' => 'Lịch thi',
+                                        ],
+                                        4 => [
+                                            'cls' => 'bh-tt-tam-ngung',
+                                            'icon' => 'fa-pause-circle',
+                                            'lbl' => 'Tạm ngưng',
+                                        ],
+                                    ];
+                                    $bhTT = $ttBuoi[$bh->trangThai ?? 0] ?? $ttBuoi[0];
+                                @endphp
+                                <span class="bh-badge {{ $bhTT['cls'] }}">
+                                    <i class="fas {{ $bhTT['icon'] }}"></i> {{ $bhTT['lbl'] }}
+                                </span>
                             </div>
                         </div>
 
                         <div class="bh-actions">
+                            <button type="button" class="lh-btn-action lh-btn-edit" title="Chỉnh sửa buổi học"
+                                onclick="openEditModal(
+                                    {{ $bh->buoiHocId }},
+                                    '{{ addslashes($bh->tenBuoiHoc ?? '') }}',
+                                    '{{ $bh->ngayHoc }}',
+                                    {{ $bh->caHocId ?? 'null' }},
+                                    {{ $bh->phongHocId ?? 'null' }},
+                                    {{ $bh->taiKhoanId ?? 'null' }},
+                                    {{ $bh->trangThai ?? 0 }},
+                                    '{{ addslashes($bh->ghiChu ?? '') }}',
+                                    {{ $bh->daHoanThanh ? 1 : 0 }}
+                                )">
+                                <i class="fas fa-pen"></i>
+                            </button>
                             <button type="button" class="lh-btn-action lh-btn-edit" title="Đánh dấu hoàn thành"
                                 onclick="toggleHoanThanh({{ $bh->buoiHocId }}, {{ $bh->daHoanThanh ? 0 : 1 }})"
                                 style="width:auto;padding:0 10px;font-size:.72rem;gap:4px;color:{{ $bh->daHoanThanh ? '#16a34a' : '#d97706' }}">
@@ -801,16 +866,122 @@
         @endif
     </div>
 
-@endsection
 
-{{-- Hidden forms --}}
-<form id="delete-bh-form" method="POST" style="display:none">
-    @csrf @method('DELETE')
-</form>
-<form id="update-bh-form" method="POST" style="display:none">
-    @csrf @method('PUT')
-    <input type="hidden" name="daHoanThanh" id="update-bh-value">
-</form>
+    {{-- Hidden forms --}}
+    <form id="delete-bh-form" method="POST" style="display:none">
+        @csrf @method('DELETE')
+    </form>
+    <form id="update-bh-form" method="POST" style="display:none">
+        @csrf @method('PUT')
+        <input type="hidden" name="daHoanThanh" id="update-bh-value">
+    </form>
+
+    {{-- Modal Edit Buổi Học (Custom, không dùng Bootstrap modal class) --}}
+    <div id="editBuoiHocModal"
+        style="display:none;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center;background:rgba(0,0,0,.55);">
+        <div
+            style="background:#fff;border-radius:14px;width:100%;max-width:680px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.25);margin:16px;">
+            <div
+                style="background:linear-gradient(135deg,#4c1d95,#7c3aed);border-radius:14px 14px 0 0;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;">
+                <h5 style="color:#fff;font-weight:700;margin:0;font-size:1rem;">
+                    <i class="fas fa-pen me-2"></i>Chỉnh sửa buổi học
+                </h5>
+                <button type="button" onclick="closeEditModal()"
+                    style="background:none;border:none;color:#fff;font-size:1.3rem;cursor:pointer;padding:0;line-height:1;">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            {{-- Body --}}
+            <div style="padding:24px 24px 8px;">
+                {{-- Tên buổi học full width --}}
+                <div style="margin-bottom:16px;">
+                    <label style="display:block;font-size:.75rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Tên buổi học</label>
+                    <input type="text" id="ebh-ten"
+                        style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.9rem;color:#1e293b;outline:none;"
+                        placeholder="Để trống = tự đặt"
+                        onfocus="this.style.borderColor='#7c3aed'" onblur="this.style.borderColor='#e2e8f0'">
+                </div>
+                {{-- Grid 2 cột --}}
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;">
+                    <div>
+                        <label style="display:block;font-size:.75rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Ngày học <span style="color:#dc2626">*</span></label>
+                        <input type="date" id="ebh-ngay" required
+                            style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.9rem;color:#1e293b;outline:none;"
+                            onfocus="this.style.borderColor='#7c3aed'" onblur="this.style.borderColor='#e2e8f0'">
+                    </div>
+                    <div>
+                        <label style="display:block;font-size:.75rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Ca học <span style="color:#dc2626">*</span></label>
+                        <select id="ebh-ca"
+                            style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.9rem;color:#1e293b;background:#fff;outline:none;">
+                            @foreach ($caHocs as $ca)
+                                <option value="{{ $ca->caHocId }}">{{ $ca->tenCa }} ({{ $ca->gioBatDau }}–{{ $ca->gioKetThuc }})</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display:block;font-size:.75rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Phòng học</label>
+                        <select id="ebh-phong"
+                            style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.9rem;color:#1e293b;background:#fff;outline:none;">
+                            <option value="">-- Không chọn --</option>
+                            @foreach ($phongHocs as $ph)
+                                <option value="{{ $ph->phongHocId }}">{{ $ph->tenPhong }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display:block;font-size:.75rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Giáo viên</label>
+                        <select id="ebh-gv"
+                            style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.9rem;color:#1e293b;background:#fff;outline:none;">
+                            <option value="">-- Không chọn --</option>
+                            @foreach ($giaoViens as $gv)
+                                <option value="{{ $gv->taiKhoanId }}">{{ $gv->hoSoNguoiDung?->hoTen ?? $gv->taiKhoan }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display:block;font-size:.75rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Loại buổi học</label>
+                        <select id="ebh-trangthai"
+                            style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.9rem;color:#1e293b;background:#fff;outline:none;">
+                            <option value="0">📖 Lý thuyết</option>
+                            <option value="1">🔬 Thực hành</option>
+                            <option value="2">💻 Trực tuyến</option>
+                            <option value="3">✏️ Lịch thi</option>
+                            <option value="4">⏸️ Tạm ngưng</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display:block;font-size:.75rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Trạng thái hoàn thành</label>
+                        <select id="ebh-hoanhthanh"
+                            style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.9rem;color:#1e293b;background:#fff;outline:none;">
+                            <option value="0">⏳ Chưa học</option>
+                            <option value="1">✅ Đã hoàn thành</option>
+                        </select>
+                    </div>
+                </div>
+                {{-- Ghi chú full width --}}
+                <div style="margin-bottom:8px;">
+                    <label style="display:block;font-size:.75rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Ghi chú</label>
+                    <textarea id="ebh-ghichu" rows="2"
+                        style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.9rem;color:#1e293b;outline:none;resize:vertical;"
+                        placeholder="Ghi chú thêm..."
+                        onfocus="this.style.borderColor='#7c3aed'" onblur="this.style.borderColor='#e2e8f0'"></textarea>
+                </div>
+            </div>
+            {{-- Footer --}}
+            <div style="padding:16px 24px;border-top:1px solid #f1f5f9;display:flex;justify-content:flex-end;gap:10px;">
+                <button type="button" onclick="closeEditModal()"
+                    style="padding:9px 20px;border:1.5px solid #e2e8f0;border-radius:8px;background:#fff;color:#64748b;font-size:.875rem;font-weight:600;cursor:pointer;">
+                    Hủy
+                </button>
+                <button type="button" id="ebh-save-btn" onclick="saveEditBuoiHoc()"
+                    style="padding:9px 22px;border:none;border-radius:8px;background:linear-gradient(135deg,#7c3aed,#a78bfa);color:#fff;font-size:.875rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
+                    <i class="fas fa-save"></i> Lưu thay đổi
+                </button>
+            </div>
+        </div>
+    </div>
+
+@endsection
 
 @section('script')
     <script>
@@ -840,22 +1011,109 @@
         }
 
         function toggleHoanThanh(id, newVal) {
+            const fd = new FormData();
+            fd.append('_token', '{{ csrf_token() }}');
+            fd.append('_method', 'PUT');
+            fd.append('daHoanThanh', newVal);
             fetch(`/admin/buoi-hoc/${id}`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'X-HTTP-Method-Override': 'PUT',
-                    'Accept': 'application/json',
+                    'Accept': 'application/json'
                 },
-                body: JSON.stringify({
-                    daHoanThanh: newVal
-                }),
+                body: fd,
             }).then(r => r.json()).then(data => {
                 if (data.success) location.reload();
             }).catch(() => {
                 location.reload();
             });
+        }
+
+
+        /* ── EDIT MODAL ──────────────────────────────────────── */
+        let _editBuoiHocId = null;
+
+        function openEditModal(id, ten, ngay, caId, phongId, gvId, trangThai, ghiChu, hoanThanh) {
+            _editBuoiHocId = id;
+            document.getElementById('ebh-ten').value = ten || '';
+            document.getElementById('ebh-ngay').value = ngay || '';
+            document.getElementById('ebh-ghichu').value = ghiChu || '';
+
+            setSelectVal('ebh-ca', caId);
+            setSelectVal('ebh-phong', phongId);
+            setSelectVal('ebh-gv', gvId);
+            setSelectVal('ebh-trangthai', trangThai);
+            setSelectVal('ebh-hoanhthanh', hoanThanh);
+
+            // Hiện custom modal
+            const m = document.getElementById('editBuoiHocModal');
+            m.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeEditModal() {
+            const m = document.getElementById('editBuoiHocModal');
+            m.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+
+        // Đóng modal khi click backdrop
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('editBuoiHocModal').addEventListener('click', function(e) {
+                if (e.target === this) closeEditModal();
+            });
+        });
+
+        function setSelectVal(id, val) {
+            const sel = document.getElementById(id);
+            if (!sel) return;
+            const opt = sel.querySelector(`option[value="${val}"]`);
+            if (opt) opt.selected = true;
+            else if (sel.options.length > 0) {
+                // try setting by value directly
+                sel.value = (val !== null && val !== undefined) ? String(val) : '';
+            }
+        }
+
+        function saveEditBuoiHoc() {
+            const btn = document.getElementById('ebh-save-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Đang lưu...';
+
+            const fd = new FormData();
+            fd.append('_token', '{{ csrf_token() }}');
+            fd.append('_method', 'PUT');
+            fd.append('tenBuoiHoc', document.getElementById('ebh-ten').value);
+            fd.append('ngayHoc', document.getElementById('ebh-ngay').value);
+            fd.append('caHocId', document.getElementById('ebh-ca').value);
+            const phong = document.getElementById('ebh-phong').value;
+            const gv = document.getElementById('ebh-gv').value;
+            if (phong) fd.append('phongHocId', phong);
+            if (gv) fd.append('taiKhoanId', gv);
+            fd.append('trangThai', document.getElementById('ebh-trangthai').value);
+            fd.append('daHoanThanh', document.getElementById('ebh-hoanhthanh').value);
+            fd.append('ghiChu', document.getElementById('ebh-ghichu').value);
+
+            fetch(`/admin/buoi-hoc/${_editBuoiHocId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json'
+                    },
+                    body: fd,
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        closeEditModal();
+                        location.reload();
+                    } else {
+                        alert('Có lỗi xảy ra: ' + (data.message || 'Thử lại sau.'));
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fas fa-save me-1"></i> Lưu thay đổi';
+                    }
+                })
+                .catch(() => {
+                    location.reload();
+                });
         }
     </script>
 @endsection

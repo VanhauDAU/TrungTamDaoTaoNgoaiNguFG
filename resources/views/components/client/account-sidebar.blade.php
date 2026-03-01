@@ -36,7 +36,16 @@
                 </a>
             </li>
             <li class="menu-item">
-                <a href="#" class="menu-link">
+                <a href="{{ route('home.thong-bao.index') }}"
+                    class="menu-link {{ request()->routeIs('home.thong-bao.*') ? 'active' : '' }}">
+                    <i class="fas fa-bell"></i>
+                    <span>Thông báo</span>
+                    <span class="menu-badge" id="sidebar-nb-badge"></span>
+                </a>
+            </li>
+            <li class="menu-item">
+                <a href="{{ route('home.student.schedule') }}"
+                    class="menu-link {{ request()->routeIs('home.student.schedule') ? 'active' : '' }}">
                     <i class="far fa-calendar-alt"></i>
                     <span>Lịch học</span>
                 </a>

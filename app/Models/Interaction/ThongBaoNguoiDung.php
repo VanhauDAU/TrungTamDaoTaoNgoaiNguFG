@@ -3,6 +3,7 @@
 namespace App\Models\Interaction;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Auth\TaiKhoan;
 
 class ThongBaoNguoiDung extends Model
 {
@@ -25,6 +26,6 @@ class ThongBaoNguoiDung extends Model
 
     public function nguoiDung()
     {
-        return $this->belongsTo(TaiKhoan::class, 'nguoiDungId', 'taiKhoanId');
+        return $this->belongsTo(TaiKhoan::class, 'taiKhoanId', 'taiKhoanId');
     }
 }

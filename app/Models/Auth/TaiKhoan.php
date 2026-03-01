@@ -8,6 +8,8 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Education\DangKyLopHoc;
 use App\Models\Facility\CoSoDaoTao;
+use App\Models\Interaction\ThongBao;
+use App\Models\Interaction\ThongBaoNguoiDung;
 
 class TaiKhoan extends Authenticatable
 {
@@ -94,6 +96,18 @@ class TaiKhoan extends Authenticatable
     public function nhomQuyen()
     {
         return $this->belongsTo(NhomQuyen::class, 'nhomQuyenId', 'nhomQuyenId');
+    }
+
+    /** Thông báo đã gửi (với tư cách người gửi) */
+    public function thongBaoDaGui()
+    {
+        return $this->hasMany(ThongBao::class, 'nguoiGuiId', 'taiKhoanId');
+    }
+
+    /** Thông báo nhận được (qua bảng pivot thongbaonguoidung) */
+    public function thongBaoNhanDuoc()
+    {
+        return $this->hasMany(ThongBaoNguoiDung::class, 'taiKhoanId', 'taiKhoanId');
     }
 
     /**
