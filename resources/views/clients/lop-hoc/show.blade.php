@@ -242,13 +242,34 @@
                             @if ($class->trangThai == 1)
                                 @auth
                                     @if (auth()->user()->role === \App\Models\Auth\TaiKhoan::ROLE_HOC_VIEN)
-                                        <a href="{{ route('home.classes.confirm', ['slug' => $class->khoaHoc->slug, 'slugLopHoc' => $class->slug]) }}"
-                                            class="btn btn-primary w-100 py-3 rounded-3 fw-bold mb-3 d-flex align-items-center justify-content-center text-decoration-none"
-                                            style="background: linear-gradient(135deg, #10454F 0%, #27C4B5 100%); border: none;">
-                                            <i class="fas fa-user-plus me-2"></i> ĐĂNG KÝ NGAY
-                                        </a>
-                                        <p class="small text-muted mb-0"><i class="fas fa-shield-alt me-1"></i> Cam kết hoàn
-                                            tiền trong 7 ngày</p>
+                                        @php
+                                            $existingReg = $class->dangKyLopHocs
+                                                ->where('taiKhoanId', auth()->user()->taiKhoanId)
+                                                ->whereIn('trangThai', [1, 2])
+                                                ->first();
+                                        @endphp
+                                        @if ($existingReg)
+                                            <button class="btn w-100 py-3 rounded-3 fw-bold disabled mb-3"
+                                                style="background: #e8f5e9; color: #2e7d32; border: none; cursor: default;">
+                                                <i class="fas fa-check-circle me-2"></i> ĐÃ ĐĂNG KÝ
+                                            </button>
+                                            <p class="small text-muted mb-0">
+                                                <i class="fas fa-info-circle me-1"></i>
+                                                @if ($existingReg->trangThai == 1)
+                                                    Bạn đã đăng ký lớp này. Vui lòng hoàn tất thanh toán.
+                                                @else
+                                                    Đăng ký đã được xác nhận.
+                                                @endif
+                                            </p>
+                                        @else
+                                            <a href="{{ route('home.classes.confirm', ['slug' => $class->khoaHoc->slug, 'slugLopHoc' => $class->slug]) }}"
+                                                class="btn btn-primary w-100 py-3 rounded-3 fw-bold mb-3 d-flex align-items-center justify-content-center text-decoration-none"
+                                                style="background: linear-gradient(135deg, #10454F 0%, #27C4B5 100%); border: none;">
+                                                <i class="fas fa-user-plus me-2"></i> ĐĂNG KÝ NGAY
+                                            </a>
+                                            <p class="small text-muted mb-0"><i class="fas fa-shield-alt me-1"></i> Cam kết hoàn
+                                                tiền trong 7 ngày</p>
+                                        @endif
                                     @else
                                         <div class="alert alert-warning py-2 mb-0 small">
                                             <i class="fas fa-info-circle me-1"></i> Chỉ học viên mới có thể đăng ký lớp học.

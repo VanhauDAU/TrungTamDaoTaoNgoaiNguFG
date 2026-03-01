@@ -234,8 +234,57 @@
 
         {{-- Tab 3 --}}
         <div class="kf-tab-panel" id="tab-hoc-phi">
+            {{-- Gói học phí học viên --}}
             <div class="kf-card">
-                <div class="kf-card-title"><i class="fas fa-dollar-sign"></i> Học phí & Sĩ số</div>
+                <div class="kf-card-title"><i class="fas fa-file-invoice-dollar"></i> Gói học phí học viên</div>
+                <p class="form-hint" style="margin:0 0 14px">
+                    Chọn gói học phí áp dụng cho lớp học này. Mỗi gói định nghĩa số buổi và đơn giá/buổi mà học viên phải nộp.
+                </p>
+
+                <div class="kf-form-row">
+                    <div class="kf-form-group" style="grid-column:1/-1">
+                        <label>Chọn gói học phí <span class="req">*</span></label>
+                        <select name="hocPhiId" id="hocPhiSel" onchange="previewHocPhi()">
+                            <option value="">-- Chưa chọn gói --</option>
+                            @foreach ($hocPhis as $hp)
+                                <option value="{{ $hp->hocPhiId }}" data-sobuoi="{{ $hp->soBuoi }}"
+                                    data-dongia="{{ $hp->donGia }}" data-tong="{{ $hp->tongHocPhi }}"
+                                    {{ old('hocPhiId', $lopHoc->hocPhiId) == $hp->hocPhiId ? 'selected' : '' }}>
+                                    Gói {{ $hp->soBuoi }} buổi &ndash;
+                                    {{ number_format($hp->donGia, 0, ',', '.') }} đ/buổi
+                                    &rarr; Tổng: {{ number_format($hp->tongHocPhi, 0, ',', '.') }} đ
+                                </option>
+                            @endforeach
+                        </select>
+                        <div class="form-hint">Danh sách gói sẽ cập nhật khi bạn thay đổi khóa học (Tab 1).</div>
+                    </div>
+                </div>
+
+                {{-- Preview card --}}
+                <div id="hocPhiPreview" style="display:none;margin-top:16px">
+                    <div style="background:linear-gradient(135deg,#7c3aed,#a78bfa);border-radius:10px;padding:16px 20px;color:#fff;display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px">
+                        <div>
+                            <div style="font-size:.7rem;font-weight:700;opacity:.8;text-transform:uppercase">Số buổi gói</div>
+                            <div style="font-size:1.4rem;font-weight:700" id="prev-sobuoi">—</div>
+                        </div>
+                        <div>
+                            <div style="font-size:.7rem;font-weight:700;opacity:.8;text-transform:uppercase">Đơn giá/buổi</div>
+                            <div style="font-size:1.4rem;font-weight:700" id="prev-dongia">—</div>
+                        </div>
+                        <div>
+                            <div style="font-size:.7rem;font-weight:700;opacity:.8;text-transform:uppercase">Tổng học phí HV</div>
+                            <div style="font-size:1.4rem;font-weight:700;color:#fde68a" id="prev-tong">—</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Chi phí giáo viên --}}
+            <div class="kf-card">
+                <div class="kf-card-title"><i class="fas fa-chalkboard-teacher"></i> Chi phí giáo viên</div>
+                <p class="form-hint" style="margin:0 0 14px">
+                    ĐÂY LÀ CHI PHÍ CỦA TRUNG TÂM (khác với học phí học viên ở trên).
+                </p>
                 <div class="kf-form-row">
                     <div class="kf-form-group">
                         <label>Đơn giá dạy (VNĐ/buổi)</label>
@@ -464,6 +513,53 @@
                 alert(`Sĩ số tối đa (${siSo}) không được vượt sức chứa phòng học (${sucChua} chỗ).`);
                 siSoInput.focus();
             }
+        });
+
+        // ── Gói học phí: Preview & AJAX ─────────────────────
+        function fmtMoney(n) {
+            return Number(n).toLocaleString('vi-VN') + ' đ';
+        }
+
+        function previewHocPhi() {
+            const sel = document.getElementById('hocPhiSel');
+            const opt = sel.options[sel.selectedIndex];
+            const preview = document.getElementById('hocPhiPreview');
+            if (!opt || !opt.value) { preview.style.display = 'none'; return; }
+            const soBuoi = parseInt(opt.dataset.sobuoi) || 0;
+            const donGia = parseFloat(opt.dataset.dongia) || 0;
+            const tong   = parseFloat(opt.dataset.tong) || soBuoi * donGia;
+            document.getElementById('prev-sobuoi').textContent = soBuoi + ' buổi';
+            document.getElementById('prev-dongia').textContent = fmtMoney(donGia);
+            document.getElementById('prev-tong').textContent   = fmtMoney(tong);
+            preview.style.display = 'block';
+        }
+
+        // AJAX: reload gói học phí khi đổi khóa học
+        async function loadHocPhi(khoaHocId) {
+            const sel = document.getElementById('hocPhiSel');
+            sel.innerHTML = '<option value="">Đang tải...</option>';
+            if (!khoaHocId) {
+                sel.innerHTML = '<option value="">-- Chọn khóa học trước --</option>';
+                return;
+            }
+            const data = await fetch(`/admin/api/hoc-phi/${khoaHocId}`).then(r => r.json());
+            sel.innerHTML = '<option value="">-- Chọn gói học phí --</option>' +
+                data.map(hp => `<option value="${hp.hocPhiId}"
+                    data-sobuoi="${hp.soBuoi}" data-dongia="${hp.donGia}" data-tong="${hp.tongHocPhi}">
+                    Gói ${hp.soBuoi} buổi – ${fmtMoney(hp.donGia)}/buổi → Tổng: ${fmtMoney(hp.tongHocPhi)}
+                </option>`).join('');
+            document.getElementById('hocPhiPreview').style.display = 'none';
+        }
+
+        // Wire khoaHocId change to reload hocPhi
+        document.querySelector('[name="khoaHocId"]')?.addEventListener('change', function() {
+            loadHocPhi(this.value);
+        });
+
+        // Auto-show preview nếu đã có gói học phí
+        document.addEventListener('DOMContentLoaded', () => {
+            const sel = document.getElementById('hocPhiSel');
+            if (sel && sel.value) previewHocPhi();
         });
     </script>
 @endsection
