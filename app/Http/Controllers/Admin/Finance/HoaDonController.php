@@ -56,6 +56,24 @@ class HoaDonController extends Controller
             $query->whereDate('ngayLap', '<=', $request->denNgay);
         }
 
+        // ── Lọc theo tình trạng hạn thanh toán ────────────────
+        if ($request->filled('hanThanhToan')) {
+            $today = now()->toDateString();
+            $canh  = now()->addDays(HoaDon::NGAY_CANH_BAO)->toDateString();
+            match ($request->hanThanhToan) {
+                'sap_het_han' => $query
+                    ->whereNotNull('ngayHetHan')
+                    ->where('ngayHetHan', '>=', $today)
+                    ->where('ngayHetHan', '<=', $canh)
+                    ->where('trangThai', '!=', HoaDon::TRANG_THAI_DA_TT),
+                'qua_han' => $query
+                    ->whereNotNull('ngayHetHan')
+                    ->whereDate('ngayHetHan', '<', $today)
+                    ->where('trangThai', '!=', HoaDon::TRANG_THAI_DA_TT),
+                default => null,
+            };
+        }
+
         // ── Sắp xếp ──────────────────────────────────────────
         $orderBy = $request->get('orderBy', 'hoaDonId');
         $dir = $request->get('dir', 'desc');
@@ -67,11 +85,25 @@ class HoaDonController extends Controller
         $hoaDons = $query->paginate(15)->withQueryString();
 
         // ── Thống kê nhanh ────────────────────────────────────
-        $tongSo = HoaDon::count();
-        $chuaTT = HoaDon::where('trangThai', HoaDon::TRANG_THAI_CHUA_TT)->count();
-        $motPhan = HoaDon::where('trangThai', HoaDon::TRANG_THAI_MOT_PHAN)->count();
-        $daTT = HoaDon::where('trangThai', HoaDon::TRANG_THAI_DA_TT)->count();
-        $tongDoanhThu = HoaDon::sum('daTra');
+        $tongSo      = HoaDon::count();
+        $chuaTT      = HoaDon::where('trangThai', HoaDon::TRANG_THAI_CHUA_TT)->count();
+        $motPhan     = HoaDon::where('trangThai', HoaDon::TRANG_THAI_MOT_PHAN)->count();
+        $daTT        = HoaDon::where('trangThai', HoaDon::TRANG_THAI_DA_TT)->count();
+        $tongDoanhThu= HoaDon::sum('daTra');
+
+        $todayStr = now()->toDateString();
+        $canhStr  = now()->addDays(HoaDon::NGAY_CANH_BAO)->toDateString();
+
+        $sapHetHan = HoaDon::whereNotNull('ngayHetHan')
+            ->where('ngayHetHan', '>=', $todayStr)
+            ->where('ngayHetHan', '<=', $canhStr)
+            ->where('trangThai', '!=', HoaDon::TRANG_THAI_DA_TT)
+            ->count();
+
+        $quaHan = HoaDon::whereNotNull('ngayHetHan')
+            ->whereDate('ngayHetHan', '<', $todayStr)
+            ->where('trangThai', '!=', HoaDon::TRANG_THAI_DA_TT)
+            ->count();
 
         // ── Danh sách cơ sở (cho dropdown filter) ─────────────
         $coSos = CoSoDaoTao::orderBy('tenCoSo')->get();
@@ -83,7 +115,9 @@ class HoaDonController extends Controller
             'motPhan',
             'daTT',
             'tongDoanhThu',
-            'coSos'
+            'coSos',
+            'sapHetHan',
+            'quaHan'
         ));
     }
 

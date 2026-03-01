@@ -5,7 +5,9 @@ namespace App\Models\Finance;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Auth\TaiKhoan;
 use App\Models\Education\DangKyLopHoc;
+use App\Models\Education\DiemDanh;
 use App\Models\Facility\CoSoDaoTao;
+use Carbon\Carbon;
 
 class HoaDon extends Model
 {
@@ -18,6 +20,9 @@ class HoaDon extends Model
     const TRANG_THAI_CHUA_TT = 0;
     const TRANG_THAI_MOT_PHAN = 1;
     const TRANG_THAI_DA_TT = 2;
+
+    // Số ngày cảnh báo trước khi hết hạn
+    const NGAY_CANH_BAO = 7;
 
     protected $table = 'hoadon';
     protected $primaryKey = 'hoaDonId';
@@ -118,6 +123,47 @@ class HoaDon extends Model
         };
     }
 
+    /** Số ngày còn lại đến hạn (âm = quá hạn). NULL nếu không có hạn. */
+    public function getSoNgayConLaiAttribute(): ?int
+    {
+        if (! $this->ngayHetHan) {
+            return null;
+        }
+        return (int) Carbon::today()->diffInDays(Carbon::parse($this->ngayHetHan), false);
+    }
+
+    /** True nếu hóa đơn chưa TT đủ và sắp hết hạn (≤ NGAY_CANH_BAO ngày) */
+    public function getIsSapHetHanAttribute(): bool
+    {
+        if ($this->trangThai === self::TRANG_THAI_DA_TT || ! $this->ngayHetHan) {
+            return false;
+        }
+        $soNgay = $this->soNgayConLai;
+        return $soNgay !== null && $soNgay >= 0 && $soNgay <= self::NGAY_CANH_BAO;
+    }
+
+    /** True nếu hóa đơn chưa TT đủ và đã quá hạn */
+    public function getIsQuaHanAttribute(): bool
+    {
+        if ($this->trangThai === self::TRANG_THAI_DA_TT || ! $this->ngayHetHan) {
+            return false;
+        }
+        return Carbon::today()->greaterThan(Carbon::parse($this->ngayHetHan));
+    }
+
+    /** Nhãn tình trạng hạn thanh toán để hiển thị badge */
+    public function getTinhTrangHanLabelAttribute(): ?string
+    {
+        if ($this->isQuaHan) {
+            return 'Quá hạn';
+        }
+        if ($this->isSapHetHan) {
+            $ngay = $this->soNgayConLai;
+            return $ngay === 0 ? 'Hôm nay hết hạn' : "Còn {$ngay} ngày";
+        }
+        return null;
+    }
+
     /* ── Helpers ────────────────────────────────────────────── */
 
     /** Tạo mã hóa đơn duy nhất: HD-YYYYMM-XXXXXX */
@@ -138,7 +184,7 @@ class HoaDon extends Model
         return $prefix . str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
     }
 
-    /** Tính lại daTra + trangThai từ phiếu thu hợp lệ */
+    /** Tính lại daTra + trangThai từ phiếu thu hợp lệ, phục hồi DangKyLopHoc khi TT đủ */
     public function recalculate(): void
     {
         $totalPaid = $this->phieuThusHopLe()->sum('soTien');
@@ -155,5 +201,18 @@ class HoaDon extends Model
         }
 
         $this->save();
+
+        // ── Phục hồi DangKyLopHoc khi thanh toán đủ ─────────────────
+        if ($this->trangThai === self::TRANG_THAI_DA_TT && $this->dangKyLopHocId) {
+            $dangKy = DangKyLopHoc::find($this->dangKyLopHocId);
+            if ($dangKy && $dangKy->trangThai === DangKyLopHoc::TRANG_THAI_TAM_DUNG) {
+                $dangKy->update(['trangThai' => DangKyLopHoc::TRANG_THAI_DANG_HOC]);
+
+                // Xóa các bản ghi DiemDanh tương lai đã bị khóa (nợ HP)
+                DiemDanh::where('dangKyLopHocId', $dangKy->dangKyLopHocId)
+                    ->where('trangThai', DiemDanh::BI_KHOA_NO_HP)
+                    ->delete();
+            }
+        }
     }
 }

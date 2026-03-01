@@ -26,8 +26,8 @@
 /* ── Stats strip ─────────────────────────────────────── */
 .hd-stats {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 16px;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 14px;
     margin-bottom: 24px;
 }
 
@@ -76,6 +76,16 @@
 .hd-stat-icon.revenue {
     background: #fce7f3;
     color: #db2777;
+}
+
+.hd-stat-icon.warning {
+    background: #fff7ed;
+    color: #ea580c;
+}
+
+.hd-stat-icon.overdue {
+    background: #fef2f2;
+    color: #dc2626;
 }
 
 .hd-stat-value {
@@ -353,6 +363,31 @@
     color: #065f46;
 }
 
+/* Badge hạn thanh toán */
+.badge-han {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 20px;
+    white-space: nowrap;
+    margin-top: 3px;
+}
+
+.badge-han-warning {
+    background: #fff7ed;
+    color: #c2410c;
+    border: 1px solid #fed7aa;
+}
+
+.badge-han-danger {
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+}
+
 /* Actions */
 .hd-actions {
     display: flex;
@@ -457,6 +492,12 @@
 }
 
 /* Responsive */
+@media (max-width: 1400px) {
+    .hd-stats {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
 @media (max-width: 1200px) {
     .hd-stats {
         grid-template-columns: repeat(3, 1fr);

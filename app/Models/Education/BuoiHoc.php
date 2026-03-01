@@ -47,4 +47,10 @@ class BuoiHoc extends Model
     {
         return $this->belongsTo(TaiKhoan::class, 'taiKhoanId', 'taiKhoanId');
     }
+
+    /** Danh sách điểm danh của từng học viên trong buổi học này */
+    public function diemDanhs()
+    {
+        return $this->hasMany(DiemDanh::class, 'buoiHocId', 'buoiHocId');
+    }
 }
