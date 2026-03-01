@@ -24,6 +24,7 @@ use App\Http\Controllers\Admin\BaiViet\BaiVietController as AdminBaiVietControll
 use App\Http\Controllers\Admin\BaiViet\DanhMucBaiVietController as AdminDanhMucBaiVietController;
 use App\Http\Controllers\Admin\BaiViet\TagController as AdminTagController;
 use App\Http\Controllers\Admin\ThongBao\ThongBaoController as AdminThongBaoController;
+use App\Http\Controllers\Admin\Finance\HoaDonController as AdminHoaDonController;
 use App\Http\Controllers\Client\ClientThongBaoController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
@@ -77,29 +78,29 @@ Route::prefix('/')->name('home.')->group(function () {
 
     // ── Thông báo client (auth required) ────────────────────────────────────
     Route::prefix('thong-bao')->name('thong-bao.')->middleware('auth')->group(function () {
-        Route::get('/',               [ClientThongBaoController::class, 'index'])->name('index');
+        Route::get('/', [ClientThongBaoController::class, 'index'])->name('index');
     });
 
     // ── Thông báo client API (auth, JSON) ────────────────────────────────────
     Route::prefix('api/thong-bao')->name('api.thong-bao.')->middleware('auth')->group(function () {
-        Route::get('/stream',          [ClientThongBaoController::class, 'stream'])->name('stream');
-        Route::get('/dropdown',        [ClientThongBaoController::class, 'getDropdown'])->name('dropdown');
-        Route::get('/chua-doc',        [ClientThongBaoController::class, 'getUnreadCount'])->name('unread-count');
-        Route::patch('/{id}/da-doc',   [ClientThongBaoController::class, 'markRead'])->name('mark-read');
+        Route::get('/stream', [ClientThongBaoController::class, 'stream'])->name('stream');
+        Route::get('/dropdown', [ClientThongBaoController::class, 'getDropdown'])->name('dropdown');
+        Route::get('/chua-doc', [ClientThongBaoController::class, 'getUnreadCount'])->name('unread-count');
+        Route::patch('/{id}/da-doc', [ClientThongBaoController::class, 'markRead'])->name('mark-read');
         Route::patch('/da-doc-tat-ca', [ClientThongBaoController::class, 'markAllRead'])->name('mark-all-read');
     });
 
     // ── Thông báo client (auth required) ────────────────────────────────────
     Route::prefix('thong-bao')->name('thong-bao.')->middleware('auth')->group(function () {
-        Route::get('/',               [ClientThongBaoController::class, 'index'])->name('index');
+        Route::get('/', [ClientThongBaoController::class, 'index'])->name('index');
     });
 
     // ── Thông báo client API (auth, JSON) ────────────────────────────────────
     Route::prefix('api/thong-bao')->name('api.thong-bao.')->middleware('auth')->group(function () {
-        Route::get('/stream',          [ClientThongBaoController::class, 'stream'])->name('stream');
-        Route::get('/dropdown',        [ClientThongBaoController::class, 'getDropdown'])->name('dropdown');
-        Route::get('/chua-doc',        [ClientThongBaoController::class, 'getUnreadCount'])->name('unread-count');
-        Route::patch('/{id}/da-doc',   [ClientThongBaoController::class, 'markRead'])->name('mark-read');
+        Route::get('/stream', [ClientThongBaoController::class, 'stream'])->name('stream');
+        Route::get('/dropdown', [ClientThongBaoController::class, 'getDropdown'])->name('dropdown');
+        Route::get('/chua-doc', [ClientThongBaoController::class, 'getUnreadCount'])->name('unread-count');
+        Route::patch('/{id}/da-doc', [ClientThongBaoController::class, 'markRead'])->name('mark-read');
         Route::patch('/da-doc-tat-ca', [ClientThongBaoController::class, 'markAllRead'])->name('mark-all-read');
     });
 });
@@ -243,6 +244,15 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
         Route::put('/{id}', [AdminHocPhiController::class, 'update'])->name('update');
         Route::delete('/{id}', [AdminHocPhiController::class, 'destroy'])->name('destroy');
         Route::patch('/{id}/toggle-status', [AdminHocPhiController::class, 'toggleStatus'])->name('toggle-status');
+    });
+
+    // ── Hóa Đơn & Phiếu Thu ─────────────────────────────────────
+    Route::prefix('hoa-don')->name('hoa-don.')->group(function () {
+        Route::get('/', [AdminHoaDonController::class, 'index'])->name('index');
+        Route::get('/{id}', [AdminHoaDonController::class, 'show'])->name('show');
+        Route::put('/{id}', [AdminHoaDonController::class, 'update'])->name('update');
+        Route::post('/{id}/phieu-thu', [AdminHoaDonController::class, 'storePhieuThu'])->name('phieu-thu.store');
+        Route::delete('/phieu-thu/{id}', [AdminHoaDonController::class, 'destroyPhieuThu'])->name('phieu-thu.destroy');
     });
 
     // ── Bài Viết / Blog ──────────────────────────────────────────

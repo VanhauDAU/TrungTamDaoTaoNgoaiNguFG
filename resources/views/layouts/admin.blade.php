@@ -330,6 +330,9 @@
 
     </div>
 
+    {{-- Modals (rendered outside flex layout for proper Bootstrap positioning) --}}
+    @yield('modal')
+
     {{-- Bootstrap JS (cho alert dismiss + dropdown) --}}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -378,7 +381,7 @@
         }
 
         // Xác nhận đăng xuất bằng SweetAlert2
-        document.getElementById('btn-logout-admin')?.addEventListener('click', function() {
+        document.getElementById('btn-logout-admin')?.addEventListener('click', function () {
             Swal.fire({
                 title: 'Đăng xuất?',
                 text: 'Bạn có chắc muốn đăng xuất khỏi hệ thống?',
@@ -444,7 +447,7 @@
 
         // Hiện loader khi user click link chuyển trang (trừ những link có thuộc tính target="_blank" hoặc href "#")
         document.querySelectorAll('a').forEach(link => {
-            link.addEventListener('click', function(e) {
+            link.addEventListener('click', function (e) {
                 const href = this.getAttribute('href');
                 const target = this.getAttribute('target');
                 if (href && href !== '#' && !href.startsWith('javascript:') && target !== '_blank' && !e
@@ -456,7 +459,7 @@
 
         // Hiện loader khi submit form truyền thống (không phải ajax)
         document.querySelectorAll('form:not(.ajax-form)').forEach(form => {
-            form.addEventListener('submit', function() {
+            form.addEventListener('submit', function () {
                 showLoader();
             });
         });
@@ -465,7 +468,7 @@
         window.addEventListener('load', hideLoader);
 
         // Đề phòng user back lại bằng browser thì tắt loader (safari bfcache)
-        window.addEventListener('pageshow', function(event) {
+        window.addEventListener('pageshow', function (event) {
             if (event.persisted) {
                 hideLoader();
             }
@@ -552,7 +555,7 @@
 
         // Toggle dropdown
         if (bellBtn) {
-            bellBtn.addEventListener('click', function(e) {
+            bellBtn.addEventListener('click', function (e) {
                 e.stopPropagation();
                 bellDropdown.classList.toggle('open');
                 if (bellDropdown.classList.contains('open')) refreshBell();
@@ -560,7 +563,7 @@
         }
 
         // Close on outside click
-        document.addEventListener('click', function(e) {
+        document.addEventListener('click', function (e) {
             if (!bellDropdown?.contains(e.target) && e.target !== bellBtn) {
                 bellDropdown?.classList.remove('open');
             }
@@ -583,7 +586,7 @@
 
         // Mark all read
         if (markAllBtn) {
-            markAllBtn.addEventListener('click', async function() {
+            markAllBtn.addEventListener('click', async function () {
                 await fetch('{{ route('admin.api.thong-bao.mark-all-read') }}', {
                     method: 'PATCH',
                     headers: {

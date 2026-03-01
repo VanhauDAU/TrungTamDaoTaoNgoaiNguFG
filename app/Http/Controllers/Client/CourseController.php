@@ -104,6 +104,12 @@ class CourseController extends Controller
                 ->with('error', $validation);
         }
 
+        // 5. Kiểm tra lớp có gói học phí chưa
+        if (!$class->hocPhi || $class->hocPhi->tongHocPhi <= 0) {
+            return redirect()->route('home.classes.show', ['slug' => $class->khoaHoc->slug, 'slugLopHoc' => $class->slug])
+                ->with('error', 'Lớp học chưa có thông tin học phí. Vui lòng liên hệ trung tâm để được tư vấn.');
+        }
+
         return view('clients.lop-hoc.checkout', compact('class', 'user'));
     }
 
@@ -146,28 +152,38 @@ class CourseController extends Controller
                 'ngayDangKy' => now(),
                 'trangThai' => 1 // 1: Chờ thanh toán
             ]);
-            // 2. Create Invoice
-            // tongHocPhi = soBuoi × donGia (tổng tiền học viên phải đóng)
-            $tongTien = $class->hocPhi ? $class->hocPhi->tongHocPhi : 0;
+
+            // 2. Create Invoice — chuẩn hệ thống chuyên nghiệp
+            if (!$class->hocPhi || $class->hocPhi->tongHocPhi <= 0) {
+                throw new \Exception('Lớp học chưa có thông tin học phí. Không thể tạo hóa đơn.');
+            }
+
+            $tongTien = $class->hocPhi->tongHocPhi;
+            $giamGia = 0;
+            $thue = 0;
+            $tongTienSauThue = $tongTien - $giamGia + ($tongTien - $giamGia) * $thue / 100;
+
             $invoice = HoaDon::create([
+                'maHoaDon' => HoaDon::generateMaHoaDon(),
                 'ngayLap' => now(),
+                'ngayHetHan' => now()->addDays(30),
                 'tongTien' => $tongTien,
+                'giamGia' => $giamGia,
+                'thue' => $thue,
+                'tongTienSauThue' => $tongTienSauThue,
                 'daTra' => 0,
                 'taiKhoanId' => $user->taiKhoanId,
+                'nguoiLapId' => null, // Tự đăng ký (không có admin lập)
                 'dangKyLopHocId' => $registration->dangKyLopHocId,
-                // 1: tiền mặt, 2: chuyển khoản, 3: vnpay
                 'phuongThucThanhToan' => $request->payment_method,
+                'loaiHoaDon' => HoaDon::LOAI_DANG_KY_MOI,
                 'coSoId' => $class->coSoId,
-                'trangThai' => 0, // 0: Chưa thanh toán
+                'trangThai' => HoaDon::TRANG_THAI_CHUA_TT,
                 'ghiChu' => 'Đăng ký lớp ' . $class->tenLopHoc
+                    . ' - Khóa ' . ($class->khoaHoc->tenKhoaHoc ?? ''),
             ]);
-            // kiểm tra lưu hóa đơn thành công không
-            if (!$invoice) {
-                DB::rollBack();
-                return back()->with('error', 'Có lỗi xảy ra: Không thể tạo hóa đơn');
-            }
+
             DB::commit();
-            // Todo: Handle Online Payment redirect here
 
             return redirect()->route('home.classes.show', ['slug' => $class->khoaHoc->slug, 'slugLopHoc' => $class->slug])
                 ->with('success', 'Đăng ký thành công! Vui lòng hoàn tất thanh toán để giữ chỗ.');

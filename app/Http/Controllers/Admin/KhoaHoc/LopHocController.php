@@ -34,7 +34,7 @@ class LopHocController extends Controller
         if ($search = $request->q) {
             $query->where(function ($q) use ($search) {
                 $q->where('tenLopHoc', 'like', "%{$search}%")
-                  ->orWhereHas('khoaHoc', fn($q2) => $q2->where('tenKhoaHoc', 'like', "%{$search}%"));
+                    ->orWhereHas('khoaHoc', fn($q2) => $q2->where('tenKhoaHoc', 'like', "%{$search}%"));
             });
         }
 
@@ -55,7 +55,7 @@ class LopHocController extends Controller
 
         // ── Sắp xếp ──────────────────────────────────────────
         $orderBy = $request->get('orderBy', 'lopHocId');
-        $dir     = $request->get('dir', 'desc');
+        $dir = $request->get('dir', 'desc');
         if (in_array($orderBy, ['lopHocId', 'tenLopHoc', 'ngayBatDau'])) {
             $query->orderBy($orderBy, $dir === 'asc' ? 'asc' : 'desc');
         }
@@ -65,23 +65,28 @@ class LopHocController extends Controller
         // ── Stats ─────────────────────────────────────────────
         $tongLop = LopHoc::count();
         $dangHoc = LopHoc::where('trangThai', 4)->count();
-        $sapMo   = LopHoc::where('trangThai', 0)->count();
+        $sapMo = LopHoc::where('trangThai', 0)->count();
 
         // ── Data cho filter ───────────────────────────────────
         $khoaHocs = KhoaHoc::where('trangThai', 1)->orderBy('tenKhoaHoc')->get();
-        $coSos    = CoSoDaoTao::where('trangThai', 1)->orderBy('tenCoSo')->get();
+        $coSos = CoSoDaoTao::where('trangThai', 1)->orderBy('tenCoSo')->get();
 
         return view('admin.lop-hoc.index', compact(
-            'lopHocs', 'tongLop', 'dangHoc', 'sapMo', 'khoaHocs', 'coSos'
+            'lopHocs',
+            'tongLop',
+            'dangHoc',
+            'sapMo',
+            'khoaHocs',
+            'coSos'
         ));
     }
 
     /** Form thêm lớp học */
     public function create(Request $request)
     {
-        $khoaHocs  = KhoaHoc::where('trangThai', 1)->orderBy('tenKhoaHoc')->get();
-        $caHocs    = CaHoc::where('trangThai', 1)->orderBy('tenCa')->get();
-        $tinhThanhs= TinhThanh::orderBy('tenTinhThanh')->get(); // cho cascade Tỉnh→Phường→Cơ sở
+        $khoaHocs = KhoaHoc::where('trangThai', 1)->orderBy('tenKhoaHoc')->get();
+        $caHocs = CaHoc::where('trangThai', 1)->orderBy('tenCa')->get();
+        $tinhThanhs = TinhThanh::orderBy('tenTinhThanh')->get(); // cho cascade Tỉnh→Phường→Cơ sở
         $selectedKhoaHocId = $request->get('khoaHocId');
 
         // Load gói học phí theo khóa nếu đã chọn trước
@@ -90,7 +95,11 @@ class LopHocController extends Controller
             : collect();
 
         return view('admin.lop-hoc.create', compact(
-            'khoaHocs', 'caHocs', 'tinhThanhs', 'selectedKhoaHocId', 'hocPhis'
+            'khoaHocs',
+            'caHocs',
+            'tinhThanhs',
+            'selectedKhoaHocId',
+            'hocPhis'
         ));
     }
 
@@ -98,27 +107,28 @@ class LopHocController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'tenLopHoc'      => 'required|string|max:255',
-            'khoaHocId'      => 'required|exists:khoahoc,khoaHocId',
-            'coSoId'         => 'required|exists:cosodaotao,coSoId',
-            'caHocId'        => 'required|exists:cahoc,caHocId',
-            'taiKhoanId'     => 'nullable|exists:taikhoan,taiKhoanId',
-            'phongHocId'     => 'nullable|exists:phonghoc,phongHocId',
-            'ngayBatDau'     => 'required|date',
-            'ngayKetThuc'    => 'required|date|after:ngayBatDau',
-            'soBuoiDuKien'   => 'nullable|integer|min:1',
+            'tenLopHoc' => 'required|string|max:255',
+            'khoaHocId' => 'required|exists:khoahoc,khoaHocId',
+            'coSoId' => 'required|exists:cosodaotao,coSoId',
+            'caHocId' => 'required|exists:cahoc,caHocId',
+            'taiKhoanId' => 'nullable|exists:taikhoan,taiKhoanId',
+            'phongHocId' => 'nullable|exists:phonghoc,phongHocId',
+            'ngayBatDau' => 'required|date',
+            'ngayKetThuc' => 'required|date|after:ngayBatDau',
+            'soBuoiDuKien' => 'nullable|integer|min:1',
             'soHocVienToiDa' => 'nullable|integer|min:1',
-            'donGiaDay'      => 'nullable|numeric|min:0',
-            'lichHoc'        => 'nullable|string|max:20',
-            'trangThai'      => 'required|in:0,1,2,3,4',
+            'donGiaDay' => 'nullable|numeric|min:0',
+            'hocPhiId' => 'nullable|exists:hocphi,hocPhiId',
+            'lichHoc' => 'nullable|string|max:20',
+            'trangThai' => 'required|in:0,1,2,3,4',
         ], [
-            'tenLopHoc.required'   => 'Vui lòng nhập tên lớp học.',
-            'khoaHocId.required'   => 'Vui lòng chọn khóa học.',
-            'coSoId.required'      => 'Vui lòng chọn cơ sở.',
-            'caHocId.required'     => 'Vui lòng chọn ca học.',
-            'ngayBatDau.required'  => 'Vui lòng chọn ngày bắt đầu.',
+            'tenLopHoc.required' => 'Vui lòng nhập tên lớp học.',
+            'khoaHocId.required' => 'Vui lòng chọn khóa học.',
+            'coSoId.required' => 'Vui lòng chọn cơ sở.',
+            'caHocId.required' => 'Vui lòng chọn ca học.',
+            'ngayBatDau.required' => 'Vui lòng chọn ngày bắt đầu.',
             'ngayKetThuc.required' => 'Vui lòng chọn ngày kết thúc.',
-            'ngayKetThuc.after'    => 'Ngày kết thúc phải sau ngày bắt đầu.',
+            'ngayKetThuc.after' => 'Ngày kết thúc phải sau ngày bắt đầu.',
         ]);
 
         $data['slug'] = $this->generateUniqueSlug($request->tenLopHoc);
@@ -153,7 +163,7 @@ class LopHocController extends Controller
             'dangKyLopHocs.taiKhoan.hoSoNguoiDung',
         ])->findOrFail($id);
 
-        $caHocs    = CaHoc::where('trangThai', 1)->orderBy('tenCa')->get();
+        $caHocs = CaHoc::where('trangThai', 1)->orderBy('tenCa')->get();
         $phongHocs = PhongHoc::where('coSoId', $lopHoc->coSoId)->get();
         $giaoViens = TaiKhoan::with('hoSoNguoiDung')
             ->where('role', TaiKhoan::ROLE_GIAO_VIEN)
@@ -161,24 +171,29 @@ class LopHocController extends Controller
             ->get();
 
         $soHocVienDangKy = $lopHoc->dangKyLopHocs->count();
-        $soBuoiDaHoc     = $lopHoc->buoiHocs->where('daHoanThanh', 1)->count();
-        $soBuoiChuaHoc   = $lopHoc->buoiHocs->where('daHoanThanh', 0)->count();
+        $soBuoiDaHoc = $lopHoc->buoiHocs->where('daHoanThanh', 1)->count();
+        $soBuoiChuaHoc = $lopHoc->buoiHocs->where('daHoanThanh', 0)->count();
 
         return view('admin.lop-hoc.show', compact(
-            'lopHoc', 'caHocs', 'phongHocs', 'giaoViens',
-            'soHocVienDangKy', 'soBuoiDaHoc', 'soBuoiChuaHoc'
+            'lopHoc',
+            'caHocs',
+            'phongHocs',
+            'giaoViens',
+            'soHocVienDangKy',
+            'soBuoiDaHoc',
+            'soBuoiChuaHoc'
         ));
     }
 
     /** Form chỉnh sửa lớp học */
     public function edit(int $id)
     {
-        $lopHoc     = LopHoc::with('coSo')->findOrFail($id);
-        $khoaHocs   = KhoaHoc::where('trangThai', 1)->orderBy('tenKhoaHoc')->get();
-        $caHocs     = CaHoc::where('trangThai', 1)->orderBy('tenCa')->get();
+        $lopHoc = LopHoc::with('coSo')->findOrFail($id);
+        $khoaHocs = KhoaHoc::where('trangThai', 1)->orderBy('tenKhoaHoc')->get();
+        $caHocs = CaHoc::where('trangThai', 1)->orderBy('tenCa')->get();
         $tinhThanhs = TinhThanh::orderBy('tenTinhThanh')->get();
-        $phongHocs  = PhongHoc::where('coSoId', $lopHoc->coSoId)->get();
-        $giaoViens  = TaiKhoan::with('hoSoNguoiDung')
+        $phongHocs = PhongHoc::where('coSoId', $lopHoc->coSoId)->get();
+        $giaoViens = TaiKhoan::with('hoSoNguoiDung')
             ->where('role', TaiKhoan::ROLE_GIAO_VIEN)
             ->where('trangThai', 1)
             ->get();
@@ -189,8 +204,14 @@ class LopHocController extends Controller
         $currentCoSo = $lopHoc->coSo;
 
         return view('admin.lop-hoc.edit', compact(
-            'lopHoc', 'khoaHocs', 'caHocs', 'tinhThanhs', 'phongHocs',
-            'giaoViens', 'hocPhis', 'currentCoSo'
+            'lopHoc',
+            'khoaHocs',
+            'caHocs',
+            'tinhThanhs',
+            'phongHocs',
+            'giaoViens',
+            'hocPhis',
+            'currentCoSo'
         ));
     }
 
@@ -200,19 +221,20 @@ class LopHocController extends Controller
         $lopHoc = LopHoc::findOrFail($id);
 
         $data = $request->validate([
-            'tenLopHoc'      => 'required|string|max:255',
-            'khoaHocId'      => 'required|exists:khoahoc,khoaHocId',
-            'coSoId'         => 'required|exists:cosodaotao,coSoId',
-            'caHocId'        => 'required|exists:cahoc,caHocId',
-            'taiKhoanId'     => 'nullable|exists:taikhoan,taiKhoanId',
-            'phongHocId'     => 'nullable|exists:phonghoc,phongHocId',
-            'ngayBatDau'     => 'required|date',
-            'ngayKetThuc'    => 'required|date|after:ngayBatDau',
-            'soBuoiDuKien'   => 'nullable|integer|min:1',
+            'tenLopHoc' => 'required|string|max:255',
+            'khoaHocId' => 'required|exists:khoahoc,khoaHocId',
+            'coSoId' => 'required|exists:cosodaotao,coSoId',
+            'caHocId' => 'required|exists:cahoc,caHocId',
+            'taiKhoanId' => 'nullable|exists:taikhoan,taiKhoanId',
+            'phongHocId' => 'nullable|exists:phonghoc,phongHocId',
+            'ngayBatDau' => 'required|date',
+            'ngayKetThuc' => 'required|date|after:ngayBatDau',
+            'soBuoiDuKien' => 'nullable|integer|min:1',
             'soHocVienToiDa' => 'nullable|integer|min:1',
-            'donGiaDay'      => 'nullable|numeric|min:0',
-            'lichHoc'        => 'nullable|string|max:20',
-            'trangThai'      => 'required|in:0,1,2,3,4',
+            'donGiaDay' => 'nullable|numeric|min:0',
+            'hocPhiId' => 'nullable|exists:hocphi,hocPhiId',
+            'lichHoc' => 'nullable|string|max:20',
+            'trangThai' => 'required|in:0,1,2,3,4',
         ]);
 
         // Kiểm tra sĩ số không vượt sức chứa phòng học
@@ -255,11 +277,11 @@ class LopHocController extends Controller
             ->where('trangThai', 1)
             ->get()
             ->map(fn($hp) => [
-                'hocPhiId'       => $hp->hocPhiId,
-                'soBuoi'         => $hp->soBuoi,
-                'donGia'         => $hp->donGia,
-                'tongHocPhi'     => $hp->tongHocPhi,
-                'label'          => 'Gói ' . $hp->soBuoi . ' buổi – ' . $hp->tongHocPhiFormat,
+                'hocPhiId' => $hp->hocPhiId,
+                'soBuoi' => $hp->soBuoi,
+                'donGia' => $hp->donGia,
+                'tongHocPhi' => $hp->tongHocPhi,
+                'label' => 'Gói ' . $hp->soBuoi . ' buổi – ' . $hp->tongHocPhiFormat,
             ]);
         return response()->json($hocPhis);
     }
@@ -283,7 +305,7 @@ class LopHocController extends Controller
             ->get()
             ->map(fn($gv) => [
                 'taiKhoanId' => $gv->taiKhoanId,
-                'hoTen'      => $gv->hoSoNguoiDung->hoTen ?? $gv->taiKhoan,
+                'hoTen' => $gv->hoSoNguoiDung->hoTen ?? $gv->taiKhoan,
             ]);
         return response()->json($giaoViens);
     }
@@ -291,13 +313,15 @@ class LopHocController extends Controller
     /** Tạo slug duy nhất */
     private function generateUniqueSlug(string $name, ?int $excludeId = null): string
     {
-        $slug      = Str::slug($name, '-');
+        $slug = Str::slug($name, '-');
         $candidate = $slug;
-        $counter   = 1;
+        $counter = 1;
         while (true) {
             $q = LopHoc::where('slug', $candidate);
-            if ($excludeId) $q->where('lopHocId', '!=', $excludeId);
-            if (!$q->exists()) break;
+            if ($excludeId)
+                $q->where('lopHocId', '!=', $excludeId);
+            if (!$q->exists())
+                break;
             $candidate = $slug . '-' . $counter++;
         }
         return $candidate;
