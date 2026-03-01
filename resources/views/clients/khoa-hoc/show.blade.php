@@ -189,7 +189,7 @@
                                             {{-- Course image --}}
                                             <div class="related-course-image">
                                                 @if ($relatedCourse->anhKhoaHoc)
-                                                    <img src="{{ asset('storage/courses/' . $relatedCourse->anhKhoaHoc) }}"
+                                                    <img src="{{ asset('storage/' . $relatedCourse->anhKhoaHoc) }}"
                                                         alt="{{ $relatedCourse->tenKhoaHoc }}">
                                                 @else
                                                     <img src="{{ asset('assets/images/course-placeholder.jpg') }}"
@@ -243,7 +243,7 @@
                         <div class="sidebar-card">
                             <div class="course-thumbnail-sidebar">
                                 @if ($course->anhKhoaHoc)
-                                    <img src="{{ asset('storage/courses/' . $course->anhKhoaHoc) }}"
+                                    <img src="{{ asset('storage/' . $course->anhKhoaHoc) }}"
                                         alt="{{ $course->tenKhoaHoc }}" class="img-fluid rounded-3">
                                 @else
                                     <img src="{{ asset('assets/images/course-placeholder.jpg') }}"

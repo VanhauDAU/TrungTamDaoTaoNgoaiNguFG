@@ -118,7 +118,10 @@
 
                                                                 $lop = $buoi->lopHoc;
                                                                 $khoaHoc = $lop->khoaHoc ?? null;
-                                                                $gv = $lop->taiKhoan->hoSoNguoiDung ?? null;
+                                                                // Ưu tiên GV của buổi học, fallback về GV của lớp
+                                                                $gv =
+                                                                    $buoi->taiKhoan->hoSoNguoiDung ??
+                                                                    ($lop->taiKhoan->hoSoNguoiDung ?? null);
                                                                 $phong = $buoi->phongHoc;
                                                                 $coSo = $lop->coSo ?? null;
                                                             @endphp
