@@ -14,7 +14,7 @@
     <div class="lh-page-header">
         <div class="lh-page-title">
             <i class="fas fa-file-alt me-2" style="color:#27c4b5"></i>Chi tiết liên hệ
-            <span>#{{ $lienHe->LienHeId }}</span>
+            <span>#{{ $lienHe->lienHeId }}</span>
         </div>
         <div>
             <a href="{{ route('admin.lien-he.index') }}" class="btn-back">
@@ -64,7 +64,7 @@
             <i class="fas fa-tasks" style="color: #4a5568"></i> Trạng thái xử lý
         </div>
 
-        <form action="{{ route('admin.lien-he.update', $lienHe->LienHeId) }}" method="POST">
+        <form action="{{ route('admin.lien-he.update', $lienHe->lienHeId) }}" method="POST">
             @csrf
             @method('PUT')
 
