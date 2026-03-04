@@ -6,6 +6,70 @@
 
 @section('stylesheet')
     <link rel="stylesheet" href="{{ asset('assets/admin/css/pages/lien-he/index.css') }}">
+    <style>
+        /* Bulk-action bar */
+        .lh-bulk-bar {
+            display: none;
+            align-items: center;
+            gap: 12px;
+            background: linear-gradient(135deg, #eff6ff, #f0f4f8);
+            border: 1.5px solid #93c5fd;
+            border-radius: 10px;
+            padding: 10px 18px;
+            margin-bottom: 16px;
+            font-size: 0.85rem;
+            color: #1e40af;
+            font-weight: 600;
+        }
+
+        .lh-bulk-bar.active {
+            display: flex;
+        }
+
+        .lh-bulk-bar .bulk-count {
+            background: #3b82f6;
+            color: #fff;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+        }
+
+        .btn-bulk-delete {
+            margin-left: auto;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 16px;
+            border-radius: 8px;
+            background: #dc2626;
+            color: #fff;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: background .18s;
+        }
+
+        .btn-bulk-delete:hover {
+            background: #b91c1c;
+        }
+
+        /* Checkbox style */
+        .lh-checkbox {
+            width: 17px;
+            height: 17px;
+            accent-color: #3b82f6;
+            cursor: pointer;
+        }
+
+        /* Inline status toggle */
+        .btn-toggle-status {
+            border: none;
+            background: none;
+            cursor: pointer;
+            padding: 0;
+        }
+    </style>
 @endsection
 
 @section('content')
@@ -16,6 +80,13 @@
             <i class="fas fa-envelope-open-text me-2" style="color:#27c4b5"></i>Danh sách liên hệ
             <span>{{ $lienHes->total() }} kết quả</span>
         </div>
+        <a href="{{ route('admin.lien-he.trash') }}" class="btn-filter btn-filter-reset" style="gap:8px;font-weight:600">
+            <i class="fas fa-trash-can" style="color:#dc2626"></i> Thùng rác
+            @if ($tongXoa > 0)
+                <span
+                    style="background:#dc2626;color:#fff;font-size:0.72rem;padding:2px 8px;border-radius:20px;font-weight:700">{{ $tongXoa }}</span>
+            @endif
+        </a>
     </div>
 
     {{-- ── Stats strip ────────────────────────────────────────────── --}}
@@ -61,7 +132,8 @@
 
         {{-- Sắp xếp --}}
         <select name="orderBy" onchange="this.form.submit()">
-            <option value="LienHeId" {{ request('orderBy', 'LienHeId') === 'LienHeId' ? 'selected' : '' }}>Mới nhất</option>
+            <option value="LienHeId" {{ request('orderBy', 'LienHeId') === 'LienHeId' ? 'selected' : '' }}>Mới nhất
+            </option>
             <option value="created_at" {{ request('orderBy') === 'created_at' ? 'selected' : '' }}>Ngày gửi (cũ - mới)
             </option>
             <option value="hoTen" {{ request('orderBy') === 'hoTen' ? 'selected' : '' }}>Người gửi A-Z</option>
@@ -76,6 +148,15 @@
             <i class="fas fa-times"></i> Đặt lại
         </a>
     </form>
+
+    {{-- ── Bulk action bar (hiện khi chọn checkbox) ────────────── --}}
+    <div class="lh-bulk-bar" id="bulk-bar">
+        <i class="fas fa-check-double"></i>
+        Đã chọn <span class="bulk-count" id="bulk-count">0</span> liên hệ
+        <button type="button" class="btn-bulk-delete" onclick="confirmBulkDelete()">
+            <i class="fas fa-trash"></i> Xóa đã chọn
+        </button>
+    </div>
 
     {{-- ── Table card ─────────────────────────────────────────────── --}}
     <div class="lh-card">
@@ -102,6 +183,9 @@
                 <table class="lh-table">
                     <thead>
                         <tr>
+                            <th style="width:36px">
+                                <input type="checkbox" class="lh-checkbox" id="check-all" title="Chọn tất cả">
+                            </th>
                             <th style="width:44px">#</th>
                             <th>
                                 <a class="sort-link"
@@ -134,6 +218,10 @@
                     <tbody>
                         @foreach ($lienHes as $lh)
                             <tr>
+                                <td>
+                                    <input type="checkbox" class="lh-checkbox row-check" value="{{ $lh->lienHeId }}">
+                                </td>
+
                                 <td style="color:#8899a6;font-size:0.78rem">
                                     {{ $lienHes->firstItem() + $loop->index }}
                                 </td>
@@ -161,25 +249,29 @@
                                 </td>
 
                                 <td>
-                                    @if ($lh->trangThai == 1)
-                                        <span class="badge-active">
-                                            <i class="fas fa-check-circle" style="font-size:.5em"></i> Đã xử lý
-                                        </span>
-                                    @else
-                                        <span class="badge-inactive">
-                                            <i class="fas fa-hourglass-half" style="font-size:.5em"></i> Chưa xử lý
-                                        </span>
-                                    @endif
+                                    <button type="button" class="btn-toggle-status"
+                                        onclick="toggleStatus({{ $lh->lienHeId }}, {{ $lh->trangThai }})"
+                                        title="Click để chuyển trạng thái">
+                                        @if ($lh->trangThai == 1)
+                                            <span class="badge-active">
+                                                <i class="fas fa-check-circle" style="font-size:.5em"></i> Đã xử lý
+                                            </span>
+                                        @else
+                                            <span class="badge-inactive">
+                                                <i class="fas fa-hourglass-half" style="font-size:.5em"></i> Chưa xử lý
+                                            </span>
+                                        @endif
+                                    </button>
                                 </td>
 
                                 <td>
                                     <div class="lh-actions">
-                                        {{-- <a href="{{ route('admin.lien-he.edit', $lh->LienHeId) }}"
+                                        <a href="{{ route('admin.lien-he.edit', $lh->lienHeId) }}"
                                             class="btn-action btn-action-edit" title="Chi tiết / Cập nhật">
                                             <i class="fas fa-eye"></i>
-                                        </a> --}}
+                                        </a>
                                         <button type="button" class="btn-action btn-action-del" title="Xóa"
-                                            onclick="confirmDelete({{ $lh->LienHeId }}, '{{ addslashes($lh->hoTen) }}')">
+                                            onclick="confirmDelete({{ $lh->lienHeId }}, '{{ addslashes($lh->hoTen) }}')">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </div>
@@ -202,20 +294,33 @@
         @endif
     </div>
 
-@endsection
+    {{-- Hidden forms INSIDE @section('content') --}}
+    <form id="delete-form" method="POST" style="display:none">
+        @csrf
+        @method('DELETE')
+    </form>
 
-{{-- Hidden DELETE form --}}
-<form id="delete-form" method="POST" style="display:none">
-    @csrf
-    @method('DELETE')
-</form>
+    <form id="bulk-delete-form" method="POST" action="{{ route('admin.lien-he.bulk-destroy') }}" style="display:none">
+        @csrf
+        @method('DELETE')
+        <input type="hidden" name="ids" id="bulk-ids">
+    </form>
+
+    <form id="toggle-status-form" method="POST" style="display:none">
+        @csrf
+        @method('PUT')
+        <input type="hidden" name="trangThai" id="toggle-trangThai">
+    </form>
+
+@endsection
 
 @section('script')
     <script>
+        // ── Single delete ───────────────────────────────────────
         function confirmDelete(id, name) {
             Swal.fire({
                 title: 'Xóa liên hệ?',
-                html: `Bạn có chắc muốn xóa liên hệ từ <strong>${name}</strong>?`,
+                html: `Liên hệ từ <strong>${name}</strong> sẽ được chuyển vào thùng rác.<br><small style="color:#8899a6">Bạn có thể khôi phục bất kỳ lúc nào.</small>`,
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonText: '<i class="fas fa-trash me-1"></i> Xóa',
@@ -229,6 +334,77 @@
                     const form = document.getElementById('delete-form');
                     form.action = `/admin/lien-he/${id}`;
                     form.submit();
+                }
+            });
+        }
+
+        // ── Inline toggle status ────────────────────────────────
+        function toggleStatus(id, current) {
+            const newStatus = current == 1 ? 0 : 1;
+            const label = newStatus == 1 ? 'Đã xử lý' : 'Chưa xử lý';
+            Swal.fire({
+                title: 'Chuyển trạng thái?',
+                html: `Chuyển trạng thái liên hệ sang <strong>${label}</strong>?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: '<i class="fas fa-check me-1"></i> Xác nhận',
+                cancelButtonText: 'Hủy',
+                confirmButtonColor: '#059669',
+                cancelButtonColor: '#6c757d',
+                reverseButtons: true,
+                focusCancel: true,
+            }).then(result => {
+                if (result.isConfirmed) {
+                    const form = document.getElementById('toggle-status-form');
+                    form.action = `/admin/lien-he/${id}`;
+                    document.getElementById('toggle-trangThai').value = newStatus;
+                    form.submit();
+                }
+            });
+        }
+
+        // ── Checkbox / Bulk delete ──────────────────────────────
+        const checkAll = document.getElementById('check-all');
+        const rowChecks = document.querySelectorAll('.row-check');
+        const bulkBar = document.getElementById('bulk-bar');
+        const bulkCount = document.getElementById('bulk-count');
+
+        function updateBulkBar() {
+            const checked = document.querySelectorAll('.row-check:checked');
+            bulkCount.textContent = checked.length;
+            bulkBar.classList.toggle('active', checked.length > 0);
+        }
+
+        checkAll?.addEventListener('change', function() {
+            rowChecks.forEach(cb => cb.checked = this.checked);
+            updateBulkBar();
+        });
+
+        rowChecks.forEach(cb => cb.addEventListener('change', function() {
+            checkAll.checked = document.querySelectorAll('.row-check:checked').length === rowChecks.length;
+            updateBulkBar();
+        }));
+
+        function confirmBulkDelete() {
+            const checked = document.querySelectorAll('.row-check:checked');
+            const ids = Array.from(checked).map(cb => cb.value);
+            if (ids.length === 0) return;
+
+            Swal.fire({
+                title: `Xóa ${ids.length} liên hệ?`,
+                html: `<strong>${ids.length}</strong> liên hệ đã chọn sẽ được chuyển vào thùng rác.<br><small style="color:#8899a6">Bạn có thể khôi phục bất kỳ lúc nào.</small>`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: '<i class="fas fa-trash me-1"></i> Xóa tất cả',
+                cancelButtonText: 'Hủy',
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6c757d',
+                reverseButtons: true,
+                focusCancel: true,
+            }).then(result => {
+                if (result.isConfirmed) {
+                    document.getElementById('bulk-ids').value = ids.join(',');
+                    document.getElementById('bulk-delete-form').submit();
                 }
             });
         }
