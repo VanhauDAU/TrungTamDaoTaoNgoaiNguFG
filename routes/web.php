@@ -18,13 +18,14 @@ use App\Http\Controllers\Admin\Facility\PhongHocController;
 use App\Http\Controllers\Admin\KhoaHoc\KhoaHocController as AdminKhoaHocController;
 use App\Http\Controllers\Admin\KhoaHoc\LopHocController as AdminLopHocController;
 use App\Http\Controllers\Admin\KhoaHoc\BuoiHocController as AdminBuoiHocController;
+use App\Http\Controllers\Admin\KhoaHoc\CaHocController as AdminCaHocController;
 use App\Http\Controllers\Admin\KhoaHoc\HocPhiController as AdminHocPhiController;
 use App\Http\Controllers\Admin\KhoaHoc\DanhMucKhoaHocController as AdminDanhMucKhoaHocController;
 use App\Http\Controllers\Admin\BaiViet\BaiVietController as AdminBaiVietController;
 use App\Http\Controllers\Admin\BaiViet\DanhMucBaiVietController as AdminDanhMucBaiVietController;
 use App\Http\Controllers\Admin\BaiViet\TagController as AdminTagController;
 use App\Http\Controllers\Admin\ThongBao\ThongBaoController as AdminThongBaoController;
-use App\Http\Controllers\Admin\Finance\HoaDonController as AdminHoaDonController;
+use App\Http\Controllers\Admin\TaiChinh\HoaDonController as AdminHoaDonController;
 use App\Http\Controllers\Client\ClientThongBaoController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
@@ -103,6 +104,7 @@ Route::prefix('/')->name('home.')->group(function () {
         Route::patch('/{id}/da-doc', [ClientThongBaoController::class, 'markRead'])->name('mark-read');
         Route::patch('/da-doc-tat-ca', [ClientThongBaoController::class, 'markAllRead'])->name('mark-all-read');
     });
+
 });
 
 // ─── ADMIN ROUTES ────────────────────────────────────────────────────────────
@@ -239,6 +241,15 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
         Route::put('/{id}', [AdminBuoiHocController::class, 'update'])->name('update');
         Route::delete('/{id}', [AdminBuoiHocController::class, 'destroy'])->name('destroy');
         Route::post('/tu-dong-tao/{lopHocId}', [AdminBuoiHocController::class, 'autoGenerate'])->name('auto-generate');
+    });
+
+    // ── Ca Học ────────────────────────────────────────────────────────────
+    Route::prefix('ca-hoc')->name('ca-hoc.')->group(function () {
+        Route::get('/', [AdminCaHocController::class, 'index'])->name('index');
+        Route::post('/', [AdminCaHocController::class, 'store'])->name('store');
+        Route::put('/{id}', [AdminCaHocController::class, 'update'])->name('update');
+        Route::delete('/{id}', [AdminCaHocController::class, 'destroy'])->name('destroy');
+        Route::patch('/{id}/toggle-status', [AdminCaHocController::class, 'toggleStatus'])->name('toggle-status');
     });
 
     // ── Học Phí (AJAX) ────────────────────────────────────────────────────────

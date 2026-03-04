@@ -13,6 +13,7 @@ class CaHoc extends Model
         'tenCa',
         'gioBatDau',
         'gioKetThuc',
+        'moTa',
         'trangThai'
     ];
 
