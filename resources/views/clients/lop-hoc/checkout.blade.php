@@ -255,9 +255,17 @@
                                     </ul>
                                 </div>
                             @endif
-                            <button type="submit" class="btn btn-confirm mt-4">
-                                XÁC NHẬN & ĐĂNG KÝ <i class="fas fa-arrow-right ms-2"></i>
-                            </button>
+                            @if ($class->hocPhi && $class->hocPhi->tongHocPhi > 0)
+                                <button type="submit" class="btn btn-confirm mt-4">
+                                    XÁC NHẬN & ĐĂNG KÝ <i class="fas fa-arrow-right ms-2"></i>
+                                </button>
+                            @else
+                                <div class="alert alert-warning mt-4 mb-0 text-center">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>
+                                    Lớp học chưa có thông tin học phí.<br>
+                                    <small>Vui lòng liên hệ trung tâm để được tư vấn.</small>
+                                </div>
+                            @endif
                             <div class="text-center mt-3">
                                 <small class="text-muted text-center d-block">Bằng việc xác nhận, bạn đồng ý với <a
                                         href="#">quy định đăng ký</a> của trung tâm.</small>
@@ -273,7 +281,7 @@
         // Active class for radio selection
         const options = document.querySelectorAll('.payment-option');
         options.forEach(option => {
-            option.addEventListener('click', function() {
+            option.addEventListener('click', function () {
                 // Remove active from all
                 options.forEach(opt => opt.classList.remove('active'));
                 // Add active to current
@@ -292,7 +300,7 @@
         const submitBtn = checkoutForm.querySelector('button[type="submit"]');
         const originalBtnText = submitBtn.innerHTML;
 
-        checkoutForm.addEventListener('submit', function(e) {
+        checkoutForm.addEventListener('submit', function (e) {
             // Disable button and show loading
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Đang xử lý...';
@@ -302,7 +310,7 @@
         });
 
         // Re-enable button if there are validation errors (after page reload)
-        window.addEventListener('load', function() {
+        window.addEventListener('load', function () {
             if (document.querySelector('.alert-danger')) {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalBtnText;

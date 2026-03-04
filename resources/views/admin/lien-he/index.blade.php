@@ -175,6 +175,7 @@
         <button type="button" class="btn-bulk-status" onclick="confirmBulkStatus()">
             <i class="fas fa-arrows-rotate"></i> Chuyển trạng thái
         </button>
+
         <button type="button" class="btn-bulk-delete" onclick="confirmBulkDelete()">
             <i class="fas fa-trash"></i> Xóa đã chọn
         </button>
@@ -391,7 +392,6 @@
                 }
             });
         }
-
         // ── Bulk status change ──────────────────────────────────
         function confirmBulkStatus() {
             const checked = document.querySelectorAll('.row-check:checked');

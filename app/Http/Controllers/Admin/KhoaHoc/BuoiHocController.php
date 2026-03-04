@@ -33,7 +33,7 @@ class BuoiHocController extends Controller
             'phongHocId'  => 'nullable|exists:phonghoc,phongHocId',
             'taiKhoanId'  => 'nullable|exists:taikhoan,taiKhoanId',
             'ghiChu'      => 'nullable|string',
-            'trangThai'   => 'nullable|in:0,1,2',
+            'trangThai'   => 'nullable|in:0,1,2,3,4',
         ], [
             'lopHocId.required'   => 'Vui lòng chọn lớp học.',
             'ngayHoc.required'    => 'Vui lòng chọn ngày học.',
@@ -63,15 +63,16 @@ class BuoiHocController extends Controller
 
         $data = $request->validate([
             'tenBuoiHoc'   => 'nullable|string|max:255',
-            'ngayHoc'      => 'required|date',
-            'caHocId'      => 'required|exists:cahoc,caHocId',
+            'ngayHoc'      => 'sometimes|required|date',
+            'caHocId'      => 'sometimes|required|exists:cahoc,caHocId',
             'phongHocId'   => 'nullable|exists:phonghoc,phongHocId',
             'taiKhoanId'   => 'nullable|exists:taikhoan,taiKhoanId',
             'ghiChu'       => 'nullable|string',
             'daHoanThanh'  => 'nullable|in:0,1',
             'daDiemDanh'   => 'nullable|in:0,1',
-            'trangThai'    => 'nullable|in:0,1,2',
+            'trangThai'    => 'nullable|in:0,1,2,3,4',
         ]);
+
 
         $buoiHoc->update($data);
 

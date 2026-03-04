@@ -24,6 +24,10 @@ class BuoiHoc extends Model
         'trangThai'
     ];
 
+    protected $casts = [
+        'trangThai' => 'integer',
+    ];
+
     public function lopHoc()
     {
         return $this->belongsTo(LopHoc::class, 'lopHocId', 'lopHocId');
@@ -42,5 +46,11 @@ class BuoiHoc extends Model
     public function taiKhoan()
     {
         return $this->belongsTo(TaiKhoan::class, 'taiKhoanId', 'taiKhoanId');
+    }
+
+    /** Danh sách điểm danh của từng học viên trong buổi học này */
+    public function diemDanhs()
+    {
+        return $this->hasMany(DiemDanh::class, 'buoiHocId', 'buoiHocId');
     }
 }

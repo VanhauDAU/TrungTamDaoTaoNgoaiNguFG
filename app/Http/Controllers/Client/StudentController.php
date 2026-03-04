@@ -170,4 +170,82 @@ class StudentController extends Controller
 
         return view('clients.hoc-vien.classes.index', compact('classes'));
     }
+
+    /** Trang lịch học theo tuần */
+    public function schedule(Request $request)
+    {
+        // Xác định tuần hiện tại hoặc tuần do user chọn
+        $baseDate = $request->get('tuan')
+            ? \Carbon\Carbon::parse($request->get('tuan'))
+            : \Carbon\Carbon::now();
+
+        $startOfWeek = $baseDate->copy()->startOfWeek(\Carbon\Carbon::MONDAY);
+        $endOfWeek   = $baseDate->copy()->endOfWeek(\Carbon\Carbon::SUNDAY);
+
+        $userId = auth()->user()->taiKhoanId;
+
+        // Lấy tất cả ID lớp học mà học viên đã đăng ký (trangThai 1=chờ, 2=xác nhận)
+        $lopHocIds = \App\Models\Education\DangKyLopHoc::where('taiKhoanId', $userId)
+            ->whereIn('trangThai', [1, 2])
+            ->pluck('lopHocId');
+
+        // Lấy buổi học trong tuần được chọn
+        $buoiHocs = \App\Models\Education\BuoiHoc::whereIn('lopHocId', $lopHocIds)
+            ->whereBetween('ngayHoc', [$startOfWeek->toDateString(), $endOfWeek->toDateString()])
+            ->with([
+                'caHoc',
+                'phongHoc',
+                'lopHoc.khoaHoc',
+                'lopHoc.taiKhoan.hoSoNguoiDung',
+                'lopHoc.coSo',
+            ])
+            ->orderBy('ngayHoc')
+            ->orderBy('caHocId')
+            ->get();
+
+        // Lấy tất cả ca học đang hoạt động (trangThai = 1)
+        $caHocs = \App\Models\Education\CaHoc::where('trangThai', 1)
+            ->orderBy('gioBatDau')
+            ->get();
+
+        // Nhóm buổi học theo: thu (1=Thứ2,...,7=Chủ nhật) -> caHocId -> [buoiHoc,...]
+        // Carbon dayOfWeek: 0=Sunday, 1=Monday,...,6=Saturday
+        $schedule = [];
+        foreach ($buoiHocs as $buoi) {
+            $ngay    = \Carbon\Carbon::parse($buoi->ngayHoc);
+            // Chuyển sang số thứ: Thứ2=2, Thứ3=3,..., CN=8
+            $thu = $ngay->dayOfWeek === 0 ? 8 : $ngay->dayOfWeek + 1;
+            $caId = $buoi->caHocId;
+            if (!isset($schedule[$thu])) {
+                $schedule[$thu] = [];
+            }
+            if (!isset($schedule[$thu][$caId])) {
+                $schedule[$thu][$caId] = [];
+            }
+            $schedule[$thu][$caId][] = $buoi;
+        }
+
+        // Danh sách 7 ngày trong tuần (Thứ 2 → Chủ nhật)
+        $weekDays = [];
+        for ($i = 0; $i < 7; $i++) {
+            $day = $startOfWeek->copy()->addDays($i);
+            // thu: Thứ2=2,...,CN=8
+            $thu = $i === 6 ? 8 : $i + 2;
+            $weekDays[] = [
+                'date' => $day,
+                'thu'  => $thu,
+                'label' => $i === 6 ? 'Chủ nhật' : 'Thứ ' . ($i + 2),
+            ];
+        }
+
+        return view('clients.hoc-vien.lich-hoc.index', compact(
+            'schedule',
+            'caHocs',
+            'weekDays',
+            'startOfWeek',
+            'endOfWeek',
+            'baseDate'
+        ));
+    }
 }
+

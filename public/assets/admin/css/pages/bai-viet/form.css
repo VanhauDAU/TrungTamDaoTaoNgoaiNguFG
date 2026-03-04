@@ -1,0 +1,502 @@
+/* =========================================================
+   Bài Viết – Form Page CSS (Create / Edit)
+   ========================================================= */
+
+:root {
+    --bf-primary: #1d4ed8;
+    --bf-primary2: #3b82f6;
+    --bf-dark: #1e3a5f;
+    --bf-accent: #eff6ff;
+    --bf-border: #e2e8f0;
+    --bf-text: #1e293b;
+    --bf-muted: #64748b;
+    --bf-shadow: 0 1px 3px rgba(0, 0, 0, .08), 0 4px 16px rgba(29, 78, 216, .06);
+    --bf-radius: 12px;
+}
+
+/* ── Page header ──────────────────────────────────────────── */
+.bf-page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.bf-page-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--bf-dark);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.bf-breadcrumb {
+    font-size: .82rem;
+    color: var(--bf-muted);
+}
+
+.bf-breadcrumb a {
+    color: var(--bf-primary);
+    text-decoration: none;
+}
+
+.bf-breadcrumb a:hover {
+    text-decoration: underline;
+}
+
+/* ── Tab nav ──────────────────────────────────────────────── */
+.bf-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid var(--bf-border);
+    margin-bottom: 24px;
+    overflow-x: auto;
+}
+
+.bf-tab-btn {
+    padding: 10px 22px;
+    font-size: .88rem;
+    font-weight: 600;
+    color: var(--bf-muted);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    transition: color .2s;
+    white-space: nowrap;
+}
+
+.bf-tab-btn:hover {
+    color: var(--bf-primary);
+}
+
+.bf-tab-btn.active {
+    color: var(--bf-primary);
+    border-bottom-color: var(--bf-primary);
+}
+
+.bf-tab-panel {
+    display: none;
+}
+
+.bf-tab-panel.active {
+    display: block;
+}
+
+/* ── Card ─────────────────────────────────────────────────── */
+.bf-card {
+    background: #fff;
+    border-radius: var(--bf-radius);
+    border: 1px solid var(--bf-border);
+    box-shadow: var(--bf-shadow);
+    padding: 24px;
+    margin-bottom: 20px;
+}
+
+.bf-card-title {
+    font-size: .95rem;
+    font-weight: 700;
+    color: var(--bf-text);
+    margin-bottom: 18px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--bf-border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.bf-card-title i {
+    color: var(--bf-primary);
+}
+
+/* ── Form groups ─────────────────────────────────────────── */
+.bf-form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.bf-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.bf-form-group label {
+    font-size: .82rem;
+    font-weight: 600;
+    color: var(--bf-text);
+}
+
+.bf-form-group label .req {
+    color: #dc2626;
+    margin-left: 2px;
+}
+
+.bf-form-group input,
+.bf-form-group select,
+.bf-form-group textarea {
+    padding: 9px 12px;
+    border: 1px solid var(--bf-border);
+    border-radius: 7px;
+    font-size: .875rem;
+    color: var(--bf-text);
+    outline: none;
+    transition: border-color .2s, box-shadow .2s;
+    background: #fff;
+}
+
+.bf-form-group input:focus,
+.bf-form-group select:focus,
+.bf-form-group textarea:focus {
+    border-color: var(--bf-primary2);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, .12);
+}
+
+.bf-form-group textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.bf-form-group .form-hint {
+    font-size: .75rem;
+    color: var(--bf-muted);
+    margin-top: 2px;
+}
+
+.bf-form-group .is-invalid {
+    border-color: #dc2626 !important;
+}
+
+.bf-form-group .invalid-feedback {
+    color: #dc2626;
+    font-size: .78rem;
+}
+
+/* ── Image upload ─────────────────────────────────────────── */
+.bf-img-upload {
+    border: 2px dashed var(--bf-border);
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .2s, background .2s;
+    position: relative;
+}
+
+.bf-img-upload:hover {
+    border-color: var(--bf-primary2);
+    background: var(--bf-accent);
+}
+
+.bf-img-upload input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+}
+
+.bf-img-preview {
+    width: 100%;
+    max-height: 220px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-top: 10px;
+    display: none;
+}
+
+.bf-img-placeholder {
+    color: var(--bf-muted);
+    font-size: .85rem;
+}
+
+.bf-img-placeholder i {
+    font-size: 2rem;
+    display: block;
+    margin-bottom: 8px;
+    opacity: .4;
+}
+
+/* ── Category checkboxes ──────────────────────────────────── */
+.bf-category-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.bf-category-grid label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border: 1px solid var(--bf-border);
+    border-radius: 7px;
+    cursor: pointer;
+    font-size: .84rem;
+    font-weight: 500;
+    color: var(--bf-text);
+    transition: all .15s;
+    user-select: none;
+}
+
+.bf-category-grid label:hover {
+    border-color: var(--bf-primary2);
+    background: var(--bf-accent);
+}
+
+.bf-category-grid input[type="checkbox"] {
+    accent-color: var(--bf-primary);
+    width: 16px;
+    height: 16px;
+}
+
+.bf-category-grid input[type="checkbox"]:checked+span {
+    color: var(--bf-primary);
+    font-weight: 600;
+}
+
+/* ── Tag input ────────────────────────────────────────────── */
+.bf-tag-input-wrap {
+    border: 1px solid var(--bf-border);
+    border-radius: 7px;
+    padding: 6px 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    min-height: 40px;
+    transition: border-color .2s;
+    cursor: text;
+}
+
+.bf-tag-input-wrap:focus-within {
+    border-color: var(--bf-primary2);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, .12);
+}
+
+.bf-tag-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    background: var(--bf-accent);
+    border: 1px solid #dbeafe;
+    border-radius: 14px;
+    font-size: .8rem;
+    font-weight: 500;
+    color: var(--bf-primary);
+}
+
+.bf-tag-chip .remove-tag {
+    cursor: pointer;
+    font-size: .7rem;
+    margin-left: 2px;
+    opacity: .6;
+    transition: opacity .15s;
+}
+
+.bf-tag-chip .remove-tag:hover {
+    opacity: 1;
+    color: #dc2626;
+}
+
+.bf-tag-input {
+    border: none;
+    outline: none;
+    font-size: .85rem;
+    flex: 1;
+    min-width: 100px;
+    padding: 3px 0;
+    background: transparent;
+}
+
+/* ── Tag autocomplete dropdown ───────────────────────────── */
+.bf-tag-suggest {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 200;
+    background: #fff;
+    border: 1px solid var(--bf-border);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .12);
+    margin-top: 4px;
+    max-height: 240px;
+    overflow-y: auto;
+}
+
+.bf-tag-suggest-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 14px;
+    font-size: .84rem;
+    color: var(--bf-text);
+    cursor: pointer;
+    transition: background .1s;
+}
+
+.bf-tag-suggest-item:first-child {
+    border-radius: 8px 8px 0 0;
+}
+
+.bf-tag-suggest-item:last-child {
+    border-radius: 0 0 8px 8px;
+}
+
+.bf-tag-suggest-item:hover {
+    background: var(--bf-accent);
+}
+
+.bf-tag-suggest-item span {
+    font-weight: 500;
+}
+
+/* ── Toggle switch ───────────────────────────────────────── */
+.bf-toggle-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.bf-toggle {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    flex-shrink: 0;
+}
+
+.bf-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.bf-toggle-slider {
+    position: absolute;
+    inset: 0;
+    background: #cbd5e1;
+    border-radius: 24px;
+    cursor: pointer;
+    transition: background .2s;
+}
+
+.bf-toggle-slider::before {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    left: 3px;
+    top: 3px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform .2s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .2);
+}
+
+.bf-toggle input:checked~.bf-toggle-slider {
+    background: var(--bf-primary);
+}
+
+.bf-toggle input:checked~.bf-toggle-slider::before {
+    transform: translateX(20px);
+}
+
+.bf-toggle-label {
+    font-size: .875rem;
+    color: var(--bf-text);
+}
+
+/* ── Action buttons ───────────────────────────────────────── */
+.bf-action-bar {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    padding-top: 8px;
+}
+
+.bf-btn {
+    padding: 10px 22px;
+    border-radius: 8px;
+    font-size: .875rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    transition: all .2s;
+}
+
+.bf-btn-primary {
+    background: linear-gradient(135deg, var(--bf-primary), var(--bf-primary2));
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(29, 78, 216, .3);
+}
+
+.bf-btn-primary:hover {
+    background: linear-gradient(135deg, var(--bf-dark), var(--bf-primary));
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+.bf-btn-secondary {
+    background: #f1f5f9;
+    color: var(--bf-muted);
+}
+
+.bf-btn-secondary:hover {
+    background: #e2e8f0;
+    color: var(--bf-text);
+}
+
+/* ── Alert messages ───────────────────────────────────────── */
+.bf-alert-success {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #16a34a;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: .88rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.bf-alert-error {
+    background: #fff1f2;
+    border: 1px solid #fecdd3;
+    color: #dc2626;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: .88rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+/* ── TinyMCE wrapper ──────────────────────────────────────── */
+.bf-editor-wrap {
+    border: 1px solid var(--bf-border);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.bf-editor-wrap .tox-tinymce {
+    border: none !important;
+}

@@ -53,14 +53,17 @@
                         <ul class="cate_menu">
                             <li class="{{ !request('category') ? 'active' : '' }}">
                                 <a
-                                    href="{{ route('home.blog.index', array_filter(['s' => request('s'), 'sort' => request('sort')])) }}">Tất
-                                    cả</a>
+                                    href="{{ route('home.blog.index', array_filter(['s' => request('s'), 'sort' => request('sort')])) }}">
+                                    Tất cả
+                                    <span class="cate-count">{{ $totalPosts }}</span>
+                                </a>
                             </li>
                             @foreach ($categories as $cate)
                                 <li class="{{ request('category') == $cate->slug ? 'active' : '' }}">
                                     <a
                                         href="{{ route('home.blog.index', array_filter(['category' => $cate->slug, 's' => request('s'), 'sort' => request('sort')])) }}">
                                         {{ $cate->tenDanhMuc }}
+                                        <span class="cate-count">{{ $cate->bai_viets_count }}</span>
                                     </a>
                                 </li>
                             @endforeach
@@ -124,17 +127,20 @@
                                             fetchpriority="high"> </a>
                                 </figure>
                                 <div class="meta_post">
-                                    <div class="row align-items-center"> {{-- Thêm align-items-center để căn hàng chuẩn --}}
+                                    <div class="row align-items-center">
                                         <div class="col">
                                             <ul class="post_tag fs-12">
-                                                <li>
-                                                    <a href="{{ route('home.blog.index', ['category' => $cate->slug]) }}">
-                                                        {{ $cate->tenDanhMuc }}
-                                                    </a>
-                                                </li>
+                                                @foreach ($blog->danhMucs->take(2) as $dm)
+                                                    <li>
+                                                        <a href="{{ route('home.blog.index', ['category' => $dm->slug]) }}">
+                                                            {{ $dm->tenDanhMuc }}
+                                                        </a>
+                                                    </li>
+                                                @endforeach
                                             </ul>
                                         </div>
-                                        <div class="col-auto d-flex align-items-center"> {{-- Sử dụng flex để các icon thẳng hàng --}}
+                                        <div class="col-auto d-flex align-items-center"> {{-- Sử dụng flex để các icon thẳng
+                                            hàng --}}
                                             <div class="post_date fs-12 me-3">
                                                 <i class="far fa-calendar-alt me-1"></i>
                                                 {{ $blog->created_at->format('d/m/Y') }}
@@ -169,7 +175,7 @@
 @endsection
 @section('script')
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
+        document.addEventListener("DOMContentLoaded", function () {
             // 1. Hiệu ứng vẽ nét mực tiêu đề chính
             const mainTitlePath = document.querySelector('.title-style-1');
             if (mainTitlePath) {

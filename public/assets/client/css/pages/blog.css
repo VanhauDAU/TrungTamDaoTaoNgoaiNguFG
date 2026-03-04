@@ -123,24 +123,7 @@
     /* Ẩn thanh cuộn Chrome/Safari */
 }
 
-.cate_menu li a {
-    display: inline-block;
-    padding: 8px 20px;
-    background: white;
-    color: #10454F;
-    border-radius: 50px;
-    text-decoration: none;
-    font-weight: 600;
-    font-size: 14px;
-    transition: 0.3s;
-    border: 1px solid transparent;
-}
-
-.cate_menu li.active a,
-.cate_menu li a:hover {
-    background: #10454F;
-    color: #fff !important;
-}
+/* (cate_menu link styles are below, near line 340+) */
 
 /* --- TÌM KIẾM --- */
 .search_post .input-group {
@@ -310,51 +293,85 @@
     margin: 0 !important;
 }
 
-/* --- THANH DANH MỤC (Cập nhật cuộn ngang) --- */
+/* --- THANH DANH MỤC (SCROLL NGANG) --- */
 .cate_menu {
+    list-style: none;
+    padding: 12px 0;
+    margin: 0;
     display: flex;
-    gap: 12px;
+    gap: 10px;
     overflow-x: auto;
     white-space: nowrap;
-    padding-bottom: 12px;
-    /* Tạo khoảng trống để không đè lên thanh cuộn */
-
-    /* Hiện thanh cuộn cho Firefox và Edge */
-    -ms-overflow-style: auto;
-    scrollbar-width: thin;
-    scrollbar-color: #10454F #f1f3f5;
-    /* Màu con trượt và màu nền */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 }
 
-/* --- STYLE THANH CUỘN CHO CHROME/SAFARI --- */
 .cate_menu::-webkit-scrollbar {
-    display: block;
-    /* Hiện lại thanh cuộn */
-    height: 5px;
-    /* Độ dày thanh cuộn ngang */
+    display: none;
 }
 
-.cate_menu::-webkit-scrollbar-track {
-    background: #f1f3f5;
-    /* Màu nền của thanh cuộn */
-    border-radius: 10px;
-}
-
-.cate_menu::-webkit-scrollbar-thumb {
-    background: #10454F;
-    /* Màu Navy thương hiệu của Five Genius */
-    border-radius: 10px;
-}
-
-.cate_menu::-webkit-scrollbar-thumb:hover {
-    background: #E31E24;
-    /* Chuyển sang đỏ khi người dùng rà chuột vào */
-}
-
-/* Đảm bảo item không bị co lại khi cuộn */
 .cate_menu li {
     flex-shrink: 0;
 }
+
+.cate_menu li a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 22px;
+    background: #fff;
+    color: #10454F;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    border: 1.5px solid #e8ecef;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.cate_menu li a:hover {
+    background: #f0faf9;
+    border-color: #27C4B5;
+    color: #10454F;
+    box-shadow: 0 4px 14px rgba(39, 196, 181, 0.15);
+    transform: translateY(-1px);
+}
+
+.cate_menu li.active a {
+    background: #10454F;
+    color: #fff !important;
+    border-color: #10454F;
+    box-shadow: 0 4px 16px rgba(16, 69, 79, 0.3);
+}
+
+/* Count badge */
+.cate-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    background: #f0f3f5;
+    color: #636e72;
+    line-height: 1;
+    transition: all 0.3s ease;
+}
+
+.cate_menu li a:hover .cate-count {
+    background: rgba(39, 196, 181, 0.2);
+    color: #10454F;
+}
+
+.cate_menu li.active a .cate-count {
+    background: rgba(255, 255, 255, 0.25);
+    color: #fff;
+}
+
 
 /* Style cho meta info (Ngày và Lượt xem) */
 .post_date,
