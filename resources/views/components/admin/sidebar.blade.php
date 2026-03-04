@@ -30,7 +30,7 @@
         @if ($hasDaoTao)
             <div class="sidebar-section">Academic Management</div>
             <div
-                class="nav-group {{ Request::is('admin/khoa-hoc*', 'admin/lop-hoc*', 'admin/lich-hoc*', 'admin/ky-thi*') ? 'open' : '' }}">
+                class="nav-group {{ Request::is('admin/khoa-hoc*', 'admin/lop-hoc*', 'admin/ca-hoc*', 'admin/lich-hoc*', 'admin/ky-thi*') ? 'open' : '' }}">
                 <div class="nav-group-header">
                     <i class="fas fa-graduation-cap"></i> <span>Quản lý đào tạo</span>
                     <i class="fas fa-chevron-right"></i>
@@ -51,6 +51,10 @@
                             class="nav-sub-item {{ Request::is('admin/lop-hoc*') ? 'active' : '' }}">
                             Lớp Học
                         </a>
+                        <a href="{{ route('admin.ca-hoc.index') }}"
+                            class="nav-sub-item {{ Request::is('admin/ca-hoc*') ? 'active' : '' }}">
+                            Ca Học
+                        </a>
                         <a href="#" class="nav-sub-item {{ Request::is('admin/lich-hoc*') ? 'active' : '' }}">
                             Lịch Học & Điểm Danh
                         </a>
@@ -68,7 +72,8 @@
         @endphp
         @if ($hasHocVien)
             <div class="sidebar-section">Student Management</div>
-            <div class="nav-group {{ Request::is('admin/hoc-vien*', 'admin/dang-ky*', 'admin/phan-hoi*') ? 'open' : '' }}">
+            <div
+                class="nav-group {{ Request::is('admin/hoc-vien*', 'admin/dang-ky*', 'admin/phan-hoi*') ? 'open' : '' }}">
                 <div class="nav-group-header">
                     <i class="fas fa-user-graduate"></i> <span>Quản lý học viên</span>
                     <i class="fas fa-chevron-right"></i>

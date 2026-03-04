@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Admin\Finance;
+namespace App\Http\Controllers\Admin\TaiChinh;
 
 use App\Http\Controllers\Controller;
 use App\Models\Finance\HoaDon;
