@@ -129,6 +129,24 @@ class LienHeController extends Controller
     }
 
     /**
+     * Bulk update status of selected contacts.
+     */
+    public function bulkUpdateStatus(Request $request)
+    {
+        $request->validate(['trangThai' => 'required|in:0,1']);
+
+        $ids = array_filter(explode(',', $request->input('ids', '')));
+        if (empty($ids)) {
+            return redirect()->back()->with('error', 'Chưa chọn liên hệ nào.');
+        }
+
+        LienHe::whereIn('lienHeId', $ids)->update(['trangThai' => $request->trangThai]);
+
+        $label = $request->trangThai == 1 ? 'Đã xử lý' : 'Chưa xử lý';
+        return redirect()->back()->with('success', 'Đã chuyển ' . count($ids) . ' liên hệ sang "' . $label . '".');
+    }
+
+    /**
      * Restore a soft-deleted contact.
      */
     public function restore(string $id)
