@@ -225,7 +225,7 @@
                         class="fas fa-times"></i></button>
             </div>
 
-            <form id="caHocForm" novalidate>
+            <form id="caHocForm" class="ajax-form" novalidate>
                 @csrf
                 <input type="hidden" id="editId" value="">
 
