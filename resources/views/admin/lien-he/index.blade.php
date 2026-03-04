@@ -54,6 +54,25 @@
             background: #b91c1c;
         }
 
+        .btn-bulk-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 16px;
+            border-radius: 8px;
+            background: #059669;
+            color: #fff;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: background .18s;
+        }
+
+        .btn-bulk-status:hover {
+            background: #047857;
+        }
+
         /* Checkbox style */
         .lh-checkbox {
             width: 17px;
@@ -153,6 +172,9 @@
     <div class="lh-bulk-bar" id="bulk-bar">
         <i class="fas fa-check-double"></i>
         Đã chọn <span class="bulk-count" id="bulk-count">0</span> liên hệ
+        <button type="button" class="btn-bulk-status" onclick="confirmBulkStatus()">
+            <i class="fas fa-arrows-rotate"></i> Chuyển trạng thái
+        </button>
         <button type="button" class="btn-bulk-delete" onclick="confirmBulkDelete()">
             <i class="fas fa-trash"></i> Xóa đã chọn
         </button>
@@ -312,6 +334,13 @@
         <input type="hidden" name="trangThai" id="toggle-trangThai">
     </form>
 
+    <form id="bulk-status-form" method="POST" action="{{ route('admin.lien-he.bulk-status') }}" style="display:none">
+        @csrf
+        @method('PATCH')
+        <input type="hidden" name="ids" id="bulk-status-ids">
+        <input type="hidden" name="trangThai" id="bulk-trangThai">
+    </form>
+
 @endsection
 
 @section('script')
@@ -359,6 +388,41 @@
                     form.action = `/admin/lien-he/${id}`;
                     document.getElementById('toggle-trangThai').value = newStatus;
                     form.submit();
+                }
+            });
+        }
+
+        // ── Bulk status change ──────────────────────────────────
+        function confirmBulkStatus() {
+            const checked = document.querySelectorAll('.row-check:checked');
+            const ids = Array.from(checked).map(cb => cb.value);
+            if (ids.length === 0) return;
+
+            Swal.fire({
+                title: `Chuyển trạng thái ${ids.length} liên hệ?`,
+                html: `Chọn trạng thái mới cho <strong>${ids.length}</strong> liên hệ đã chọn:`,
+                icon: 'question',
+                input: 'select',
+                inputOptions: {
+                    '1': '✅ Đã xử lý',
+                    '0': '⏳ Chưa xử lý',
+                },
+                inputPlaceholder: '-- Chọn trạng thái --',
+                showCancelButton: true,
+                confirmButtonText: '<i class="fas fa-check me-1"></i> Xác nhận',
+                cancelButtonText: 'Hủy',
+                confirmButtonColor: '#059669',
+                cancelButtonColor: '#6c757d',
+                reverseButtons: true,
+                focusCancel: true,
+                inputValidator: (value) => {
+                    if (value === '') return 'Vui lòng chọn trạng thái!';
+                },
+            }).then(result => {
+                if (result.isConfirmed) {
+                    document.getElementById('bulk-status-ids').value = ids.join(',');
+                    document.getElementById('bulk-trangThai').value = result.value;
+                    document.getElementById('bulk-status-form').submit();
                 }
             });
         }
