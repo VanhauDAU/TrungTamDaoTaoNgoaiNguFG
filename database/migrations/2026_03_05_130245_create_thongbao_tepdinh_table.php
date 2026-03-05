@@ -6,20 +6,22 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('thongbao_tepdinh', function (Blueprint $table) {
-            $table->id();
+            $table->id('tepDinhId');
+            $table->integer('thongBaoId')->comment('FK → thongbao.thongBaoId');
+            $table->string('tenFile', 255)->comment('Tên file gốc của người dùng');
+            $table->string('tenFileLuu', 255)->comment('Tên file lưu trên server (uuid + ext)');
+            $table->string('duongDan', 500)->comment('Relative path trong storage/public');
+            $table->string('loaiFile', 100)->nullable()->comment('MIME type');
+            $table->unsignedBigInteger('kichThuoc')->default(0)->comment('Kích thước byte');
             $table->timestamps();
+
+            $table->index('thongBaoId');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('thongbao_tepdinh');

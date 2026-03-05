@@ -588,3 +588,186 @@
     margin-bottom: 1.25rem;
 }
 .locked-notice i { color: #16a34a; }
+
+/* ── File Dropzone (Create / Edit) ─────────────────────────── */
+.nb-dropzone {
+    border: 2px dashed #c7d2fe;
+    border-radius: 14px;
+    padding: 1.5rem 1.25rem;
+    text-align: center;
+    cursor: pointer;
+    background: #f8f7ff;
+    transition: border-color .2s, background .2s;
+    user-select: none;
+}
+.nb-dropzone:hover,
+.nb-dropzone.drag-over {
+    border-color: var(--nb-primary);
+    background: #eef2ff;
+}
+
+/* File tag chips in preview list */
+.nb-file-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    padding: .3rem .75rem;
+    border-radius: 999px;
+    background: #eef2ff;
+    border: 1px solid #c7d2fe;
+    font-size: .78rem;
+    font-weight: 500;
+    color: #4338ca;
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.nb-file-tag .rm-file {
+    cursor: pointer;
+    color: #9ca3af;
+    font-size: .85rem;
+    flex-shrink: 0;
+    line-height: 1;
+}
+.nb-file-tag .rm-file:hover { color: var(--nb-danger); }
+
+/* ── Attachment list (Show / Client modal) ──────────────────── */
+.attach-list { display: flex; flex-direction: column; gap: .55rem; }
+.attach-item {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: .65rem .9rem;
+    border-radius: 10px;
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    font-size: .82rem;
+    transition: background .15s;
+}
+.attach-item:hover { background: #eef2ff; }
+.attach-icon { font-size: 1.1rem; flex-shrink: 0; width: 22px; text-align: center; }
+.attach-name { font-weight: 600; color: #374151; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.attach-size { color: #9ca3af; font-size: .75rem; flex-shrink: 0; }
+.attach-dl {
+    color: var(--nb-primary);
+    font-size: .8rem;
+    text-decoration: none;
+    font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.attach-dl:hover { text-decoration: underline; }
+/* Delete checkbox in edit */
+.attach-del-label {
+    display: flex;
+    align-items: center;
+    gap: .3rem;
+    color: var(--nb-danger);
+    font-size: .73rem;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+/* ── File Preview Cards (Create / Edit form) ─────────────── */
+.nb-preview-card {
+    position: relative;
+    width: 130px;
+    border-radius: 12px;
+    border: 1.5px solid #e0e7ff;
+    background: #f8f7ff;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: box-shadow .2s, border-color .2s;
+}
+.nb-preview-card:hover {
+    box-shadow: 0 4px 16px rgba(99,102,241,.18);
+    border-color: #a5b4fc;
+}
+
+/* Thumbnail area */
+.npc-thumb {
+    position: relative;
+    width: 100%;
+    height: 88px;
+    background: #eef2ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    cursor: pointer;
+}
+.npc-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform .25s;
+}
+.nb-preview-card:hover .npc-thumb img { transform: scale(1.06); }
+
+/* Icon-only thumb (non-image files) */
+.npc-thumb-icon { background: #f3f4f6; }
+
+/* Hover overlay with "eye" button */
+.npc-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,.38);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity .2s;
+}
+.nb-preview-card:hover .npc-overlay { opacity: 1; }
+.npc-overlay span {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.9);
+    display: flex; align-items: center; justify-content: center;
+    color: #4338ca;
+    font-size: .9rem;
+    cursor: pointer;
+    transition: transform .15s;
+}
+.npc-overlay span:hover { transform: scale(1.1); }
+
+/* Info row */
+.npc-info {
+    padding: .45rem .55rem .3rem;
+    flex: 1;
+}
+.npc-name {
+    font-size: .72rem;
+    font-weight: 600;
+    color: #374151;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: .15rem;
+}
+.npc-size {
+    font-size: .67rem;
+    color: #9ca3af;
+}
+
+/* Remove button */
+.npc-remove {
+    position: absolute;
+    top: .35rem; right: .35rem;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: rgba(0,0,0,.55);
+    color: #fff;
+    border: none;
+    font-size: .7rem;
+    line-height: 1;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0;
+    transition: opacity .2s, background .15s;
+    z-index: 2;
+}
+.nb-preview-card:hover .npc-remove { opacity: 1; }
+.npc-remove:hover { background: #ef4444; }

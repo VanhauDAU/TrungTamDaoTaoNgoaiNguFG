@@ -62,6 +62,33 @@
                     </div>
                 </div>
 
+                {{-- File đính kèm --}}
+                @if ($thongBao->tepDinhs->isNotEmpty())
+                    <div class="nb-card">
+                        <div class="nb-card-title">
+                            <div class="nb-icon-tag" style="background:linear-gradient(135deg,#3b82f6,#1d4ed8);">
+                                <i class="fas fa-paperclip"></i>
+                            </div>
+                            File đính kèm
+                            <span class="nb-badge badge-hoc-tap" style="margin-left:auto;">
+                                {{ $thongBao->tepDinhs->count() }} file
+                            </span>
+                        </div>
+                        <div class="attach-list">
+                            @foreach ($thongBao->tepDinhs as $tep)
+                                <div class="attach-item">
+                                    <span class="attach-icon"><i class="fas {{ $tep->iconClass }}"></i></span>
+                                    <span class="attach-name" title="{{ $tep->tenFile }}">{{ $tep->tenFile }}</span>
+                                    <span class="attach-size">{{ $tep->kichThuocHienThi }}</span>
+                                    <a href="{{ $tep->url }}" download="{{ $tep->tenFile }}" class="attach-dl">
+                                        <i class="fas fa-download me-1"></i>Tải
+                                    </a>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
                 {{-- Analytics đọc --}}
                 <div class="nb-card">
                     <div class="nb-card-title">
