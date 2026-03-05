@@ -273,6 +273,61 @@ body {
     opacity: 0.5;
 }
 
+.nav-sub-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 8px 20px;
+    color: #9cb0bd;
+    background: transparent;
+    border: 0;
+    border-radius: 6px;
+    font-size: 0.76rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.nav-sub-toggle:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.nav-sub-toggle i {
+    margin-left: auto;
+    font-size: 0.7rem;
+    transition: transform 0.2s;
+}
+
+.nav-sub-toggle.open i {
+    transform: rotate(180deg);
+}
+
+.nav-sub-more {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.25s ease-out;
+}
+
+.nav-sub-more.open {
+    max-height: 220px;
+}
+
+.nav-sub-item.is-disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.nav-sub-item.is-disabled::after {
+    content: "Sắp có";
+    margin-left: auto;
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #7f93a0;
+}
+
 /* ── MAIN CONTENT ────────────────────────── */
 .main-wrapper {
     margin-left: var(--sidebar-w);

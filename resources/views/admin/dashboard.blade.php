@@ -13,7 +13,9 @@
     <div class="dashboard-welcome">
         <div class="dashboard-welcome__content">
             <h1 class="dashboard-welcome__title">
-                Xin chào, {{ auth()->user()->hoSoNguoiDung->hoTen ?? (auth()->user()->nhanSu->hoTen ?? auth()->user()->taiKhoan) }}! 👋
+                Xin chào,
+                {{ auth()->user()->hoSoNguoiDung->hoTen ?? (auth()->user()->nhanSu->hoTen ?? auth()->user()->taiKhoan) }}!
+                👋
             </h1>
             <p class="dashboard-welcome__sub">
                 {{ \Carbon\Carbon::now()->isoFormat('dddd, D/M/YYYY') }} — Chào mừng bạn trở lại {{ config('app.name') }}.
@@ -66,7 +68,8 @@
                 <div class="dashboard-stat-card__value">{{ number_format($newRegistrationsToday) }}</div>
                 <div class="dashboard-stat-card__label">Đăng ký mới hôm nay</div>
                 @if (isset($registrationTrend) && $registrationTrend != 0)
-                    <span class="dashboard-stat-card__trend dashboard-stat-card__trend--{{ $registrationTrend >= 0 ? 'up' : 'down' }}">
+                    <span
+                        class="dashboard-stat-card__trend dashboard-stat-card__trend--{{ $registrationTrend >= 0 ? 'up' : 'down' }}">
                         <i class="fas fa-arrow-{{ $registrationTrend >= 0 ? 'up' : 'down' }}"></i>
                         {{ abs($registrationTrend) }}% so hôm qua
                     </span>
@@ -78,10 +81,12 @@
                 <i class="fas fa-wallet"></i>
             </div>
             <div class="dashboard-stat-card__body">
-                <div class="dashboard-stat-card__value">{{ number_format($revenueMonth, 0, ',', '.') }}<span class="dashboard-stat-card__unit">đ</span></div>
+                <div class="dashboard-stat-card__value">{{ number_format($revenueMonth, 0, ',', '.') }}<span
+                        class="dashboard-stat-card__unit">đ</span></div>
                 <div class="dashboard-stat-card__label">Doanh thu tháng này</div>
                 @if (isset($monthlyComparison['growth']) && $monthlyComparison['growth'] != 0)
-                    <span class="dashboard-stat-card__trend dashboard-stat-card__trend--{{ $monthlyComparison['growth'] >= 0 ? 'up' : 'down' }}">
+                    <span
+                        class="dashboard-stat-card__trend dashboard-stat-card__trend--{{ $monthlyComparison['growth'] >= 0 ? 'up' : 'down' }}">
                         <i class="fas fa-arrow-{{ $monthlyComparison['growth'] >= 0 ? 'up' : 'down' }}"></i>
                         {{ abs($monthlyComparison['growth']) }}% so tháng trước
                     </span>
@@ -135,10 +140,13 @@
                         @foreach ($upcomingRegistrations as $reg)
                             <li class="dashboard-list__item">
                                 <div class="dashboard-list__main">
-                                    <span class="dashboard-list__name">{{ optional($reg->taiKhoan->hoSoNguoiDung)->hoTen ?? $reg->taiKhoan->taiKhoan }}</span>
-                                    <span class="dashboard-list__meta">{{ $reg->lopHoc->tenLopHoc ?? '—' }} · {{ optional($reg->lopHoc->khoaHoc)->tenKhoaHoc ?? '—' }}</span>
+                                    <span
+                                        class="dashboard-list__name">{{ optional($reg->taiKhoan->hoSoNguoiDung)->hoTen ?? $reg->taiKhoan->taiKhoan }}</span>
+                                    <span class="dashboard-list__meta">{{ $reg->lopHoc->tenLopHoc ?? '—' }} ·
+                                        {{ optional($reg->lopHoc->khoaHoc)->tenKhoaHoc ?? '—' }}</span>
                                 </div>
-                                <div class="dashboard-list__date">{{ \Carbon\Carbon::parse($reg->ngayDangKy)->format('d/m/Y') }}</div>
+                                <div class="dashboard-list__date">
+                                    {{ \Carbon\Carbon::parse($reg->ngayDangKy)->format('d/m/Y') }}</div>
                             </li>
                         @endforeach
                     </ul>
@@ -157,16 +165,16 @@
                             <span>Học viên</span>
                         </a>
                     @endif
-                    <a href="#" class="dashboard-quick-btn">
+                    <a href="{{ route('admin.danh-muc-khoa-hoc.index') }}" class="dashboard-quick-btn">
                         <i class="fas fa-book-open"></i>
                         <span>Khóa học</span>
                     </a>
-                    <a href="#" class="dashboard-quick-btn">
+                    <a href="{{ route('admin.lop-hoc.index') }}" class="dashboard-quick-btn">
                         <i class="fas fa-chalkboard"></i>
                         <span>Lớp học</span>
                     </a>
                     @if (auth()->user()->canDo('tai_chinh', 'xem'))
-                        <a href="#" class="dashboard-quick-btn">
+                        <a href="{{ route('admin.hoa-don.index') }}" class="dashboard-quick-btn">
                             <i class="fas fa-file-invoice-dollar"></i>
                             <span>Hóa đơn</span>
                             @if ($pendingInvoices > 0)
@@ -221,7 +229,9 @@
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
-                            legend: { display: false },
+                            legend: {
+                                display: false
+                            },
                             tooltip: {
                                 callbacks: {
                                     label: function(ctx) {
@@ -236,8 +246,8 @@
                                 beginAtZero: true,
                                 ticks: {
                                     callback: function(v) {
-                                        if (v >= 1000000) return (v/1e6) + 'M';
-                                        if (v >= 1000) return (v/1000) + 'K';
+                                        if (v >= 1000000) return (v / 1e6) + 'M';
+                                        if (v >= 1000) return (v / 1000) + 'K';
                                         return v;
                                     }
                                 }
@@ -270,7 +280,9 @@
                         maintainAspectRatio: false,
                         cutout: '62%',
                         plugins: {
-                            legend: { display: false },
+                            legend: {
+                                display: false
+                            },
                             tooltip: {
                                 callbacks: {
                                     label: function(ctx) {
@@ -306,7 +318,8 @@
                 const legendEl = document.getElementById('donutLegend');
                 if (legendEl) {
                     legendEl.innerHTML = shiftData.map((d, i) =>
-                        '<span class="dashboard-donut-legend__item"><i style="background:' + d.color + '"></i>' + d.label + ' (' + d.value + ')</span>'
+                        '<span class="dashboard-donut-legend__item"><i style="background:' + d.color + '"></i>' + d
+                        .label + ' (' + d.value + ')</span>'
                     ).join('');
                 }
             }

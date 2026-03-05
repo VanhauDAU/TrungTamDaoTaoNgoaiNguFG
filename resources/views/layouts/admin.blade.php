@@ -406,8 +406,10 @@
                 const group = header.parentElement;
                 const isOpen = group.classList.contains('open');
 
-                // Đóng các group khác (optional - accordion style)
-                // document.querySelectorAll('.nav-group').forEach(g => g.classList.remove('open'));
+                // Accordion: chỉ mở 1 nhóm để tránh sidebar quá dài
+                document.querySelectorAll('.nav-group').forEach(g => {
+                    if (g !== group) g.classList.remove('open');
+                });
 
                 if (!isOpen) {
                     group.classList.add('open');
@@ -424,6 +426,19 @@
                 const group = activeLink.closest('.nav-group');
                 if (group) group.classList.add('open');
             }
+        });
+
+        // Toggle nhóm con "Nghiệp vụ nâng cao" trong menu đào tạo
+        document.querySelectorAll('.nav-sub-toggle').forEach(toggle => {
+            toggle.addEventListener('click', () => {
+                const targetSelector = toggle.getAttribute('data-target');
+                const target = targetSelector ? document.querySelector(targetSelector) : null;
+                if (!target) return;
+
+                const nextOpen = !toggle.classList.contains('open');
+                toggle.classList.toggle('open', nextOpen);
+                target.classList.toggle('open', nextOpen);
+            });
         });
 
         // ── GLOBAL LOADER ──────────────────────────

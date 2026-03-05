@@ -51,16 +51,26 @@
                             class="nav-sub-item {{ Request::is('admin/lop-hoc*') ? 'active' : '' }}">
                             Lớp Học
                         </a>
-                        <a href="{{ route('admin.ca-hoc.index') }}"
-                            class="nav-sub-item {{ Request::is('admin/ca-hoc*') ? 'active' : '' }}">
-                            Ca Học
-                        </a>
-                        <a href="#" class="nav-sub-item {{ Request::is('admin/lich-hoc*') ? 'active' : '' }}">
-                            Lịch Học & Điểm Danh
-                        </a>
-                        <a href="#" class="nav-sub-item {{ Request::is('admin/ky-thi*') ? 'active' : '' }}">
-                            Kỳ Thi & Điểm Số
-                        </a>
+                        @php
+                            $daoTaoMoreOpen = Request::is('admin/ca-hoc*', 'admin/lich-hoc*', 'admin/ky-thi*');
+                        @endphp
+                        <button type="button" class="nav-sub-toggle {{ $daoTaoMoreOpen ? 'open' : '' }}"
+                            data-target="#dao-tao-more">
+                            <span>Nghiệp vụ nâng cao</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="nav-sub-more {{ $daoTaoMoreOpen ? 'open' : '' }}" id="dao-tao-more">
+                            <a href="{{ route('admin.ca-hoc.index') }}"
+                                class="nav-sub-item {{ Request::is('admin/ca-hoc*') ? 'active' : '' }}">
+                                Ca Học
+                            </a>
+                            <span class="nav-sub-item is-disabled" title="Sắp ra mắt">
+                                Lịch Học & Điểm Danh
+                            </span>
+                            <span class="nav-sub-item is-disabled" title="Sắp ra mắt">
+                                Kỳ Thi & Điểm Số
+                            </span>
+                        </div>
                     @endif
                 </div>
             </div>
