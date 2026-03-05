@@ -8,6 +8,7 @@ use App\Models\Facility\CoSoDaoTao;
 use App\Models\Facility\TinhThanh;
 use App\Models\Interaction\LienHe;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Schema;
 
 class ContactController extends Controller
 {
@@ -73,7 +74,7 @@ class ContactController extends Controller
         }
 
         // Lưu vào database
-        LienHe::create([
+        $payload = [
             'hoTen' => $request->fullname,
             'email' => $request->email,
             'soDienThoai' => $request->phone,
@@ -81,7 +82,14 @@ class ContactController extends Controller
             'noiDung' => $noiDung,
             'trangThai' => 0, // 0 = chưa xử lý
             'taiKhoanId' => auth()->check() ? auth()->id() : null,
-        ]);
+        ];
+
+        // CRM: luôn gắn loại "tư vấn" để tránh rơi vào nhóm "Khác"
+        if (Schema::hasColumn('lienhe', 'loaiLienHe')) {
+            $payload['loaiLienHe'] = 'tu_van';
+        }
+
+        LienHe::create($payload);
 
         // Nếu là AJAX request, trả về JSON
         if ($request->ajax()) {

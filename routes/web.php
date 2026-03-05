@@ -166,18 +166,24 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
     });
 
 
-    // ── Liên Hệ (Leads) ─────────────────────────────────────────────────────────
+    // ── Liên Hệ (CRM) ───────────────────────────────────────────────────────────
     Route::prefix('lien-he')->name('lien-he.')->group(function () {
         Route::get('/', [AdminLienHeController::class, 'index'])->name('index');
         Route::get('/thung-rac', [AdminLienHeController::class, 'trash'])->name('trash');
-        Route::delete('/bulk/xoa', [AdminLienHeController::class, 'bulkDestroy'])->name('bulk-destroy');
 
+        // Bulk actions
+        Route::delete('/bulk/xoa', [AdminLienHeController::class, 'bulkDestroy'])->name('bulk-destroy');
         Route::patch('/bulk/trang-thai', [AdminLienHeController::class, 'bulkUpdateStatus'])->name('bulk-status');
 
+        // Single item
         Route::patch('/{id}/khoi-phuc', [AdminLienHeController::class, 'restore'])->name('restore');
-        Route::get('/{id}/sua', [AdminLienHeController::class, 'edit'])->name('edit');
+        Route::get('/{id}', [AdminLienHeController::class, 'show'])->name('show');
         Route::put('/{id}', [AdminLienHeController::class, 'update'])->name('update');
         Route::delete('/{id}', [AdminLienHeController::class, 'destroy'])->name('destroy');
+
+        // CRM actions
+        Route::post('/{id}/phan-hoi', [AdminLienHeController::class, 'storeReply'])->name('reply.store');
+        Route::patch('/{id}/gan-phu-trach', [AdminLienHeController::class, 'assign'])->name('assign');
     });
 
     // ── Cơ sở Đào tạo ────────────────────────────────────────────────────────
