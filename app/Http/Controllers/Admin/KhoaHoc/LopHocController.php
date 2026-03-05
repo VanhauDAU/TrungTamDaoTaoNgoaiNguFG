@@ -86,7 +86,9 @@ class LopHocController extends Controller
     {
         $khoaHocs = KhoaHoc::where('trangThai', 1)->orderBy('tenKhoaHoc')->get();
         $caHocs = CaHoc::where('trangThai', 1)->orderBy('tenCa')->get();
-        $tinhThanhs = TinhThanh::orderBy('tenTinhThanh')->get(); // cho cascade Tỉnh→Phường→Cơ sở
+        $tinhThanhs = TinhThanh::whereHas('coSoDaoTaos', fn($q) => $q->where('trangThai', 1))
+            ->orderBy('tenTinhThanh')
+            ->get(); // Chỉ lấy tỉnh có cơ sở hoạt động
         $selectedKhoaHocId = $request->get('khoaHocId');
 
         // Load gói học phí theo khóa nếu đã chọn trước
@@ -165,9 +167,20 @@ class LopHocController extends Controller
 
         $caHocs = CaHoc::where('trangThai', 1)->orderBy('tenCa')->get();
         $phongHocs = PhongHoc::where('coSoId', $lopHoc->coSoId)->get();
-        $giaoViens = TaiKhoan::with('hoSoNguoiDung')
+        $coSoId = $lopHoc->coSoId;
+        $giaoVienCoSo = TaiKhoan::with(['hoSoNguoiDung', 'nhanSu'])
             ->where('role', TaiKhoan::ROLE_GIAO_VIEN)
             ->where('trangThai', 1)
+            ->whereHas('nhanSu', fn($q) => $q->where('coSoId', $coSoId))
+            ->get();
+
+        $giaoVienKhac = TaiKhoan::with(['hoSoNguoiDung', 'nhanSu'])
+            ->where('role', TaiKhoan::ROLE_GIAO_VIEN)
+            ->where('trangThai', 1)
+            ->where(function($q) use ($coSoId) {
+                $q->whereDoesntHave('nhanSu')
+                  ->orWhereHas('nhanSu', fn($sq) => $sq->where('coSoId', '!=', $coSoId));
+            })
             ->get();
 
         $soHocVienDangKy = $lopHoc->dangKyLopHocs->count();
@@ -178,7 +191,8 @@ class LopHocController extends Controller
             'lopHoc',
             'caHocs',
             'phongHocs',
-            'giaoViens',
+            'giaoVienCoSo',
+            'giaoVienKhac',
             'soHocVienDangKy',
             'soBuoiDaHoc',
             'soBuoiChuaHoc'
@@ -191,11 +205,24 @@ class LopHocController extends Controller
         $lopHoc = LopHoc::with('coSo')->where('slug', $slug)->firstOrFail();
         $khoaHocs = KhoaHoc::where('trangThai', 1)->orderBy('tenKhoaHoc')->get();
         $caHocs = CaHoc::where('trangThai', 1)->orderBy('tenCa')->get();
-        $tinhThanhs = TinhThanh::orderBy('tenTinhThanh')->get();
+        $tinhThanhs = TinhThanh::whereHas('coSoDaoTaos', fn($q) => $q->where('trangThai', 1))
+            ->orderBy('tenTinhThanh')
+            ->get();
         $phongHocs = PhongHoc::where('coSoId', $lopHoc->coSoId)->get();
-        $giaoViens = TaiKhoan::with('hoSoNguoiDung')
+        $coSoId = $lopHoc->coSoId;
+        $giaoVienCoSo = TaiKhoan::with(['hoSoNguoiDung', 'nhanSu'])
             ->where('role', TaiKhoan::ROLE_GIAO_VIEN)
             ->where('trangThai', 1)
+            ->whereHas('nhanSu', fn($q) => $q->where('coSoId', $coSoId))
+            ->get();
+
+        $giaoVienKhac = TaiKhoan::with(['hoSoNguoiDung', 'nhanSu'])
+            ->where('role', TaiKhoan::ROLE_GIAO_VIEN)
+            ->where('trangThai', 1)
+            ->where(function($q) use ($coSoId) {
+                $q->whereDoesntHave('nhanSu')
+                  ->orWhereHas('nhanSu', fn($sq) => $sq->where('coSoId', '!=', $coSoId));
+            })
             ->get();
         // Gói học phí của khóa học này
         $hocPhis = HocPhi::where('khoaHocId', $lopHoc->khoaHocId)->where('trangThai', 1)->get();
@@ -209,7 +236,8 @@ class LopHocController extends Controller
             'caHocs',
             'tinhThanhs',
             'phongHocs',
-            'giaoViens',
+            'giaoVienCoSo',
+            'giaoVienKhac',
             'hocPhis',
             'currentCoSo'
         ));
@@ -295,10 +323,11 @@ class LopHocController extends Controller
         return response()->json($phongs);
     }
 
-    /** API: Lấy giáo viên theo cơ sở */
+    /** API: Lấy giáo viên theo cơ sở (phân nhóm) */
     public function getGiaoVienByCoso(int $coSoId)
     {
-        $giaoViens = TaiKhoan::with(['hoSoNguoiDung', 'nhanSu'])
+        // 1. Giáo viên thuộc cơ sở này
+        $giaoVienCoSo = TaiKhoan::with(['hoSoNguoiDung', 'nhanSu'])
             ->where('role', TaiKhoan::ROLE_GIAO_VIEN)
             ->where('trangThai', 1)
             ->whereHas('nhanSu', fn($q) => $q->where('coSoId', $coSoId))
@@ -307,7 +336,25 @@ class LopHocController extends Controller
                 'taiKhoanId' => $gv->taiKhoanId,
                 'hoTen' => $gv->hoSoNguoiDung->hoTen ?? $gv->taiKhoan,
             ]);
-        return response()->json($giaoViens);
+
+        // 2. Giáo viên thuộc cơ sở KHÁC (hoặc không gắn cơ sở)
+        $giaoVienKhac = TaiKhoan::with(['hoSoNguoiDung', 'nhanSu'])
+            ->where('role', TaiKhoan::ROLE_GIAO_VIEN)
+            ->where('trangThai', 1)
+            ->where(function($q) use ($coSoId) {
+                $q->whereDoesntHave('nhanSu')
+                  ->orWhereHas('nhanSu', fn($sq) => $sq->where('coSoId', '!=', $coSoId));
+            })
+            ->get()
+            ->map(fn($gv) => [
+                'taiKhoanId' => $gv->taiKhoanId,
+                'hoTen' => $gv->hoSoNguoiDung->hoTen ?? $gv->taiKhoan,
+            ]);
+
+        return response()->json([
+            'cung_co_so' => $giaoVienCoSo,
+            'khac_co_so' => $giaoVienKhac
+        ]);
     }
 
     /** Tạo slug duy nhất */

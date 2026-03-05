@@ -108,12 +108,7 @@
                         @enderror
                     </div>
 
-                    <div class="kf-form-group">
-                        <label>Giáo viên</label>
-                        <select name="taiKhoanId" id="giaoVienSel">
-                            <option value="">-- Chọn cơ sở trước --</option>
-                        </select>
-                    </div>
+
                 </div>
             </div>
 
@@ -154,9 +149,16 @@
                 </div>
 
                 <div class="kf-form-row">
-                    <div class="kf-form-group" style="max-width:33%">
+                    <div class="kf-form-group">
                         <label>Phòng học</label>
                         <select name="phongHocId" id="phongHocSel">
+                            <option value="">-- Chọn cơ sở trước --</option>
+                        </select>
+                    </div>
+                    <div class="kf-form-group">
+                        <label>Giáo viên <span class="hint-text text-muted" style="font-weight:normal;font-size:12px;">(Ưu
+                                tiên thuộc cơ sở)</span></label>
+                        <select name="taiKhoanId" id="giaoVienSel">
                             <option value="">-- Chọn cơ sở trước --</option>
                         </select>
                     </div>
@@ -466,8 +468,18 @@
                     </option>`
                 ).join('');
 
-            gvSel.innerHTML = '<option value="">-- Chọn giáo viên (tùy chọn) --</option>' +
-                gvs.map(g => `<option value="${g.taiKhoanId}">${g.hoTen}</option>`).join('');
+            let gvHtml = '<option value="">-- Chọn giáo viên (tùy chọn) --</option>';
+            if (gvs.cung_co_so && gvs.cung_co_so.length > 0) {
+                gvHtml += '<optgroup label="Giáo viên thuộc cơ sở này">';
+                gvHtml += gvs.cung_co_so.map(g => `<option value="${g.taiKhoanId}">${g.hoTen}</option>`).join('');
+                gvHtml += '</optgroup>';
+            }
+            if (gvs.khac_co_so && gvs.khac_co_so.length > 0) {
+                gvHtml += '<optgroup label="Giáo viên cơ sở khác">';
+                gvHtml += gvs.khac_co_so.map(g => `<option value="${g.taiKhoanId}">${g.hoTen}</option>`).join('');
+                gvHtml += '</optgroup>';
+            }
+            gvSel.innerHTML = gvHtml;
         }
 
         // ── Validation sĩ số ≤ sức chứa phòng ──────────────────

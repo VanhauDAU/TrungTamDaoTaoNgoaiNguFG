@@ -66,9 +66,7 @@
     {{-- Hành động --}}
     <td style="text-align:center">
         <div class="dm-actions" style="justify-content:center">
-
             <a href="{{ route('admin.danh-muc-khoa-hoc.edit', $node->slug) }}" class="dm-btn-action dm-btn-edit"
-
                 title="Chỉnh sửa">
                 <i class="fas fa-pen"></i>
             </a>

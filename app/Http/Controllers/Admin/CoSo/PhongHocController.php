@@ -101,7 +101,6 @@ class PhongHocController extends Controller
      * Xóa phòng học.
      */
     public function destroy(Request $request, int $id)
-
     {
         $phong  = PhongHoc::findOrFail($id);
         $coSoId = $phong->coSoId;

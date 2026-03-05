@@ -164,12 +164,15 @@ class CoSoController extends Controller
     public function getPhuongXa(int $maTinh)
     {
         try {
-            $response = Http::timeout(8)->get("https://provinces.open-api.vn/api/v2/p/{$maTinh}?depth=2");
+
+            $response = Http::timeout(8)->get("https://provinces.open-api.vn/api/p/{$maTinh}?depth=2");
+
             if ($response->successful()) {
                 $data = $response->json();
                 return response()->json([
                     'success' => true,
-                    'wards'   => $data['wards'] ?? [],
+                    // depth=2 trả về danh sách quận/huyện trong key 'districts'
+                    'wards'   => $data['districts'] ?? [],
                 ]);
             }
         } catch (\Exception $e) {

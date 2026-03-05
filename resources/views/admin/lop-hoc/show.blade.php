@@ -738,12 +738,26 @@
                             viên</label>
                         <select name="taiKhoanId">
                             <option value="">-- Tùy chọn --</option>
-                            @foreach ($giaoViens as $gv)
-                                <option value="{{ $gv->taiKhoanId }}"
-                                    {{ $gv->taiKhoanId == $lopHoc->taiKhoanId ? 'selected' : '' }}>
-                                    {{ $gv->hoSoNguoiDung?->hoTen ?? $gv->taiKhoan }}
-                                </option>
-                            @endforeach
+                            @if ($giaoVienCoSo->count() > 0)
+                                <optgroup label="Giáo viên thuộc cơ sở này">
+                                    @foreach ($giaoVienCoSo as $gv)
+                                        <option value="{{ $gv->taiKhoanId }}"
+                                            {{ $gv->taiKhoanId == $lopHoc->taiKhoanId ? 'selected' : '' }}>
+                                            {{ $gv->hoSoNguoiDung?->hoTen ?? $gv->taiKhoan }}
+                                        </option>
+                                    @endforeach
+                                </optgroup>
+                            @endif
+                            @if ($giaoVienKhac->count() > 0)
+                                <optgroup label="Giáo viên cơ sở khác">
+                                    @foreach ($giaoVienKhac as $gv)
+                                        <option value="{{ $gv->taiKhoanId }}"
+                                            {{ $gv->taiKhoanId == $lopHoc->taiKhoanId ? 'selected' : '' }}>
+                                            {{ $gv->hoSoNguoiDung?->hoTen ?? $gv->taiKhoan }}
+                                        </option>
+                                    @endforeach
+                                </optgroup>
+                            @endif
                         </select>
                     </div>
                     <div style="align-self:flex-end">
@@ -921,7 +935,8 @@
                             style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.9rem;color:#1e293b;background:#fff;outline:none;">
                             @foreach ($caHocs as $ca)
                                 <option value="{{ $ca->caHocId }}">{{ $ca->tenCa }}
-                                    ({{ $ca->gioBatDau }}–{{ $ca->gioKetThuc }})</option>
+                                    ({{ $ca->gioBatDau }}–{{ $ca->gioKetThuc }})
+                                </option>
                             @endforeach
                         </select>
                     </div>
@@ -944,10 +959,24 @@
                         <select id="ebh-gv"
                             style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.9rem;color:#1e293b;background:#fff;outline:none;">
                             <option value="">-- Không chọn --</option>
-                            @foreach ($giaoViens as $gv)
-                                <option value="{{ $gv->taiKhoanId }}">{{ $gv->hoSoNguoiDung?->hoTen ?? $gv->taiKhoan }}
-                                </option>
-                            @endforeach
+                            @if ($giaoVienCoSo->count() > 0)
+                                <optgroup label="Giáo viên thuộc cơ sở này">
+                                    @foreach ($giaoVienCoSo as $gv)
+                                        <option value="{{ $gv->taiKhoanId }}">
+                                            {{ $gv->hoSoNguoiDung?->hoTen ?? $gv->taiKhoan }}
+                                        </option>
+                                    @endforeach
+                                </optgroup>
+                            @endif
+                            @if ($giaoVienKhac->count() > 0)
+                                <optgroup label="Giáo viên cơ sở khác">
+                                    @foreach ($giaoVienKhac as $gv)
+                                        <option value="{{ $gv->taiKhoanId }}">
+                                            {{ $gv->hoSoNguoiDung?->hoTen ?? $gv->taiKhoan }}
+                                        </option>
+                                    @endforeach
+                                </optgroup>
+                            @endif
                         </select>
                     </div>
                     <div>
