@@ -16,23 +16,34 @@ class CourseController extends Controller
 {
     public function index(Request $request)
     {
-        $listTypeCourses = DanhMucKhoaHoc::all();
+        // Lấy cây danh mục: roots + children
+        $tree = DanhMucKhoaHoc::with(['children' => function ($q) {
+            $q->where('trangThai', 1)->orderBy('tenDanhMuc');
+        }])
+        ->whereNull('parent_id')
+        ->where('trangThai', 1)
+        ->orderBy('tenDanhMuc')
+        ->withCount('khoaHocs')
+        ->get();
 
-        // Tạo query builder với điều kiện cơ bản
+        // Filter theo category slug (slug có thể là cha hoặc con)
         $query = KhoaHoc::where('trangThai', 1);
+        $activeSlug  = $request->input('category');
+        $activeDanhMuc = null;
 
-        // Lọc theo category nếu có
-        if ($request->has('category')) {
-            $categorySlug = $request->input('category');
-            $query->whereHas('danhMuc', function ($q) use ($categorySlug) {
-                $q->where('slug', $categorySlug);
-            });
+        if ($activeSlug) {
+            $dm = DanhMucKhoaHoc::with('children')->where('slug', $activeSlug)->first();
+            if ($dm) {
+                $activeDanhMuc = $dm;
+                $ids = $dm->allDescendantIds(); // cha + tất cả con
+                $query->whereIn('danhMucId', $ids);
+            }
         }
 
-        // Lấy danh sách khóa học có ít nhất 1 lớp học với pagination và giữ query parameters
-        $listCourses = $query->with('danhMuc')->whereHas('lopHoc')->paginate(6)->withQueryString();
+        $listCourses = $query->with('danhMuc')->whereHas('lopHoc')
+                             ->paginate(6)->withQueryString();
 
-        return view('clients.khoa-hoc.index', compact('listTypeCourses', 'listCourses'));
+        return view('clients.khoa-hoc.index', compact('tree', 'listCourses', 'activeSlug', 'activeDanhMuc'));
     }
     public function show($slug)
     {

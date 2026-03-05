@@ -84,10 +84,15 @@
                         <label>Danh mục khóa học <span class="req">*</span></label>
                         <select name="danhMucId" class="{{ $errors->has('danhMucId') ? 'is-invalid' : '' }}">
                             <option value="">-- Chọn danh mục --</option>
-                            @foreach ($danhMucs as $dm)
-                                <option value="{{ $dm->danhMucId }}"
-                                    {{ old('danhMucId', $khoaHoc->danhMucId) == $dm->danhMucId ? 'selected' : '' }}>
-                                    {{ $dm->tenDanhMuc }}
+                            @foreach ($flatTree as $item)
+                                @php
+                                    $node = $item['node'];
+                                    $depth = $item['depth'];
+                                @endphp
+                                <option value="{{ $node->danhMucId }}"
+                                    {{ old('danhMucId', $khoaHoc->danhMucId) == $node->danhMucId ? 'selected' : '' }}
+                                    style="{{ $depth === 0 ? 'font-weight:600' : '' }}">
+                                    {{ str_repeat('　', $depth) }}{{ $depth > 0 ? '└─ ' : '📂 ' }}{{ $node->tenDanhMuc }}
                                 </option>
                             @endforeach
                         </select>
