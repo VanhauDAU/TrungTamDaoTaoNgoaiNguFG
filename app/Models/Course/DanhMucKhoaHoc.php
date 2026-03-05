@@ -30,6 +30,12 @@ class DanhMucKhoaHoc extends Model
                     ->orderBy('tenDanhMuc');
     }
 
+    /** Đệ quy: con của con của con... (tất cả cấp) */
+    public function childrenRecursive()
+    {
+        return $this->children()->with('childrenRecursive');
+    }
+
     public function khoaHocs()
     {
         return $this->hasMany(KhoaHoc::class, 'danhMucId', 'danhMucId');
@@ -54,36 +60,44 @@ class DanhMucKhoaHoc extends Model
     }
 
     /**
-     * Xây danh sách phẳng có depth (cho select dropdown).
-     * Trả về Collection: [danhMucId, tenDanhMuc, depth]
-     * excludeId: loại trừ node (không cho chọn chính nó / các con của nó làm cha)
+     * Danh sách phẳng có depth (cho select dropdown).
+     * Hỗ trợ cây nhiều cấp, dựng đệ quy.
      */
     public static function buildFlatTree(?int $excludeId = null): Collection
     {
-        $all    = static::with('children')->whereNull('parent_id')->orderBy('tenDanhMuc')->get();
+        $all = static::with('childrenRecursive')
+                    ->whereNull('parent_id')
+                    ->orderBy('tenDanhMuc')
+                    ->get();
+
         $result = collect();
-
         foreach ($all as $root) {
-            if ($excludeId && $root->danhMucId === $excludeId) continue;
-            $result->push(['node' => $root, 'depth' => 0]);
-            foreach ($root->children as $child) {
-                if ($excludeId && $child->danhMucId === $excludeId) continue;
-                $result->push(['node' => $child, 'depth' => 1]);
-            }
+            static::flattenNode($root, 0, $excludeId, $result);
         }
-
         return $result;
     }
 
+    private static function flattenNode(self $node, int $depth, ?int $excludeId, Collection &$result): void
+    {
+        if ($excludeId && $node->danhMucId === $excludeId) return;
+        $result->push(['node' => $node, 'depth' => $depth]);
+        foreach ($node->childrenRecursive as $child) {
+            static::flattenNode($child, $depth + 1, $excludeId, $result);
+        }
+    }
+
     /**
-     * Lấy tất cả danhMucId trong nhóm (cha + các con) để filter khóa học.
+     * Tất cả descendant IDs (cây nhiều cấp) để filter khóa học.
      */
     public function allDescendantIds(): array
     {
         $ids = [$this->danhMucId];
-        foreach ($this->children as $child) {
-            $ids[] = $child->danhMucId;
+        $this->loadMissing('childrenRecursive');
+        foreach ($this->childrenRecursive as $child) {
+            foreach ($child->allDescendantIds() as $id) {
+                $ids[] = $id;
+            }
         }
-        return $ids;
+        return array_unique($ids);
     }
 }

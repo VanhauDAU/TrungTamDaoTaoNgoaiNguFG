@@ -76,7 +76,7 @@
                                     {{-- Classes in this facility --}}
                                     <div class="row g-3 mt-3">
                                         @foreach ($classes as $lopHoc)
-                                            <div class="col-xl-4 col-lg-4 col-md-6">
+                                            <div class="col-xl-6 col-lg-6 col-md-6">
                                                 <div class="class-card-compact">
                                                     <div class="class-card-header">
                                                         <div class="class-name-wrapper">

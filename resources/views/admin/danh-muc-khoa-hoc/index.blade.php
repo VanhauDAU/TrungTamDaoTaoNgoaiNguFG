@@ -98,10 +98,10 @@
                 <tbody>
                     @foreach ($roots as $root)
                         {{-- ── ROW CHA ────────────────────────────── --}}
-                        <tr class="dm-row-parent {{ $root->children->isNotEmpty() ? 'has-children' : '' }}"
+                        <tr class="dm-row-parent {{ $root->childrenRecursive->isNotEmpty() ? 'has-children' : '' }}"
                             data-tree-id="{{ $root->danhMucId }}">
                             <td style="text-align:center">
-                                @if ($root->children->isNotEmpty())
+                                @if ($root->childrenRecursive->isNotEmpty())
                                     <button type="button" class="dm-toggle-tree"
                                         onclick="toggleChildren({{ $root->danhMucId }}, this)" title="Thu gọn/Mở rộng">
                                         <i class="fas fa-chevron-down"></i>
@@ -114,8 +114,8 @@
                                 <div style="display:flex;align-items:center;gap:.5rem">
                                     <span class="dm-node-icon dm-node-root"><i class="fas fa-folder"></i></span>
                                     <span style="font-weight:700;color:#1e293b">{{ $root->tenDanhMuc }}</span>
-                                    @if ($root->children->isNotEmpty())
-                                        <span class="dm-children-count">{{ $root->children->count() }} con</span>
+                                    @if ($root->childrenRecursive->isNotEmpty())
+                                        <span class="dm-children-count">{{ $root->childrenRecursive->count() }} con</span>
                                     @endif
                                 </div>
                             </td>
@@ -124,7 +124,8 @@
                             <td style="text-align:center">
                                 @php
                                     $totalKhoa =
-                                        $root->khoaHocs_count + $root->children->sum(fn($c) => $c->khoaHocs->count());
+                                        $root->khoaHocs_count +
+                                        $root->childrenRecursive->sum(fn($c) => $c->khoaHocs->count());
                                 @endphp
                                 <span class="dm-count-badge">{{ $totalKhoa }} khóa</span>
                             </td>
@@ -144,53 +145,20 @@
                                         <i class="fas fa-pen"></i>
                                     </a>
                                     <button type="button" class="dm-btn-action dm-btn-del" title="Xóa"
-                                        onclick="confirmDeleteDM({{ $root->danhMucId }}, '{{ addslashes($root->tenDanhMuc) }}', {{ $root->khoaHocs_count }}, {{ $root->children->count() }})">
+                                        onclick="confirmDeleteDM({{ $root->danhMucId }}, '{{ addslashes($root->tenDanhMuc) }}', {{ $root->khoaHocs_count }}, {{ $root->childrenRecursive->count() }})">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </div>
                             </td>
                         </tr>
 
-                        {{-- ── CÁC ROW CON ────────────────────────── --}}
-                        @foreach ($root->children as $child)
-                            <tr class="dm-row-child" data-parent="{{ $root->danhMucId }}">
-                                <td></td>
-                                <td>
-                                    <div style="display:flex;align-items:center;gap:.5rem;padding-left:1.5rem">
-                                        <span class="dm-tree-connector">└─</span>
-                                        <span class="dm-node-icon dm-node-child"><i class="fas fa-folder-open"></i></span>
-                                        <span style="font-weight:600;color:#374151">{{ $child->tenDanhMuc }}</span>
-                                    </div>
-                                </td>
-                                <td style="color:#0f766e;font-family:monospace;font-size:.83rem;padding-left:1.5rem">
-                                    {{ $child->slug }}
-                                </td>
-                                <td style="color:#64748b;max-width:260px">{{ Str::limit($child->moTa, 60) ?: '—' }}</td>
-                                <td style="text-align:center">
-                                    <span class="dm-count-badge">{{ $child->khoaHocs->count() }} khóa</span>
-                                </td>
-                                <td style="text-align:center">
-                                    @if ($child->trangThai)
-                                        <span class="dm-badge-active"><i class="fas fa-circle"
-                                                style="font-size:.4em"></i> Hoạt động</span>
-                                    @else
-                                        <span class="dm-badge-inactive"><i class="fas fa-circle"
-                                                style="font-size:.4em"></i> Ngừng</span>
-                                    @endif
-                                </td>
-                                <td style="text-align:center">
-                                    <div class="dm-actions" style="justify-content:center">
-                                        <a href="{{ route('admin.danh-muc-khoa-hoc.edit', $child->danhMucId) }}"
-                                            class="dm-btn-action dm-btn-edit" title="Chỉnh sửa">
-                                            <i class="fas fa-pen"></i>
-                                        </a>
-                                        <button type="button" class="dm-btn-action dm-btn-del" title="Xóa"
-                                            onclick="confirmDeleteDM({{ $child->danhMucId }}, '{{ addslashes($child->tenDanhMuc) }}', {{ $child->khoaHocs->count() }}, 0)">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
+                        {{-- ── CÁC ROW CON (đệ quy nhiều cấp) ──── --}}
+                        @foreach ($root->childrenRecursive as $child)
+                            @include('admin.danh-muc-khoa-hoc._tree-row', [
+                                'node' => $child,
+                                'depth' => 1,
+                                'parentId' => $root->danhMucId,
+                            ])
                         @endforeach
                     @endforeach
                 </tbody>
@@ -205,14 +173,34 @@
 
 @section('script')
     <script>
-        // Thu gọn / mở rộng các hàng con
-        function toggleChildren(parentId, btn) {
+        // Thu gọn / mở rộng cây đệ quy
+        function setSubtreeVisible(parentId, visible) {
+            // Tìm tất cả hàng con trực tiếp
             const rows = document.querySelectorAll(`.dm-row-child[data-parent="${parentId}"]`);
+            rows.forEach(row => {
+                row.style.display = visible ? '' : 'none';
+                const childId = row.getAttribute('data-tree-id');
+                if (childId) {
+                    if (!visible) {
+                        // Thu gọn: đóng luôn button toggle bên trong
+                        const innerBtn = row.querySelector('.dm-toggle-tree i');
+                        if (innerBtn) {
+                            innerBtn.classList.remove('fa-chevron-down');
+                            innerBtn.classList.add('fa-chevron-right');
+                        }
+                    }
+                    // Đệ quy vào các con cháu
+                    setSubtreeVisible(childId, visible);
+                }
+            });
+        }
+
+        function toggleChildren(parentId, btn) {
             const icon = btn.querySelector('i');
-            const open = icon.classList.contains('fa-chevron-down');
-            rows.forEach(r => r.style.display = open ? 'none' : '');
-            icon.classList.toggle('fa-chevron-down', !open);
-            icon.classList.toggle('fa-chevron-right', open);
+            const isOpen = icon.classList.contains('fa-chevron-down');
+            setSubtreeVisible(parentId, !isOpen);
+            icon.classList.toggle('fa-chevron-down', !isOpen);
+            icon.classList.toggle('fa-chevron-right', isOpen);
         }
 
         function confirmDeleteDM(id, name, soKH, soKon) {

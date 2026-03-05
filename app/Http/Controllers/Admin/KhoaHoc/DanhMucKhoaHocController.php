@@ -16,7 +16,7 @@ class DanhMucKhoaHocController extends Controller
         $q = $request->q;
 
         // Lấy danh mục gốc kèm con, withCount khóa học
-        $roots = DanhMucKhoaHoc::with(['children.khoaHocs'])
+        $roots = DanhMucKhoaHoc::with(['childrenRecursive.khoaHocs'])
             ->withCount('khoaHocs')
             ->whereNull('parent_id')
             ->when($q, fn($query) => $query->where(function ($sq) use ($q) {
@@ -59,14 +59,8 @@ class DanhMucKhoaHocController extends Controller
             'parent_id.exists'    => 'Danh mục cha không hợp lệ.',
         ]);
 
-        // Không cho chọn node đã là con làm cha (chỉ root mới được là cha)
-        if (!empty($data['parent_id'])) {
-            $cha = DanhMucKhoaHoc::find($data['parent_id']);
-            if ($cha && !is_null($cha->parent_id)) {
-                return back()->withInput()
-                    ->withErrors(['parent_id' => 'Chỉ có thể chọn danh mục gốc làm danh mục cha.']);
-            }
-        }
+        // Không cho tạo vòng lặp: không thể chọn chính mình làm cha
+        // (không giới hạn cấp — hỗ trợ cây sâu tùy ý)
 
         $data['slug'] = $this->generateUniqueSlug($request->tenDanhMuc);
         DanhMucKhoaHoc::create($data);
@@ -98,14 +92,20 @@ class DanhMucKhoaHocController extends Controller
             'tenDanhMuc.unique'   => 'Tên danh mục này đã tồn tại.',
         ]);
 
-        // Không cho đặt chính nó hoặc con của nó làm cha
+        // Không cho đặt chính nó làm cha
+        if (!empty($data['parent_id']) && $data['parent_id'] == $id) {
+            return back()->withInput()->withErrors(['parent_id' => 'Không thể chọn chính nó làm cha.']);
+        }
+
+        // Không cho chọn descendant làm cha (gây vòng lặp)
         if (!empty($data['parent_id'])) {
-            if ($data['parent_id'] == $id) {
-                return back()->withInput()->withErrors(['parent_id' => 'Không thể chọn chính nó làm cha.']);
-            }
-            $cha = DanhMucKhoaHoc::find($data['parent_id']);
-            if ($cha && !is_null($cha->parent_id)) {
-                return back()->withInput()->withErrors(['parent_id' => 'Chỉ được chọn danh mục gốc làm cha.']);
+            $candidate = DanhMucKhoaHoc::with('childrenRecursive')->find($data['parent_id']);
+            if ($candidate) {
+                $descendantIds = $candidate->allDescendantIds();
+                if (in_array($id, $descendantIds)) {
+                    return back()->withInput()
+                        ->withErrors(['parent_id' => 'Không thể chọn danh mục con/cháu của danh mục này làm cha (gây vòng lặp).']);
+                }
             }
         }
 

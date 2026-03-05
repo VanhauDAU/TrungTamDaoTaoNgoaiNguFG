@@ -16,34 +16,65 @@ class CourseController extends Controller
 {
     public function index(Request $request)
     {
-        // Lấy cây danh mục: roots + children
-        $tree = DanhMucKhoaHoc::with(['children' => function ($q) {
+        // Cây danh mục: roots + children đệ quy vô hạn cấp
+        $tree = DanhMucKhoaHoc::with(['childrenRecursive' => function ($q) {
             $q->where('trangThai', 1)->orderBy('tenDanhMuc');
         }])
         ->whereNull('parent_id')
         ->where('trangThai', 1)
-        ->orderBy('tenDanhMuc')
         ->withCount('khoaHocs')
+        ->orderBy('tenDanhMuc')
         ->get();
 
-        // Filter theo category slug (slug có thể là cha hoặc con)
-        $query = KhoaHoc::where('trangThai', 1);
-        $activeSlug  = $request->input('category');
+        // Filters
+        $activeSlug   = $request->input('category');
+        $searchQ      = $request->input('q');
+        $sortBy       = $request->input('sort', 'newest');
         $activeDanhMuc = null;
 
+        $query = KhoaHoc::where('trangThai', 1)->whereHas('lopHoc');
+
+        // Filter theo danh mục (bao gồm tất cả con đệ quy)
         if ($activeSlug) {
-            $dm = DanhMucKhoaHoc::with('children')->where('slug', $activeSlug)->first();
+            $dm = DanhMucKhoaHoc::with('childrenRecursive')->where('slug', $activeSlug)->first();
             if ($dm) {
                 $activeDanhMuc = $dm;
-                $ids = $dm->allDescendantIds(); // cha + tất cả con
+                $ids = $dm->allDescendantIds();
                 $query->whereIn('danhMucId', $ids);
             }
         }
 
-        $listCourses = $query->with('danhMuc')->whereHas('lopHoc')
-                             ->paginate(6)->withQueryString();
+        // Tìm kiếm theo tên
+        if ($searchQ) {
+            $query->where(function ($q) use ($searchQ) {
+                $q->where('tenKhoaHoc', 'like', "%{$searchQ}%")
+                  ->orWhere('moTa', 'like', "%{$searchQ}%");
+            });
+        }
 
-        return view('clients.khoa-hoc.index', compact('tree', 'listCourses', 'activeSlug', 'activeDanhMuc'));
+        // Sắp xếp
+        match ($sortBy) {
+            'name_asc'  => $query->orderBy('tenKhoaHoc', 'asc'),
+            'name_desc' => $query->orderBy('tenKhoaHoc', 'desc'),
+            default     => $query->orderBy('khoaHocId', 'desc'),
+        };
+
+        $listCourses = $query->with('danhMuc')->paginate(9)->withQueryString();
+
+        // Compute ancestor IDs để partial sidebar biết node nào cần mở
+        $activeIds = [];
+        if ($activeDanhMuc) {
+            // Lấy id của chính nó + tất cả tổ tiên
+            $dm = $activeDanhMuc;
+            while ($dm) {
+                $activeIds[] = $dm->danhMucId;
+                $dm = $dm->parent_id ? DanhMucKhoaHoc::find($dm->parent_id) : null;
+            }
+        }
+
+        return view('clients.khoa-hoc.index', compact(
+            'tree', 'listCourses', 'activeSlug', 'activeDanhMuc', 'searchQ', 'sortBy', 'activeIds'
+        ));
     }
     public function show($slug)
     {
