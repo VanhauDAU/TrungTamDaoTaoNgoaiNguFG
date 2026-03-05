@@ -161,11 +161,11 @@
                         @endif
 
                         <div class="kh-actions">
-                            <a href="{{ route('admin.khoa-hoc.show', $kh->khoaHocId) }}" class="kh-btn-action kh-btn-view"
+                            <a href="{{ route('admin.khoa-hoc.show', $kh->slug) }}" class="kh-btn-action kh-btn-view"
                                 title="Xem chi tiết">
                                 <i class="fas fa-eye"></i>
                             </a>
-                            <a href="{{ route('admin.khoa-hoc.edit', $kh->khoaHocId) }}" class="kh-btn-action kh-btn-edit"
+                            <a href="{{ route('admin.khoa-hoc.edit', $kh->slug) }}" class="kh-btn-action kh-btn-edit"
                                 title="Chỉnh sửa">
                                 <i class="fas fa-pen"></i>
                             </a>

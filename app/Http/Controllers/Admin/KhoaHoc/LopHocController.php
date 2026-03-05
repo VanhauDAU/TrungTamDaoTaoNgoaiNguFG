@@ -149,7 +149,7 @@ class LopHocController extends Controller
     }
 
     /** Chi tiết lớp học */
-    public function show(int $id)
+    public function show(string $slug)
     {
         $lopHoc = LopHoc::with([
             'khoaHoc',
@@ -161,7 +161,7 @@ class LopHocController extends Controller
             'buoiHocs.phongHoc',
             'buoiHocs.taiKhoan.hoSoNguoiDung',
             'dangKyLopHocs.taiKhoan.hoSoNguoiDung',
-        ])->findOrFail($id);
+        ])->where('slug', $slug)->firstOrFail();
 
         $caHocs = CaHoc::where('trangThai', 1)->orderBy('tenCa')->get();
         $phongHocs = PhongHoc::where('coSoId', $lopHoc->coSoId)->get();
@@ -186,9 +186,9 @@ class LopHocController extends Controller
     }
 
     /** Form chỉnh sửa lớp học */
-    public function edit(int $id)
+    public function edit(string $slug)
     {
-        $lopHoc = LopHoc::with('coSo')->findOrFail($id);
+        $lopHoc = LopHoc::with('coSo')->where('slug', $slug)->firstOrFail();
         $khoaHocs = KhoaHoc::where('trangThai', 1)->orderBy('tenKhoaHoc')->get();
         $caHocs = CaHoc::where('trangThai', 1)->orderBy('tenCa')->get();
         $tinhThanhs = TinhThanh::orderBy('tenTinhThanh')->get();
@@ -216,9 +216,9 @@ class LopHocController extends Controller
     }
 
     /** Cập nhật lớp học */
-    public function update(Request $request, int $id)
+    public function update(Request $request, string $slug)
     {
-        $lopHoc = LopHoc::findOrFail($id);
+        $lopHoc = LopHoc::where('slug', $slug)->firstOrFail();
 
         $data = $request->validate([
             'tenLopHoc' => 'required|string|max:255',
@@ -248,14 +248,14 @@ class LopHocController extends Controller
 
         $lopHoc->update($data);
 
-        return redirect()->route('admin.lop-hoc.show', $id)
+        return redirect()->route('admin.lop-hoc.show', $slug)
             ->with('success', 'Đã cập nhật lớp học «' . $lopHoc->tenLopHoc . '» thành công.');
     }
 
     /** Xóa lớp học */
-    public function destroy(int $id)
+    public function destroy(string $slug)
     {
-        $lopHoc = LopHoc::findOrFail($id);
+        $lopHoc = LopHoc::where('slug', $slug)->firstOrFail();
 
         if ($lopHoc->dangKyLopHocs()->count() > 0) {
             return redirect()->route('admin.lop-hoc.index')
