@@ -22,7 +22,7 @@
     {{-- Footer --}}
     @include('components.client.footer')
     @unless (Route::is('login') || Route::is('register'))
-        @include('components.client.sticky_contact')
+        @include('components.client.sticky-contact')
     @endunless
     @include('partials.client.script')
     @yield('script')

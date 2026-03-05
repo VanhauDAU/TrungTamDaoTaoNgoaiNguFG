@@ -416,11 +416,11 @@
             @endif
         </div>
         <div class="lh-show-actions">
-            <a href="{{ route('admin.lop-hoc.edit', $lopHoc->lopHocId) }}" class="lh-hero-btn lh-hero-edit">
+            <a href="{{ route('admin.lop-hoc.edit', $lopHoc->slug) }}" class="lh-hero-btn lh-hero-edit">
                 <i class="fas fa-pen"></i> Chỉnh sửa
             </a>
             @if ($lopHoc->khoaHoc)
-                <a href="{{ route('admin.khoa-hoc.show', $lopHoc->khoaHocId) }}" class="lh-hero-btn lh-hero-kh">
+                <a href="{{ route('admin.khoa-hoc.show', $lopHoc->khoaHoc->slug) }}" class="lh-hero-btn lh-hero-kh">
                     <i class="fas fa-graduation-cap"></i> Xem khóa học
                 </a>
             @endif
@@ -475,7 +475,7 @@
                     <td>Khóa học</td>
                     <td>
                         @if ($lopHoc->khoaHoc)
-                            <a href="{{ route('admin.khoa-hoc.show', $lopHoc->khoaHocId) }}"
+                            <a href="{{ route('admin.khoa-hoc.show', $lopHoc->khoaHoc->slug) }}"
                                 style="color:#0f766e;font-weight:600;text-decoration:none">
                                 {{ $lopHoc->khoaHoc->tenKhoaHoc }}
                             </a>
@@ -895,31 +895,40 @@
             <div style="padding:24px 24px 8px;">
                 {{-- Tên buổi học full width --}}
                 <div style="margin-bottom:16px;">
-                    <label style="display:block;font-size:.75rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Tên buổi học</label>
+                    <label
+                        style="display:block;font-size:.75rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Tên
+                        buổi học</label>
                     <input type="text" id="ebh-ten"
                         style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.9rem;color:#1e293b;outline:none;"
-                        placeholder="Để trống = tự đặt"
-                        onfocus="this.style.borderColor='#7c3aed'" onblur="this.style.borderColor='#e2e8f0'">
+                        placeholder="Để trống = tự đặt" onfocus="this.style.borderColor='#7c3aed'"
+                        onblur="this.style.borderColor='#e2e8f0'">
                 </div>
                 {{-- Grid 2 cột --}}
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;">
                     <div>
-                        <label style="display:block;font-size:.75rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Ngày học <span style="color:#dc2626">*</span></label>
+                        <label
+                            style="display:block;font-size:.75rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Ngày
+                            học <span style="color:#dc2626">*</span></label>
                         <input type="date" id="ebh-ngay" required
                             style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.9rem;color:#1e293b;outline:none;"
                             onfocus="this.style.borderColor='#7c3aed'" onblur="this.style.borderColor='#e2e8f0'">
                     </div>
                     <div>
-                        <label style="display:block;font-size:.75rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Ca học <span style="color:#dc2626">*</span></label>
+                        <label
+                            style="display:block;font-size:.75rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Ca
+                            học <span style="color:#dc2626">*</span></label>
                         <select id="ebh-ca"
                             style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.9rem;color:#1e293b;background:#fff;outline:none;">
                             @foreach ($caHocs as $ca)
-                                <option value="{{ $ca->caHocId }}">{{ $ca->tenCa }} ({{ $ca->gioBatDau }}–{{ $ca->gioKetThuc }})</option>
+                                <option value="{{ $ca->caHocId }}">{{ $ca->tenCa }}
+                                    ({{ $ca->gioBatDau }}–{{ $ca->gioKetThuc }})</option>
                             @endforeach
                         </select>
                     </div>
                     <div>
-                        <label style="display:block;font-size:.75rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Phòng học</label>
+                        <label
+                            style="display:block;font-size:.75rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Phòng
+                            học</label>
                         <select id="ebh-phong"
                             style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.9rem;color:#1e293b;background:#fff;outline:none;">
                             <option value="">-- Không chọn --</option>
@@ -929,17 +938,22 @@
                         </select>
                     </div>
                     <div>
-                        <label style="display:block;font-size:.75rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Giáo viên</label>
+                        <label
+                            style="display:block;font-size:.75rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Giáo
+                            viên</label>
                         <select id="ebh-gv"
                             style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.9rem;color:#1e293b;background:#fff;outline:none;">
                             <option value="">-- Không chọn --</option>
                             @foreach ($giaoViens as $gv)
-                                <option value="{{ $gv->taiKhoanId }}">{{ $gv->hoSoNguoiDung?->hoTen ?? $gv->taiKhoan }}</option>
+                                <option value="{{ $gv->taiKhoanId }}">{{ $gv->hoSoNguoiDung?->hoTen ?? $gv->taiKhoan }}
+                                </option>
                             @endforeach
                         </select>
                     </div>
                     <div>
-                        <label style="display:block;font-size:.75rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Loại buổi học</label>
+                        <label
+                            style="display:block;font-size:.75rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Loại
+                            buổi học</label>
                         <select id="ebh-trangthai"
                             style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.9rem;color:#1e293b;background:#fff;outline:none;">
                             <option value="0">📖 Lý thuyết</option>
@@ -950,7 +964,9 @@
                         </select>
                     </div>
                     <div>
-                        <label style="display:block;font-size:.75rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Trạng thái hoàn thành</label>
+                        <label
+                            style="display:block;font-size:.75rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Trạng
+                            thái hoàn thành</label>
                         <select id="ebh-hoanhthanh"
                             style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.9rem;color:#1e293b;background:#fff;outline:none;">
                             <option value="0">⏳ Chưa học</option>
@@ -960,11 +976,13 @@
                 </div>
                 {{-- Ghi chú full width --}}
                 <div style="margin-bottom:8px;">
-                    <label style="display:block;font-size:.75rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Ghi chú</label>
+                    <label
+                        style="display:block;font-size:.75rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Ghi
+                        chú</label>
                     <textarea id="ebh-ghichu" rows="2"
                         style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.9rem;color:#1e293b;outline:none;resize:vertical;"
-                        placeholder="Ghi chú thêm..."
-                        onfocus="this.style.borderColor='#7c3aed'" onblur="this.style.borderColor='#e2e8f0'"></textarea>
+                        placeholder="Ghi chú thêm..." onfocus="this.style.borderColor='#7c3aed'"
+                        onblur="this.style.borderColor='#e2e8f0'"></textarea>
                 </div>
             </div>
             {{-- Footer --}}

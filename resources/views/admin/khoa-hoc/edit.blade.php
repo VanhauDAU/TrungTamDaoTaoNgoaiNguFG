@@ -16,8 +16,7 @@
             <div class="kf-breadcrumb">
                 <a href="{{ route('admin.khoa-hoc.index') }}"><i class="fas fa-graduation-cap me-1"></i> Khóa học</a>
                 <span style="margin:0 6px;color:#cbd5e1">/</span>
-                <a
-                    href="{{ route('admin.khoa-hoc.show', $khoaHoc->khoaHocId) }}">{{ Str::limit($khoaHoc->tenKhoaHoc, 30) }}</a>
+                <a href="{{ route('admin.khoa-hoc.show', $khoaHoc->slug) }}">{{ Str::limit($khoaHoc->tenKhoaHoc, 30) }}</a>
                 <span style="margin:0 6px;color:#cbd5e1">/</span> Chỉnh sửa
             </div>
             <div class="kf-page-title" style="margin-top:4px">
@@ -25,7 +24,7 @@
                 Chỉnh sửa: {{ Str::limit($khoaHoc->tenKhoaHoc, 40) }}
             </div>
         </div>
-        <a href="{{ route('admin.khoa-hoc.show', $khoaHoc->khoaHocId) }}" class="kf-btn kf-btn-secondary">
+        <a href="{{ route('admin.khoa-hoc.show', $khoaHoc->slug) }}" class="kf-btn kf-btn-secondary">
             <i class="fas fa-arrow-left"></i> Quay lại
         </a>
     </div>
@@ -169,7 +168,7 @@
         </div>
 
         <div class="kf-action-bar">
-            <a href="{{ route('admin.khoa-hoc.show', $khoaHoc->khoaHocId) }}" class="kf-btn kf-btn-secondary">
+            <a href="{{ route('admin.khoa-hoc.show', $khoaHoc->slug) }}" class="kf-btn kf-btn-secondary">
                 <i class="fas fa-times"></i> Hủy
             </a>
             <button type="submit" class="kf-btn kf-btn-primary">

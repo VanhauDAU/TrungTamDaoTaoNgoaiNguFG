@@ -102,7 +102,8 @@
         </select>
 
         <select name="orderBy" onchange="this.form.submit()">
-            <option value="lopHocId" {{ request('orderBy', 'lopHocId') === 'lopHocId' ? 'selected' : '' }}>Mới nhất</option>
+            <option value="lopHocId" {{ request('orderBy', 'lopHocId') === 'lopHocId' ? 'selected' : '' }}>Mới nhất
+            </option>
             <option value="tenLopHoc" {{ request('orderBy') === 'tenLopHoc' ? 'selected' : '' }}>Tên A-Z</option>
             <option value="ngayBatDau" {{ request('orderBy') === 'ngayBatDau' ? 'selected' : '' }}>Ngày bắt đầu</option>
         </select>
@@ -161,7 +162,7 @@
                             <tr>
                                 <td style="color:#94a3b8;font-size:.78rem">{{ $lopHocs->firstItem() + $loop->index }}</td>
                                 <td>
-                                    <a href="{{ route('admin.lop-hoc.show', $lop->lopHocId) }}"
+                                    <a href="{{ route('admin.lop-hoc.show', $lop->slug) }}"
                                         style="font-weight:600;color:#4c1d95;text-decoration:none">
                                         {{ $lop->tenLopHoc }}
                                     </a>
@@ -171,7 +172,7 @@
                                     @endif
                                 </td>
                                 <td style="font-size:.82rem">
-                                    <a href="{{ route('admin.khoa-hoc.show', $lop->khoaHocId) }}"
+                                    <a href="{{ route('admin.khoa-hoc.show', $lop->khoaHoc->slug) }}"
                                         style="color:#0f766e;text-decoration:none;font-weight:500">
                                         {{ $lop->khoaHoc?->tenKhoaHoc ?? '—' }}
                                     </a>
@@ -230,11 +231,11 @@
                                 </td>
                                 <td>
                                     <div class="lh-actions">
-                                        <a href="{{ route('admin.lop-hoc.show', $lop->lopHocId) }}"
+                                        <a href="{{ route('admin.lop-hoc.show', $lop->slug) }}"
                                             class="lh-btn-action lh-btn-view" title="Xem chi tiết">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <a href="{{ route('admin.lop-hoc.edit', $lop->lopHocId) }}"
+                                        <a href="{{ route('admin.lop-hoc.edit', $lop->slug) }}"
                                             class="lh-btn-action lh-btn-edit" title="Chỉnh sửa">
                                             <i class="fas fa-pen"></i>
                                         </a>

@@ -263,7 +263,7 @@
                 <span><i class="fas fa-chalkboard"></i> {{ $tongLop }} lớp học</span>
             </div>
             <div class="kh-show-actions">
-                <a href="{{ route('admin.khoa-hoc.edit', $khoaHoc->khoaHocId) }}" class="kh-hero-btn kh-hero-btn-edit">
+                <a href="{{ route('admin.khoa-hoc.edit', $khoaHoc->slug) }}" class="kh-hero-btn kh-hero-btn-edit">
                     <i class="fas fa-pen"></i> Chỉnh sửa
                 </a>
                 <a href="{{ route('admin.lop-hoc.create', ['khoaHocId' => $khoaHoc->khoaHocId]) }}"
@@ -583,7 +583,7 @@
                             <tr>
                                 <td style="color:#94a3b8;font-size:.78rem">{{ $i + 1 }}</td>
                                 <td>
-                                    <a href="{{ route('admin.lop-hoc.show', $lop->lopHocId) }}"
+                                    <a href="{{ route('admin.lop-hoc.show', $lop->slug) }}"
                                         style="font-weight:600;color:#134e4a;text-decoration:none">
                                         {{ $lop->tenLopHoc }}
                                     </a>
@@ -607,11 +607,11 @@
                                 </td>
                                 <td>
                                     <div style="display:flex;gap:5px;justify-content:center">
-                                        <a href="{{ route('admin.lop-hoc.show', $lop->lopHocId) }}"
+                                        <a href="{{ route('admin.lop-hoc.show', $lop->slug) }}"
                                             class="kh-btn-action kh-btn-view" title="Xem">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <a href="{{ route('admin.lop-hoc.edit', $lop->lopHocId) }}"
+                                        <a href="{{ route('admin.lop-hoc.edit', $lop->slug) }}"
                                             class="kh-btn-action kh-btn-edit" title="Sửa">
                                             <i class="fas fa-pen"></i>
                                         </a>

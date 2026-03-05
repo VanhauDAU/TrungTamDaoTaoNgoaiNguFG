@@ -103,7 +103,7 @@ class KhoaHocController extends Controller
     }
 
     /** Chi tiết khóa học */
-    public function show(int $id)
+    public function show(string $slug)
     {
         $khoaHoc = KhoaHoc::with([
             'danhMuc',
@@ -111,7 +111,7 @@ class KhoaHocController extends Controller
             'lopHoc.caHoc',
             'lopHoc.taiKhoan.hoSoNguoiDung',
             'hocPhis',
-        ])->findOrFail($id);
+        ])->where('slug', $slug)->firstOrFail();
 
         $tongLop        = $khoaHoc->lopHoc->count();
         $lopDangHoc     = $khoaHoc->lopHoc->where('trangThai', 4)->count();
@@ -130,17 +130,20 @@ class KhoaHocController extends Controller
     }
 
     /** Form chỉnh sửa khóa học */
-    public function edit(int $id)
+    public function edit(string $slug)
     {
-        $khoaHoc      = KhoaHoc::findOrFail($id);
+        $khoaHoc      = KhoaHoc::where('slug', $slug)->firstOrFail();
+        $id = $khoaHoc->khoaHocId;
+
         $flatTree = DanhMucKhoaHoc::buildFlatTree();
         return view('admin.khoa-hoc.edit', compact('khoaHoc', 'flatTree'));
     }
 
     /** Cập nhật khóa học */
-    public function update(Request $request, int $id)
+    public function update(Request $request, string $slug)
     {
-        $khoaHoc = KhoaHoc::findOrFail($id);
+        $khoaHoc = KhoaHoc::where('slug', $slug)->firstOrFail();
+        $id = $khoaHoc->khoaHocId;
 
         $data = $request->validate([
             'tenKhoaHoc'    => 'required|string|max:255',
@@ -173,15 +176,15 @@ class KhoaHocController extends Controller
 
         $khoaHoc->update($data);
 
-        return redirect()->route('admin.khoa-hoc.show', $id)
+        return redirect()->route('admin.khoa-hoc.show', $slug)
             ->with('success', 'Đã cập nhật khóa học «' . $khoaHoc->tenKhoaHoc . '» thành công.');
     }
 
     /** Xóa mềm (lưu trữ) khóa học */
-    public function destroy(int $id)
+    public function destroy(string $slug)
     {
         try {
-            $khoaHoc = KhoaHoc::findOrFail($id);
+            $khoaHoc = KhoaHoc::where('slug', $slug)->firstOrFail();
 
             // Kiểm tra lớp học đang hoạt động (trạng thái: 0=sắp mở, 1=đang mở, 4=đang học)
             $lopDangHoatDong = $khoaHoc->lopHoc()
@@ -209,13 +212,13 @@ class KhoaHocController extends Controller
     }
 
     /** Khôi phục khóa học đã lưu trữ */
-    public function restore(int $id)
+    public function restore(string $slug)
     {
         try {
-            $khoaHoc = KhoaHoc::withTrashed()->findOrFail($id);
+            $khoaHoc = KhoaHoc::withTrashed()->where('slug', $slug)->firstOrFail();
             $khoaHoc->restore();
             return redirect()
-                ->route('admin.khoa-hoc.show', $id)
+                ->route('admin.khoa-hoc.show', $slug)
                 ->with('success', "Đã khôi phục khóa học «{$khoaHoc->tenKhoaHoc}» thành công.");
         } catch (\Exception $e) {
             return redirect()

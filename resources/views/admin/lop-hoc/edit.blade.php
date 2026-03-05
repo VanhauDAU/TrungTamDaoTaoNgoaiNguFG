@@ -16,7 +16,7 @@
             <div class="kf-breadcrumb">
                 <a href="{{ route('admin.lop-hoc.index') }}"><i class="fas fa-chalkboard me-1"></i> Lớp học</a>
                 <span style="margin:0 6px;color:#cbd5e1">/</span>
-                <a href="{{ route('admin.lop-hoc.show', $lopHoc->lopHocId) }}">{{ Str::limit($lopHoc->tenLopHoc, 25) }}</a>
+                <a href="{{ route('admin.lop-hoc.show', $lopHoc->slug) }}">{{ Str::limit($lopHoc->tenLopHoc, 25) }}</a>
                 <span style="margin:0 6px;color:#cbd5e1">/</span> Chỉnh sửa
             </div>
             <div class="kf-page-title" style="margin-top:4px;color:#4c1d95">
@@ -24,7 +24,7 @@
                 Chỉnh sửa lớp học
             </div>
         </div>
-        <a href="{{ route('admin.lop-hoc.show', $lopHoc->lopHocId) }}" class="kf-btn kf-btn-secondary">
+        <a href="{{ route('admin.lop-hoc.show', $lopHoc->slug) }}" class="kf-btn kf-btn-secondary">
             <i class="fas fa-arrow-left"></i> Quay lại
         </a>
     </div>
@@ -238,7 +238,8 @@
             <div class="kf-card">
                 <div class="kf-card-title"><i class="fas fa-file-invoice-dollar"></i> Gói học phí học viên</div>
                 <p class="form-hint" style="margin:0 0 14px">
-                    Chọn gói học phí áp dụng cho lớp học này. Mỗi gói định nghĩa số buổi và đơn giá/buổi mà học viên phải nộp.
+                    Chọn gói học phí áp dụng cho lớp học này. Mỗi gói định nghĩa số buổi và đơn giá/buổi mà học viên phải
+                    nộp.
                 </p>
 
                 <div class="kf-form-row">
@@ -262,17 +263,21 @@
 
                 {{-- Preview card --}}
                 <div id="hocPhiPreview" style="display:none;margin-top:16px">
-                    <div style="background:linear-gradient(135deg,#7c3aed,#a78bfa);border-radius:10px;padding:16px 20px;color:#fff;display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px">
+                    <div
+                        style="background:linear-gradient(135deg,#7c3aed,#a78bfa);border-radius:10px;padding:16px 20px;color:#fff;display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px">
                         <div>
-                            <div style="font-size:.7rem;font-weight:700;opacity:.8;text-transform:uppercase">Số buổi gói</div>
+                            <div style="font-size:.7rem;font-weight:700;opacity:.8;text-transform:uppercase">Số buổi gói
+                            </div>
                             <div style="font-size:1.4rem;font-weight:700" id="prev-sobuoi">—</div>
                         </div>
                         <div>
-                            <div style="font-size:.7rem;font-weight:700;opacity:.8;text-transform:uppercase">Đơn giá/buổi</div>
+                            <div style="font-size:.7rem;font-weight:700;opacity:.8;text-transform:uppercase">Đơn giá/buổi
+                            </div>
                             <div style="font-size:1.4rem;font-weight:700" id="prev-dongia">—</div>
                         </div>
                         <div>
-                            <div style="font-size:.7rem;font-weight:700;opacity:.8;text-transform:uppercase">Tổng học phí HV</div>
+                            <div style="font-size:.7rem;font-weight:700;opacity:.8;text-transform:uppercase">Tổng học phí
+                                HV</div>
                             <div style="font-size:1.4rem;font-weight:700;color:#fde68a" id="prev-tong">—</div>
                         </div>
                     </div>
@@ -316,7 +321,7 @@
         </div>
 
         <div class="kf-action-bar">
-            <a href="{{ route('admin.lop-hoc.show', $lopHoc->lopHocId) }}" class="kf-btn kf-btn-secondary">
+            <a href="{{ route('admin.lop-hoc.show', $lopHoc->slug) }}" class="kf-btn kf-btn-secondary">
                 <i class="fas fa-times"></i> Hủy
             </a>
             <button type="submit" class="kf-btn kf-btn-primary"
@@ -395,7 +400,7 @@
                 pSel.innerHTML = '<option value="">-- Chọn phường/xã --</option>' +
                     res.phuongXas.map(p =>
                         `<option value="${p.maPhuongXa}" ${String(p.maPhuongXa) === oldPhuong ? 'selected' : ''}>${p.tenPhuongXa}</option>`
-                        ).join('');
+                    ).join('');
                 pSel.disabled = false;
                 // Auto-load cơ sở if old value exists
                 if (oldPhuong && pSel.value) loadCoSo();
@@ -421,7 +426,7 @@
                 cSel.innerHTML = '<option value="">-- Chọn cơ sở --</option>' +
                     res.coSos.map(c =>
                         `<option value="${c.coSoId}" ${String(c.coSoId) === oldCoSo ? 'selected' : ''}>${c.tenCoSo}${c.tenPhuongXa ? ' — ' + c.tenPhuongXa : ''}</option>`
-                        ).join('');
+                    ).join('');
                 cSel.disabled = false;
                 // Trigger room/teacher load if coSo is pre-selected
                 if (cSel.value) loadPhongVaGV(cSel.value);
@@ -524,13 +529,16 @@
             const sel = document.getElementById('hocPhiSel');
             const opt = sel.options[sel.selectedIndex];
             const preview = document.getElementById('hocPhiPreview');
-            if (!opt || !opt.value) { preview.style.display = 'none'; return; }
+            if (!opt || !opt.value) {
+                preview.style.display = 'none';
+                return;
+            }
             const soBuoi = parseInt(opt.dataset.sobuoi) || 0;
             const donGia = parseFloat(opt.dataset.dongia) || 0;
-            const tong   = parseFloat(opt.dataset.tong) || soBuoi * donGia;
+            const tong = parseFloat(opt.dataset.tong) || soBuoi * donGia;
             document.getElementById('prev-sobuoi').textContent = soBuoi + ' buổi';
             document.getElementById('prev-dongia').textContent = fmtMoney(donGia);
-            document.getElementById('prev-tong').textContent   = fmtMoney(tong);
+            document.getElementById('prev-tong').textContent = fmtMoney(tong);
             preview.style.display = 'block';
         }
 
