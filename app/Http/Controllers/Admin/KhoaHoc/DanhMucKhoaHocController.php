@@ -10,82 +10,74 @@ use Illuminate\Support\Str;
 
 class DanhMucKhoaHocController extends Controller
 {
-    /** Danh sách danh mục khóa học */
+    // ── INDEX (tree view) ──────────────────────────────────────────
     public function index(Request $request)
     {
-        $query = DanhMucKhoaHoc::withCount('khoaHocs');
+        $q = $request->q;
 
-        // ── Tìm kiếm ──────────────────────────────────────────
-        if ($search = $request->q) {
-            $query->where(function ($q) use ($search) {
-                $q->where('tenDanhMuc', 'like', "%{$search}%")
-                  ->orWhere('moTa',      'like', "%{$search}%");
-            });
-        }
+        // Lấy danh mục gốc kèm con, withCount khóa học
+        $roots = DanhMucKhoaHoc::with(['childrenRecursive.khoaHocs'])
+            ->withCount('khoaHocs')
+            ->whereNull('parent_id')
+            ->when($q, fn($query) => $query->where(function ($sq) use ($q) {
+                $sq->where('tenDanhMuc', 'like', "%{$q}%")
+                   ->orWhereHas('children', fn($c) => $c->where('tenDanhMuc', 'like', "%{$q}%"));
+            }))
+            ->when($request->filled('trangThai'), fn($query) =>
+                $query->where('trangThai', $request->trangThai))
+            ->orderBy('tenDanhMuc')
+            ->get();
 
-        // ── Lọc trạng thái ────────────────────────────────────
-        if ($request->filled('trangThai') && $request->trangThai !== '') {
-            $query->where('trangThai', $request->trangThai);
-        }
-
-        // ── Sắp xếp ───────────────────────────────────────────
-        $orderBy = $request->get('orderBy', 'danhMucId');
-        $dir     = $request->get('dir', 'asc');
-        if (in_array($orderBy, ['danhMucId', 'tenDanhMuc', 'khoaHocs_count'])) {
-            $query->orderBy($orderBy, $dir === 'desc' ? 'desc' : 'asc');
-        }
-
-        $danhMucs = $query->paginate(15)->withQueryString();
-
-        // ── Thống kê nhanh ────────────────────────────────────
         $tongSo       = DanhMucKhoaHoc::count();
-        $dangHoatDong = DanhMucKhoaHoc::where('trangThai', 1)->count();
+        $tongCha      = DanhMucKhoaHoc::whereNull('parent_id')->count();
+        $tongCon      = DanhMucKhoaHoc::whereNotNull('parent_id')->count();
         $tongKhoaHoc  = KhoaHoc::count();
 
         return view('admin.danh-muc-khoa-hoc.index', compact(
-            'danhMucs',
-            'tongSo',
-            'dangHoatDong',
-            'tongKhoaHoc'
+            'roots', 'tongSo', 'tongCha', 'tongCon', 'tongKhoaHoc'
         ));
     }
 
-    /** Form thêm danh mục mới */
+    // ── CREATE ─────────────────────────────────────────────────────
     public function create()
     {
-        return view('admin.danh-muc-khoa-hoc.create');
+        $flatTree = DanhMucKhoaHoc::buildFlatTree();
+        return view('admin.danh-muc-khoa-hoc.create', compact('flatTree'));
     }
 
-    /** Lưu danh mục mới */
+    // ── STORE ──────────────────────────────────────────────────────
     public function store(Request $request)
     {
         $data = $request->validate([
             'tenDanhMuc' => 'required|string|max:255|unique:danhmuckhoahoc,tenDanhMuc',
             'moTa'       => 'nullable|string|max:1000',
             'trangThai'  => 'required|in:0,1',
+            'parent_id'  => 'nullable|integer|exists:danhmuckhoahoc,danhMucId',
         ], [
             'tenDanhMuc.required' => 'Vui lòng nhập tên danh mục.',
             'tenDanhMuc.unique'   => 'Tên danh mục này đã tồn tại.',
-            'tenDanhMuc.max'      => 'Tên danh mục không được vượt quá 255 ký tự.',
-            'trangThai.required'  => 'Vui lòng chọn trạng thái.',
+            'parent_id.exists'    => 'Danh mục cha không hợp lệ.',
         ]);
 
-        $data['slug'] = $this->generateUniqueSlug($request->tenDanhMuc);
+        // Không cho tạo vòng lặp: không thể chọn chính mình làm cha
+        // (không giới hạn cấp — hỗ trợ cây sâu tùy ý)
 
+        $data['slug'] = $this->generateUniqueSlug($request->tenDanhMuc);
         DanhMucKhoaHoc::create($data);
 
         return redirect()->route('admin.danh-muc-khoa-hoc.index')
             ->with('success', 'Đã thêm danh mục «' . $request->tenDanhMuc . '» thành công.');
     }
 
-    /** Form chỉnh sửa danh mục */
+    // ── EDIT ───────────────────────────────────────────────────────
     public function edit(int $id)
     {
-        $danhMuc = DanhMucKhoaHoc::findOrFail($id);
-        return view('admin.danh-muc-khoa-hoc.edit', compact('danhMuc'));
+        $danhMuc  = DanhMucKhoaHoc::findOrFail($id);
+        $flatTree = DanhMucKhoaHoc::buildFlatTree(excludeId: $id);
+        return view('admin.danh-muc-khoa-hoc.edit', compact('danhMuc', 'flatTree'));
     }
 
-    /** Cập nhật danh mục */
+    // ── UPDATE ─────────────────────────────────────────────────────
     public function update(Request $request, int $id)
     {
         $danhMuc = DanhMucKhoaHoc::findOrFail($id);
@@ -94,11 +86,28 @@ class DanhMucKhoaHocController extends Controller
             'tenDanhMuc' => 'required|string|max:255|unique:danhmuckhoahoc,tenDanhMuc,' . $id . ',danhMucId',
             'moTa'       => 'nullable|string|max:1000',
             'trangThai'  => 'required|in:0,1',
+            'parent_id'  => 'nullable|integer|exists:danhmuckhoahoc,danhMucId',
         ], [
             'tenDanhMuc.required' => 'Vui lòng nhập tên danh mục.',
             'tenDanhMuc.unique'   => 'Tên danh mục này đã tồn tại.',
-            'trangThai.required'  => 'Vui lòng chọn trạng thái.',
         ]);
+
+        // Không cho đặt chính nó làm cha
+        if (!empty($data['parent_id']) && $data['parent_id'] == $id) {
+            return back()->withInput()->withErrors(['parent_id' => 'Không thể chọn chính nó làm cha.']);
+        }
+
+        // Không cho chọn descendant làm cha (gây vòng lặp)
+        if (!empty($data['parent_id'])) {
+            $candidate = DanhMucKhoaHoc::with('childrenRecursive')->find($data['parent_id']);
+            if ($candidate) {
+                $descendantIds = $candidate->allDescendantIds();
+                if (in_array($id, $descendantIds)) {
+                    return back()->withInput()
+                        ->withErrors(['parent_id' => 'Không thể chọn danh mục con/cháu của danh mục này làm cha (gây vòng lặp).']);
+                }
+            }
+        }
 
         if ($danhMuc->tenDanhMuc !== $request->tenDanhMuc) {
             $data['slug'] = $this->generateUniqueSlug($request->tenDanhMuc, $id);
@@ -110,47 +119,44 @@ class DanhMucKhoaHocController extends Controller
             ->with('success', 'Đã cập nhật danh mục «' . $danhMuc->tenDanhMuc . '» thành công.');
     }
 
-    /** Xóa danh mục */
+    // ── DESTROY ────────────────────────────────────────────────────
     public function destroy(int $id)
     {
         try {
-            $danhMuc = DanhMucKhoaHoc::withCount('khoaHocs')->findOrFail($id);
+            $danhMuc = DanhMucKhoaHoc::with('children')->withCount('khoaHocs')->findOrFail($id);
 
             if ($danhMuc->khoaHocs_count > 0) {
-                return redirect()
-                    ->route('admin.danh-muc-khoa-hoc.index')
-                    ->with('error', "Không thể xóa «{$danhMuc->tenDanhMuc}» — còn {$danhMuc->khoaHocs_count} khóa học đang thuộc danh mục này. Hãy chuyển các khóa học sang danh mục khác trước.");
+                return redirect()->route('admin.danh-muc-khoa-hoc.index')
+                    ->with('error', "Không thể xóa «{$danhMuc->tenDanhMuc}» — còn {$danhMuc->khoaHocs_count} khóa học.");
+            }
+            if ($danhMuc->children->isNotEmpty()) {
+                return redirect()->route('admin.danh-muc-khoa-hoc.index')
+                    ->with('error', "Không thể xóa «{$danhMuc->tenDanhMuc}» — còn {$danhMuc->children->count()} danh mục con. Hãy xóa hoặc chuyển danh mục con trước.");
             }
 
             $ten = $danhMuc->tenDanhMuc;
             $danhMuc->delete();
 
-            return redirect()
-                ->route('admin.danh-muc-khoa-hoc.index')
+            return redirect()->route('admin.danh-muc-khoa-hoc.index')
                 ->with('success', "Đã xóa danh mục «{$ten}» thành công.");
 
         } catch (\Exception $e) {
-            return redirect()
-                ->route('admin.danh-muc-khoa-hoc.index')
+            return redirect()->route('admin.danh-muc-khoa-hoc.index')
                 ->with('error', 'Đã xảy ra lỗi: ' . $e->getMessage());
         }
     }
 
-    /** Tạo slug duy nhất */
+    // ── HELPERS ────────────────────────────────────────────────────
     private function generateUniqueSlug(string $name, ?int $excludeId = null): string
     {
-        $slug      = Str::slug($name, '-');
-        $candidate = $slug;
-        $counter   = 1;
-
+        $slug = $candidate = Str::slug($name, '-');
+        $i    = 1;
         while (true) {
             $q = DanhMucKhoaHoc::where('slug', $candidate);
             if ($excludeId) $q->where('danhMucId', '!=', $excludeId);
             if (!$q->exists()) break;
-            $candidate = $slug . '-' . $counter;
-            $counter++;
+            $candidate = $slug . '-' . $i++;
         }
-
         return $candidate;
     }
 }

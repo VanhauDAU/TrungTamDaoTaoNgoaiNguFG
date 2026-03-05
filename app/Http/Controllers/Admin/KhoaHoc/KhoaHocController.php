@@ -64,8 +64,8 @@ class KhoaHocController extends Controller
     /** Form thêm khóa học mới */
     public function create()
     {
-        $danhMucs = DanhMucKhoaHoc::orderBy('tenDanhMuc')->get();
-        return view('admin.khoa-hoc.create', compact('danhMucs'));
+        $flatTree = DanhMucKhoaHoc::buildFlatTree();
+        return view('admin.khoa-hoc.create', compact('flatTree'));
     }
 
     /** Lưu khóa học mới */
@@ -133,8 +133,8 @@ class KhoaHocController extends Controller
     public function edit(int $id)
     {
         $khoaHoc      = KhoaHoc::findOrFail($id);
-        $danhMucs = DanhMucKhoaHoc::orderBy('tenDanhMuc')->get();
-        return view('admin.khoa-hoc.edit', compact('khoaHoc', 'danhMucs'));
+        $flatTree = DanhMucKhoaHoc::buildFlatTree();
+        return view('admin.khoa-hoc.edit', compact('khoaHoc', 'flatTree'));
     }
 
     /** Cập nhật khóa học */

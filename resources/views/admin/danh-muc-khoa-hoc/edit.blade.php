@@ -1,5 +1,4 @@
 @extends('layouts.admin')
-
 @section('title', 'Chỉnh sửa Danh Mục Khóa Học')
 @section('page-title', 'Danh Mục Khóa Học')
 @section('breadcrumb', 'Quản lý · Danh mục · Chỉnh sửa')
@@ -10,20 +9,19 @@
 
 @section('content')
 
-    {{-- ── Page header ──────────────────────────────────────── --}}
     <div class="dm-form-header">
         <div>
             <div class="dm-form-breadcrumb">
                 <a href="{{ route('admin.danh-muc-khoa-hoc.index') }}">
-                    <i class="fas fa-tags me-1"></i> Danh mục khóa học
+                    <i class="fas fa-sitemap me-1"></i> Danh mục khóa học
                 </a>
                 <span style="margin:0 6px;color:#cbd5e1">/</span>
-                {{ Str::limit($danhMuc->tenDanhMuc, 35) }}
+                {{ Str::limit($danhMuc->tenDanhMuc, 30) }}
                 <span style="margin:0 6px;color:#cbd5e1">/</span> Chỉnh sửa
             </div>
             <div class="dm-form-title">
                 <i class="fas fa-pen" style="color:#0f766e"></i>
-                Chỉnh sửa: {{ Str::limit($danhMuc->tenDanhMuc, 45) }}
+                Chỉnh sửa: {{ Str::limit($danhMuc->tenDanhMuc, 40) }}
             </div>
         </div>
         <a href="{{ route('admin.danh-muc-khoa-hoc.index') }}" class="dm-btn dm-btn-secondary">
@@ -31,7 +29,6 @@
         </a>
     </div>
 
-    {{-- ── Validation errors ────────────────────────────────── --}}
     @if ($errors->any())
         <div class="dm-alert-error">
             <i class="fas fa-exclamation-circle" style="font-size:1.1rem;flex-shrink:0"></i>
@@ -47,42 +44,65 @@
     @endif
 
     <form action="{{ route('admin.danh-muc-khoa-hoc.update', $danhMuc->danhMucId) }}" method="POST">
-        @csrf
-        @method('PUT')
+        @csrf @method('PUT')
 
-        {{-- ── Thông tin danh mục ───────────────────────────── --}}
         <div class="dm-card">
-            <div class="dm-card-title">
-                <i class="fas fa-info-circle"></i> Thông tin danh mục
-            </div>
+            <div class="dm-card-title"><i class="fas fa-info-circle"></i> Thông tin danh mục</div>
 
+            {{-- Tên --}}
             <div class="dm-form-group">
                 <label>Tên danh mục <span class="req">*</span></label>
                 <input type="text" name="tenDanhMuc" value="{{ old('tenDanhMuc', $danhMuc->tenDanhMuc) }}"
-                    placeholder="Ví dụ: Tiếng Anh, Tiếng Nhật, Kỹ năng mềm..."
-                    class="{{ $errors->has('tenDanhMuc') ? 'is-invalid' : '' }}">
-                <div class="form-hint" style="margin-top: 4px;font-size:0.8rem">Slug hiện tại:
-                    <strong>{{ $danhMuc->slug }}</strong> (Nếu bạn đổi tên danh mục, slug mới sẽ được tự động tạo).</div>
+                    placeholder="Ví dụ: Tiếng Anh..." class="{{ $errors->has('tenDanhMuc') ? 'is-invalid' : '' }}">
+                <div class="form-hint" style="margin-top:4px;font-size:.8rem">
+                    Slug hiện tại: <strong>{{ $danhMuc->slug }}</strong>
+                    (Thay đổi tên sẽ tạo slug mới.)
+                </div>
                 @error('tenDanhMuc')
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
             </div>
 
+            {{-- Danh mục cha --}}
+            <div class="dm-form-group">
+                <label>Danh mục cha</label>
+                @if ($danhMuc->children->isNotEmpty())
+                    <div class="dm-info-note">
+                        <i class="fas fa-info-circle"></i>
+                        Danh mục này đang có <strong>{{ $danhMuc->children->count() }} danh mục con</strong>
+                        → không thể trở thành danh mục con của danh mục khác.
+                    </div>
+                    <input type="hidden" name="parent_id" value="">
+                @else
+                    <select name="parent_id" class="dm-select {{ $errors->has('parent_id') ? 'is-invalid' : '' }}">
+                        <option value="">— Đây là danh mục gốc —</option>
+                        @foreach ($flatTree as $item)
+                            @php
+                                $node = $item['node'];
+                                $depth = $item['depth'];
+                            @endphp
+                            <option value="{{ $node->danhMucId }}"
+                                {{ old('parent_id', $danhMuc->parent_id) == $node->danhMucId ? 'selected' : '' }}>
+                                {{ str_repeat('　', $depth) }}{{ $depth > 0 ? '└─ ' : '' }}{{ $node->tenDanhMuc }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('parent_id')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                @endif
+            </div>
+
+            {{-- Mô tả --}}
             <div class="dm-form-group">
                 <label>Mô tả</label>
-                <textarea name="moTa" rows="4" placeholder="Mô tả ngắn về danh mục này...">{{ old('moTa', $danhMuc->moTa) }}</textarea>
-                @error('moTa')
-                    <div class="invalid-feedback">{{ $message }}</div>
-                @enderror
+                <textarea name="moTa" rows="3">{{ old('moTa', $danhMuc->moTa) }}</textarea>
             </div>
         </div>
 
-        {{-- ── Trạng thái ───────────────────────────────────── --}}
+        {{-- Trạng thái --}}
         <div class="dm-card">
-            <div class="dm-card-title">
-                <i class="fas fa-sliders-h"></i> Trạng thái
-            </div>
-
+            <div class="dm-card-title"><i class="fas fa-sliders-h"></i> Trạng thái</div>
             @php $currentStatus = old('trangThai', $danhMuc->trangThai); @endphp
             <input type="hidden" name="trangThai" value="{{ $currentStatus ? 1 : 0 }}">
             <div class="dm-toggle-group">
@@ -96,12 +116,8 @@
                     {{ $currentStatus ? 'Đang hoạt động' : 'Ngừng hoạt động' }}
                 </span>
             </div>
-            <p class="form-hint" style="margin-top:10px">
-                Danh mục hoạt động sẽ xuất hiện trong form tạo/sửa khóa học.
-            </p>
         </div>
 
-        {{-- ── Action bar ───────────────────────────────────── --}}
         <div class="dm-action-bar">
             <a href="{{ route('admin.danh-muc-khoa-hoc.index') }}" class="dm-btn dm-btn-secondary">
                 <i class="fas fa-times"></i> Hủy
@@ -111,5 +127,4 @@
             </button>
         </div>
     </form>
-
 @endsection

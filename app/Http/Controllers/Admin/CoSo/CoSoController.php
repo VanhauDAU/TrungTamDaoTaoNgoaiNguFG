@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Admin\Facility;
+namespace App\Http\Controllers\Admin\CoSo;
 
 use App\Http\Controllers\Controller;
 use App\Models\Facility\CoSoDaoTao;
