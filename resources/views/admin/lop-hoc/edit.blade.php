@@ -46,7 +46,7 @@
         </div>
     @endif
 
-    <form action="{{ route('admin.lop-hoc.update', $lopHoc->lopHocId) }}" method="POST">
+    <form action="{{ route('admin.lop-hoc.update', $lopHoc->slug) }}" method="POST">
         @csrf
         @method('PUT')
 
@@ -162,12 +162,26 @@
                                 tiên thuộc cơ sở)</span></label>
                         <select name="taiKhoanId" id="giaoVienSel">
                             <option value="">-- Không có --</option>
-                            @foreach ($giaoViens as $gv)
-                                <option value="{{ $gv->taiKhoanId }}"
-                                    {{ old('taiKhoanId', $lopHoc->taiKhoanId) == $gv->taiKhoanId ? 'selected' : '' }}>
-                                    {{ $gv->hoSoNguoiDung->hoTen ?? $gv->taiKhoan }}
-                                </option>
-                            @endforeach
+                            @if ($giaoVienCoSo->isNotEmpty())
+                                <optgroup label="Giáo viên thuộc cơ sở này">
+                                    @foreach ($giaoVienCoSo as $gv)
+                                        <option value="{{ $gv->taiKhoanId }}"
+                                            {{ old('taiKhoanId', $lopHoc->taiKhoanId) == $gv->taiKhoanId ? 'selected' : '' }}>
+                                            {{ $gv->hoSoNguoiDung->hoTen ?? $gv->taiKhoan }}
+                                        </option>
+                                    @endforeach
+                                </optgroup>
+                            @endif
+                            @if ($giaoVienKhac->isNotEmpty())
+                                <optgroup label="Giáo viên cơ sở khác">
+                                    @foreach ($giaoVienKhac as $gv)
+                                        <option value="{{ $gv->taiKhoanId }}"
+                                            {{ old('taiKhoanId', $lopHoc->taiKhoanId) == $gv->taiKhoanId ? 'selected' : '' }}>
+                                            {{ $gv->hoSoNguoiDung->hoTen ?? $gv->taiKhoan }}
+                                        </option>
+                                    @endforeach
+                                </optgroup>
+                            @endif
                         </select>
                     </div>
                 </div>

@@ -164,22 +164,49 @@ class CoSoController extends Controller
     public function getPhuongXa(int $maTinh)
     {
         try {
-
-            $response = Http::timeout(8)->get("https://provinces.open-api.vn/api/p/{$maTinh}?depth=2");
+            // depth=3 để lấy wards lồng trong từng district
+            $response = Http::timeout(8)
+                ->retry(1, 200)
+                ->get("https://provinces.open-api.vn/api/p/{$maTinh}?depth=3");
 
             if ($response->successful()) {
                 $data = $response->json();
+                $wards = collect($data['districts'] ?? [])
+                    ->flatMap(fn($district) => $district['wards'] ?? [])
+                    ->map(fn($ward) => [
+                        'code' => (int) ($ward['code'] ?? 0),
+                        'name' => $ward['name'] ?? null,
+                    ])
+                    ->filter(fn($ward) => $ward['code'] > 0 && !empty($ward['name']))
+                    ->unique('code')
+                    ->sortBy('name')
+                    ->values();
+
                 return response()->json([
                     'success' => true,
-                    // depth=2 trả về danh sách quận/huyện trong key 'districts'
-                    'wards'   => $data['districts'] ?? [],
+                    'wards'   => $wards,
+                    'source'  => 'open-api',
                 ]);
             }
         } catch (\Exception $e) {
-            // Trả về rỗng nếu API lỗi
+            // fallback bên dưới
         }
 
-        return response()->json(['success' => false, 'wards' => []]);
+        // Fallback: lấy danh sách phường/xã đã có trong dữ liệu cơ sở nội bộ
+        $wards = CoSoDaoTao::query()
+            ->whereHas('tinhThanh', fn($q) => $q->where('maAPI', $maTinh))
+            ->whereNotNull('maPhuongXa')
+            ->whereNotNull('tenPhuongXa')
+            ->selectRaw('maPhuongXa as code, tenPhuongXa as name')
+            ->groupBy('maPhuongXa', 'tenPhuongXa')
+            ->orderBy('tenPhuongXa')
+            ->get();
+
+        return response()->json([
+            'success' => $wards->isNotEmpty(),
+            'wards' => $wards,
+            'source' => 'local-db',
+        ]);
     }
 
     /**

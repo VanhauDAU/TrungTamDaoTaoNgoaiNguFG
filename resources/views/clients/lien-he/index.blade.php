@@ -343,13 +343,18 @@
 
                         // Chỉ hiển thị phường/xã CÓ cơ sở
                         const tinhId = parseInt(this.value);
-                        const validMas = new Set(branches.filter(b => b.tinhThanhId === tinhId).map(b =>
-                            b.maPhuongXa).filter(Boolean));
+                        const validMas = new Set(
+                            branches
+                            .filter(b => parseInt(b.tinhThanhId) === tinhId)
+                            .map(b => Number(b.maPhuongXa))
+                            .filter(v => Number.isFinite(v) && v > 0)
+                        );
 
                         (data.wards || []).forEach(w => {
-                            if (!validMas.has(w.code)) return;
+                            const wardCode = Number(w.code);
+                            if (!validMas.has(wardCode)) return;
                             const opt = document.createElement('option');
-                            opt.value = w.code;
+                            opt.value = wardCode;
                             opt.textContent = w.name;
                             filterPhuong.appendChild(opt);
                         });

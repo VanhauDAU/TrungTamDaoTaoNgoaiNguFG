@@ -86,7 +86,7 @@ class LopHocController extends Controller
     {
         $khoaHocs = KhoaHoc::where('trangThai', 1)->orderBy('tenKhoaHoc')->get();
         $caHocs = CaHoc::where('trangThai', 1)->orderBy('tenCa')->get();
-        $tinhThanhs = TinhThanh::whereHas('coSoDaoTaos', fn($q) => $q->where('trangThai', 1))
+        $tinhThanhs = TinhThanh::whereHas('coSoDaoTao', fn($q) => $q->where('trangThai', 1))
             ->orderBy('tenTinhThanh')
             ->get(); // Chỉ lấy tỉnh có cơ sở hoạt động
         $selectedKhoaHocId = $request->get('khoaHocId');
@@ -205,7 +205,7 @@ class LopHocController extends Controller
         $lopHoc = LopHoc::with('coSo')->where('slug', $slug)->firstOrFail();
         $khoaHocs = KhoaHoc::where('trangThai', 1)->orderBy('tenKhoaHoc')->get();
         $caHocs = CaHoc::where('trangThai', 1)->orderBy('tenCa')->get();
-        $tinhThanhs = TinhThanh::whereHas('coSoDaoTaos', fn($q) => $q->where('trangThai', 1))
+        $tinhThanhs = TinhThanh::whereHas('coSoDaoTao', fn($q) => $q->where('trangThai', 1))
             ->orderBy('tenTinhThanh')
             ->get();
         $phongHocs = PhongHoc::where('coSoId', $lopHoc->coSoId)->get();
