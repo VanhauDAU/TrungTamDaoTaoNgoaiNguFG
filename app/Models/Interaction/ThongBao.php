@@ -3,6 +3,7 @@
 namespace App\Models\Interaction;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Models\Auth\TaiKhoan;
 
 class ThongBao extends Model
@@ -95,6 +96,12 @@ class ThongBao extends Model
     public function nguoiNhans()
     {
         return $this->hasMany(ThongBaoNguoiDung::class, 'thongBaoId', 'thongBaoId');
+    }
+
+    public function tepDinhs(): HasMany
+    {
+        return $this->hasMany(ThongBaoTepDinh::class, 'thongBaoId', 'thongBaoId')
+                    ->orderBy('tepDinhId');
     }
 
     // ── Scopes ─────────────────────────────────────────────

@@ -36,7 +36,7 @@
             </div>
         </div>
 
-        <form method="POST" action="{{ route('admin.thong-bao.store') }}" id="wizardForm">
+        <form method="POST" action="{{ route('admin.thong-bao.store') }}" id="wizardForm" enctype="multipart/form-data">
             @csrf
 
             {{-- ════════════ STEP 1: Soạn nội dung ════════════ --}}
@@ -86,6 +86,27 @@
                             <i class="fas fa-thumbtack"></i> Ghim thông báo này lên đầu danh sách
                         </label>
                     </div>
+
+                    {{-- ── FILE ĐÍNH KÈM ──────────────────── --}}
+                    <div class="nb-form-group" style="margin-top:1.25rem;">
+                        <label class="nb-form-label">
+                            <i class="fas fa-paperclip me-1"></i> File đính kèm
+                            <span style="font-weight:400;color:#6b7280;font-size:.82rem;">(Tối đa 5 file, mỗi file ≤
+                                10MB)</span>
+                        </label>
+                        <div class="nb-dropzone" id="nb-dropzone" onclick="document.getElementById('tepDinhInput').click()"
+                            ondragover="event.preventDefault();this.classList.add('drag-over')"
+                            ondragleave="this.classList.remove('drag-over')" ondrop="handleDrop(event)">
+                            <i class="fas fa-cloud-upload-alt" style="font-size:1.8rem;color:#a5b4fc;"></i>
+                            <div style="font-size:.9rem;color:#6b7280;margin-top:.5rem;">Kéo thả file vào đây hoặc <span
+                                    style="color:#6366f1;text-decoration:underline;cursor:pointer;">chọn file</span></div>
+                            <div style="font-size:.78rem;color:#9ca3af;margin-top:.25rem;">PDF, Word, Excel, ảnh, ZIP…</div>
+                        </div>
+                        <input type="file" id="tepDinhInput" name="tepDinhs[]" multiple style="display:none;"
+                            onchange="previewFiles(this.files)">
+                        <div id="nb-file-list" style="margin-top:.75rem;display:flex;flex-wrap:wrap;gap:.5rem;"></div>
+                    </div>
+
                 </div>
 
                 <div class="wizard-nav">
@@ -221,6 +242,9 @@
                             <i class="fas fa-paper-plane me-2"></i>
                             Sẽ gửi đến <strong id="cf-count">?</strong> người nhận
                         </div>
+                        <div id="cf-file-info" style="margin-top:.75rem;font-size:.85rem;color:#6b7280;display:none;">
+                            <i class="fas fa-paperclip me-1"></i> <span id="cf-file-count">0</span> file đính kèm
+                        </div>
                     </div>
                 </div>
 
@@ -248,6 +272,172 @@
         window.LOAI_LABELS = @json(App\Models\Interaction\ThongBao::loaiLabels());
         window.UU_TIEN_LABELS = @json(App\Models\Interaction\ThongBao::uuTienLabels());
         window.DOI_TUONG_LABELS = @json(App\Models\Interaction\ThongBao::doiTuongLabels());
+    </script>
+
+    <script>
+        // ── File dropzone ──────────────────────────────────────────
+        let selectedFiles = []; // DataTransfer-backed list
+
+        // ─── Helpers ────────────────────────────────────────────────
+        function formatSize(bytes) {
+            if (bytes >= 1048576) return (bytes / 1048576).toFixed(1) + ' MB';
+            return (bytes / 1024).toFixed(0) + ' KB';
+        }
+
+        function getFileIcon(mime) {
+            if (!mime) return {
+                icon: 'fa-file',
+                color: '#6b7280'
+            };
+            if (mime.startsWith('image/')) return {
+                icon: 'fa-file-image',
+                color: '#3b82f6'
+            };
+            if (mime === 'application/pdf') return {
+                icon: 'fa-file-pdf',
+                color: '#ef4444'
+            };
+            if (mime.includes('word') || mime.includes('doc'))
+                return {
+                    icon: 'fa-file-word',
+                    color: '#2563eb'
+                };
+            if (mime.includes('sheet') || mime.includes('excel') || mime.includes('xls'))
+                return {
+                    icon: 'fa-file-excel',
+                    color: '#16a34a'
+                };
+            if (mime.includes('presentation') || mime.includes('powerpoint'))
+                return {
+                    icon: 'fa-file-powerpoint',
+                    color: '#ea580c'
+                };
+            if (mime.includes('zip') || mime.includes('rar') || mime.includes('archive'))
+                return {
+                    icon: 'fa-file-archive',
+                    color: '#7c3aed'
+                };
+            if (mime.startsWith('text/')) return {
+                icon: 'fa-file-alt',
+                color: '#6b7280'
+            };
+            return {
+                icon: 'fa-file',
+                color: '#9ca3af'
+            };
+        }
+
+        function previewFiles(fileList) {
+            for (const f of fileList) {
+                if (selectedFiles.length >= 5) {
+                    alert('Tối đa 5 file đính kèm.');
+                    break;
+                }
+                if (f.size > 10 * 1024 * 1024) {
+                    alert(`File "${f.name}" vượt quá 10MB.`);
+                    continue;
+                }
+                // Tránh trùng tên
+                if (selectedFiles.some(s => s.name === f.name && s.size === f.size)) continue;
+                selectedFiles.push(f);
+            }
+            rebuildInput();
+            renderCards();
+            updateConfirmFileCount();
+        }
+
+        function renderCards() {
+            const list = document.getElementById('nb-file-list');
+            list.innerHTML = '';
+            list.style.cssText = 'margin-top:.75rem; display:flex; flex-wrap:wrap; gap:.65rem;';
+
+            selectedFiles.forEach((f, i) => {
+                const card = document.createElement('div');
+                card.className = 'nb-preview-card';
+                card.dataset.idx = i;
+
+                if (f.type.startsWith('image/')) {
+                    // ── Ảnh: thumbnail thực ─────────────────────────
+                    const reader = new FileReader();
+                    reader.onload = e => {
+                        card.innerHTML = `
+                        <div class="npc-thumb">
+                            <img src="${e.target.result}" alt="${f.name}" onclick="openPreviewWindow('${e.target.result}','${f.name}')">
+                            <div class="npc-overlay">
+                                <span onclick="openPreviewWindow('${e.target.result}','${f.name}')" title="Xem">
+                                    <i class="fas fa-eye"></i>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="npc-info">
+                            <div class="npc-name" title="${f.name}">${f.name}</div>
+                            <div class="npc-size">${formatSize(f.size)}</div>
+                        </div>
+                        <button type="button" class="npc-remove" onclick="removeFile(${i})" title="Xóa">✕</button>`;
+                    };
+                    reader.readAsDataURL(f);
+                } else {
+                    // ── File khác: icon lớn ──────────────────────────
+                    const {
+                        icon,
+                        color
+                    } = getFileIcon(f.type);
+                    const objUrl = URL.createObjectURL(f);
+                    card.innerHTML = `
+                    <div class="npc-thumb npc-thumb-icon">
+                        <i class="fas ${icon}" style="color:${color};font-size:2rem;"></i>
+                        <div class="npc-overlay">
+                            <span onclick="window.open('${objUrl}','_blank')" title="Mở xem">
+                                <i class="fas fa-eye"></i>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="npc-info">
+                        <div class="npc-name" title="${f.name}">${f.name}</div>
+                        <div class="npc-size">${formatSize(f.size)}</div>
+                    </div>
+                    <button type="button" class="npc-remove" onclick="removeFile(${i})" title="Xóa">✕</button>`;
+                }
+
+                list.appendChild(card);
+            });
+        }
+
+        function openPreviewWindow(src, name) {
+            const w = window.open('', '_blank');
+            w.document.write(`<html><head><title>${name}</title>
+            <style>body{margin:0;display:flex;align-items:center;justify-content:center;
+            min-height:100vh;background:#111;}img{max-width:100%;max-height:100vh;}</style>
+            </head><body><img src="${src}" alt="${name}"></body></html>`);
+        }
+
+        function removeFile(idx) {
+            selectedFiles.splice(idx, 1);
+            rebuildInput();
+            renderCards();
+            updateConfirmFileCount();
+        }
+
+        function rebuildInput() {
+            const dt = new DataTransfer();
+            selectedFiles.forEach(f => dt.items.add(f));
+            document.getElementById('tepDinhInput').files = dt.files;
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            document.getElementById('nb-dropzone').classList.remove('drag-over');
+            previewFiles(e.dataTransfer.files);
+        }
+
+        function updateConfirmFileCount() {
+            const el = document.getElementById('cf-file-info');
+            const cnt = document.getElementById('cf-file-count');
+            if (el && cnt) {
+                cnt.textContent = selectedFiles.length;
+                el.style.display = selectedFiles.length > 0 ? 'block' : 'none';
+            }
+        }
     </script>
 
     <script src="{{ asset('assets/admin/js/pages/thong-bao/create.js') }}"></script>

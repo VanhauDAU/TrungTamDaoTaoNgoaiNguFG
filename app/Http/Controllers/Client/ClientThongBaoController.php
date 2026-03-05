@@ -21,24 +21,39 @@ class ClientThongBaoController extends Controller
     {
         $userId = Auth::id();
 
-        $query = ThongBaoNguoiDung::with('thongBao')
+        // ── Dữ liệu gộp theo danh mục (cho grid 2×2) ──────────────
+        $loaiMap = [
+            0 => ['label' => 'Hệ thống',   'icon' => 'fa-cog',                'color' => '#6366f1'],
+            1 => ['label' => 'Học tập',     'icon' => 'fa-graduation-cap',     'color' => '#3b82f6'],
+            2 => ['label' => 'Tài chính',   'icon' => 'fa-wallet',             'color' => '#10b981'],
+            3 => ['label' => 'Sự kiện',     'icon' => 'fa-calendar-alt',       'color' => '#f59e0b'],
+            4 => ['label' => 'Khẩn cấp',   'icon' => 'fa-exclamation-triangle','color' => '#ef4444'],
+        ];
+
+        // Lấy tất cả thông báo của user (không phân trang), eager load tepDinhs
+        $allItems = ThongBaoNguoiDung::with(['thongBao.tepDinhs'])
             ->where('taiKhoanId', $userId)
-            ->whereHas('thongBao');
+            ->whereHas('thongBao')
+            ->latest()
+            ->get();
 
-        // Filter theo trạng thái đọc
-        if ($request->filter === 'unread') $query->where('daDoc', false);
-        if ($request->filter === 'read')   $query->where('daDoc', true);
-
-        // Filter theo loại thông báo
-        if ($request->filled('loai')) {
-            $query->whereHas('thongBao', fn($q) => $q->where('loaiGui', $request->loai));
+        // Group theo loaiGui. Mỗi category chứa tối đa 5 thông báo mới nhất để hiển thị inline.
+        $byCategory = [];
+        foreach ($loaiMap as $loaiKey => $meta) {
+            $items = $allItems->filter(fn($i) => ($i->thongBao->loaiGui ?? 0) === $loaiKey);
+            $byCategory[$loaiKey] = [
+                'label'   => $meta['label'],
+                'icon'    => $meta['icon'],
+                'color'   => $meta['color'],
+                'items'   => $items->values(),
+                'total'   => $items->count(),
+                'unread'  => $items->where('daDoc', false)->count(),
+            ];
         }
 
-        $items = $query->latest()->paginate(15);
+        $tongChuaDoc = $allItems->where('daDoc', false)->count();
 
-        $tongChuaDoc = ThongBaoNguoiDung::where('taiKhoanId', $userId)->where('daDoc', false)->count();
-
-        return view('clients.hoc-vien.thong-bao.index', compact('items', 'tongChuaDoc'));
+        return view('clients.hoc-vien.thong-bao.index', compact('byCategory', 'tongChuaDoc'));
     }
 
     // ── SSE (Server-Sent Events) stream ──────────────────────────────────────

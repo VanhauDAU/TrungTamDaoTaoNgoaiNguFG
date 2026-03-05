@@ -5,12 +5,15 @@ namespace App\Http\Controllers\Admin\ThongBao;
 use App\Http\Controllers\Controller;
 use App\Models\Interaction\ThongBao;
 use App\Models\Interaction\ThongBaoNguoiDung;
+use App\Models\Interaction\ThongBaoTepDinh;
 use App\Models\Auth\TaiKhoan;
 use App\Models\Education\LopHoc;
 use App\Models\Course\KhoaHoc;
 use App\Services\ThongBaoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Carbon\Carbon;
 
 class ThongBaoController extends Controller
@@ -85,23 +88,32 @@ class ThongBaoController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'tieuDe'      => 'required|string|max:255',
-            'noiDung'     => 'required|string',
-            'loaiGui'     => 'required|integer|between:0,4',
-            'doiTuongGui' => 'required|integer|between:0,4',
-            'doiTuongId'  => 'nullable|integer',
-            'uuTien'      => 'required|integer|between:0,2',
-            'ghim'        => 'nullable|boolean',
-            'hinhAnh'     => 'nullable|string|max:500',
+            'tieuDe'        => 'required|string|max:255',
+            'noiDung'       => 'required|string',
+            'loaiGui'       => 'required|integer|between:0,4',
+            'doiTuongGui'   => 'required|integer|between:0,4',
+            'doiTuongId'    => 'nullable|integer',
+            'uuTien'        => 'required|integer|between:0,2',
+            'ghim'          => 'nullable|boolean',
+            'tepDinhs'      => 'nullable|array|max:5',
+            'tepDinhs.*'    => 'file|max:10240', // tối đa 10MB/file
         ]);
 
         $tb = ThongBao::create([
-            ...$validated,
-            'nguoiGuiId' => Auth::id(),
-            'ngayGui'    => Carbon::now(),
-            'trangThai'  => 1,
-            'ghim'       => $request->boolean('ghim'),
+            'tieuDe'      => $validated['tieuDe'],
+            'noiDung'     => $validated['noiDung'],
+            'loaiGui'     => $validated['loaiGui'],
+            'doiTuongGui' => $validated['doiTuongGui'],
+            'doiTuongId'  => $validated['doiTuongId'] ?? null,
+            'uuTien'      => $validated['uuTien'],
+            'nguoiGuiId'  => Auth::id(),
+            'ngayGui'     => Carbon::now(),
+            'trangThai'   => 1,
+            'ghim'        => $request->boolean('ghim'),
         ]);
+
+        // Lưu file đính kèm
+        $this->luuTepDinh($tb->thongBaoId, $request);
 
         // Gửi đến người nhận
         $soNguoiNhan = $this->service->guiThongBao($tb);
@@ -109,6 +121,29 @@ class ThongBaoController extends Controller
         return redirect()
             ->route('admin.thong-bao.show', $tb->thongBaoId)
             ->with('success', "Đã gửi thông báo thành công đến {$soNguoiNhan} người nhận.");
+    }
+
+    /** Lưu các file đính kèm upload vào storage và DB */
+    private function luuTepDinh(int $thongBaoId, Request $request): void
+    {
+        if (!$request->hasFile('tepDinhs')) return;
+
+        foreach ($request->file('tepDinhs') as $file) {
+            if (!$file->isValid()) continue;
+
+            $ext        = $file->getClientOriginalExtension();
+            $tenFileLuu = Str::uuid() . ($ext ? '.' . $ext : '');
+            $duongDan   = $file->storeAs('thongbao/tepdinh', $tenFileLuu, 'public');
+
+            ThongBaoTepDinh::create([
+                'thongBaoId' => $thongBaoId,
+                'tenFile'    => $file->getClientOriginalName(),
+                'tenFileLuu' => $tenFileLuu,
+                'duongDan'   => $duongDan,
+                'loaiFile'   => $file->getMimeType(),
+                'kichThuoc'  => $file->getSize(),
+            ]);
+        }
     }
 
     // ── SHOW ───────────────────────────────────────────────
@@ -119,6 +154,7 @@ class ThongBaoController extends Controller
             'nguoiGui.nhanSu',
             'nguoiNhans.nguoiDung.hoSoNguoiDung',
             'nguoiNhans.nguoiDung.nhanSu',
+            'tepDinhs',
         ])->findOrFail($id);
 
         $tongNguoiNhan = $thongBao->nguoiNhans->count();
@@ -149,17 +185,37 @@ class ThongBaoController extends Controller
         $thongBao = ThongBao::findOrFail($id);
 
         $validated = $request->validate([
-            'tieuDe'  => 'required|string|max:255',
-            'noiDung' => 'required|string',
-            'loaiGui' => 'required|integer|between:0,4',
-            'uuTien'  => 'required|integer|between:0,2',
-            'ghim'    => 'nullable|boolean',
+            'tieuDe'        => 'required|string|max:255',
+            'noiDung'       => 'required|string',
+            'loaiGui'       => 'required|integer|between:0,4',
+            'uuTien'        => 'required|integer|between:0,2',
+            'ghim'          => 'nullable|boolean',
+            'tepDinhs'      => 'nullable|array|max:5',
+            'tepDinhs.*'    => 'file|max:10240',
+            'xoa_tep'       => 'nullable|array',
+            'xoa_tep.*'     => 'integer',
         ]);
 
         $thongBao->update([
-            ...$validated,
-            'ghim' => $request->boolean('ghim'),
+            'tieuDe'  => $validated['tieuDe'],
+            'noiDung' => $validated['noiDung'],
+            'loaiGui' => $validated['loaiGui'],
+            'uuTien'  => $validated['uuTien'],
+            'ghim'    => $request->boolean('ghim'),
         ]);
+
+        // Xóa file được chọn xóa
+        if ($request->filled('xoa_tep')) {
+            $tepXoas = ThongBaoTepDinh::where('thongBaoId', $thongBao->thongBaoId)
+                ->whereIn('tepDinhId', $request->xoa_tep)->get();
+            foreach ($tepXoas as $tep) {
+                Storage::disk('public')->delete($tep->duongDan);
+                $tep->delete();
+            }
+        }
+
+        // Thêm file mới
+        $this->luuTepDinh($thongBao->thongBaoId, $request);
 
         return redirect()
             ->route('admin.thong-bao.show', $thongBao->thongBaoId)
@@ -169,8 +225,15 @@ class ThongBaoController extends Controller
     // ── DESTROY ────────────────────────────────────────────
     public function destroy(string $id)
     {
-        $thongBao = ThongBao::findOrFail($id);
-        // Xóa pivot records trước
+        $thongBao = ThongBao::with('tepDinhs')->findOrFail($id);
+
+        // Xóa file vật lý
+        foreach ($thongBao->tepDinhs as $tep) {
+            Storage::disk('public')->delete($tep->duongDan);
+        }
+
+        // Xóa records liên quan
+        $thongBao->tepDinhs()->delete();
         $thongBao->nguoiNhans()->delete();
         $thongBao->delete();
 
@@ -184,6 +247,13 @@ class ThongBaoController extends Controller
     {
         $ids = $request->validate(['ids' => 'required|array', 'ids.*' => 'integer'])['ids'];
 
+        // Xóa file vật lý
+        $tepDinhs = ThongBaoTepDinh::whereIn('thongBaoId', $ids)->get();
+        foreach ($tepDinhs as $tep) {
+            Storage::disk('public')->delete($tep->duongDan);
+        }
+
+        ThongBaoTepDinh::whereIn('thongBaoId', $ids)->delete();
         ThongBaoNguoiDung::whereIn('thongBaoId', $ids)->delete();
         ThongBao::whereIn('thongBaoId', $ids)->delete();
 
