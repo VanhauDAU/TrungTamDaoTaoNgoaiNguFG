@@ -70,16 +70,20 @@ class DanhMucKhoaHocController extends Controller
     }
 
     // ── EDIT ───────────────────────────────────────────────────────
+
     public function edit(string $slug)
     {
         $danhMuc  = DanhMucKhoaHoc::where('slug', $slug)->firstOrFail();
         $id = $danhMuc->danhMucId;
+
         $flatTree = DanhMucKhoaHoc::buildFlatTree(excludeId: $id);
         return view('admin.danh-muc-khoa-hoc.edit', compact('danhMuc', 'flatTree'));
     }
 
     // ── UPDATE ─────────────────────────────────────────────────────
+
     public function update(Request $request, string $slug)
+
     {
         $danhMuc = DanhMucKhoaHoc::where('slug', $slug)->firstOrFail();
         $id = $danhMuc->danhMucId;
@@ -127,6 +131,7 @@ class DanhMucKhoaHocController extends Controller
         try {
             $danhMuc = DanhMucKhoaHoc::with('children')->withCount('khoaHocs')->where('slug', $slug)->firstOrFail();
             $id = $danhMuc->danhMucId;
+
 
             if ($danhMuc->khoaHocs_count > 0) {
                 return redirect()->route('admin.danh-muc-khoa-hoc.index')

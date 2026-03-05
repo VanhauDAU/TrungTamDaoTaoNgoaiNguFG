@@ -134,6 +134,7 @@ class KhoaHocController extends Controller
     {
         $khoaHoc      = KhoaHoc::where('slug', $slug)->firstOrFail();
         $id = $khoaHoc->khoaHocId;
+
         $flatTree = DanhMucKhoaHoc::buildFlatTree();
         return view('admin.khoa-hoc.edit', compact('khoaHoc', 'flatTree'));
     }
