@@ -7,7 +7,148 @@
 @section('stylesheet')
     <link rel="stylesheet" href="{{ asset('assets/admin/css/pages/lien-he/index.css') }}">
     <style>
-        /* Bulk-action bar */
+        /* ── Stats ──────────────────────────────────────────────────── */
+        .lh-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+
+        .lh-stat-card {
+            background: #fff;
+            border: 1.5px solid #e9eef5;
+            border-radius: 12px;
+            padding: 16px 18px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, .04);
+            transition: box-shadow .2s;
+        }
+
+        .lh-stat-card:hover {
+            box-shadow: 0 4px 16px rgba(0, 0, 0, .08);
+        }
+
+        .lh-stat-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .lh-stat-icon.total {
+            background: #e0f2fe;
+            color: #0284c7;
+        }
+
+        .lh-stat-icon.orange {
+            background: #fff7ed;
+            color: #ea580c;
+        }
+
+        .lh-stat-icon.blue {
+            background: #eff6ff;
+            color: #2563eb;
+        }
+
+        .lh-stat-icon.green {
+            background: #f0fdf4;
+            color: #16a34a;
+        }
+
+        .lh-stat-icon.red {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
+        .lh-stat-icon.trash {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
+        .lh-stat-value {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #1a2b3c;
+            line-height: 1;
+        }
+
+        .lh-stat-label {
+            font-size: 0.72rem;
+            color: #8899a6;
+            margin-top: 3px;
+        }
+
+        /* ── Badge loại ─────────────────────────────────────────────── */
+        .badge-loai {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: .3px;
+        }
+
+        .badge-loai.blue {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .badge-loai.green {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .badge-loai.red {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .badge-loai.gray {
+            background: #f1f5f9;
+            color: #475569;
+        }
+
+        /* ── Badge trạng thái ───────────────────────────────────────── */
+        .badge-ts {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 700;
+        }
+
+        .badge-ts.orange {
+            background: #fff7ed;
+            color: #c2410c;
+        }
+
+        .badge-ts.blue {
+            background: #eff6ff;
+            color: #1d4ed8;
+        }
+
+        .badge-ts.green {
+            background: #f0fdf4;
+            color: #15803d;
+        }
+
+        .badge-ts.red {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        /* ── Bulk bar ────────────────────────────────────────────────── */
         .lh-bulk-bar {
             display: none;
             align-items: center;
@@ -26,7 +167,7 @@
             display: flex;
         }
 
-        .lh-bulk-bar .bulk-count {
+        .bulk-count {
             background: #3b82f6;
             color: #fff;
             padding: 2px 10px;
@@ -60,7 +201,7 @@
             gap: 6px;
             padding: 6px 16px;
             border-radius: 8px;
-            background: #059669;
+            background: #7c3aed;
             color: #fff;
             font-size: 0.8rem;
             font-weight: 600;
@@ -70,10 +211,9 @@
         }
 
         .btn-bulk-status:hover {
-            background: #047857;
+            background: #6d28d9;
         }
 
-        /* Checkbox style */
         .lh-checkbox {
             width: 17px;
             height: 17px;
@@ -81,19 +221,33 @@
             cursor: pointer;
         }
 
-        /* Inline status toggle */
         .btn-toggle-status {
             border: none;
             background: none;
             cursor: pointer;
             padding: 0;
         }
+
+        /* ── Avatar initials ─────────────────────────────────────────── */
+        .lh-avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
     </style>
 @endsection
 
 @section('content')
 
-    {{-- ── Page Header ───────────────────────────────────────────── --}}
+    {{-- ── Page Header ──────────────────────────────────────────────────────── --}}
     <div class="lh-page-header">
         <div class="lh-page-title">
             <i class="fas fa-envelope-open-text me-2" style="color:#27c4b5"></i>Danh sách liên hệ
@@ -108,7 +262,7 @@
         </a>
     </div>
 
-    {{-- ── Stats strip ────────────────────────────────────────────── --}}
+    {{-- ── Stats strip ──────────────────────────────────────────────────────── --}}
     <div class="lh-stats">
         <div class="lh-stat-card">
             <div class="lh-stat-icon total"><i class="fas fa-inbox"></i></div>
@@ -118,48 +272,83 @@
             </div>
         </div>
         <div class="lh-stat-card">
-            <div class="lh-stat-icon active"><i class="fas fa-check-circle"></i></div>
+            <div class="lh-stat-icon orange"><i class="fas fa-hourglass-half"></i></div>
+            <div>
+                <div class="lh-stat-value">{{ number_format($chuaXuLy) }}</div>
+                <div class="lh-stat-label">Chưa xử lý</div>
+            </div>
+        </div>
+        <div class="lh-stat-card">
+            <div class="lh-stat-icon blue"><i class="fas fa-spinner"></i></div>
+            <div>
+                <div class="lh-stat-value">{{ number_format($dangXuLy) }}</div>
+                <div class="lh-stat-label">Đang xử lý</div>
+            </div>
+        </div>
+        <div class="lh-stat-card">
+            <div class="lh-stat-icon green"><i class="fas fa-check-circle"></i></div>
             <div>
                 <div class="lh-stat-value">{{ number_format($daXuLy) }}</div>
                 <div class="lh-stat-label">Đã xử lý</div>
             </div>
         </div>
         <div class="lh-stat-card">
-            <div class="lh-stat-icon new"><i class="fas fa-hourglass-half"></i></div>
+            <div class="lh-stat-icon red"><i class="fas fa-ban"></i></div>
             <div>
-                <div class="lh-stat-value">{{ number_format($chuaXuLy) }}</div>
-                <div class="lh-stat-label">Chưa xử lý</div>
+                <div class="lh-stat-value">{{ number_format($daTuChoi) }}</div>
+                <div class="lh-stat-label">Đã từ chối</div>
             </div>
         </div>
     </div>
 
-    {{-- ── Filter bar ─────────────────────────────────────────────── --}}
+    {{-- ── Filter bar ───────────────────────────────────────────────────────── --}}
     <form action="{{ route('admin.lien-he.index') }}" method="GET" class="lh-filter-bar" id="filter-form">
-        {{-- Search --}}
         <div class="search-wrap">
             <i class="fas fa-search"></i>
-            <input type="text" name="q" class="search-input"
-                placeholder="Tìm theo tên, email, số điện thoại, tiêu đề..." value="{{ request('q') }}" autocomplete="off">
+            <input type="text" name="q" class="search-input" placeholder="Tìm theo tên, email, SĐT, tiêu đề..."
+                value="{{ request('q') }}" autocomplete="off">
         </div>
 
         {{-- Trạng thái --}}
         <select name="trangThai" onchange="this.form.submit()">
             <option value="">Tất cả trạng thái</option>
-            <option value="1" {{ request('trangThai') === '1' ? 'selected' : '' }}>Đã xử lý</option>
-            <option value="0" {{ request('trangThai') === '0' ? 'selected' : '' }}>Chưa xử lý</option>
+            <option value="0" {{ request('trangThai') === '0' ? 'selected' : '' }}>⏳ Chưa xử lý</option>
+            <option value="1" {{ request('trangThai') === '1' ? 'selected' : '' }}>🔄 Đang xử lý</option>
+            <option value="2" {{ request('trangThai') === '2' ? 'selected' : '' }}>✅ Đã xử lý</option>
+            <option value="3" {{ request('trangThai') === '3' ? 'selected' : '' }}>🚫 Đã từ chối</option>
+        </select>
+
+        {{-- Loại liên hệ --}}
+        <select name="loaiLienHe" onchange="this.form.submit()">
+            <option value="">Tất cả loại</option>
+            @foreach (\App\Models\Interaction\LienHe::LOAI_LABELS as $val => $label)
+                <option value="{{ $val }}" {{ request('loaiLienHe') === $val ? 'selected' : '' }}>
+                    {{ $label }}</option>
+            @endforeach
+        </select>
+
+        {{-- Người phụ trách --}}
+        <select name="nguoiPhuTrachId" onchange="this.form.submit()">
+            <option value="">Tất cả phụ trách</option>
+            <option value="__null__" {{ request('nguoiPhuTrachId') === '__null__' ? 'selected' : '' }}>Chưa gán</option>
+            @foreach ($nhanVienList as $nv)
+                <option value="{{ $nv->taiKhoanId }}"
+                    {{ request('nguoiPhuTrachId') == $nv->taiKhoanId ? 'selected' : '' }}>
+                    {{ $nv->hoSoNguoiDung?->hoTen ?? $nv->taiKhoan }}
+                </option>
+            @endforeach
         </select>
 
         {{-- Sắp xếp --}}
         <select name="orderBy" onchange="this.form.submit()">
-            <option value="LienHeId" {{ request('orderBy', 'LienHeId') === 'LienHeId' ? 'selected' : '' }}>Mới nhất
+            <option value="lienHeId" {{ request('orderBy', 'lienHeId') === 'lienHeId' ? 'selected' : '' }}>Mới nhất
             </option>
-            <option value="created_at" {{ request('orderBy') === 'created_at' ? 'selected' : '' }}>Ngày gửi (cũ - mới)
-            </option>
-            <option value="hoTen" {{ request('orderBy') === 'hoTen' ? 'selected' : '' }}>Người gửi A-Z</option>
+            <option value="created_at" {{ request('orderBy') === 'created_at' ? 'selected' : '' }}>Ngày gửi</option>
+            <option value="hoTen" {{ request('orderBy') === 'hoTen' ? 'selected' : '' }}>A–Z</option>
+            <option value="trangThai" {{ request('orderBy') === 'trangThai' ? 'selected' : '' }}>Trạng thái</option>
         </select>
         <input type="hidden" name="dir" value="{{ request('dir', 'desc') }}">
 
-        {{-- Buttons --}}
         <button type="submit" class="btn-filter btn-filter-primary">
             <i class="fas fa-filter"></i> Lọc
         </button>
@@ -168,20 +357,19 @@
         </a>
     </form>
 
-    {{-- ── Bulk action bar (hiện khi chọn checkbox) ────────────── --}}
+    {{-- ── Bulk bar ─────────────────────────────────────────────────────────── --}}
     <div class="lh-bulk-bar" id="bulk-bar">
         <i class="fas fa-check-double"></i>
         Đã chọn <span class="bulk-count" id="bulk-count">0</span> liên hệ
         <button type="button" class="btn-bulk-status" onclick="confirmBulkStatus()">
-            <i class="fas fa-arrows-rotate"></i> Chuyển trạng thái
+            <i class="fas fa-arrows-rotate"></i> Đổi trạng thái
         </button>
-
         <button type="button" class="btn-bulk-delete" onclick="confirmBulkDelete()">
             <i class="fas fa-trash"></i> Xóa đã chọn
         </button>
     </div>
 
-    {{-- ── Table card ─────────────────────────────────────────────── --}}
+    {{-- ── Table card ───────────────────────────────────────────────────────── --}}
     <div class="lh-card">
         <div class="lh-table-header">
             <div class="lh-table-title"><i class="fas fa-list me-2"></i> Danh sách liên hệ</div>
@@ -195,10 +383,8 @@
             <div class="lh-empty">
                 <i class="fas fa-envelope-open"></i>
                 <p>Không tìm thấy liên hệ nào.</p>
-                @if (request()->anyFilled(['q', 'trangThai']))
-                    <a href="{{ route('admin.lien-he.index') }}" class="btn-filter btn-filter-reset">
-                        Xóa bộ lọc
-                    </a>
+                @if (request()->anyFilled(['q', 'trangThai', 'loaiLienHe', 'nguoiPhuTrachId']))
+                    <a href="{{ route('admin.lien-he.index') }}" class="btn-filter btn-filter-reset">Xóa bộ lọc</a>
                 @endif
             </div>
         @else
@@ -206,64 +392,64 @@
                 <table class="lh-table">
                     <thead>
                         <tr>
-                            <th style="width:36px">
-                                <input type="checkbox" class="lh-checkbox" id="check-all" title="Chọn tất cả">
-                            </th>
+                            <th style="width:36px"><input type="checkbox" class="lh-checkbox" id="check-all"></th>
                             <th style="width:44px">#</th>
-                            <th>
-                                <a class="sort-link"
-                                    href="{{ request()->fullUrlWithQuery(['orderBy' => 'hoTen', 'dir' => request('orderBy') === 'hoTen' && request('dir') === 'asc' ? 'desc' : 'asc']) }}">
-                                    Người gửi
-                                    @if (request('orderBy') === 'hoTen')
-                                        <i class="fas fa-sort-{{ request('dir', 'asc') === 'asc' ? 'up' : 'down' }}"></i>
-                                    @else
-                                        <i class="fas fa-sort" style="opacity:.4"></i>
-                                    @endif
-                                </a>
-                            </th>
-                            <th>Email & Phone</th>
+                            <th>Người gửi</th>
+                            <th>Email & SĐT</th>
+                            <th>Loại</th>
                             <th>Tiêu đề</th>
-                            <th>
-                                <a class="sort-link"
-                                    href="{{ request()->fullUrlWithQuery(['orderBy' => 'created_at', 'dir' => request('orderBy') === 'created_at' && request('dir') === 'desc' ? 'asc' : 'desc']) }}">
-                                    Thời gian gửi
-                                    @if (request('orderBy', 'LienHeId') === 'LienHeId' || request('orderBy') === 'created_at')
-                                        <i class="fas fa-sort-{{ request('dir', 'desc') === 'desc' ? 'down' : 'up' }}"></i>
-                                    @else
-                                        <i class="fas fa-sort" style="opacity:.4"></i>
-                                    @endif
-                                </a>
-                            </th>
+                            <th>Phụ trách</th>
+                            <th>Thời gian gửi</th>
                             <th>Trạng thái</th>
                             <th style="text-align:center">Thao tác</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach ($lienHes as $lh)
+                            @php
+                                $loaiColor = \App\Models\Interaction\LienHe::LOAI_COLORS[$lh->loaiLienHe] ?? 'gray';
+                                $tsColor = \App\Models\Interaction\LienHe::TRANG_THAI_COLORS[$lh->trangThai] ?? 'gray';
+                                $tsLabel = \App\Models\Interaction\LienHe::TRANG_THAI_LABELS[$lh->trangThai] ?? '?';
+                                $loaiLabel = \App\Models\Interaction\LienHe::LOAI_LABELS[$lh->loaiLienHe] ?? 'Khác';
+                                $initials = mb_strtoupper(mb_substr($lh->hoTen, 0, 1));
+                            @endphp
                             <tr>
-                                <td>
-                                    <input type="checkbox" class="lh-checkbox row-check" value="{{ $lh->lienHeId }}">
+                                <td><input type="checkbox" class="lh-checkbox row-check" value="{{ $lh->lienHeId }}">
                                 </td>
-
-                                <td style="color:#8899a6;font-size:0.78rem">
-                                    {{ $lienHes->firstItem() + $loop->index }}
+                                <td style="color:#8899a6;font-size:0.78rem">{{ $lienHes->firstItem() + $loop->index }}
                                 </td>
 
                                 <td>
-                                    <div class="lh-name">{{ $lh->hoTen }}</div>
-                                </td>
-
-                                <td>
-                                    <div class="lh-info-sub" style="color: #2d3748">{{ $lh->email ?? '—' }}</div>
-                                    <div class="lh-info-sub"><i class="fas fa-phone-alt me-1"
-                                            style="font-size: 0.7rem; color: #aab8c2"></i>{{ $lh->soDienThoai ?? '—' }}
+                                    <div style="display:flex;align-items:center;gap:10px">
+                                        <div class="lh-avatar">{{ $initials }}</div>
+                                        <div class="lh-name">{{ $lh->hoTen }}</div>
                                     </div>
                                 </td>
 
                                 <td>
-                                    <span style="font-weight: 500;">
-                                        {{ \Illuminate\Support\Str::limit($lh->tieuDe, 40) }}
-                                    </span>
+                                    <div class="lh-info-sub" style="color:#2d3748">{{ $lh->email ?? '—' }}</div>
+                                    <div class="lh-info-sub"><i class="fas fa-phone-alt me-1"
+                                            style="font-size:0.7rem;color:#aab8c2"></i>{{ $lh->soDienThoai ?? '—' }}</div>
+                                </td>
+
+                                <td>
+                                    <span class="badge-loai {{ $loaiColor }}">{{ $loaiLabel }}</span>
+                                </td>
+
+                                <td>
+                                    <span
+                                        style="font-weight:500;">{{ \Illuminate\Support\Str::limit($lh->tieuDe, 35) }}</span>
+                                </td>
+
+                                <td>
+                                    @if ($lh->nguoiPhuTrach)
+                                        <span style="font-size:0.8rem;color:#374151;font-weight:600">
+                                            <i class="fas fa-user-check me-1" style="color:#10b981;font-size:0.7rem"></i>
+                                            {{ $lh->nguoiPhuTrach->hoSoNguoiDung?->hoTen ?? $lh->nguoiPhuTrach->taiKhoan }}
+                                        </span>
+                                    @else
+                                        <span style="font-size:0.78rem;color:#94a3b8;font-style:italic">Chưa gán</span>
+                                    @endif
                                 </td>
 
                                 <td style="color:#8899a6;font-size:0.8rem">
@@ -272,25 +458,13 @@
                                 </td>
 
                                 <td>
-                                    <button type="button" class="btn-toggle-status"
-                                        onclick="toggleStatus({{ $lh->lienHeId }}, {{ $lh->trangThai }})"
-                                        title="Click để chuyển trạng thái">
-                                        @if ($lh->trangThai == 1)
-                                            <span class="badge-active">
-                                                <i class="fas fa-check-circle" style="font-size:.5em"></i> Đã xử lý
-                                            </span>
-                                        @else
-                                            <span class="badge-inactive">
-                                                <i class="fas fa-hourglass-half" style="font-size:.5em"></i> Chưa xử lý
-                                            </span>
-                                        @endif
-                                    </button>
+                                    <span class="badge-ts {{ $tsColor }}">{{ $tsLabel }}</span>
                                 </td>
 
                                 <td>
                                     <div class="lh-actions">
-                                        <a href="{{ route('admin.lien-he.edit', $lh->lienHeId) }}"
-                                            class="btn-action btn-action-edit" title="Chi tiết / Cập nhật">
+                                        <a href="{{ route('admin.lien-he.show', $lh->lienHeId) }}"
+                                            class="btn-action btn-action-edit" title="Xem chi tiết CRM">
                                             <i class="fas fa-eye"></i>
                                         </a>
                                         <button type="button" class="btn-action btn-action-del" title="Xóa"
@@ -305,7 +479,6 @@
                 </table>
             </div>
 
-            {{-- Pagination --}}
             @if ($lienHes->hasPages())
                 <div class="lh-pagination">
                     <div class="lh-pagination-info">
@@ -317,27 +490,16 @@
         @endif
     </div>
 
-    {{-- Hidden forms INSIDE @section('content') --}}
+    {{-- Hidden forms --}}
     <form id="delete-form" method="POST" style="display:none">
-        @csrf
-        @method('DELETE')
+        @csrf @method('DELETE')
     </form>
-
     <form id="bulk-delete-form" method="POST" action="{{ route('admin.lien-he.bulk-destroy') }}" style="display:none">
-        @csrf
-        @method('DELETE')
+        @csrf @method('DELETE')
         <input type="hidden" name="ids" id="bulk-ids">
     </form>
-
-    <form id="toggle-status-form" method="POST" style="display:none">
-        @csrf
-        @method('PUT')
-        <input type="hidden" name="trangThai" id="toggle-trangThai">
-    </form>
-
     <form id="bulk-status-form" method="POST" action="{{ route('admin.lien-he.bulk-status') }}" style="display:none">
-        @csrf
-        @method('PATCH')
+        @csrf @method('PATCH')
         <input type="hidden" name="ids" id="bulk-status-ids">
         <input type="hidden" name="trangThai" id="bulk-trangThai">
     </form>
@@ -346,11 +508,11 @@
 
 @section('script')
     <script>
-        // ── Single delete ───────────────────────────────────────
+        // ── Delete ──────────────────────────────────────────────────────────────
         function confirmDelete(id, name) {
             Swal.fire({
                 title: 'Xóa liên hệ?',
-                html: `Liên hệ từ <strong>${name}</strong> sẽ được chuyển vào thùng rác.<br><small style="color:#8899a6">Bạn có thể khôi phục bất kỳ lúc nào.</small>`,
+                html: `Liên hệ từ <strong>${name}</strong> sẽ được chuyển vào thùng rác.`,
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonText: '<i class="fas fa-trash me-1"></i> Xóa',
@@ -358,9 +520,8 @@
                 confirmButtonColor: '#dc2626',
                 cancelButtonColor: '#6c757d',
                 reverseButtons: true,
-                focusCancel: true,
-            }).then(result => {
-                if (result.isConfirmed) {
+            }).then(r => {
+                if (r.isConfirmed) {
                     const form = document.getElementById('delete-form');
                     form.action = `/admin/lien-he/${id}`;
                     form.submit();
@@ -368,66 +529,60 @@
             });
         }
 
-        // ── Inline toggle status ────────────────────────────────
-        function toggleStatus(id, current) {
-            const newStatus = current == 1 ? 0 : 1;
-            const label = newStatus == 1 ? 'Đã xử lý' : 'Chưa xử lý';
-            Swal.fire({
-                title: 'Chuyển trạng thái?',
-                html: `Chuyển trạng thái liên hệ sang <strong>${label}</strong>?`,
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: '<i class="fas fa-check me-1"></i> Xác nhận',
-                cancelButtonText: 'Hủy',
-                confirmButtonColor: '#059669',
-                cancelButtonColor: '#6c757d',
-                reverseButtons: true,
-                focusCancel: true,
-            }).then(result => {
-                if (result.isConfirmed) {
-                    const form = document.getElementById('toggle-status-form');
-                    form.action = `/admin/lien-he/${id}`;
-                    document.getElementById('toggle-trangThai').value = newStatus;
-                    form.submit();
-                }
-            });
-        }
-        // ── Bulk status change ──────────────────────────────────
+        // ── Bulk status ─────────────────────────────────────────────────────────
         function confirmBulkStatus() {
-            const checked = document.querySelectorAll('.row-check:checked');
-            const ids = Array.from(checked).map(cb => cb.value);
-            if (ids.length === 0) return;
-
+            const ids = Array.from(document.querySelectorAll('.row-check:checked')).map(c => c.value);
+            if (!ids.length) return;
             Swal.fire({
-                title: `Chuyển trạng thái ${ids.length} liên hệ?`,
-                html: `Chọn trạng thái mới cho <strong>${ids.length}</strong> liên hệ đã chọn:`,
+                title: `Đổi trạng thái ${ids.length} liên hệ?`,
                 icon: 'question',
                 input: 'select',
                 inputOptions: {
-                    '1': '✅ Đã xử lý',
                     '0': '⏳ Chưa xử lý',
+                    '1': '🔄 Đang xử lý',
+                    '2': '✅ Đã xử lý',
+                    '3': '🚫 Đã từ chối'
                 },
                 inputPlaceholder: '-- Chọn trạng thái --',
                 showCancelButton: true,
                 confirmButtonText: '<i class="fas fa-check me-1"></i> Xác nhận',
                 cancelButtonText: 'Hủy',
-                confirmButtonColor: '#059669',
+                confirmButtonColor: '#7c3aed',
                 cancelButtonColor: '#6c757d',
                 reverseButtons: true,
-                focusCancel: true,
-                inputValidator: (value) => {
-                    if (value === '') return 'Vui lòng chọn trạng thái!';
-                },
-            }).then(result => {
-                if (result.isConfirmed) {
+                inputValidator: v => !v && 'Vui lòng chọn trạng thái!',
+            }).then(r => {
+                if (r.isConfirmed) {
                     document.getElementById('bulk-status-ids').value = ids.join(',');
-                    document.getElementById('bulk-trangThai').value = result.value;
+                    document.getElementById('bulk-trangThai').value = r.value;
                     document.getElementById('bulk-status-form').submit();
                 }
             });
         }
 
-        // ── Checkbox / Bulk delete ──────────────────────────────
+        // ── Bulk delete ─────────────────────────────────────────────────────────
+        function confirmBulkDelete() {
+            const ids = Array.from(document.querySelectorAll('.row-check:checked')).map(c => c.value);
+            if (!ids.length) return;
+            Swal.fire({
+                title: `Xóa ${ids.length} liên hệ?`,
+                html: `<strong>${ids.length}</strong> liên hệ sẽ vào thùng rác.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: '<i class="fas fa-trash me-1"></i> Xóa',
+                cancelButtonText: 'Hủy',
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6c757d',
+                reverseButtons: true,
+            }).then(r => {
+                if (r.isConfirmed) {
+                    document.getElementById('bulk-ids').value = ids.join(',');
+                    document.getElementById('bulk-delete-form').submit();
+                }
+            });
+        }
+
+        // ── Checkbox ────────────────────────────────────────────────────────────
         const checkAll = document.getElementById('check-all');
         const rowChecks = document.querySelectorAll('.row-check');
         const bulkBar = document.getElementById('bulk-bar');
@@ -443,37 +598,12 @@
             rowChecks.forEach(cb => cb.checked = this.checked);
             updateBulkBar();
         });
-
         rowChecks.forEach(cb => cb.addEventListener('change', function() {
             checkAll.checked = document.querySelectorAll('.row-check:checked').length === rowChecks.length;
             updateBulkBar();
         }));
 
-        function confirmBulkDelete() {
-            const checked = document.querySelectorAll('.row-check:checked');
-            const ids = Array.from(checked).map(cb => cb.value);
-            if (ids.length === 0) return;
-
-            Swal.fire({
-                title: `Xóa ${ids.length} liên hệ?`,
-                html: `<strong>${ids.length}</strong> liên hệ đã chọn sẽ được chuyển vào thùng rác.<br><small style="color:#8899a6">Bạn có thể khôi phục bất kỳ lúc nào.</small>`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: '<i class="fas fa-trash me-1"></i> Xóa tất cả',
-                cancelButtonText: 'Hủy',
-                confirmButtonColor: '#dc2626',
-                cancelButtonColor: '#6c757d',
-                reverseButtons: true,
-                focusCancel: true,
-            }).then(result => {
-                if (result.isConfirmed) {
-                    document.getElementById('bulk-ids').value = ids.join(',');
-                    document.getElementById('bulk-delete-form').submit();
-                }
-            });
-        }
-
-        // Enter để submit filter
+        // Enter to submit
         document.querySelector('.search-input')?.addEventListener('keydown', e => {
             if (e.key === 'Enter') document.getElementById('filter-form').submit();
         });
