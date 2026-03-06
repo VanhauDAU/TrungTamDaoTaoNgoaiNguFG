@@ -11,6 +11,7 @@ class DanhMucKhoaHoc extends Model
     protected $primaryKey = 'danhMucId';
 
     protected $fillable = [
+        'maDanhMuc',
         'tenDanhMuc',
         'slug',
         'moTa',
@@ -46,6 +47,27 @@ class DanhMucKhoaHoc extends Model
     public function scopeRoots($query)
     {
         return $query->whereNull('parent_id');
+    }
+
+    // ── Generator ──────────────────────────────────────────────────
+    public static function generateMaDanhMuc($tenDanhMuc)
+    {
+        $words = explode(' ', $tenDanhMuc);
+        $abbr = '';
+        foreach ($words as $word) {
+            $abbr .= mb_substr($word, 0, 1);
+        }
+        $abbr = strtoupper(\Illuminate\Support\Str::ascii($abbr));
+        $abbr = preg_replace('/[^A-Z]/', '', $abbr);
+        if (empty($abbr)) $abbr = 'DM';
+
+        $count = self::where('maDanhMuc', 'LIKE', $abbr . '%')->count();
+        if ($count == 0) {
+            return $abbr;
+        }
+
+        $so = str_pad($count + 1, 2, '0', STR_PAD_LEFT);
+        return $abbr . $so; 
     }
 
     // ── Helpers ────────────────────────────────────────────────────

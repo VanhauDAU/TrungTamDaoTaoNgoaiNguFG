@@ -34,6 +34,7 @@
             </span>
             <span style="font-weight:{{ $depth === 1 ? '700' : '500' }};color:#374151">
                 {{ $node->tenDanhMuc }}
+                <span style="color:#666; font-size:0.85em; margin-left:5px;">[{{ $node->maDanhMuc }}]</span>
             </span>
             @if ($hasKids)
                 <span class="dm-children-count">{{ $soKon }} con</span>

@@ -13,6 +13,7 @@ class KhoaHoc extends Model
     protected $primaryKey = 'khoaHocId'; 
     protected $fillable = [
         'khoaHocId',
+        'maKhoaHoc',
         'danhMucId',
         'tenKhoaHoc',
         'slug',
@@ -23,6 +24,17 @@ class KhoaHoc extends Model
         'ketQuaDatDuoc',
         'trangThai'
     ];
+
+    public static function generateMaKhoaHoc($danhMucId)
+    {
+        $danhMuc = DanhMucKhoaHoc::find($danhMucId);
+        $maVietTat = $danhMuc && $danhMuc->maDanhMuc ? $danhMuc->maDanhMuc : 'KH';
+
+        $count = self::where('maKhoaHoc', 'LIKE', $maVietTat . '-%')->count();
+        $so = str_pad($count + 1, 3, '0', STR_PAD_LEFT);
+
+        return strtoupper($maVietTat) . '-' . $so;
+    }
 
     public function danhMuc()
     {

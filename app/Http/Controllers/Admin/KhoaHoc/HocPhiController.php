@@ -26,8 +26,11 @@ class HocPhiController extends Controller
 
         HocPhi::create($data);
 
+        // Lấy slug của khóa học để redirect đúng
+        $khoaHoc = KhoaHoc::find($data['khoaHocId']);
+
         return redirect()
-            ->route('admin.khoa-hoc.show', $request->khoaHocId)
+            ->route('admin.khoa-hoc.show', $khoaHoc->slug)
             ->with('success', "Đã thêm gói học phí {$data['soBuoi']} buổi thành công.");
     }
 
@@ -49,7 +52,7 @@ class HocPhiController extends Controller
         }
 
         return redirect()
-            ->route('admin.khoa-hoc.show', $hocPhi->khoaHocId)
+            ->route('admin.khoa-hoc.show', $hocPhi->khoaHoc->slug)
             ->with('success', "Đã cập nhật gói học phí {$hocPhi->soBuoi} buổi thành công.");
     }
 
@@ -65,16 +68,16 @@ class HocPhiController extends Controller
                 return response()->json(['success' => false, 'message' => "Gói này đang được dùng bởi {$soLopDung} lớp học, không thể xóa."], 422);
             }
             return redirect()
-                ->route('admin.khoa-hoc.show', $hocPhi->khoaHocId)
+                ->route('admin.khoa-hoc.show', $hocPhi->khoaHoc->slug)
                 ->with('error', "Gói này đang được dùng bởi {$soLopDung} lớp học, không thể xóa.");
         }
 
-        $khoaHocId = $hocPhi->khoaHocId;
-        $soBuoi    = $hocPhi->soBuoi;
+        $slug   = $hocPhi->khoaHoc->slug;
+        $soBuoi = $hocPhi->soBuoi;
         $hocPhi->delete();
 
         return redirect()
-            ->route('admin.khoa-hoc.show', $khoaHocId)
+            ->route('admin.khoa-hoc.show', $slug)
             ->with('success', "Đã xóa gói học phí {$soBuoi} buổi thành công.");
     }
 
