@@ -71,7 +71,7 @@
                 <i class="fas fa-pen"></i>
             </a>
             <button type="button" class="dm-btn-action dm-btn-del" title="Xóa"
-                onclick="confirmDeleteDM({{ $node->danhMucId }}, '{{ addslashes($node->tenDanhMuc) }}', {{ $soKhoaHoc }}, {{ $soKon }})">
+                onclick='confirmDeleteDM(@json($node->slug), @json($node->tenDanhMuc), {{ $soKhoaHoc }}, {{ $soKon }})'>
                 <i class="fas fa-trash"></i>
             </button>
         </div>

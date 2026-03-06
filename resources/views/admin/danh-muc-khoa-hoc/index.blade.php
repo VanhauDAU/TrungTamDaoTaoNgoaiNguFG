@@ -145,7 +145,7 @@
                                         <i class="fas fa-pen"></i>
                                     </a>
                                     <button type="button" class="dm-btn-action dm-btn-del" title="Xóa"
-                                        onclick="confirmDeleteDM({{ $root->danhMucId }}, '{{ addslashes($root->tenDanhMuc) }}', {{ $root->khoaHocs_count }}, {{ $root->childrenRecursive->count() }})">
+                                        onclick='confirmDeleteDM(@json($root->slug), @json($root->tenDanhMuc), {{ $root->khoaHocs_count }}, {{ $root->childrenRecursive->count() }})'>
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </div>
@@ -203,7 +203,7 @@
             icon.classList.toggle('fa-chevron-right', isOpen);
         }
 
-        function confirmDeleteDM(id, name, soKH, soKon) {
+        function confirmDeleteDM(slug, name, soKH, soKon) {
             if (soKH > 0) {
                 Swal.fire({
                     title: 'Không thể xóa!',
@@ -238,7 +238,7 @@
             }).then(r => {
                 if (r.isConfirmed) {
                     const form = document.getElementById('delete-dm-form');
-                    form.action = `/admin/danh-muc-khoa-hoc/${id}`;
+                    form.action = `/admin/danh-muc-khoa-hoc/${encodeURIComponent(slug)}`;
                     form.submit();
                 }
             });
