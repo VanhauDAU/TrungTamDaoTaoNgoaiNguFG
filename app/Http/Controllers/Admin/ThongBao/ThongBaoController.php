@@ -170,7 +170,7 @@ class ThongBaoController extends Controller
     // ── EDIT ───────────────────────────────────────────────
     public function edit(string $id)
     {
-        $thongBao   = ThongBao::findOrFail($id);
+        $thongBao   = ThongBao::with('tepDinhs')->findOrFail($id);
         $lopHocs    = LopHoc::select('lopHocId', 'tenLopHoc')->orderBy('tenLopHoc')->get();
         $khoaHocs   = KhoaHoc::select('khoaHocId', 'tenKhoaHoc')->orderBy('tenKhoaHoc')->get();
         $taiKhoans  = TaiKhoan::with('hoSoNguoiDung', 'nhanSu')

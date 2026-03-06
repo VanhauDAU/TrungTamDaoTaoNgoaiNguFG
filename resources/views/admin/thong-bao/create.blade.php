@@ -10,33 +10,55 @@
 @endsection
 
 @section('content')
-    <div class="container-fluid px-4 py-2" style="max-width:860px; margin:auto;">
-
-        {{-- ── WIZARD STEPS HEADER ──────────────────────────────── --}}
-        <div class="wizard-steps" id="wizardSteps">
-            <div class="wz-step active" id="step-dot-1">
-                <div class="wz-step-inner">
-                    <div class="wz-circle">1</div>
-                    <div class="wz-label">Soạn nội dung</div>
-                </div>
+    <div class="container-fluid px-4 py-2" style="max-width:1220px; margin:auto;">
+        <div class="nb-editor-hero">
+            <div>
+                <div class="nb-editor-hero-title">Soạn Và Gửi Thông Báo</div>
+                <div class="nb-editor-hero-subtitle">Bố cục 3 bước: soạn nội dung, chọn đúng đối tượng, xác nhận trước khi gửi.</div>
             </div>
-            <div class="wz-connector" id="conn-1"></div>
-            <div class="wz-step" id="step-dot-2">
-                <div class="wz-step-inner">
-                    <div class="wz-circle">2</div>
-                    <div class="wz-label">Chọn đối tượng</div>
-                </div>
-            </div>
-            <div class="wz-connector" id="conn-2"></div>
-            <div class="wz-step" id="step-dot-3">
-                <div class="wz-step-inner">
-                    <div class="wz-circle">3</div>
-                    <div class="wz-label">Xác nhận & Gửi</div>
-                </div>
+            <div class="nb-hero-chips">
+                <span class="nb-hero-chip"><i class="fas fa-bolt"></i> Gửi ngay tức thì</span>
+                <span class="nb-hero-chip"><i class="fas fa-users"></i> Preview người nhận</span>
+                <span class="nb-hero-chip"><i class="fas fa-paperclip"></i> Tối đa 5 tệp</span>
             </div>
         </div>
 
-        <form method="POST" action="{{ route('admin.thong-bao.store') }}" id="wizardForm" enctype="multipart/form-data">
+        @if ($errors->any())
+            <div class="nb-alert-error">
+                <i class="fas fa-circle-exclamation"></i>
+                <div>
+                    <strong>Dữ liệu chưa hợp lệ.</strong> Vui lòng kiểm tra lại các trường bắt buộc và thử lại.
+                </div>
+            </div>
+        @endif
+
+        <div class="nb-compose-layout">
+            <div class="nb-compose-main">
+                {{-- ── WIZARD STEPS HEADER ──────────────────────────────── --}}
+                <div class="wizard-steps" id="wizardSteps">
+                    <div class="wz-step active" id="step-dot-1">
+                        <div class="wz-step-inner">
+                            <div class="wz-circle">1</div>
+                            <div class="wz-label">Soạn nội dung</div>
+                        </div>
+                    </div>
+                    <div class="wz-connector" id="conn-1"></div>
+                    <div class="wz-step" id="step-dot-2">
+                        <div class="wz-step-inner">
+                            <div class="wz-circle">2</div>
+                            <div class="wz-label">Chọn đối tượng</div>
+                        </div>
+                    </div>
+                    <div class="wz-connector" id="conn-2"></div>
+                    <div class="wz-step" id="step-dot-3">
+                        <div class="wz-step-inner">
+                            <div class="wz-circle">3</div>
+                            <div class="wz-label">Xác nhận & Gửi</div>
+                        </div>
+                    </div>
+                </div>
+
+                <form method="POST" action="{{ route('admin.thong-bao.store') }}" id="wizardForm" enctype="multipart/form-data">
             @csrf
 
             {{-- ════════════ STEP 1: Soạn nội dung ════════════ --}}
@@ -259,7 +281,53 @@
                 </div>
             </div>
 
-        </form>
+                </form>
+            </div>
+
+            <aside class="nb-compose-aside">
+                <div class="nb-side-card">
+                    <div class="nb-side-title"><i class="fas fa-circle-info"></i> Tóm tắt nhanh</div>
+                    <div class="nb-side-kv">
+                        <span>Bước hiện tại</span>
+                        <strong id="compose-step">1/3</strong>
+                    </div>
+                    <div class="nb-side-kv">
+                        <span>Tiêu đề</span>
+                        <strong id="compose-title">Chưa nhập</strong>
+                    </div>
+                    <div class="nb-side-kv">
+                        <span>Loại / Ưu tiên</span>
+                        <strong><span id="compose-loai">Hệ thống</span> · <span id="compose-uu-tien">Bình thường</span></strong>
+                    </div>
+                    <div class="nb-side-kv">
+                        <span>Đối tượng nhận</span>
+                        <strong id="compose-doi-tuong">Tất cả</strong>
+                    </div>
+                    <div class="nb-side-kv">
+                        <span>Ước tính người nhận</span>
+                        <strong id="compose-recipient">0</strong>
+                    </div>
+                    <div class="nb-side-kv">
+                        <span>Tệp đính kèm mới</span>
+                        <strong id="compose-files">0</strong>
+                    </div>
+                    <div class="nb-side-kv">
+                        <span>Ghim lên đầu</span>
+                        <strong id="compose-pin">Không</strong>
+                    </div>
+                </div>
+
+                <div class="nb-side-card">
+                    <div class="nb-side-title"><i class="fas fa-list-check"></i> Checklist trước khi gửi</div>
+                    <ul class="nb-side-checklist">
+                        <li>Tiêu đề rõ ràng, nêu đúng mục đích thông báo.</li>
+                        <li>Nội dung chứa đầy đủ mốc thời gian và hành động cần làm.</li>
+                        <li>Đối tượng nhận đã đúng nhóm cần tiếp cận.</li>
+                        <li>Đính kèm đúng tài liệu, dung lượng hợp lệ.</li>
+                    </ul>
+                </div>
+            </aside>
+        </div>
     </div>
 @endsection
 
@@ -437,6 +505,8 @@
                 cnt.textContent = selectedFiles.length;
                 el.style.display = selectedFiles.length > 0 ? 'block' : 'none';
             }
+            const asideCount = document.getElementById('compose-files');
+            if (asideCount) asideCount.textContent = selectedFiles.length;
         }
     </script>
 

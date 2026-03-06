@@ -42,6 +42,30 @@ let currentStep    = 1;
 let previewCount   = 0;
 let currentDoiTuong = 0; // default: Tất cả
 
+function updateComposeSummary() {
+    const titleEl = document.getElementById('compose-title');
+    const loaiEl = document.getElementById('compose-loai');
+    const uuTienEl = document.getElementById('compose-uu-tien');
+    const doiTuongEl = document.getElementById('compose-doi-tuong');
+    const recipientEl = document.getElementById('compose-recipient');
+    const pinEl = document.getElementById('compose-pin');
+    const stepEl = document.getElementById('compose-step');
+
+    const tieuDe = document.getElementById('tieuDe')?.value.trim();
+    const loai = document.querySelector('[name=loaiGui]')?.value ?? 0;
+    const uuTien = document.querySelector('[name=uuTien]')?.value ?? 0;
+    const doiTuong = document.querySelector('[name=doiTuongGui]:checked')?.value ?? 0;
+    const ghim = document.querySelector('[name=ghim]')?.checked;
+
+    if (titleEl) titleEl.textContent = tieuDe || 'Chưa nhập';
+    if (loaiEl) loaiEl.textContent = window.LOAI_LABELS[loai] ?? '—';
+    if (uuTienEl) uuTienEl.textContent = window.UU_TIEN_LABELS[uuTien] ?? '—';
+    if (doiTuongEl) doiTuongEl.textContent = window.DOI_TUONG_LABELS[doiTuong] ?? '—';
+    if (recipientEl) recipientEl.textContent = previewCount;
+    if (pinEl) pinEl.textContent = ghim ? 'Có' : 'Không';
+    if (stepEl) stepEl.textContent = `${currentStep}/3`;
+}
+
 /**
  * Chuyển sang step N, validate từng bước
  */
@@ -73,6 +97,7 @@ function goStep(n) {
         document.getElementById(`conn-${i}`).classList.toggle('done', i < n);
     }
     currentStep = n;
+    updateComposeSummary();
 }
 window.goStep = goStep;
 
@@ -91,6 +116,7 @@ function buildConfirmStep() {
     document.getElementById('cf-uu-tien').textContent   = window.UU_TIEN_LABELS[uuTien]  ?? '—';
     document.getElementById('cf-doi-tuong').textContent = window.DOI_TUONG_LABELS[doiTuong] ?? '—';
     document.getElementById('cf-count').textContent     = previewCount;
+    updateComposeSummary();
 }
 
 // ── Doi tuong radio cards ─────────────────────────────────────────────────────
@@ -128,6 +154,7 @@ function selectDoiTuong(val, labelEl) {
     }
 
     fetchRecipientPreview();
+    updateComposeSummary();
 }
 window.selectDoiTuong = selectDoiTuong;
 
@@ -145,8 +172,17 @@ async function fetchRecipientPreview() {
     document.getElementById('previewBody').innerHTML =
         '<div class="preview-loading"><i class="fas fa-spinner fa-spin me-1"></i> Đang tải…</div>';
 
-    const resp = await fetch(`${window.RECIPIENTS_URL}?doiTuongGui=${dtg}&doiTuongId=${dtid}`);
-    const data = await resp.json();
+    let data;
+    try {
+        const resp = await fetch(`${window.RECIPIENTS_URL}?doiTuongGui=${dtg}&doiTuongId=${dtid}`);
+        data = await resp.json();
+    } catch (e) {
+        document.getElementById('previewBody').innerHTML =
+            '<div class="preview-loading">Không thể tải preview người nhận.</div>';
+        previewCount = 0;
+        updateComposeSummary();
+        return;
+    }
 
     previewCount = data.soNguoiNhan;
     document.getElementById('previewCount').textContent = previewCount;
@@ -155,6 +191,7 @@ async function fetchRecipientPreview() {
 
     if (!data.nguoiNhans.length) {
         body.innerHTML = '<div class="preview-loading">Không tìm thấy người nhận phù hợp.</div>';
+        updateComposeSummary();
         return;
     }
 
@@ -176,6 +213,7 @@ async function fetchRecipientPreview() {
     } else {
         more.style.display = 'none';
     }
+    updateComposeSummary();
 }
 
 // ── Init ─────────────────────────────────────────────────────────────────────
@@ -189,4 +227,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const el = document.getElementById(id);
         if (el) el.addEventListener('change', fetchRecipientPreview);
     });
+
+    ['tieuDe', 'sel-lop', 'sel-khoa', 'sel-canhan', 'sel-role'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', updateComposeSummary);
+    });
+
+    document.querySelector('[name=loaiGui]')?.addEventListener('change', updateComposeSummary);
+    document.querySelector('[name=uuTien]')?.addEventListener('change', updateComposeSummary);
+    document.querySelector('[name=ghim]')?.addEventListener('change', updateComposeSummary);
+    document.querySelectorAll('[name=doiTuongGui]').forEach(el => el.addEventListener('change', updateComposeSummary));
+
+    updateComposeSummary();
 });
