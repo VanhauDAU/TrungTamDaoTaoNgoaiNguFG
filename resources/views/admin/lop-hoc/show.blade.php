@@ -397,7 +397,7 @@
                 {{ $ttLabels[$lopHoc->trangThai] ?? '?' }}
             </span>
         </div>
-        <h1>{{ $lopHoc->tenLopHoc }}</h1>
+        <h1>[<span style="color:#fde68a;">{{ $lopHoc->maLopHoc }}</span>] {{ $lopHoc->tenLopHoc }}</h1>
         <div class="lh-show-meta">
             @if ($lopHoc->caHoc)
                 <span><i class="fas fa-clock"></i> {{ $lopHoc->caHoc->tenCa }}
