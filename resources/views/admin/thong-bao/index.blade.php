@@ -42,7 +42,16 @@
                 </div>
             </div>
             <div class="nb-stat-card">
-                <div class="nb-stat-icon" style="background:rgba(148,163,184,.14);color:#475569"><i class="fas fa-file-lines"></i>
+                <div class="nb-stat-icon" style="background:rgba(99,102,241,.13);color:#6366f1"><i class="fas fa-clock"></i>
+                </div>
+                <div>
+                    <div class="nb-stat-num">{{ number_format($stats['da_len_lich']) }}</div>
+                    <div class="nb-stat-label">Đã lên lịch</div>
+                </div>
+            </div>
+            <div class="nb-stat-card">
+                <div class="nb-stat-icon" style="background:rgba(148,163,184,.14);color:#475569"><i
+                        class="fas fa-file-lines"></i>
                 </div>
                 <div>
                     <div class="nb-stat-num">{{ number_format($stats['nhap']) }}</div>
@@ -50,7 +59,8 @@
                 </div>
             </div>
             <div class="nb-stat-card">
-                <div class="nb-stat-icon" style="background:rgba(239,68,68,.12);color:#ef4444"><i class="fas fa-triangle-exclamation"></i>
+                <div class="nb-stat-icon" style="background:rgba(239,68,68,.12);color:#ef4444"><i
+                        class="fas fa-triangle-exclamation"></i>
                 </div>
                 <div>
                     <div class="nb-stat-num">{{ number_format($stats['gui_loi']) }}</div>
@@ -100,17 +110,26 @@
                 <select name="sendTrangThai" onchange="this.form.submit()">
                     <option value="">Mọi trạng thái gửi</option>
                     @foreach (App\Models\Interaction\ThongBao::sendTrangThaiLabels() as $k => $v)
-                        <option value="{{ $k }}" {{ request('sendTrangThai') !== null && request('sendTrangThai') !== '' && (int) request('sendTrangThai') === $k ? 'selected' : '' }}>
+                        <option value="{{ $k }}"
+                            {{ request('sendTrangThai') !== null && request('sendTrangThai') !== '' && (int) request('sendTrangThai') === $k ? 'selected' : '' }}>
                             {{ $v }}
                         </option>
                     @endforeach
                 </select>
 
+                {{-- Date range filters --}}
+                <input type="date" name="tu_ngay" value="{{ request('tu_ngay') }}" title="Từ ngày"
+                    max="{{ date('Y-m-d') }}" onchange="this.form.submit()"
+                    style="border:1px solid #e5e7eb;border-radius:8px;padding:.35rem .75rem;font-size:.85rem;color:#374151;background:#fff;cursor:pointer;">
+                <input type="date" name="den_ngay" value="{{ request('den_ngay') }}" title="Đến ngày"
+                    max="{{ date('Y-m-d') }}" onchange="this.form.submit()"
+                    style="border:1px solid #e5e7eb;border-radius:8px;padding:.35rem .75rem;font-size:.85rem;color:#374151;background:#fff;cursor:pointer;">
+
                 <button type="submit" class="nb-btn nb-btn-primary nb-btn-sm">
                     <i class="fas fa-search"></i>
                 </button>
 
-                @if (request()->hasAny(['q', 'loaiGui', 'doiTuongGui', 'uuTien', 'ghim', 'sendTrangThai']))
+                @if (request()->hasAny(['q', 'loaiGui', 'doiTuongGui', 'uuTien', 'ghim', 'sendTrangThai', 'tu_ngay', 'den_ngay']))
                     <a href="{{ route('admin.thong-bao.index') }}" class="nb-btn nb-btn-secondary nb-btn-sm">
                         <i class="fas fa-times"></i>
                     </a>
@@ -118,9 +137,13 @@
 
                 <div class="nb-spacer"></div>
 
-                <button type="button" id="btnBulkDelete" class="nb-btn nb-btn-danger nb-btn-sm" disabled>
-                    <i class="fas fa-trash"></i> Xóa (<span id="selectedCount">0</span>)
-                </button>
+                <a href="{{ route('admin.thong-bao.trash') }}" class="nb-btn nb-btn-secondary nb-btn-sm">
+                    <i class="fas fa-trash-can"></i> Thùng rác
+                    @if ($stats['da_xoa'] > 0)
+                        <span class="badge"
+                            style="background:#ef4444;color:#fff;border-radius:99px;padding:.1rem .45rem;font-size:.75rem;margin-left:.25rem;">{{ $stats['da_xoa'] }}</span>
+                    @endif
+                </a>
 
                 <a href="{{ route('admin.thong-bao.create') }}" class="nb-btn nb-btn-primary">
                     <i class="fas fa-plus"></i> Tạo thông báo
@@ -210,7 +233,8 @@
                             <td>
                                 <div class="nb-read-progress">
                                     <div class="nb-read-percent">{{ $daDocs }}/{{ $tong }}
-                                        ({{ $tiLe }}%)</div>
+                                        ({{ $tiLe }}%)
+                                    </div>
                                     <div class="bar-wrap">
                                         <div class="bar-fill" style="width:{{ $tiLe }}%"></div>
                                     </div>

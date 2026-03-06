@@ -22,33 +22,7 @@
                 <span class="nb-hero-chip"><i class="fas fa-users"></i> Preview người nhận</span>
                 <span class="nb-hero-chip"><i class="fas fa-paperclip"></i> Tối đa 5 tệp</span>
             </div>
-        @endif
-
-        <div class="nb-compose-layout">
-            <div class="nb-compose-main">
-                {{-- ── WIZARD STEPS HEADER ──────────────────────────────── --}}
-                <div class="wizard-steps" id="wizardSteps">
-                    <div class="wz-step active" id="step-dot-1">
-                        <div class="wz-step-inner">
-                            <div class="wz-circle">1</div>
-                            <div class="wz-label">Soạn nội dung</div>
-                        </div>
-                    </div>
-                    <div class="wz-connector" id="conn-1"></div>
-                    <div class="wz-step" id="step-dot-2">
-                        <div class="wz-step-inner">
-                            <div class="wz-circle">2</div>
-                            <div class="wz-label">Chọn đối tượng</div>
-                        </div>
-                    </div>
-                    <div class="wz-connector" id="conn-2"></div>
-                    <div class="wz-step" id="step-dot-3">
-                        <div class="wz-step-inner">
-                            <div class="wz-circle">3</div>
-                            <div class="wz-label">Xác nhận & Gửi</div>
-                        </div>
-                    </div>
-                </div>
+        </div>
 
         @if ($errors->any())
             <div class="nb-alert-error">
@@ -309,6 +283,50 @@
                                     <i class="fas fa-paperclip me-1"></i> <span id="cf-file-count">0</span> file đính kèm
                                 </div>
                             </div>
+
+                            {{-- ── Chế độ gửi ───────────────────────────── --}}
+                            <div class="nb-form-group" style="margin-top:1.5rem;">
+                                <label class="nb-form-label"><i class="fas fa-paper-plane me-1"></i> Chế độ gửi</label>
+                                <div style="display:flex;gap:.75rem;flex-wrap:wrap;">
+                                    <label class="send-mode-card selected" id="mode-send"
+                                        onclick="setSendMode('send',this)"
+                                        style="flex:1;min-width:140px;display:flex;align-items:center;gap:.6rem;padding:.75rem 1rem;border:2px solid #6366f1;border-radius:12px;cursor:pointer;background:#eef2ff;transition:all .2s;">
+                                        <i class="fas fa-bolt" style="color:#6366f1;"></i>
+                                        <div>
+                                            <div style="font-weight:600;font-size:.9rem;color:#312e81;">Gửi ngay</div>
+                                            <div style="font-size:.78rem;color:#6b7280;">Gửi tức thì khi nhấn</div>
+                                        </div>
+                                    </label>
+                                    <label class="send-mode-card" id="mode-schedule"
+                                        onclick="setSendMode('schedule',this)"
+                                        style="flex:1;min-width:140px;display:flex;align-items:center;gap:.6rem;padding:.75rem 1rem;border:2px solid #e5e7eb;border-radius:12px;cursor:pointer;background:#fff;transition:all .2s;">
+                                        <i class="fas fa-clock" style="color:#6366f1;"></i>
+                                        <div>
+                                            <div style="font-weight:600;font-size:.9rem;color:#374151;">Lên lịch</div>
+                                            <div style="font-size:.78rem;color:#6b7280;">Chọn thời gian gửi</div>
+                                        </div>
+                                    </label>
+                                </div>
+
+                                {{-- Datetime picker – chỉ hiển thị khi chọn "Lên lịch" --}}
+                                <div id="schedule-picker" style="display:none;margin-top:1rem;">
+                                    <label class="nb-form-label">
+                                        <i class="fas fa-calendar-clock me-1"></i>
+                                        Thời gian gửi <span class="req">*</span>
+                                    </label>
+                                    <input type="datetime-local" id="scheduled_at_input" name="scheduled_at"
+                                        class="nb-input" min="{{ now()->addMinutes(5)->format('Y-m-d\TH:i') }}"
+                                        style="max-width:280px;">
+                                    <div style="font-size:.78rem;color:#6b7280;margin-top:.3rem;">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Thông báo sẽ được gửi tự động vào thời điểm bạn chọn.
+                                    </div>
+                                    @error('scheduled_at')
+                                        <div style="color:#ef4444;font-size:.82rem;margin-top:.25rem;">{{ $message }}
+                                        </div>
+                                    @enderror
+                                </div>
+                            </div>
                         </div>
 
                         <div class="wizard-nav">
@@ -319,7 +337,8 @@
                             <button type="submit" class="nb-btn nb-btn-secondary" name="hanhDong" value="draft">
                                 <i class="fas fa-file-lines"></i> Lưu nháp
                             </button>
-                            <button type="submit" class="nb-btn nb-btn-success" name="hanhDong" value="send">
+                            <button type="submit" id="btnSubmitSend" class="nb-btn nb-btn-success" name="hanhDong"
+                                value="send">
                                 <i class="fas fa-paper-plane"></i> Gửi thông báo ngay
                             </button>
                         </div>
@@ -553,6 +572,51 @@
             const asideCount = document.getElementById('compose-files');
             if (asideCount) asideCount.textContent = selectedFiles.length;
         }
+
+        // ── Chế độ gửi: Gửi ngay / Lên lịch ──────────────────────
+        let currentSendMode = 'send';
+
+        function setSendMode(mode, el) {
+            currentSendMode = mode;
+
+            // Reset styles
+            document.querySelectorAll('.send-mode-card').forEach(c => {
+                c.style.border = '2px solid #e5e7eb';
+                c.style.background = '#fff';
+            });
+
+            // Highlight selected
+            el.style.border = '2px solid #6366f1';
+            el.style.background = '#eef2ff';
+
+            const picker = document.getElementById('schedule-picker');
+            const btnSend = document.getElementById('btnSubmitSend');
+
+            if (mode === 'schedule') {
+                picker.style.display = 'block';
+                btnSend.value = 'schedule';
+                btnSend.innerHTML = '<i class="fas fa-clock"></i> Lên lịch gửi';
+                btnSend.className = 'nb-btn nb-btn-primary';
+            } else {
+                picker.style.display = 'none';
+                document.getElementById('scheduled_at_input').value = '';
+                btnSend.value = 'send';
+                btnSend.innerHTML = '<i class="fas fa-paper-plane"></i> Gửi thông báo ngay';
+                btnSend.className = 'nb-btn nb-btn-success';
+            }
+        }
+
+        // Validate: khi submit, nếu mode là schedule thì scheduled_at phải có giá trị
+        document.getElementById('wizardForm').addEventListener('submit', function(e) {
+            if (currentSendMode === 'schedule') {
+                const dt = document.getElementById('scheduled_at_input').value;
+                if (!dt) {
+                    e.preventDefault();
+                    alert('Vui lòng chọn thời gian gửi thông báo.');
+                    document.getElementById('scheduled_at_input').focus();
+                }
+            }
+        });
     </script>
 
     <script src="{{ asset('assets/admin/js/pages/thong-bao/create.js') }}"></script>

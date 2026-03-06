@@ -4,10 +4,13 @@ namespace App\Models\Interaction;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Auth\TaiKhoan;
 
 class ThongBao extends Model
 {
+    use SoftDeletes;
+
     protected $table = 'thongbao';
     protected $primaryKey = 'thongBaoId';
 
@@ -99,6 +102,7 @@ class ThongBao extends Model
         'hinhAnh',
         'created_at',
         'updated_at',
+        'deleted_at',
     ];
 
     protected $casts = [
@@ -111,6 +115,7 @@ class ThongBao extends Model
         'scheduled_at' => 'datetime',
         'sent_at' => 'datetime',
         'failed_at' => 'datetime',
+        'deleted_at' => 'datetime',
     ];
 
     // ── Relationships ───────────────────────────────────────
