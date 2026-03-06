@@ -149,6 +149,25 @@ class ThongBaoService
         return true;
     }
 
+    /**
+     * Đánh dấu 1 thông báo là chưa đọc
+     */
+    public function markAsUnread(int $thongBaoId, int $taiKhoanId): bool
+    {
+        $record = ThongBaoNguoiDung::where('thongBaoId', $thongBaoId)
+            ->where('taiKhoanId', $taiKhoanId)
+            ->first();
+
+        if (!$record || !$record->daDoc) return false;
+
+        $record->update([
+            'daDoc' => false,
+            'ngayDoc' => null,
+        ]);
+
+        return true;
+    }
+
     // ── Private helpers ────────────────────────────────────
 
     private function layDanhSachNguoiNhan(int $doiTuongGui, ?int $doiTuongId, ?int $loaiTruId = null): Collection
@@ -189,6 +208,17 @@ class ThongBaoService
                 if ($doiTuongId === null) return collect();
                 $query = TaiKhoan::where('trangThai', 1)
                     ->where('role', $doiTuongId);
+                if ($loaiTruId) {
+                    $query->where('taiKhoanId', '!=', $loaiTruId);
+                }
+                return $query->pluck('taiKhoanId');
+
+            case ThongBao::DOI_TUONG_THEO_CO_SO:
+                // Theo cơ sở: lấy giáo viên + nhân viên đang làm việc tại cơ sở
+                if ($doiTuongId === null) return collect();
+                $query = TaiKhoan::where('trangThai', 1)
+                    ->whereIn('role', [TaiKhoan::ROLE_GIAO_VIEN, TaiKhoan::ROLE_NHAN_VIEN])
+                    ->whereHas('nhanSu', fn($q) => $q->where('coSoId', $doiTuongId));
                 if ($loaiTruId) {
                     $query->where('taiKhoanId', '!=', $loaiTruId);
                 }

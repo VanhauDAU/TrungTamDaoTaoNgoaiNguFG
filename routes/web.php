@@ -88,6 +88,7 @@ Route::prefix('/')->name('home.')->group(function () {
         Route::get('/dropdown', [ClientThongBaoController::class, 'getDropdown'])->name('dropdown');
         Route::get('/chua-doc', [ClientThongBaoController::class, 'getUnreadCount'])->name('unread-count');
         Route::patch('/{id}/da-doc', [ClientThongBaoController::class, 'markRead'])->name('mark-read');
+        Route::patch('/{id}/chua-doc', [ClientThongBaoController::class, 'markUnread'])->name('mark-unread');
         Route::patch('/da-doc-tat-ca', [ClientThongBaoController::class, 'markAllRead'])->name('mark-all-read');
     });
 
@@ -305,6 +306,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
         Route::get('/tao-moi', [AdminThongBaoController::class, 'create'])->name('create');
         Route::post('/', [AdminThongBaoController::class, 'store'])->name('store');
         Route::post('/xoa-nhieu', [AdminThongBaoController::class, 'bulkDestroy'])->name('bulk-destroy');
+        Route::post('/{id}/nhan-ban', [AdminThongBaoController::class, 'duplicate'])->name('duplicate');
+        Route::post('/{id}/gui-thu', [AdminThongBaoController::class, 'sendTest'])->name('send-test');
         Route::get('/{id}', [AdminThongBaoController::class, 'show'])->name('show');
         Route::get('/{id}/sua', [AdminThongBaoController::class, 'edit'])->name('edit');
         Route::put('/{id}', [AdminThongBaoController::class, 'update'])->name('update');

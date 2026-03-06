@@ -34,6 +34,7 @@ const DROPDOWN_URL = window.NB_DROPDOWN_URL;
 const MARK_ALL_URL = window.NB_MARK_ALL_URL;
 const PAGE_URL     = window.NB_PAGE_URL;
 const MARK_BASE    = window.NB_MARK_READ_URL;
+const MARK_UNREAD_BASE = window.NB_MARK_UNREAD_URL;
 
 const ICON_MAP = {
     0: { cls: 'icon-he-thong',  fa: 'fa-cog' },
@@ -215,6 +216,14 @@ async function markOneRead(id) {
     });
 }
 
+async function markOneUnread(id) {
+    await fetch(`${MARK_UNREAD_BASE}/${id}/chua-doc`, {
+        method: 'PATCH',
+        headers: { 'X-CSRF-TOKEN': CSRF },
+    });
+}
+window.markOneUnread = markOneUnread;
+
 // ═══════════════════════════════════════════════════════════════
 // SSE CONNECTION — DISABLED for php artisan serve compatibility
 // php artisan serve = PHP built-in single-threaded server.
@@ -248,6 +257,7 @@ async function fetchUnreadCount() {
         console.error('[NB] fetchUnreadCount error', e);
     }
 }
+window.fetchUnreadCount = fetchUnreadCount;
 
 function startPolling() {
     if (pollingInterval) return;

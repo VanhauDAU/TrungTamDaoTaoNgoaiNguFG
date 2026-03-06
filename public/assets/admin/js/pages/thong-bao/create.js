@@ -80,7 +80,15 @@ function goStep(n) {
     }
 
     // Build bước xác nhận
-    if (n === 3) buildConfirmStep();
+    if (n === 3) {
+        const doiTuong = Number(document.querySelector('[name=doiTuongGui]:checked')?.value ?? 0);
+        const doiTuongId = document.querySelector('.ss-panel:not([style*="none"]) select')?.value ?? '';
+        if (doiTuong !== 0 && !doiTuongId) {
+            Toast.fire({ icon: 'warning', title: 'Vui lòng chọn đúng đối tượng nhận thông báo!' });
+            return;
+        }
+        buildConfirmStep();
+    }
 
     // Hiện panel tương ứng
     document.querySelectorAll('.wizard-panel').forEach(p => p.classList.remove('active'));
@@ -138,7 +146,7 @@ function selectDoiTuong(val, labelEl) {
     });
 
     // Map đối tượng → panel
-    const panelMap = { 1: 'ss-lop', 2: 'ss-khoa', 3: 'ss-canhan', 4: 'ss-role' };
+    const panelMap = { 1: 'ss-lop', 2: 'ss-khoa', 3: 'ss-canhan', 4: 'ss-role', 5: 'ss-coso' };
     const panelId  = panelMap[val];
 
     if (panelId) {
@@ -218,17 +226,13 @@ async function fetchRecipientPreview() {
 
 // ── Init ─────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-    // Trigger preview cho đối tượng mặc định (Tất cả = 0)
-    const defaultCard = document.querySelector('.doi-tuong-card.selected');
-    if (defaultCard) fetchRecipientPreview();
-
     // Lắng nghe sub-selects
-    ['sel-lop', 'sel-khoa', 'sel-canhan', 'sel-role'].forEach(id => {
+    ['sel-lop', 'sel-khoa', 'sel-canhan', 'sel-role', 'sel-coso'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.addEventListener('change', fetchRecipientPreview);
     });
 
-    ['tieuDe', 'sel-lop', 'sel-khoa', 'sel-canhan', 'sel-role'].forEach(id => {
+    ['tieuDe', 'sel-lop', 'sel-khoa', 'sel-canhan', 'sel-role', 'sel-coso'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.addEventListener('input', updateComposeSummary);
     });
@@ -237,6 +241,12 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelector('[name=uuTien]')?.addEventListener('change', updateComposeSummary);
     document.querySelector('[name=ghim]')?.addEventListener('change', updateComposeSummary);
     document.querySelectorAll('[name=doiTuongGui]').forEach(el => el.addEventListener('change', updateComposeSummary));
+
+    const prechecked = document.querySelector('[name=doiTuongGui]:checked');
+    if (prechecked) {
+        const card = prechecked.closest('.doi-tuong-card');
+        if (card) selectDoiTuong(Number(prechecked.value), card);
+    }
 
     updateComposeSummary();
 });

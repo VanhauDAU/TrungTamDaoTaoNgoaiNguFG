@@ -10,6 +10,14 @@
 @endsection
 
 @section('content')
+    @php
+        $isDraft = (int) $thongBao->sendTrangThai === App\Models\Interaction\ThongBao::SEND_TRANG_THAI_NHAP;
+        $canSendNow = (int) $thongBao->sendTrangThai !== App\Models\Interaction\ThongBao::SEND_TRANG_THAI_DA_GUI;
+        $xoaTepOld = collect(old('xoa_tep', []))
+            ->map(fn($id) => (int) $id)
+            ->all();
+    @endphp
+
     <div class="container-fluid px-4 py-2" style="max-width:1220px; margin:auto;">
         <div class="nb-editor-hero">
             <div>
@@ -29,6 +37,14 @@
             Đối tượng nhận đã được ghi nhận khi gửi và không thể thay đổi.
             Chỉ có thể chỉnh sửa nội dung và cài đặt hiển thị.
         </div>
+
+        @if ($isDraft)
+            <div class="locked-notice" style="background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8;">
+                <i class="fas fa-paper-plane" style="color:#2563eb;"></i>
+                Thông báo này đang ở trạng thái <strong>nháp</strong>. Sau khi hoàn tất, bấm nút <strong>"Gửi thông báo
+                    ngay"</strong> ở cuối form để phát hành.
+            </div>
+        @endif
 
         @if ($errors->any())
             <div class="nb-alert-error">
@@ -98,23 +114,32 @@
 
                     <div class="nb-card">
                         <div class="nb-card-title">
-                            <div class="nb-icon-tag"><i class="fas fa-paperclip"></i></div>
-                            Quản lý tệp đính kèm
+                            <div class="nb-icon-tag" style="background:linear-gradient(135deg,#3b82f6,#1d4ed8);">
+                                <i class="fas fa-paperclip"></i>
+                            </div>
+                            Tệp đính kèm
+                            <span class="nb-badge badge-hoc-tap" style="margin-left:auto;">
+                                {{ $thongBao->tepDinhs->count() }} file hiện có
+                            </span>
                         </div>
 
                         @if ($thongBao->tepDinhs->isNotEmpty())
                             <div class="nb-form-group">
-                                <label class="nb-form-label">Tệp hiện có (đánh dấu để xóa khi lưu)</label>
+                                <label class="nb-form-label">Tệp hiện tại (chọn để xóa)</label>
                                 <div class="attach-list">
                                     @foreach ($thongBao->tepDinhs as $tep)
                                         <div class="attach-item">
-                                            <i class="fas {{ $tep->icon_class }} attach-icon"></i>
-                                            <div class="attach-name" title="{{ $tep->tenFile }}">{{ $tep->tenFile }}</div>
-                                            <div class="attach-size">{{ $tep->kich_thuoc_hien_thi }}</div>
-                                            <a class="attach-dl" href="{{ $tep->url }}" target="_blank">Xem</a>
+                                            <span class="attach-icon"><i class="fas {{ $tep->iconClass }}"></i></span>
+                                            <span class="attach-name" title="{{ $tep->tenFile }}">{{ $tep->tenFile }}</span>
+                                            <span class="attach-size">{{ $tep->kichThuocHienThi }}</span>
+                                            <a href="{{ $tep->url }}" target="_blank" rel="noopener"
+                                                class="attach-dl">
+                                                <i class="fas fa-eye me-1"></i>Xem
+                                            </a>
                                             <label class="attach-del-label">
-                                                <input type="checkbox" name="xoa_tep[]" value="{{ $tep->tepDinhId }}"
-                                                    class="edit-delete-attachment">
+                                                <input type="checkbox" class="edit-delete-attachment" name="xoa_tep[]"
+                                                    value="{{ $tep->tepDinhId }}"
+                                                    {{ in_array((int) $tep->tepDinhId, $xoaTepOld, true) ? 'checked' : '' }}>
                                                 Xóa
                                             </label>
                                         </div>
@@ -125,20 +150,26 @@
 
                         <div class="nb-form-group mb-0">
                             <label class="nb-form-label">
-                                Tải thêm tệp mới
-                                <span style="font-weight:400;color:#6b7280;font-size:.82rem;">(Tối đa 5 file mỗi lần cập nhật, mỗi file ≤ 10MB)</span>
+                                Thêm tệp mới
+                                <span style="font-weight:400;color:#6b7280;font-size:.82rem;">(Tối đa 5 file tải mới, mỗi
+                                    file ≤ 10MB)</span>
                             </label>
-                            <div class="nb-dropzone" id="edit-dropzone" onclick="document.getElementById('edit-tepDinhInput').click()"
+                            <div class="nb-dropzone" id="edit-dropzone"
+                                onclick="document.getElementById('edit-tepDinhInput').click()"
                                 ondragover="event.preventDefault();this.classList.add('drag-over')"
                                 ondragleave="this.classList.remove('drag-over')" ondrop="handleEditDrop(event)">
                                 <i class="fas fa-cloud-upload-alt" style="font-size:1.8rem;color:#a5b4fc;"></i>
-                                <div style="font-size:.9rem;color:#6b7280;margin-top:.5rem;">Kéo thả file vào đây hoặc <span
-                                        style="color:#6366f1;text-decoration:underline;cursor:pointer;">chọn file</span></div>
-                                <div style="font-size:.78rem;color:#9ca3af;margin-top:.25rem;">PDF, Word, Excel, ảnh, ZIP…</div>
+                                <div style="font-size:.9rem;color:#6b7280;margin-top:.5rem;">
+                                    Kéo thả file vào đây hoặc <span
+                                        style="color:#6366f1;text-decoration:underline;cursor:pointer;">chọn file</span>
+                                </div>
+                                <div style="font-size:.78rem;color:#9ca3af;margin-top:.25rem;">PDF, Word, Excel, ảnh,
+                                    ZIP…</div>
                             </div>
-                            <input type="file" id="edit-tepDinhInput" name="tepDinhs[]" multiple style="display:none;"
-                                onchange="previewEditFiles(this.files)">
-                            <div id="edit-file-list" style="margin-top:.75rem;display:flex;flex-wrap:wrap;gap:.65rem;"></div>
+                            <input type="file" id="edit-tepDinhInput" name="tepDinhs[]" multiple
+                                style="display:none;" onchange="previewEditFiles(this.files)">
+                            <div id="edit-file-list" style="margin-top:.75rem;display:flex;flex-wrap:wrap;gap:.5rem;">
+                            </div>
                         </div>
                     </div>
 
@@ -147,44 +178,61 @@
                             <i class="fas fa-times"></i> Huỷ
                         </a>
                         <div class="nb-spacer"></div>
-                        <button type="submit" class="nb-btn nb-btn-primary">
-                            <i class="fas fa-save"></i> Lưu thay đổi
+                        <button type="submit" class="nb-btn nb-btn-secondary" name="hanhDong" value="save">
+                            <i class="fas fa-save"></i> {{ $isDraft ? 'Lưu nháp' : 'Lưu thay đổi' }}
                         </button>
+                        @if ($canSendNow)
+                            <button type="submit" class="nb-btn nb-btn-success" name="hanhDong" value="send">
+                                <i class="fas fa-paper-plane"></i> Gửi thông báo ngay
+                            </button>
+                        @endif
                     </div>
                 </form>
             </div>
 
             <aside class="nb-compose-aside">
                 <div class="nb-side-card">
-                    <div class="nb-side-title"><i class="fas fa-chart-simple"></i> Trạng thái hiện tại</div>
-                    <div class="nb-side-kv">
-                        <span>Thông báo ID</span>
-                        <strong>#{{ $thongBao->thongBaoId }}</strong>
-                    </div>
+                    <div class="nb-side-title"><i class="fas fa-list-check"></i> Tóm tắt chỉnh sửa</div>
                     <div class="nb-side-kv">
                         <span>Tiêu đề</span>
                         <strong id="edit-summary-title">{{ old('tieuDe', $thongBao->tieuDe) }}</strong>
                     </div>
                     <div class="nb-side-kv">
-                        <span>Loại / Ưu tiên</span>
-                        <strong><span id="edit-summary-loai">{{ $thongBao->getLoaiLabel() }}</span> · <span id="edit-summary-uu-tien">{{ $thongBao->getUuTienLabel() }}</span></strong>
+                        <span>Loại</span>
+                        <strong id="edit-summary-loai">{{ $thongBao->getLoaiLabel() }}</strong>
                     </div>
                     <div class="nb-side-kv">
-                        <span>Đối tượng nhận</span>
-                        <strong>{{ $thongBao->getDoiTuongLabel() }}</strong>
+                        <span>Ưu tiên</span>
+                        <strong id="edit-summary-uu-tien">{{ $thongBao->getUuTienLabel() }}</strong>
+                    </div>
+                    <div class="nb-side-kv">
+                        <span>Ghim</span>
+                        <strong id="edit-summary-pin">{{ old('ghim', $thongBao->ghim) ? 'Có' : 'Không' }}</strong>
+                    </div>
+                    <div class="nb-side-kv">
+                        <span>Trạng thái gửi</span>
+                        <strong>{{ $thongBao->getSendTrangThaiLabel() }}</strong>
                     </div>
                     <div class="nb-side-kv">
                         <span>Tệp hiện có</span>
                         <strong id="edit-existing-files">{{ $thongBao->tepDinhs->count() }}</strong>
                     </div>
                     <div class="nb-side-kv">
-                        <span>Tệp mới thêm</span>
+                        <span>Tệp mới</span>
                         <strong id="edit-new-files">0</strong>
                     </div>
-                    <div class="nb-side-kv">
-                        <span>Ghim lên đầu</span>
-                        <strong id="edit-summary-pin">{{ old('ghim', $thongBao->ghim) ? 'Có' : 'Không' }}</strong>
-                    </div>
+                </div>
+
+                <div class="nb-side-card">
+                    <div class="nb-side-title"><i class="fas fa-circle-info"></i> Hướng dẫn nhanh</div>
+                    <ul class="nb-side-checklist">
+                        <li>Đánh dấu <strong>Xóa</strong> tại tệp hiện có nếu muốn gỡ khỏi thông báo.</li>
+                        <li>Dùng vùng kéo-thả để thêm tệp đính kèm mới.</li>
+                        <li>Nút <strong>{{ $isDraft ? 'Lưu nháp' : 'Lưu thay đổi' }}</strong> chỉ cập nhật nội dung, chưa gửi.</li>
+                        @if ($canSendNow)
+                            <li>Bấm <strong>Gửi thông báo ngay</strong> để phát hành cho người nhận đã cấu hình trước đó.</li>
+                        @endif
+                    </ul>
                 </div>
             </aside>
         </div>

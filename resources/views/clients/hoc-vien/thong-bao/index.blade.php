@@ -39,6 +39,13 @@
                             </button>
                         </div>
 
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            <a class="nb-mark-all-btn {{ $scope === 'all' ? 'active' : '' }}" href="{{ route('home.thong-bao.index', ['scope' => 'all']) }}">Tất cả</a>
+                            <a class="nb-mark-all-btn {{ $scope === 'unread' ? 'active' : '' }}" href="{{ route('home.thong-bao.index', ['scope' => 'unread']) }}">Chưa đọc</a>
+                            <a class="nb-mark-all-btn {{ $scope === 'important' ? 'active' : '' }}" href="{{ route('home.thong-bao.index', ['scope' => 'important']) }}">Quan trọng</a>
+                            <a class="nb-mark-all-btn {{ $scope === 'system' ? 'active' : '' }}" href="{{ route('home.thong-bao.index', ['scope' => 'system']) }}">Hệ thống</a>
+                        </div>
+
                         {{-- ═══════════ GRID 2×2 CATEGORIES ═══════════ --}}
                         @php
                             $categoryOrder = [1, 2, 3, 4]; // Học tập | Tài chính / Sự kiện | Khẩn cấp
@@ -249,6 +256,9 @@
                 </div>
                 <div class="modal-footer border-0 bg-light">
                     <small class="text-muted" id="nbModalTime"></small>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="nbMarkUnreadBtn" style="display:none;">
+                        Đánh dấu chưa đọc
+                    </button>
                     <button type="button" class="btn btn-primary btn-sm" data-bs-dismiss="modal">Đóng</button>
                 </div>
             </div>
@@ -293,11 +303,15 @@
             }
         @endphp
         const NB_DATA = @json($allNbData);
+        let CURRENT_OPEN_ID = null;
+        let CURRENT_OPEN_EL = null;
 
         /* ── Mở modal chi tiết ───────────────────────────────── */
         function openDetail(id, el) {
             const nb = NB_DATA[id];
             if (!nb) return;
+            CURRENT_OPEN_ID = id;
+            CURRENT_OPEN_EL = el || null;
 
             document.getElementById('nbModalTitle').textContent = nb.tieuDe;
             document.getElementById('nbModalContent').innerHTML = nb.noiDung;
@@ -346,6 +360,11 @@
                     });
                 }
             }
+
+            const unreadBtn = document.getElementById('nbMarkUnreadBtn');
+            if (unreadBtn) {
+                unreadBtn.style.display = el && el.dataset.read === '1' ? '' : 'none';
+            }
         }
 
         /* ── Xem thêm / thu gọn ─────────────────────────────── */
@@ -382,5 +401,41 @@
             document.querySelectorAll('.nb-cat-badge').forEach(b => b.remove());
         }
         window.refreshBadgeAfterMarkAll = refreshAllBadges;
+
+        async function markUnreadFromModal() {
+            if (!CURRENT_OPEN_ID || !CURRENT_OPEN_EL) return;
+            await fetch(`${window.NB_MARK_UNREAD_URL}/${CURRENT_OPEN_ID}/chua-doc`, {
+                method: 'PATCH',
+                headers: {
+                    'X-CSRF-TOKEN': window.NB_CSRF
+                }
+            });
+            CURRENT_OPEN_EL.classList.add('unread');
+            CURRENT_OPEN_EL.dataset.read = '0';
+            if (!CURRENT_OPEN_EL.querySelector('.nb-cat-dot')) {
+                const dot = document.createElement('div');
+                dot.className = 'nb-cat-dot';
+                CURRENT_OPEN_EL.prepend(dot);
+            }
+            const badge = document.getElementById('page-unread-badge');
+            if (!badge) {
+                const title = document.querySelector('.content-title');
+                if (title) {
+                    const b = document.createElement('span');
+                    b.className = 'nb-unread-count-badge';
+                    b.id = 'page-unread-badge';
+                    b.textContent = '1 chưa đọc';
+                    title.appendChild(b);
+                }
+            } else {
+                const curr = parseInt(badge.textContent) || 0;
+                badge.textContent = `${curr + 1} chưa đọc`;
+            }
+            const unreadBtn = document.getElementById('nbMarkUnreadBtn');
+            if (unreadBtn) unreadBtn.style.display = 'none';
+            if (window.fetchUnreadCount) window.fetchUnreadCount();
+        }
+
+        document.getElementById('nbMarkUnreadBtn')?.addEventListener('click', markUnreadFromModal);
     </script>
 @endsection

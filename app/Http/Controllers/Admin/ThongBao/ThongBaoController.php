@@ -4,11 +4,13 @@ namespace App\Http\Controllers\Admin\ThongBao;
 
 use App\Http\Controllers\Controller;
 use App\Models\Interaction\ThongBao;
+use App\Models\Interaction\ThongBaoLichSu;
 use App\Models\Interaction\ThongBaoNguoiDung;
 use App\Models\Interaction\ThongBaoTepDinh;
 use App\Models\Auth\TaiKhoan;
 use App\Models\Education\LopHoc;
 use App\Models\Course\KhoaHoc;
+use App\Models\Facility\CoSoDaoTao;
 use App\Services\ThongBaoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -28,31 +30,50 @@ class ThongBaoController extends Controller
 
         // Tìm kiếm
         if ($request->filled('q')) {
-            $q = $request->q;
-            $query->where(function ($sub) use ($q) {
-                $sub->where('tieuDe', 'like', "%{$q}%")
-                    ->orWhere('noiDung', 'like', "%{$q}%");
-            });
+            $q = trim((string) $request->q);
+            if ($q !== '') {
+                $query->where(function ($sub) use ($q) {
+                    $sub->where('tieuDe', 'like', "%{$q}%")
+                        ->orWhere('noiDung', 'like', "%{$q}%");
+                });
+            }
         }
 
         // Filter loại
-        if ($request->filled('loaiGui')) {
-            $query->where('loaiGui', $request->loaiGui);
+        $loaiGui = $request->query('loaiGui');
+        if ($loaiGui !== null && $loaiGui !== '' && array_key_exists((int) $loaiGui, ThongBao::loaiLabels())) {
+            $query->where('loaiGui', (int) $loaiGui);
         }
 
         // Filter đối tượng
-        if ($request->filled('doiTuongGui')) {
-            $query->where('doiTuongGui', $request->doiTuongGui);
+        $doiTuongGui = $request->query('doiTuongGui');
+        if (
+            $doiTuongGui !== null &&
+            $doiTuongGui !== '' &&
+            array_key_exists((int) $doiTuongGui, ThongBao::doiTuongLabels())
+        ) {
+            $query->where('doiTuongGui', (int) $doiTuongGui);
         }
 
         // Filter ưu tiên
-        if ($request->filled('uuTien')) {
-            $query->where('uuTien', $request->uuTien);
+        $uuTien = $request->query('uuTien');
+        if ($uuTien !== null && $uuTien !== '' && array_key_exists((int) $uuTien, ThongBao::uuTienLabels())) {
+            $query->where('uuTien', (int) $uuTien);
         }
 
         // Filter ghim
-        if ($request->filled('ghim')) {
-            $query->where('ghim', (bool)$request->ghim);
+        $ghim = $request->query('ghim');
+        if ($ghim !== null && $ghim !== '' && in_array((string) $ghim, ['0', '1'], true)) {
+            $query->where('ghim', (int) $ghim === 1);
+        }
+
+        $sendTrangThai = $request->query('sendTrangThai');
+        if (
+            $sendTrangThai !== null &&
+            $sendTrangThai !== '' &&
+            array_key_exists((int) $sendTrangThai, ThongBao::sendTrangThaiLabels())
+        ) {
+            $query->where('sendTrangThai', (int) $sendTrangThai);
         }
 
         // Sắp xếp: ghim lên trên, rồi mới nhất
@@ -66,6 +87,9 @@ class ThongBaoController extends Controller
             'hom_nay'  => ThongBao::whereDate('created_at', today())->count(),
             'chua_doc' => ThongBaoNguoiDung::where('daDoc', false)->count(),
             'ghim'     => ThongBao::where('ghim', true)->count(),
+            'nhap'     => ThongBao::where('sendTrangThai', ThongBao::SEND_TRANG_THAI_NHAP)->count(),
+            'da_gui'   => ThongBao::where('sendTrangThai', ThongBao::SEND_TRANG_THAI_DA_GUI)->count(),
+            'gui_loi'  => ThongBao::where('sendTrangThai', ThongBao::SEND_TRANG_THAI_GUI_LOI)->count(),
         ];
 
         return view('admin.thong-bao.index', compact('thongBaos', 'stats'));
@@ -76,12 +100,13 @@ class ThongBaoController extends Controller
     {
         $lopHocs    = LopHoc::select('lopHocId', 'tenLopHoc', 'khoaHocId')->orderBy('tenLopHoc')->get();
         $khoaHocs   = KhoaHoc::select('khoaHocId', 'tenKhoaHoc')->orderBy('tenKhoaHoc')->get();
+        $coSos      = CoSoDaoTao::select('coSoId', 'tenCoSo')->where('trangThai', 1)->orderBy('tenCoSo')->get();
         $taiKhoans  = TaiKhoan::with('hoSoNguoiDung', 'nhanSu')
             ->where('trangThai', 1)
             ->orderBy('taiKhoanId')
             ->get();
 
-        return view('admin.thong-bao.create', compact('lopHocs', 'khoaHocs', 'taiKhoans'));
+        return view('admin.thong-bao.create', compact('lopHocs', 'khoaHocs', 'coSos', 'taiKhoans'));
     }
 
     // ── STORE ──────────────────────────────────────────────
@@ -91,13 +116,26 @@ class ThongBaoController extends Controller
             'tieuDe'        => 'required|string|max:255',
             'noiDung'       => 'required|string',
             'loaiGui'       => 'required|integer|between:0,4',
-            'doiTuongGui'   => 'required|integer|between:0,4',
+            'doiTuongGui'   => 'required|integer|between:0,5',
             'doiTuongId'    => 'nullable|integer',
             'uuTien'        => 'required|integer|between:0,2',
             'ghim'          => 'nullable|boolean',
+            'hanhDong'      => 'nullable|in:send,draft',
             'tepDinhs'      => 'nullable|array|max:5',
             'tepDinhs.*'    => 'file|max:10240', // tối đa 10MB/file
         ]);
+
+        if ((int) $validated['doiTuongGui'] === ThongBao::DOI_TUONG_THEO_CO_SO) {
+            $coSoId = $validated['doiTuongId'] ?? null;
+            if (!$coSoId || !CoSoDaoTao::where('coSoId', $coSoId)->exists()) {
+                return back()->withInput()->withErrors([
+                    'doiTuongId' => 'Vui lòng chọn cơ sở hợp lệ để gửi thông báo.',
+                ]);
+            }
+        }
+
+        $hanhDong = $validated['hanhDong'] ?? 'send';
+        $isDraft = $hanhDong === 'draft';
 
         $tb = ThongBao::create([
             'tieuDe'      => $validated['tieuDe'],
@@ -107,17 +145,34 @@ class ThongBaoController extends Controller
             'doiTuongId'  => $validated['doiTuongId'] ?? null,
             'uuTien'      => $validated['uuTien'],
             'nguoiGuiId'  => Auth::id(),
-            'ngayGui'     => Carbon::now(),
+            'ngayGui'     => $isDraft ? null : Carbon::now(),
             'trangThai'   => 1,
             'ghim'        => $request->boolean('ghim'),
+            'sendTrangThai' => $isDraft ? ThongBao::SEND_TRANG_THAI_NHAP : ThongBao::SEND_TRANG_THAI_DA_GUI,
+            'sent_at'     => $isDraft ? null : Carbon::now(),
         ]);
 
         // Lưu file đính kèm
         $this->luuTepDinh($tb->thongBaoId, $request);
 
-        // Gửi đến người nhận
-        $soNguoiNhan = $this->service->guiThongBao($tb);
+        if ($isDraft) {
+            $this->ghiLichSu($tb->thongBaoId, 'draft_created', 'Tạo thông báo nháp.');
+            return redirect()
+                ->route('admin.thong-bao.edit', $tb->thongBaoId)
+                ->with('success', 'Đã lưu bản nháp. Bạn có thể chỉnh sửa thêm và bấm "Gửi thông báo ngay" để phát hành.');
+        }
 
+        // Gửi đến người nhận
+        $soNguoiNhan = $this->guiThongBaoVaCapNhatTrangThai($tb);
+
+        if ($soNguoiNhan === 0) {
+            $this->ghiLichSu($tb->thongBaoId, 'send_failed', 'Gửi thông báo thất bại do không có người nhận phù hợp.');
+            return redirect()
+                ->route('admin.thong-bao.edit', $tb->thongBaoId)
+                ->with('error', 'Không tìm thấy người nhận phù hợp. Thông báo đã được lưu ở trạng thái gửi lỗi.');
+        }
+
+        $this->ghiLichSu($tb->thongBaoId, 'sent', "Đã gửi thông báo đến {$soNguoiNhan} người nhận.");
         return redirect()
             ->route('admin.thong-bao.show', $tb->thongBaoId)
             ->with('success', "Đã gửi thông báo thành công đến {$soNguoiNhan} người nhận.");
@@ -190,6 +245,7 @@ class ThongBaoController extends Controller
             'loaiGui'       => 'required|integer|between:0,4',
             'uuTien'        => 'required|integer|between:0,2',
             'ghim'          => 'nullable|boolean',
+            'hanhDong'      => 'nullable|in:save,send',
             'tepDinhs'      => 'nullable|array|max:5',
             'tepDinhs.*'    => 'file|max:10240',
             'xoa_tep'       => 'nullable|array',
@@ -217,6 +273,34 @@ class ThongBaoController extends Controller
         // Thêm file mới
         $this->luuTepDinh($thongBao->thongBaoId, $request);
 
+        $hanhDong = $validated['hanhDong'] ?? 'save';
+        if ($hanhDong === 'send') {
+            $thongBao->nguoiNhans()->delete();
+            $soNguoiNhan = $this->guiThongBaoVaCapNhatTrangThai($thongBao->fresh());
+            if ($soNguoiNhan === 0) {
+                $this->ghiLichSu($thongBao->thongBaoId, 'send_failed', 'Gửi thông báo thất bại từ màn hình chỉnh sửa do không có người nhận phù hợp.');
+                return redirect()
+                    ->route('admin.thong-bao.edit', $thongBao->thongBaoId)
+                    ->with('error', 'Không tìm thấy người nhận phù hợp. Vui lòng kiểm tra đối tượng gửi.');
+            }
+            $this->ghiLichSu($thongBao->thongBaoId, 'sent', "Gửi thông báo từ màn hình chỉnh sửa đến {$soNguoiNhan} người nhận.");
+            return redirect()
+                ->route('admin.thong-bao.show', $thongBao->thongBaoId)
+                ->with('success', "Đã gửi thông báo thành công đến {$soNguoiNhan} người nhận.");
+        }
+
+        if ((int)$thongBao->sendTrangThai !== ThongBao::SEND_TRANG_THAI_DA_GUI) {
+            $thongBao->update(['sendTrangThai' => ThongBao::SEND_TRANG_THAI_NHAP]);
+        }
+
+        $this->ghiLichSu($thongBao->thongBaoId, 'updated', 'Cập nhật thông báo.');
+
+        if ((int) $thongBao->fresh()->sendTrangThai === ThongBao::SEND_TRANG_THAI_NHAP) {
+            return redirect()
+                ->route('admin.thong-bao.edit', $thongBao->thongBaoId)
+                ->with('success', 'Đã lưu nháp. Khi sẵn sàng, bấm "Gửi thông báo ngay" để gửi cho người nhận.');
+        }
+
         return redirect()
             ->route('admin.thong-bao.show', $thongBao->thongBaoId)
             ->with('success', 'Đã cập nhật thông báo thành công.');
@@ -226,6 +310,7 @@ class ThongBaoController extends Controller
     public function destroy(string $id)
     {
         $thongBao = ThongBao::with('tepDinhs')->findOrFail($id);
+        $deletedTitle = $thongBao->tieuDe;
 
         // Xóa file vật lý
         foreach ($thongBao->tepDinhs as $tep) {
@@ -236,6 +321,7 @@ class ThongBaoController extends Controller
         $thongBao->tepDinhs()->delete();
         $thongBao->nguoiNhans()->delete();
         $thongBao->delete();
+        $this->ghiLichSu(null, 'deleted', "Đã xóa thông báo: {$deletedTitle}", ['thongBaoId' => (int)$id]);
 
         return redirect()
             ->route('admin.thong-bao.index')
@@ -256,6 +342,7 @@ class ThongBaoController extends Controller
         ThongBaoTepDinh::whereIn('thongBaoId', $ids)->delete();
         ThongBaoNguoiDung::whereIn('thongBaoId', $ids)->delete();
         ThongBao::whereIn('thongBaoId', $ids)->delete();
+        $this->ghiLichSu(null, 'bulk_deleted', 'Đã xóa nhiều thông báo.', ['ids' => $ids]);
 
         return response()->json(['success' => true, 'message' => 'Đã xóa ' . count($ids) . ' thông báo.']);
     }
@@ -265,12 +352,68 @@ class ThongBaoController extends Controller
     {
         $thongBao = ThongBao::findOrFail($id);
         $thongBao->update(['ghim' => !$thongBao->ghim]);
+        $this->ghiLichSu($thongBao->thongBaoId, $thongBao->ghim ? 'pinned' : 'unpinned', $thongBao->ghim ? 'Đã ghim thông báo.' : 'Đã bỏ ghim thông báo.');
 
         return response()->json([
             'success' => true,
             'ghim'    => $thongBao->ghim,
             'message' => $thongBao->ghim ? 'Đã ghim thông báo.' : 'Đã bỏ ghim thông báo.',
         ]);
+    }
+
+    public function duplicate(string $id)
+    {
+        $source = ThongBao::with('tepDinhs')->findOrFail($id);
+        $clone = ThongBao::create([
+            'tieuDe' => '[Bản sao] ' . $source->tieuDe,
+            'noiDung' => $source->noiDung,
+            'nguoiGuiId' => Auth::id(),
+            'loaiThongBao' => $source->loaiThongBao,
+            'doiTuongGui' => $source->doiTuongGui,
+            'doiTuongId' => $source->doiTuongId,
+            'ngayGui' => null,
+            'trangThai' => 1,
+            'loaiGui' => $source->loaiGui,
+            'uuTien' => $source->uuTien,
+            'ghim' => false,
+            'sendTrangThai' => ThongBao::SEND_TRANG_THAI_NHAP,
+            'scheduled_at' => null,
+            'sent_at' => null,
+            'failed_at' => null,
+            'failure_reason' => null,
+        ]);
+
+        foreach ($source->tepDinhs as $tep) {
+            ThongBaoTepDinh::create([
+                'thongBaoId' => $clone->thongBaoId,
+                'tenFile' => $tep->tenFile,
+                'tenFileLuu' => $tep->tenFileLuu,
+                'duongDan' => $tep->duongDan,
+                'loaiFile' => $tep->loaiFile,
+                'kichThuoc' => $tep->kichThuoc,
+            ]);
+        }
+
+        $this->ghiLichSu($clone->thongBaoId, 'duplicated', "Nhân bản từ thông báo #{$source->thongBaoId}");
+        return redirect()
+            ->route('admin.thong-bao.edit', $clone->thongBaoId)
+            ->with('success', 'Đã nhân bản thông báo sang bản nháp mới.');
+    }
+
+    public function sendTest(string $id)
+    {
+        $thongBao = ThongBao::findOrFail($id);
+        $userId = Auth::id();
+
+        ThongBaoNguoiDung::updateOrCreate(
+            ['thongBaoId' => $thongBao->thongBaoId, 'taiKhoanId' => $userId],
+            ['daDoc' => false, 'ngayDoc' => null]
+        );
+
+        $this->ghiLichSu($thongBao->thongBaoId, 'test_sent', 'Gửi thử thông báo đến chính người thao tác.');
+        return redirect()
+            ->route('admin.thong-bao.index')
+            ->with('success', 'Đã gửi thử thông báo cho tài khoản của bạn.');
     }
 
     // ── AJAX: Preview người nhận ────────────────────────────
@@ -318,5 +461,39 @@ class ThongBaoController extends Controller
     {
         $count = $this->service->markAllRead(Auth::id());
         return response()->json(['success' => true, 'updated' => $count]);
+    }
+
+    private function guiThongBaoVaCapNhatTrangThai(ThongBao $tb): int
+    {
+        $soNguoiNhan = $this->service->guiThongBao($tb);
+        if ($soNguoiNhan > 0) {
+            $tb->update([
+                'sendTrangThai' => ThongBao::SEND_TRANG_THAI_DA_GUI,
+                'failed_at' => null,
+                'failure_reason' => null,
+                'ngayGui' => Carbon::now(),
+                'sent_at' => Carbon::now(),
+            ]);
+            return $soNguoiNhan;
+        }
+
+        $tb->update([
+            'sendTrangThai' => ThongBao::SEND_TRANG_THAI_GUI_LOI,
+            'failed_at' => Carbon::now(),
+            'failure_reason' => 'Không có người nhận phù hợp.',
+        ]);
+        return 0;
+    }
+
+    private function ghiLichSu(?int $thongBaoId, string $hanhDong, string $moTa, array $payload = []): void
+    {
+        ThongBaoLichSu::create([
+            'thongBaoId' => $thongBaoId,
+            'taiKhoanId' => Auth::id(),
+            'hanhDong' => $hanhDong,
+            'moTa' => $moTa,
+            'payload' => $payload ?: null,
+            'created_at' => Carbon::now(),
+        ]);
     }
 }

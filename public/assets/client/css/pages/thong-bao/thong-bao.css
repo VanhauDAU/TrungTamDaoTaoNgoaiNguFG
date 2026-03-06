@@ -227,9 +227,17 @@
     color: var(--cl-primary);
     cursor: pointer;
     transition: all .2s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
 }
 .nb-mark-all-btn:hover {
     background: #eef2ff;
+    border-color: var(--cl-primary);
+}
+.nb-mark-all-btn.active {
+    background: var(--cl-primary);
+    color: #fff;
     border-color: var(--cl-primary);
 }
 
