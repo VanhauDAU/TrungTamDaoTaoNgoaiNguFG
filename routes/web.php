@@ -119,6 +119,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
     // ── Học viên ─────────────────────────────────────────────────────────────
     Route::prefix('hoc-vien')->name('hoc-vien.')->group(function () {
         Route::get('/', [AdminHocVienController::class, 'index'])->name('index');
+        Route::get('/xuat-excel', [AdminHocVienController::class, 'export'])->name('export');
         Route::get('/tao-moi', [AdminHocVienController::class, 'create'])->name('create');
         Route::post('/', [AdminHocVienController::class, 'store'])->name('store');
         Route::get('/thung-rac', [AdminHocVienController::class, 'trash'])->name('trash');
