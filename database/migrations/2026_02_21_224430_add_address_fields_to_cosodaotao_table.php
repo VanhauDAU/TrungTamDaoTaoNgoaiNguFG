@@ -8,21 +8,36 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('cosodaotao', function (Blueprint $table) {
-            // Mã phường/xã từ API (integer code)
-            $table->unsignedInteger('maPhuongXa')->nullable()->after('tinhThanhId');
-            // Tên phường/xã lưu text để không phụ thuộc vào DB table
-            $table->string('tenPhuongXa', 150)->nullable()->after('maPhuongXa');
-            // Tọa độ để hiển thị trên bản đồ
-            $table->decimal('viDo', 10, 7)->nullable()->after('tenPhuongXa');
-            $table->decimal('kinhDo', 10, 7)->nullable()->after('viDo');
-        });
+        if (!Schema::hasColumn('cosodaotao', 'maPhuongXa')) {
+            Schema::table('cosodaotao', function (Blueprint $table) {
+                $table->unsignedInteger('maPhuongXa')->nullable()->after('tinhThanhId');
+            });
+        }
+        if (!Schema::hasColumn('cosodaotao', 'tenPhuongXa')) {
+            Schema::table('cosodaotao', function (Blueprint $table) {
+                $table->string('tenPhuongXa', 150)->nullable()->after('maPhuongXa');
+            });
+        }
+        if (!Schema::hasColumn('cosodaotao', 'viDo')) {
+            Schema::table('cosodaotao', function (Blueprint $table) {
+                $table->decimal('viDo', 10, 7)->nullable()->after('tenPhuongXa');
+            });
+        }
+        if (!Schema::hasColumn('cosodaotao', 'kinhDo')) {
+            Schema::table('cosodaotao', function (Blueprint $table) {
+                $table->decimal('kinhDo', 10, 7)->nullable()->after('viDo');
+            });
+        }
     }
 
     public function down(): void
     {
         Schema::table('cosodaotao', function (Blueprint $table) {
-            $table->dropColumn(['maPhuongXa', 'tenPhuongXa', 'viDo', 'kinhDo']);
+            $drops = [];
+            foreach (['maPhuongXa', 'tenPhuongXa', 'viDo', 'kinhDo'] as $col) {
+                if (Schema::hasColumn('cosodaotao', $col)) $drops[] = $col;
+            }
+            if (!empty($drops)) $table->dropColumn($drops);
         });
     }
 };

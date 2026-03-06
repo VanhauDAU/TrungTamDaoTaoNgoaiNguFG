@@ -7,15 +7,19 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        Schema::table('baiviet', function (Blueprint $table) {
-            $table->softDeletes(); // adds nullable deleted_at column
-        });
+        if (!Schema::hasColumn('baiviet', 'deleted_at')) {
+            Schema::table('baiviet', function (Blueprint $table) {
+                $table->softDeletes(); // adds nullable deleted_at column
+            });
+        }
     }
 
     public function down(): void
     {
-        Schema::table('baiviet', function (Blueprint $table) {
-            $table->dropSoftDeletes();
-        });
+        if (Schema::hasColumn('baiviet', 'deleted_at')) {
+            Schema::table('baiviet', function (Blueprint $table) {
+                $table->dropSoftDeletes();
+            });
+        }
     }
 };

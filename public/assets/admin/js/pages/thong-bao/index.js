@@ -71,6 +71,38 @@ async function deleteSingle(id) {
 }
 window.deleteSingle = deleteSingle;
 
+// ── Duplicate to draft ─────────────────────────────────────────────────────
+async function duplicateThongBao(id) {
+    const result = await Swal.fire({
+        title: 'Nhân bản thông báo này?',
+        text: 'Hệ thống sẽ tạo một bản nháp mới để bạn chỉnh sửa.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Nhân bản',
+        cancelButtonText: 'Huỷ',
+    });
+    if (result.isConfirmed) {
+        document.getElementById(`dup-form-${id}`).submit();
+    }
+}
+window.duplicateThongBao = duplicateThongBao;
+
+// ── Send test to self ──────────────────────────────────────────────────────
+async function sendTestThongBao(id) {
+    const result = await Swal.fire({
+        title: 'Gửi thử thông báo?',
+        text: 'Thông báo sẽ được gửi cho chính tài khoản của bạn.',
+        icon: 'info',
+        showCancelButton: true,
+        confirmButtonText: 'Gửi thử',
+        cancelButtonText: 'Huỷ',
+    });
+    if (result.isConfirmed) {
+        document.getElementById(`test-form-${id}`).submit();
+    }
+}
+window.sendTestThongBao = sendTestThongBao;
+
 // ── Toggle PIN ───────────────────────────────────────────────────────────────
 async function togglePin(id) {
     const resp = await fetch(`/admin/thong-bao/${id}/ghim`, {

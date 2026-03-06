@@ -17,6 +17,7 @@ class ThongBao extends Model
     const DOI_TUONG_THEO_KHOA   = 2; // Theo khóa học
     const DOI_TUONG_CA_NHAN     = 3; // Cá nhân (1 user)
     const DOI_TUONG_THEO_ROLE   = 4; // Theo role (admin/giaovien/nhanvien/hocvien)
+    const DOI_TUONG_THEO_CO_SO  = 5; // Theo cơ sở đào tạo
 
     // ── Constants: Loại thông báo (danh mục) ───────────────
     const LOAI_HE_THONG  = 0;
@@ -30,6 +31,12 @@ class ThongBao extends Model
     const UU_TIEN_QUAN_TRONG  = 1;
     const UU_TIEN_KHAN_CAP    = 2;
 
+    // ── Constants: Trạng thái gửi ────────────────────────────
+    const SEND_TRANG_THAI_NHAP      = 0;
+    const SEND_TRANG_THAI_DA_LEN_LICH = 1;
+    const SEND_TRANG_THAI_DA_GUI    = 2;
+    const SEND_TRANG_THAI_GUI_LOI   = 3;
+
     public static function doiTuongLabels(): array
     {
         return [
@@ -38,6 +45,7 @@ class ThongBao extends Model
             self::DOI_TUONG_THEO_KHOA => 'Theo khóa học',
             self::DOI_TUONG_CA_NHAN   => 'Cá nhân',
             self::DOI_TUONG_THEO_ROLE => 'Theo vai trò',
+            self::DOI_TUONG_THEO_CO_SO => 'Theo cơ sở đào tạo',
         ];
     }
 
@@ -61,6 +69,16 @@ class ThongBao extends Model
         ];
     }
 
+    public static function sendTrangThaiLabels(): array
+    {
+        return [
+            self::SEND_TRANG_THAI_NHAP => 'Nháp',
+            self::SEND_TRANG_THAI_DA_LEN_LICH => 'Đã lên lịch',
+            self::SEND_TRANG_THAI_DA_GUI => 'Đã gửi',
+            self::SEND_TRANG_THAI_GUI_LOI => 'Gửi lỗi',
+        ];
+    }
+
     protected $fillable = [
         'tieuDe',
         'noiDung',
@@ -73,6 +91,11 @@ class ThongBao extends Model
         'loaiGui',
         'uuTien',
         'ghim',
+        'sendTrangThai',
+        'scheduled_at',
+        'sent_at',
+        'failed_at',
+        'failure_reason',
         'hinhAnh',
         'created_at',
         'updated_at',
@@ -84,6 +107,10 @@ class ThongBao extends Model
         'loaiGui' => 'integer',
         'uuTien'  => 'integer',
         'doiTuongGui' => 'integer',
+        'sendTrangThai' => 'integer',
+        'scheduled_at' => 'datetime',
+        'sent_at' => 'datetime',
+        'failed_at' => 'datetime',
     ];
 
     // ── Relationships ───────────────────────────────────────
@@ -102,6 +129,12 @@ class ThongBao extends Model
     {
         return $this->hasMany(ThongBaoTepDinh::class, 'thongBaoId', 'thongBaoId')
                     ->orderBy('tepDinhId');
+    }
+
+    public function lichSus(): HasMany
+    {
+        return $this->hasMany(ThongBaoLichSu::class, 'thongBaoId', 'thongBaoId')
+            ->orderByDesc('created_at');
     }
 
     // ── Scopes ─────────────────────────────────────────────
@@ -177,6 +210,22 @@ class ThongBao extends Model
             self::UU_TIEN_QUAN_TRONG => 'uu-tien-quan-trong',
             self::UU_TIEN_KHAN_CAP   => 'uu-tien-khan-cap',
             default                  => 'uu-tien-binh-thuong',
+        };
+    }
+
+    public function getSendTrangThaiLabel(): string
+    {
+        return self::sendTrangThaiLabels()[$this->sendTrangThai] ?? 'Không xác định';
+    }
+
+    public function getSendTrangThaiBadgeClass(): string
+    {
+        return match ((int) $this->sendTrangThai) {
+            self::SEND_TRANG_THAI_NHAP => 'send-draft',
+            self::SEND_TRANG_THAI_DA_LEN_LICH => 'send-scheduled',
+            self::SEND_TRANG_THAI_DA_GUI => 'send-sent',
+            self::SEND_TRANG_THAI_GUI_LOI => 'send-failed',
+            default => 'send-draft',
         };
     }
 }

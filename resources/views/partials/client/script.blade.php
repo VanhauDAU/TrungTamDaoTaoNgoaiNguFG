@@ -19,6 +19,7 @@
         window.NB_UNREAD_URL = '{{ route('home.api.thong-bao.unread-count') }}';
         window.NB_MARK_ALL_URL = '{{ route('home.api.thong-bao.mark-all-read') }}';
         window.NB_MARK_READ_URL = '/api/thong-bao'; // base path, JS appends /{id}/da-doc
+        window.NB_MARK_UNREAD_URL = '/api/thong-bao'; // base path, JS appends /{id}/chua-doc
         window.NB_PAGE_URL = '{{ route('home.thong-bao.index') }}';
     </script>
     <link rel="stylesheet" href="{{ asset('assets/client/css/pages/thong-bao/thong-bao.css') }}">

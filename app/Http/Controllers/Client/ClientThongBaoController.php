@@ -20,6 +20,7 @@ class ClientThongBaoController extends Controller
     public function index(Request $request)
     {
         $userId = Auth::id();
+        $scope = $request->get('scope', 'all');
 
         // ── Dữ liệu gộp theo danh mục (cho grid 2×2) ──────────────
         $loaiMap = [
@@ -33,9 +34,23 @@ class ClientThongBaoController extends Controller
         // Lấy tất cả thông báo của user (không phân trang), eager load tepDinhs
         $allItems = ThongBaoNguoiDung::with(['thongBao.tepDinhs'])
             ->where('taiKhoanId', $userId)
-            ->whereHas('thongBao')
+            ->whereHas('thongBao', function ($q) {
+                $q->where('sendTrangThai', ThongBao::SEND_TRANG_THAI_DA_GUI);
+            })
             ->latest()
             ->get();
+
+        if ($scope === 'unread') {
+            $allItems = $allItems->where('daDoc', false)->values();
+        } elseif ($scope === 'important') {
+            $allItems = $allItems
+                ->filter(fn($i) => ($i->thongBao->uuTien ?? 0) >= ThongBao::UU_TIEN_QUAN_TRONG)
+                ->values();
+        } elseif ($scope === 'system') {
+            $allItems = $allItems
+                ->filter(fn($i) => ($i->thongBao->loaiGui ?? 0) === ThongBao::LOAI_HE_THONG)
+                ->values();
+        }
 
         // Group theo loaiGui. Mỗi category chứa tối đa 5 thông báo mới nhất để hiển thị inline.
         $byCategory = [];
@@ -53,7 +68,7 @@ class ClientThongBaoController extends Controller
 
         $tongChuaDoc = $allItems->where('daDoc', false)->count();
 
-        return view('clients.hoc-vien.thong-bao.index', compact('byCategory', 'tongChuaDoc'));
+        return view('clients.hoc-vien.thong-bao.index', compact('byCategory', 'tongChuaDoc', 'scope'));
     }
 
     // ── SSE (Server-Sent Events) stream ──────────────────────────────────────
@@ -105,6 +120,7 @@ class ClientThongBaoController extends Controller
                 $newItems = ThongBaoNguoiDung::with('thongBao')
                     ->where('taiKhoanId', $userId)
                     ->where('daDoc', false)
+                    ->whereHas('thongBao', fn($q) => $q->where('sendTrangThai', ThongBao::SEND_TRANG_THAI_DA_GUI))
                     ->where('created_at', '>', $lastCheck)
                     ->get();
 
@@ -157,7 +173,7 @@ class ClientThongBaoController extends Controller
 
         $items = ThongBaoNguoiDung::with('thongBao')
             ->where('taiKhoanId', $userId)
-            ->whereHas('thongBao')
+            ->whereHas('thongBao', fn($q) => $q->where('sendTrangThai', ThongBao::SEND_TRANG_THAI_DA_GUI))
             ->latest()
             ->take(10)
             ->get()
@@ -206,6 +222,20 @@ class ClientThongBaoController extends Controller
 
         if ($item && !$item->daDoc) {
             $item->update(['daDoc' => true, 'ngayDoc' => now()]);
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    // ── API: đánh dấu 1 thông báo chưa đọc ──────────────────────────────────
+    public function markUnread($id)
+    {
+        $item = ThongBaoNguoiDung::where('thongBaoId', $id)
+            ->where('taiKhoanId', Auth::id())
+            ->first();
+
+        if ($item && $item->daDoc) {
+            $item->update(['daDoc' => false, 'ngayDoc' => null]);
         }
 
         return response()->json(['success' => true]);
