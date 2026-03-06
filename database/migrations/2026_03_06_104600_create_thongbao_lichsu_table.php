@@ -8,15 +8,17 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('thongbao_lichsu', function (Blueprint $table) {
-            $table->bigIncrements('id');
-            $table->integer('thongBaoId')->nullable()->index();
-            $table->integer('taiKhoanId')->nullable()->index();
-            $table->string('hanhDong', 80);
-            $table->text('moTa')->nullable();
-            $table->json('payload')->nullable();
-            $table->timestamp('created_at')->useCurrent();
-        });
+        if (!Schema::hasTable('thongbao_lichsu')) {
+            Schema::create('thongbao_lichsu', function (Blueprint $table) {
+                $table->bigIncrements('id');
+                $table->integer('thongBaoId')->nullable()->index();
+                $table->integer('taiKhoanId')->nullable()->index();
+                $table->string('hanhDong', 80);
+                $table->text('moTa')->nullable();
+                $table->json('payload')->nullable();
+                $table->timestamp('created_at')->useCurrent();
+            });
+        }
     }
 
     public function down(): void
@@ -24,4 +26,3 @@ return new class extends Migration
         Schema::dropIfExists('thongbao_lichsu');
     }
 };
-

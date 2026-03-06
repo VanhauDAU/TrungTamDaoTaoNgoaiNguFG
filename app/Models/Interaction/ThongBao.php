@@ -17,6 +17,7 @@ class ThongBao extends Model
     const DOI_TUONG_THEO_KHOA   = 2; // Theo khóa học
     const DOI_TUONG_CA_NHAN     = 3; // Cá nhân (1 user)
     const DOI_TUONG_THEO_ROLE   = 4; // Theo role (admin/giaovien/nhanvien/hocvien)
+    const DOI_TUONG_THEO_CO_SO  = 5; // Theo cơ sở đào tạo
 
     // ── Constants: Loại thông báo (danh mục) ───────────────
     const LOAI_HE_THONG  = 0;
@@ -44,6 +45,7 @@ class ThongBao extends Model
             self::DOI_TUONG_THEO_KHOA => 'Theo khóa học',
             self::DOI_TUONG_CA_NHAN   => 'Cá nhân',
             self::DOI_TUONG_THEO_ROLE => 'Theo vai trò',
+            self::DOI_TUONG_THEO_CO_SO => 'Theo cơ sở đào tạo',
         ];
     }
 
