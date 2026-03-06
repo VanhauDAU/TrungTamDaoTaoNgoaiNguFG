@@ -22,7 +22,33 @@
                 <span class="nb-hero-chip"><i class="fas fa-users"></i> Preview người nhận</span>
                 <span class="nb-hero-chip"><i class="fas fa-paperclip"></i> Tối đa 5 tệp</span>
             </div>
-        </div>
+        @endif
+
+        <div class="nb-compose-layout">
+            <div class="nb-compose-main">
+                {{-- ── WIZARD STEPS HEADER ──────────────────────────────── --}}
+                <div class="wizard-steps" id="wizardSteps">
+                    <div class="wz-step active" id="step-dot-1">
+                        <div class="wz-step-inner">
+                            <div class="wz-circle">1</div>
+                            <div class="wz-label">Soạn nội dung</div>
+                        </div>
+                    </div>
+                    <div class="wz-connector" id="conn-1"></div>
+                    <div class="wz-step" id="step-dot-2">
+                        <div class="wz-step-inner">
+                            <div class="wz-circle">2</div>
+                            <div class="wz-label">Chọn đối tượng</div>
+                        </div>
+                    </div>
+                    <div class="wz-connector" id="conn-2"></div>
+                    <div class="wz-step" id="step-dot-3">
+                        <div class="wz-step-inner">
+                            <div class="wz-circle">3</div>
+                            <div class="wz-label">Xác nhận & Gửi</div>
+                        </div>
+                    </div>
+                </div>
 
         @if ($errors->any())
             <div class="nb-alert-error">
