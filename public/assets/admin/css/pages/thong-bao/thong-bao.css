@@ -124,6 +124,12 @@
 .uu-tien-quan-trong  { background: #fef9c3; color: #92400e; }
 .uu-tien-khan-cap    { background: #fee2e2; color: #991b1b; animation: nb-flash 1.2s infinite; }
 
+/* Trạng thái gửi */
+.send-draft     { background: #e2e8f0; color: #334155; }
+.send-scheduled { background: #dbeafe; color: #1d4ed8; }
+.send-sent      { background: #d1fae5; color: #065f46; }
+.send-failed    { background: #fee2e2; color: #991b1b; }
+
 @keyframes nb-flash {
     0%, 100% { opacity: 1; }
     50%       { opacity: .6; }

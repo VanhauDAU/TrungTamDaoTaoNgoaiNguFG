@@ -149,6 +149,25 @@ class ThongBaoService
         return true;
     }
 
+    /**
+     * Đánh dấu 1 thông báo là chưa đọc
+     */
+    public function markAsUnread(int $thongBaoId, int $taiKhoanId): bool
+    {
+        $record = ThongBaoNguoiDung::where('thongBaoId', $thongBaoId)
+            ->where('taiKhoanId', $taiKhoanId)
+            ->first();
+
+        if (!$record || !$record->daDoc) return false;
+
+        $record->update([
+            'daDoc' => false,
+            'ngayDoc' => null,
+        ]);
+
+        return true;
+    }
+
     // ── Private helpers ────────────────────────────────────
 
     private function layDanhSachNguoiNhan(int $doiTuongGui, ?int $doiTuongId, ?int $loaiTruId = null): Collection

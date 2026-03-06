@@ -275,7 +275,10 @@
                         <i class="fas fa-arrow-left"></i> Quay lại
                     </button>
                     <div class="nb-spacer"></div>
-                    <button type="submit" class="nb-btn nb-btn-success">
+                    <button type="submit" class="nb-btn nb-btn-secondary" name="hanhDong" value="draft">
+                        <i class="fas fa-file-lines"></i> Lưu nháp
+                    </button>
+                    <button type="submit" class="nb-btn nb-btn-success" name="hanhDong" value="send">
                         <i class="fas fa-paper-plane"></i> Gửi thông báo ngay
                     </button>
                 </div>

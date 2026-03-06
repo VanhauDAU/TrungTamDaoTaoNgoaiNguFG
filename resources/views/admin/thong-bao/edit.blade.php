@@ -147,9 +147,14 @@
                             <i class="fas fa-times"></i> Huỷ
                         </a>
                         <div class="nb-spacer"></div>
-                        <button type="submit" class="nb-btn nb-btn-primary">
+                        <button type="submit" class="nb-btn nb-btn-primary" name="hanhDong" value="save">
                             <i class="fas fa-save"></i> Lưu thay đổi
                         </button>
+                        @if ((int) $thongBao->sendTrangThai !== \App\Models\Interaction\ThongBao::SEND_TRANG_THAI_DA_GUI)
+                            <button type="submit" class="nb-btn nb-btn-success" name="hanhDong" value="send">
+                                <i class="fas fa-paper-plane"></i> Gửi thông báo
+                            </button>
+                        @endif
                     </div>
                 </form>
             </div>

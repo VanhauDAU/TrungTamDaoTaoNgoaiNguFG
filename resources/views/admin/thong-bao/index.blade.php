@@ -41,6 +41,22 @@
                     <div class="nb-stat-label">Đang ghim</div>
                 </div>
             </div>
+            <div class="nb-stat-card">
+                <div class="nb-stat-icon" style="background:rgba(148,163,184,.14);color:#475569"><i class="fas fa-file-lines"></i>
+                </div>
+                <div>
+                    <div class="nb-stat-num">{{ number_format($stats['nhap']) }}</div>
+                    <div class="nb-stat-label">Bản nháp</div>
+                </div>
+            </div>
+            <div class="nb-stat-card">
+                <div class="nb-stat-icon" style="background:rgba(239,68,68,.12);color:#ef4444"><i class="fas fa-triangle-exclamation"></i>
+                </div>
+                <div>
+                    <div class="nb-stat-num">{{ number_format($stats['gui_loi']) }}</div>
+                    <div class="nb-stat-label">Gửi lỗi</div>
+                </div>
+            </div>
         </div>
 
         {{-- ── TOOLBAR & FILTER ─────────────────────────────────── --}}
@@ -81,11 +97,20 @@
                     <option value="0" {{ request('ghim') === '0' ? 'selected' : '' }}>Chưa ghim</option>
                 </select>
 
+                <select name="sendTrangThai" onchange="this.form.submit()">
+                    <option value="">Mọi trạng thái gửi</option>
+                    @foreach (App\Models\Interaction\ThongBao::sendTrangThaiLabels() as $k => $v)
+                        <option value="{{ $k }}" {{ request('sendTrangThai') !== null && request('sendTrangThai') !== '' && (int) request('sendTrangThai') === $k ? 'selected' : '' }}>
+                            {{ $v }}
+                        </option>
+                    @endforeach
+                </select>
+
                 <button type="submit" class="nb-btn nb-btn-primary nb-btn-sm">
                     <i class="fas fa-search"></i>
                 </button>
 
-                @if (request()->hasAny(['q', 'loaiGui', 'doiTuongGui', 'uuTien', 'ghim']))
+                @if (request()->hasAny(['q', 'loaiGui', 'doiTuongGui', 'uuTien', 'ghim', 'sendTrangThai']))
                     <a href="{{ route('admin.thong-bao.index') }}" class="nb-btn nb-btn-secondary nb-btn-sm">
                         <i class="fas fa-times"></i>
                     </a>
@@ -115,6 +140,7 @@
                         <th>ĐỐI TƯỢNG</th>
                         <th>TỈ LỆ ĐỌC</th>
                         <th>ƯU TIÊN</th>
+                        <th>TRẠNG THÁI</th>
                         <th>NGÀY GỬI</th>
                         <th>THAO TÁC</th>
                     </tr>
@@ -195,6 +221,11 @@
                                     {{ $tb->getUuTienLabel() }}
                                 </span>
                             </td>
+                            <td>
+                                <span class="nb-badge {{ $tb->getSendTrangThaiBadgeClass() }}">
+                                    {{ $tb->getSendTrangThaiLabel() }}
+                                </span>
+                            </td>
                             <td class="nb-date">
                                 {{ optional($tb->ngayGui ?? $tb->created_at)->format('d/m/Y H:i') }}
                             </td>
@@ -213,6 +244,14 @@
                                         onclick="togglePin({{ $tb->thongBaoId }})">
                                         <i class="fas fa-thumbtack"></i>
                                     </button>
+                                    <button class="nb-action-btn view" title="Nhân bản thành nháp"
+                                        onclick="duplicateThongBao({{ $tb->thongBaoId }})">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                    <button class="nb-action-btn edit" title="Gửi thử cho tôi"
+                                        onclick="sendTestThongBao({{ $tb->thongBaoId }})">
+                                        <i class="fas fa-vial-circle-check"></i>
+                                    </button>
                                     <button class="nb-action-btn del" title="Xóa"
                                         onclick="deleteSingle({{ $tb->thongBaoId }})">
                                         <i class="fas fa-trash"></i>
@@ -223,11 +262,21 @@
                                     style="display:none">
                                     @csrf @method('DELETE')
                                 </form>
+                                <form id="dup-form-{{ $tb->thongBaoId }}" method="POST"
+                                    action="{{ route('admin.thong-bao.duplicate', $tb->thongBaoId) }}"
+                                    style="display:none">
+                                    @csrf
+                                </form>
+                                <form id="test-form-{{ $tb->thongBaoId }}" method="POST"
+                                    action="{{ route('admin.thong-bao.send-test', $tb->thongBaoId) }}"
+                                    style="display:none">
+                                    @csrf
+                                </form>
                             </td>
                         </tr>
                         @empty
                             <tr>
-                                <td colspan="9">
+                                <td colspan="10">
                                     <div class="nb-empty">
                                         <div class="icon-empty"><i class="fas fa-bell-slash"></i></div>
                                         <p>Chưa có thông báo nào.
