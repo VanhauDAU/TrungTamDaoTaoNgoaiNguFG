@@ -35,7 +35,8 @@ class ClientThongBaoController extends Controller
         $allItems = ThongBaoNguoiDung::with(['thongBao.tepDinhs'])
             ->where('taiKhoanId', $userId)
             ->whereHas('thongBao', function ($q) {
-                $q->where('sendTrangThai', ThongBao::SEND_TRANG_THAI_DA_GUI);
+                $q->where('sendTrangThai', ThongBao::SEND_TRANG_THAI_DA_GUI)
+                    ->whereNull('deleted_at');
             })
             ->latest()
             ->get();
@@ -120,7 +121,9 @@ class ClientThongBaoController extends Controller
                 $newItems = ThongBaoNguoiDung::with('thongBao')
                     ->where('taiKhoanId', $userId)
                     ->where('daDoc', false)
-                    ->whereHas('thongBao', fn($q) => $q->where('sendTrangThai', ThongBao::SEND_TRANG_THAI_DA_GUI))
+                    ->whereHas('thongBao', fn($q) => $q
+                        ->where('sendTrangThai', ThongBao::SEND_TRANG_THAI_DA_GUI)
+                        ->whereNull('deleted_at'))
                     ->where('created_at', '>', $lastCheck)
                     ->get();
 
@@ -173,7 +176,9 @@ class ClientThongBaoController extends Controller
 
         $items = ThongBaoNguoiDung::with('thongBao')
             ->where('taiKhoanId', $userId)
-            ->whereHas('thongBao', fn($q) => $q->where('sendTrangThai', ThongBao::SEND_TRANG_THAI_DA_GUI))
+            ->whereHas('thongBao', fn($q) => $q
+                ->where('sendTrangThai', ThongBao::SEND_TRANG_THAI_DA_GUI)
+                ->whereNull('deleted_at'))
             ->latest()
             ->take(10)
             ->get()
@@ -195,6 +200,7 @@ class ClientThongBaoController extends Controller
 
         $unreadCount = ThongBaoNguoiDung::where('taiKhoanId', $userId)
             ->where('daDoc', false)
+            ->whereHas('thongBao', fn($q) => $q->whereNull('deleted_at'))
             ->count();
 
         return response()->json([
@@ -208,6 +214,7 @@ class ClientThongBaoController extends Controller
     {
         $count = ThongBaoNguoiDung::where('taiKhoanId', Auth::id())
             ->where('daDoc', false)
+            ->whereHas('thongBao', fn($q) => $q->whereNull('deleted_at'))
             ->count();
 
         return response()->json(['count' => $count]);
@@ -218,6 +225,7 @@ class ClientThongBaoController extends Controller
     {
         $item = ThongBaoNguoiDung::where('thongBaoId', $id)
             ->where('taiKhoanId', Auth::id())
+            ->whereHas('thongBao', fn($q) => $q->whereNull('deleted_at'))
             ->first();
 
         if ($item && !$item->daDoc) {
@@ -232,6 +240,7 @@ class ClientThongBaoController extends Controller
     {
         $item = ThongBaoNguoiDung::where('thongBaoId', $id)
             ->where('taiKhoanId', Auth::id())
+            ->whereHas('thongBao', fn($q) => $q->whereNull('deleted_at'))
             ->first();
 
         if ($item && $item->daDoc) {
@@ -246,6 +255,7 @@ class ClientThongBaoController extends Controller
     {
         ThongBaoNguoiDung::where('taiKhoanId', Auth::id())
             ->where('daDoc', false)
+            ->whereHas('thongBao', fn($q) => $q->whereNull('deleted_at'))
             ->update(['daDoc' => true, 'ngayDoc' => now()]);
 
         return response()->json(['success' => true, 'message' => 'Đã đọc tất cả thông báo']);

@@ -196,6 +196,15 @@
                                 </div>
                             </div>
                         </div>
+                        @if ((int) $thongBao->sendTrangThai === App\Models\Interaction\ThongBao::SEND_TRANG_THAI_DA_LEN_LICH && $thongBao->scheduled_at)
+                            <div class="meta-item">
+                                <div class="meta-icon"><i class="fas fa-calendar"></i></div>
+                                <div>
+                                    <div class="meta-label">Lịch gửi</div>
+                                    <div class="meta-value">{{ $thongBao->scheduled_at->format('d/m/Y H:i:s') }}</div>
+                                </div>
+                            </div>
+                        @endif
                         <div class="meta-item">
                             <div class="meta-icon"><i class="fas fa-bullseye"></i></div>
                             <div>

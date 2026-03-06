@@ -265,10 +265,40 @@
                                     <i class="fas fa-paper-plane me-2"></i>
                                     Sẽ gửi đến <strong id="cf-count">?</strong> người nhận
                                 </div>
+                                <div class="cp-meta" style="margin-top:.75rem;">
+                                    <div class="cp-badge"><i class="fas fa-clock"></i> <span id="cf-send-time">Gửi ngay</span>
+                                    </div>
+                                </div>
                                 <div id="cf-file-info"
                                     style="margin-top:.75rem;font-size:.85rem;color:#6b7280;display:none;">
                                     <i class="fas fa-paperclip me-1"></i> <span id="cf-file-count">0</span> file đính kèm
                                 </div>
+                            </div>
+
+                            <div class="nb-form-group" style="margin-top:1.25rem;">
+                                <label class="nb-form-label">Thời điểm gửi</label>
+                                <div style="display:flex;flex-wrap:wrap;gap:1rem;align-items:center;">
+                                    <label class="nb-toggle-pin" style="background:#eef2ff;border-color:#c7d2fe;color:#4338ca;">
+                                        <input type="radio" name="kieuGui" value="now"
+                                            {{ old('kieuGui', 'now') !== 'schedule' ? 'checked' : '' }}>
+                                        <i class="fas fa-paper-plane"></i> Gửi ngay
+                                    </label>
+                                    <label class="nb-toggle-pin" style="background:#eef2ff;border-color:#c7d2fe;color:#4338ca;">
+                                        <input type="radio" name="kieuGui" value="schedule"
+                                            {{ old('kieuGui') === 'schedule' ? 'checked' : '' }}>
+                                        <i class="fas fa-clock"></i> Hẹn giờ gửi
+                                    </label>
+                                    <input type="datetime-local" id="scheduled-at-input" name="scheduled_at"
+                                        class="nb-input" style="max-width:260px;"
+                                        min="{{ now()->addMinute()->format('Y-m-d\TH:i') }}"
+                                        value="{{ old('scheduled_at') }}">
+                                </div>
+                                <div style="font-size:.78rem;color:#6b7280;margin-top:.35rem;">
+                                    Nếu chọn hẹn giờ, hệ thống sẽ tự gửi thông báo đúng thời điểm bạn đặt.
+                                </div>
+                                @error('scheduled_at')
+                                    <div style="font-size:.78rem;color:#dc2626;margin-top:.35rem;">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
 
@@ -280,7 +310,8 @@
                             <button type="submit" class="nb-btn nb-btn-secondary" name="hanhDong" value="draft">
                                 <i class="fas fa-file-lines"></i> Lưu nháp
                             </button>
-                            <button type="submit" class="nb-btn nb-btn-success" name="hanhDong" value="send">
+                            <button type="submit" class="nb-btn nb-btn-success" name="hanhDong" value="send"
+                                id="btn-submit-send">
                                 <i class="fas fa-paper-plane"></i> Gửi thông báo ngay
                             </button>
                         </div>

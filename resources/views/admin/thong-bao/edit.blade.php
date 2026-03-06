@@ -12,7 +12,9 @@
 @section('content')
     @php
         $isDraft = (int) $thongBao->sendTrangThai === App\Models\Interaction\ThongBao::SEND_TRANG_THAI_NHAP;
+        $isScheduled = (int) $thongBao->sendTrangThai === App\Models\Interaction\ThongBao::SEND_TRANG_THAI_DA_LEN_LICH;
         $canSendNow = (int) $thongBao->sendTrangThai !== App\Models\Interaction\ThongBao::SEND_TRANG_THAI_DA_GUI;
+        $scheduledAtValue = old('scheduled_at', optional($thongBao->scheduled_at)->format('Y-m-d\TH:i'));
         $xoaTepOld = collect(old('xoa_tep', []))
             ->map(fn($id) => (int) $id)
             ->all();
@@ -43,6 +45,12 @@
                 <i class="fas fa-paper-plane" style="color:#2563eb;"></i>
                 Thông báo này đang ở trạng thái <strong>nháp</strong>. Sau khi hoàn tất, bấm nút <strong>"Gửi thông báo
                     ngay"</strong> ở cuối form để phát hành.
+            </div>
+        @elseif ($isScheduled)
+            <div class="locked-notice" style="background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8;">
+                <i class="fas fa-clock" style="color:#2563eb;"></i>
+                Thông báo đang <strong>hẹn gửi lúc {{ optional($thongBao->scheduled_at)->format('d/m/Y H:i') }}</strong>.
+                Bạn có thể đổi thời gian và bấm <strong>"Lên lịch gửi"</strong> để cập nhật.
             </div>
         @endif
 
@@ -111,6 +119,31 @@
                             </label>
                         </div>
                     </div>
+
+                    @if ($canSendNow)
+                        <div class="nb-card">
+                            <div class="nb-card-title">
+                                <div class="nb-icon-tag" style="background:linear-gradient(135deg,#2563eb,#1d4ed8);">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                Tùy chọn thời điểm gửi
+                            </div>
+                            <div class="nb-form-group mb-0">
+                                <label class="nb-form-label">Hẹn giờ gửi (tuỳ chọn)</label>
+                                <input type="datetime-local" id="edit-scheduled-at" name="scheduled_at"
+                                    class="nb-input" style="max-width:320px;"
+                                    min="{{ now()->addMinute()->format('Y-m-d\TH:i') }}"
+                                    value="{{ $scheduledAtValue }}">
+                                <div style="font-size:.78rem;color:#6b7280;margin-top:.35rem;">
+                                    Để trống nếu bạn muốn dùng nút <strong>Gửi thông báo ngay</strong>. Nhập thời gian rồi bấm
+                                    <strong>Lên lịch gửi</strong> để hẹn tự động gửi.
+                                </div>
+                                @error('scheduled_at')
+                                    <div style="font-size:.78rem;color:#dc2626;margin-top:.35rem;">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                    @endif
 
                     <div class="nb-card">
                         <div class="nb-card-title">
@@ -182,6 +215,9 @@
                             <i class="fas fa-save"></i> {{ $isDraft ? 'Lưu nháp' : 'Lưu thay đổi' }}
                         </button>
                         @if ($canSendNow)
+                            <button type="submit" class="nb-btn nb-btn-primary" name="hanhDong" value="schedule">
+                                <i class="fas fa-clock"></i> Lên lịch gửi
+                            </button>
                             <button type="submit" class="nb-btn nb-btn-success" name="hanhDong" value="send">
                                 <i class="fas fa-paper-plane"></i> Gửi thông báo ngay
                             </button>
@@ -213,6 +249,12 @@
                         <span>Trạng thái gửi</span>
                         <strong>{{ $thongBao->getSendTrangThaiLabel() }}</strong>
                     </div>
+                    @if ($thongBao->scheduled_at)
+                        <div class="nb-side-kv">
+                            <span>Lịch gửi</span>
+                            <strong>{{ $thongBao->scheduled_at->format('d/m/Y H:i') }}</strong>
+                        </div>
+                    @endif
                     <div class="nb-side-kv">
                         <span>Tệp hiện có</span>
                         <strong id="edit-existing-files">{{ $thongBao->tepDinhs->count() }}</strong>
@@ -230,6 +272,7 @@
                         <li>Dùng vùng kéo-thả để thêm tệp đính kèm mới.</li>
                         <li>Nút <strong>{{ $isDraft ? 'Lưu nháp' : 'Lưu thay đổi' }}</strong> chỉ cập nhật nội dung, chưa gửi.</li>
                         @if ($canSendNow)
+                            <li>Nếu cần hẹn giờ, nhập thời gian rồi bấm <strong>Lên lịch gửi</strong>.</li>
                             <li>Bấm <strong>Gửi thông báo ngay</strong> để phát hành cho người nhận đã cấu hình trước đó.</li>
                         @endif
                     </ul>

@@ -32,11 +32,11 @@ if (btnBulk) {
         if (!ids.length) return;
 
         const result = await Swal.fire({
-            title: `Xóa ${ids.length} thông báo?`,
-            text: 'Thao tác này không thể hoàn tác.',
+            title: `Chuyển ${ids.length} thông báo vào thùng rác?`,
+            text: 'Bạn có thể khôi phục lại tại màn Thùng rác.',
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonText: 'Xóa',
+            confirmButtonText: 'Chuyển vào thùng rác',
             confirmButtonColor: '#ef4444',
             cancelButtonText: 'Huỷ',
         });
@@ -58,10 +58,11 @@ if (btnBulk) {
 // ── Single delete ────────────────────────────────────────────────────────────
 async function deleteSingle(id) {
     const result = await Swal.fire({
-        title: 'Xóa thông báo này?',
+        title: 'Chuyển thông báo vào thùng rác?',
+        text: 'Bạn có thể khôi phục lại tại màn Thùng rác.',
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonText: 'Xóa',
+        confirmButtonText: 'Chuyển vào thùng rác',
         confirmButtonColor: '#ef4444',
         cancelButtonText: 'Huỷ',
     });

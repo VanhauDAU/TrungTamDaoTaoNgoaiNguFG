@@ -304,10 +304,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
     Route::prefix('thong-bao')->name('thong-bao.')->group(function () {
         Route::get('/', [AdminThongBaoController::class, 'index'])->name('index');
         Route::get('/tao-moi', [AdminThongBaoController::class, 'create'])->name('create');
+        Route::get('/thung-rac', [AdminThongBaoController::class, 'trash'])->name('trash');
         Route::post('/', [AdminThongBaoController::class, 'store'])->name('store');
         Route::post('/xoa-nhieu', [AdminThongBaoController::class, 'bulkDestroy'])->name('bulk-destroy');
         Route::post('/{id}/nhan-ban', [AdminThongBaoController::class, 'duplicate'])->name('duplicate');
         Route::post('/{id}/gui-thu', [AdminThongBaoController::class, 'sendTest'])->name('send-test');
+        Route::patch('/{id}/khoi-phuc', [AdminThongBaoController::class, 'restore'])->name('restore');
+        Route::delete('/{id}/xoa-vinh-vien', [AdminThongBaoController::class, 'forceDestroy'])->name('force-destroy');
         Route::get('/{id}', [AdminThongBaoController::class, 'show'])->name('show');
         Route::get('/{id}/sua', [AdminThongBaoController::class, 'edit'])->name('edit');
         Route::put('/{id}', [AdminThongBaoController::class, 'update'])->name('update');

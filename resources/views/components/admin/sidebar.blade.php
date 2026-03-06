@@ -183,6 +183,7 @@
                     @php
                         $unread = App\Models\Interaction\ThongBaoNguoiDung::where('taiKhoanId', auth()->id())
                             ->where('daDoc', false)
+                            ->whereHas('thongBao', fn($q) => $q->whereNull('deleted_at'))
                             ->count();
                     @endphp
                     @if ($unread > 0)

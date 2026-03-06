@@ -81,6 +81,7 @@ class ThongBaoService
     {
         return ThongBaoNguoiDung::where('taiKhoanId', $taiKhoanId)
             ->where('daDoc', false)
+            ->whereHas('thongBao', fn($q) => $q->whereNull('deleted_at'))
             ->count();
     }
 
@@ -91,6 +92,7 @@ class ThongBaoService
     {
         return ThongBaoNguoiDung::with(['thongBao.nguoiGui.hoSoNguoiDung', 'thongBao.nguoiGui.nhanSu'])
             ->where('taiKhoanId', $taiKhoanId)
+            ->whereHas('thongBao', fn($q) => $q->whereNull('deleted_at'))
             ->orderByDesc('created_at')
             ->limit($limit)
             ->get()
@@ -125,6 +127,7 @@ class ThongBaoService
     {
         return ThongBaoNguoiDung::where('taiKhoanId', $taiKhoanId)
             ->where('daDoc', false)
+            ->whereHas('thongBao', fn($q) => $q->whereNull('deleted_at'))
             ->update([
                 'daDoc'   => true,
                 'ngayDoc' => Carbon::now(),
@@ -138,6 +141,7 @@ class ThongBaoService
     {
         $record = ThongBaoNguoiDung::where('thongBaoId', $thongBaoId)
             ->where('taiKhoanId', $taiKhoanId)
+            ->whereHas('thongBao', fn($q) => $q->whereNull('deleted_at'))
             ->first();
 
         if (!$record || $record->daDoc) return false;
@@ -156,6 +160,7 @@ class ThongBaoService
     {
         $record = ThongBaoNguoiDung::where('thongBaoId', $thongBaoId)
             ->where('taiKhoanId', $taiKhoanId)
+            ->whereHas('thongBao', fn($q) => $q->whereNull('deleted_at'))
             ->first();
 
         if (!$record || !$record->daDoc) return false;

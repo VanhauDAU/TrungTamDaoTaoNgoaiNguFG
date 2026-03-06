@@ -26,7 +26,8 @@ class ThongBaoController extends Controller
     public function index(Request $request)
     {
         $query = ThongBao::with('nguoiGui.hoSoNguoiDung', 'nguoiGui.nhanSu')
-            ->withCount(['nguoiNhans', 'nguoiNhans as da_doc_count' => fn($q) => $q->where('daDoc', true)]);
+            ->withCount(['nguoiNhans', 'nguoiNhans as da_doc_count' => fn($q) => $q->where('daDoc', true)])
+            ->whereNull('deleted_at');
 
         // Tìm kiếm
         if ($request->filled('q')) {
@@ -83,16 +84,19 @@ class ThongBaoController extends Controller
 
         // Stats
         $stats = [
-            'tong'     => ThongBao::count(),
-            'hom_nay'  => ThongBao::whereDate('created_at', today())->count(),
-            'chua_doc' => ThongBaoNguoiDung::where('daDoc', false)->count(),
-            'ghim'     => ThongBao::where('ghim', true)->count(),
-            'nhap'     => ThongBao::where('sendTrangThai', ThongBao::SEND_TRANG_THAI_NHAP)->count(),
-            'da_gui'   => ThongBao::where('sendTrangThai', ThongBao::SEND_TRANG_THAI_DA_GUI)->count(),
-            'gui_loi'  => ThongBao::where('sendTrangThai', ThongBao::SEND_TRANG_THAI_GUI_LOI)->count(),
+            'tong'     => ThongBao::whereNull('deleted_at')->count(),
+            'hom_nay'  => ThongBao::whereNull('deleted_at')->whereDate('created_at', today())->count(),
+            'chua_doc' => ThongBaoNguoiDung::where('daDoc', false)
+                ->whereHas('thongBao', fn($q) => $q->whereNull('deleted_at'))
+                ->count(),
+            'ghim'     => ThongBao::whereNull('deleted_at')->where('ghim', true)->count(),
+            'nhap'     => ThongBao::whereNull('deleted_at')->where('sendTrangThai', ThongBao::SEND_TRANG_THAI_NHAP)->count(),
+            'da_gui'   => ThongBao::whereNull('deleted_at')->where('sendTrangThai', ThongBao::SEND_TRANG_THAI_DA_GUI)->count(),
+            'gui_loi'  => ThongBao::whereNull('deleted_at')->where('sendTrangThai', ThongBao::SEND_TRANG_THAI_GUI_LOI)->count(),
         ];
+        $trashCount = ThongBao::onlyTrashed()->count();
 
-        return view('admin.thong-bao.index', compact('thongBaos', 'stats'));
+        return view('admin.thong-bao.index', compact('thongBaos', 'stats', 'trashCount'));
     }
 
     // ── CREATE ─────────────────────────────────────────────
@@ -121,6 +125,8 @@ class ThongBaoController extends Controller
             'uuTien'        => 'required|integer|between:0,2',
             'ghim'          => 'nullable|boolean',
             'hanhDong'      => 'nullable|in:send,draft',
+            'kieuGui'       => 'nullable|in:now,schedule',
+            'scheduled_at'  => 'nullable|string',
             'tepDinhs'      => 'nullable|array|max:5',
             'tepDinhs.*'    => 'file|max:10240', // tối đa 10MB/file
         ]);
@@ -136,6 +142,22 @@ class ThongBaoController extends Controller
 
         $hanhDong = $validated['hanhDong'] ?? 'send';
         $isDraft = $hanhDong === 'draft';
+        $isScheduled = !$isDraft && (($validated['kieuGui'] ?? 'now') === 'schedule');
+        $scheduledAt = null;
+
+        if ($isScheduled) {
+            $scheduledAt = $this->parseScheduledAt($request->input('scheduled_at'));
+            if (!$scheduledAt) {
+                return back()->withInput()->withErrors([
+                    'scheduled_at' => 'Vui lòng chọn thời gian hẹn gửi hợp lệ.',
+                ]);
+            }
+            if ($scheduledAt->lessThanOrEqualTo(Carbon::now()->addMinute())) {
+                return back()->withInput()->withErrors([
+                    'scheduled_at' => 'Thời gian hẹn gửi phải lớn hơn thời điểm hiện tại ít nhất 1 phút.',
+                ]);
+            }
+        }
 
         $tb = ThongBao::create([
             'tieuDe'      => $validated['tieuDe'],
@@ -145,11 +167,14 @@ class ThongBaoController extends Controller
             'doiTuongId'  => $validated['doiTuongId'] ?? null,
             'uuTien'      => $validated['uuTien'],
             'nguoiGuiId'  => Auth::id(),
-            'ngayGui'     => $isDraft ? null : Carbon::now(),
+            'ngayGui'     => ($isDraft || $isScheduled) ? null : Carbon::now(),
             'trangThai'   => 1,
             'ghim'        => $request->boolean('ghim'),
-            'sendTrangThai' => $isDraft ? ThongBao::SEND_TRANG_THAI_NHAP : ThongBao::SEND_TRANG_THAI_DA_GUI,
-            'sent_at'     => $isDraft ? null : Carbon::now(),
+            'sendTrangThai' => $isDraft
+                ? ThongBao::SEND_TRANG_THAI_NHAP
+                : ($isScheduled ? ThongBao::SEND_TRANG_THAI_DA_LEN_LICH : ThongBao::SEND_TRANG_THAI_DA_GUI),
+            'scheduled_at' => $isScheduled ? $scheduledAt : null,
+            'sent_at'     => ($isDraft || $isScheduled) ? null : Carbon::now(),
         ]);
 
         // Lưu file đính kèm
@@ -160,6 +185,15 @@ class ThongBaoController extends Controller
             return redirect()
                 ->route('admin.thong-bao.edit', $tb->thongBaoId)
                 ->with('success', 'Đã lưu bản nháp. Bạn có thể chỉnh sửa thêm và bấm "Gửi thông báo ngay" để phát hành.');
+        }
+
+        if ($isScheduled) {
+            $this->ghiLichSu($tb->thongBaoId, 'scheduled', 'Đã lên lịch gửi thông báo.', [
+                'scheduled_at' => $scheduledAt?->toDateTimeString(),
+            ]);
+            return redirect()
+                ->route('admin.thong-bao.show', $tb->thongBaoId)
+                ->with('success', 'Đã lên lịch gửi thông báo vào ' . $scheduledAt->format('d/m/Y H:i') . '.');
         }
 
         // Gửi đến người nhận
@@ -204,7 +238,7 @@ class ThongBaoController extends Controller
     // ── SHOW ───────────────────────────────────────────────
     public function show(string $id)
     {
-        $thongBao = ThongBao::with([
+        $thongBao = ThongBao::whereNull('deleted_at')->with([
             'nguoiGui.hoSoNguoiDung',
             'nguoiGui.nhanSu',
             'nguoiNhans.nguoiDung.hoSoNguoiDung',
@@ -225,7 +259,7 @@ class ThongBaoController extends Controller
     // ── EDIT ───────────────────────────────────────────────
     public function edit(string $id)
     {
-        $thongBao   = ThongBao::with('tepDinhs')->findOrFail($id);
+        $thongBao   = ThongBao::whereNull('deleted_at')->with('tepDinhs')->findOrFail($id);
         $lopHocs    = LopHoc::select('lopHocId', 'tenLopHoc')->orderBy('tenLopHoc')->get();
         $khoaHocs   = KhoaHoc::select('khoaHocId', 'tenKhoaHoc')->orderBy('tenKhoaHoc')->get();
         $taiKhoans  = TaiKhoan::with('hoSoNguoiDung', 'nhanSu')
@@ -237,7 +271,7 @@ class ThongBaoController extends Controller
     // ── UPDATE ─────────────────────────────────────────────
     public function update(Request $request, string $id)
     {
-        $thongBao = ThongBao::findOrFail($id);
+        $thongBao = ThongBao::whereNull('deleted_at')->findOrFail($id);
 
         $validated = $request->validate([
             'tieuDe'        => 'required|string|max:255',
@@ -245,7 +279,8 @@ class ThongBaoController extends Controller
             'loaiGui'       => 'required|integer|between:0,4',
             'uuTien'        => 'required|integer|between:0,2',
             'ghim'          => 'nullable|boolean',
-            'hanhDong'      => 'nullable|in:save,send',
+            'hanhDong'      => 'nullable|in:save,send,schedule',
+            'scheduled_at'  => 'nullable|string',
             'tepDinhs'      => 'nullable|array|max:5',
             'tepDinhs.*'    => 'file|max:10240',
             'xoa_tep'       => 'nullable|array',
@@ -274,6 +309,37 @@ class ThongBaoController extends Controller
         $this->luuTepDinh($thongBao->thongBaoId, $request);
 
         $hanhDong = $validated['hanhDong'] ?? 'save';
+        if ($hanhDong === 'schedule') {
+            $scheduledAt = $this->parseScheduledAt($request->input('scheduled_at'));
+            if (!$scheduledAt) {
+                return back()->withInput()->withErrors([
+                    'scheduled_at' => 'Vui lòng chọn thời gian hẹn gửi hợp lệ.',
+                ]);
+            }
+            if ($scheduledAt->lessThanOrEqualTo(Carbon::now()->addMinute())) {
+                return back()->withInput()->withErrors([
+                    'scheduled_at' => 'Thời gian hẹn gửi phải lớn hơn thời điểm hiện tại ít nhất 1 phút.',
+                ]);
+            }
+
+            $thongBao->nguoiNhans()->delete();
+            $thongBao->update([
+                'sendTrangThai' => ThongBao::SEND_TRANG_THAI_DA_LEN_LICH,
+                'scheduled_at' => $scheduledAt,
+                'ngayGui' => null,
+                'sent_at' => null,
+                'failed_at' => null,
+                'failure_reason' => null,
+            ]);
+            $this->ghiLichSu($thongBao->thongBaoId, 'scheduled', 'Lên lịch gửi từ màn hình chỉnh sửa.', [
+                'scheduled_at' => $scheduledAt->toDateTimeString(),
+            ]);
+
+            return redirect()
+                ->route('admin.thong-bao.show', $thongBao->thongBaoId)
+                ->with('success', 'Đã lên lịch gửi thông báo vào ' . $scheduledAt->format('d/m/Y H:i') . '.');
+        }
+
         if ($hanhDong === 'send') {
             $thongBao->nguoiNhans()->delete();
             $soNguoiNhan = $this->guiThongBaoVaCapNhatTrangThai($thongBao->fresh());
@@ -289,7 +355,10 @@ class ThongBaoController extends Controller
                 ->with('success', "Đã gửi thông báo thành công đến {$soNguoiNhan} người nhận.");
         }
 
-        if ((int)$thongBao->sendTrangThai !== ThongBao::SEND_TRANG_THAI_DA_GUI) {
+        if (
+            (int) $thongBao->sendTrangThai !== ThongBao::SEND_TRANG_THAI_DA_GUI &&
+            (int) $thongBao->sendTrangThai !== ThongBao::SEND_TRANG_THAI_DA_LEN_LICH
+        ) {
             $thongBao->update(['sendTrangThai' => ThongBao::SEND_TRANG_THAI_NHAP]);
         }
 
@@ -301,6 +370,12 @@ class ThongBaoController extends Controller
                 ->with('success', 'Đã lưu nháp. Khi sẵn sàng, bấm "Gửi thông báo ngay" để gửi cho người nhận.');
         }
 
+        if ((int) $thongBao->fresh()->sendTrangThai === ThongBao::SEND_TRANG_THAI_DA_LEN_LICH) {
+            return redirect()
+                ->route('admin.thong-bao.edit', $thongBao->thongBaoId)
+                ->with('success', 'Đã lưu thay đổi. Thông báo vẫn đang ở trạng thái lên lịch gửi.');
+        }
+
         return redirect()
             ->route('admin.thong-bao.show', $thongBao->thongBaoId)
             ->with('success', 'Đã cập nhật thông báo thành công.');
@@ -309,23 +384,14 @@ class ThongBaoController extends Controller
     // ── DESTROY ────────────────────────────────────────────
     public function destroy(string $id)
     {
-        $thongBao = ThongBao::with('tepDinhs')->findOrFail($id);
+        $thongBao = ThongBao::whereNull('deleted_at')->findOrFail($id);
         $deletedTitle = $thongBao->tieuDe;
-
-        // Xóa file vật lý
-        foreach ($thongBao->tepDinhs as $tep) {
-            Storage::disk('public')->delete($tep->duongDan);
-        }
-
-        // Xóa records liên quan
-        $thongBao->tepDinhs()->delete();
-        $thongBao->nguoiNhans()->delete();
         $thongBao->delete();
-        $this->ghiLichSu(null, 'deleted', "Đã xóa thông báo: {$deletedTitle}", ['thongBaoId' => (int)$id]);
+        $this->ghiLichSu($thongBao->thongBaoId, 'deleted', "Đã chuyển thông báo vào thùng rác: {$deletedTitle}");
 
         return redirect()
             ->route('admin.thong-bao.index')
-            ->with('success', 'Đã xóa thông báo thành công.');
+            ->with('success', 'Đã chuyển thông báo vào thùng rác.');
     }
 
     // ── BULK DESTROY ───────────────────────────────────────
@@ -333,24 +399,68 @@ class ThongBaoController extends Controller
     {
         $ids = $request->validate(['ids' => 'required|array', 'ids.*' => 'integer'])['ids'];
 
-        // Xóa file vật lý
-        $tepDinhs = ThongBaoTepDinh::whereIn('thongBaoId', $ids)->get();
-        foreach ($tepDinhs as $tep) {
+        $count = ThongBao::whereNull('deleted_at')->whereIn('thongBaoId', $ids)->count();
+        ThongBao::whereNull('deleted_at')->whereIn('thongBaoId', $ids)->delete();
+        $this->ghiLichSu(null, 'bulk_deleted', 'Đã chuyển nhiều thông báo vào thùng rác.', ['ids' => $ids]);
+
+        return response()->json(['success' => true, 'message' => 'Đã chuyển ' . $count . ' thông báo vào thùng rác.']);
+    }
+
+    // ── TRASH ──────────────────────────────────────────────
+    public function trash(Request $request)
+    {
+        $query = ThongBao::onlyTrashed()
+            ->with('nguoiGui.hoSoNguoiDung', 'nguoiGui.nhanSu')
+            ->withCount('tepDinhs');
+
+        if ($request->filled('q')) {
+            $q = trim((string) $request->q);
+            if ($q !== '') {
+                $query->where(function ($sub) use ($q) {
+                    $sub->where('tieuDe', 'like', "%{$q}%")
+                        ->orWhere('noiDung', 'like', "%{$q}%");
+                });
+            }
+        }
+
+        $thongBaos = $query->orderByDesc('deleted_at')->paginate(15)->withQueryString();
+        return view('admin.thong-bao.trash', compact('thongBaos'));
+    }
+
+    public function restore(string $id)
+    {
+        $thongBao = ThongBao::onlyTrashed()->findOrFail($id);
+        $thongBao->restore();
+        $this->ghiLichSu($thongBao->thongBaoId, 'restored', 'Khôi phục thông báo từ thùng rác.');
+
+        return redirect()
+            ->route('admin.thong-bao.trash')
+            ->with('success', 'Đã khôi phục thông báo.');
+    }
+
+    public function forceDestroy(string $id)
+    {
+        $thongBao = ThongBao::onlyTrashed()->with('tepDinhs')->findOrFail($id);
+        $deletedTitle = $thongBao->tieuDe;
+
+        foreach ($thongBao->tepDinhs as $tep) {
             Storage::disk('public')->delete($tep->duongDan);
         }
 
-        ThongBaoTepDinh::whereIn('thongBaoId', $ids)->delete();
-        ThongBaoNguoiDung::whereIn('thongBaoId', $ids)->delete();
-        ThongBao::whereIn('thongBaoId', $ids)->delete();
-        $this->ghiLichSu(null, 'bulk_deleted', 'Đã xóa nhiều thông báo.', ['ids' => $ids]);
+        $thongBao->tepDinhs()->delete();
+        $thongBao->nguoiNhans()->delete();
+        $thongBao->forceDelete();
+        $this->ghiLichSu(null, 'force_deleted', "Đã xóa vĩnh viễn thông báo: {$deletedTitle}", ['thongBaoId' => (int) $id]);
 
-        return response()->json(['success' => true, 'message' => 'Đã xóa ' . count($ids) . ' thông báo.']);
+        return redirect()
+            ->route('admin.thong-bao.trash')
+            ->with('success', 'Đã xóa vĩnh viễn thông báo.');
     }
 
     // ── TOGGLE PIN ─────────────────────────────────────────
     public function togglePin(string $id)
     {
-        $thongBao = ThongBao::findOrFail($id);
+        $thongBao = ThongBao::whereNull('deleted_at')->findOrFail($id);
         $thongBao->update(['ghim' => !$thongBao->ghim]);
         $this->ghiLichSu($thongBao->thongBaoId, $thongBao->ghim ? 'pinned' : 'unpinned', $thongBao->ghim ? 'Đã ghim thông báo.' : 'Đã bỏ ghim thông báo.');
 
@@ -363,7 +473,7 @@ class ThongBaoController extends Controller
 
     public function duplicate(string $id)
     {
-        $source = ThongBao::with('tepDinhs')->findOrFail($id);
+        $source = ThongBao::whereNull('deleted_at')->with('tepDinhs')->findOrFail($id);
         $clone = ThongBao::create([
             'tieuDe' => '[Bản sao] ' . $source->tieuDe,
             'noiDung' => $source->noiDung,
@@ -402,7 +512,7 @@ class ThongBaoController extends Controller
 
     public function sendTest(string $id)
     {
-        $thongBao = ThongBao::findOrFail($id);
+        $thongBao = ThongBao::whereNull('deleted_at')->findOrFail($id);
         $userId = Auth::id();
 
         ThongBaoNguoiDung::updateOrCreate(
@@ -495,5 +605,18 @@ class ThongBaoController extends Controller
             'payload' => $payload ?: null,
             'created_at' => Carbon::now(),
         ]);
+    }
+
+    private function parseScheduledAt(?string $scheduledAtInput): ?Carbon
+    {
+        if (!$scheduledAtInput) {
+            return null;
+        }
+
+        try {
+            return Carbon::createFromFormat('Y-m-d\TH:i', $scheduledAtInput, config('app.timezone'));
+        } catch (\Throwable) {
+            return null;
+        }
     }
 }

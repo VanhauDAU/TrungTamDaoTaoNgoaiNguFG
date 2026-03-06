@@ -42,7 +42,8 @@
                 </div>
             </div>
             <div class="nb-stat-card">
-                <div class="nb-stat-icon" style="background:rgba(148,163,184,.14);color:#475569"><i class="fas fa-file-lines"></i>
+                <div class="nb-stat-icon" style="background:rgba(148,163,184,.14);color:#475569"><i
+                        class="fas fa-file-lines"></i>
                 </div>
                 <div>
                     <div class="nb-stat-num">{{ number_format($stats['nhap']) }}</div>
@@ -50,7 +51,8 @@
                 </div>
             </div>
             <div class="nb-stat-card">
-                <div class="nb-stat-icon" style="background:rgba(239,68,68,.12);color:#ef4444"><i class="fas fa-triangle-exclamation"></i>
+                <div class="nb-stat-icon" style="background:rgba(239,68,68,.12);color:#ef4444"><i
+                        class="fas fa-triangle-exclamation"></i>
                 </div>
                 <div>
                     <div class="nb-stat-num">{{ number_format($stats['gui_loi']) }}</div>
@@ -87,7 +89,8 @@
                     <select id="filter-doi-tuong" name="doiTuongGui" onchange="this.form.submit()">
                         <option value="">Tất cả đối tượng</option>
                         @foreach (App\Models\Interaction\ThongBao::doiTuongLabels() as $k => $v)
-                            <option value="{{ $k }}" {{ request('doiTuongGui') == (string) $k ? 'selected' : '' }}>
+                            <option value="{{ $k }}"
+                                {{ request('doiTuongGui') == (string) $k ? 'selected' : '' }}>
                                 {{ $v }}</option>
                         @endforeach
                     </select>
@@ -137,10 +140,9 @@
                 @endif
 
                 <div class="nb-spacer"></div>
-
-                <button type="button" id="btnBulkDelete" class="nb-btn nb-btn-danger nb-btn-sm" disabled>
-                    <i class="fas fa-trash"></i> Xóa (<span id="selectedCount">0</span>)
-                </button>
+                <a href="{{ route('admin.thong-bao.trash') }}" class="nb-btn nb-btn-secondary">
+                    <i class="fas fa-trash-can"></i> Thùng rác ({{ $trashCount ?? 0 }})
+                </a>
 
                 <a href="{{ route('admin.thong-bao.create') }}" class="nb-btn nb-btn-primary">
                     <i class="fas fa-plus"></i> Tạo thông báo
@@ -230,7 +232,8 @@
                             <td>
                                 <div class="nb-read-progress">
                                     <div class="nb-read-percent">{{ $daDocs }}/{{ $tong }}
-                                        ({{ $tiLe }}%)</div>
+                                        ({{ $tiLe }}%)
+                                    </div>
                                     <div class="bar-wrap">
                                         <div class="bar-fill" style="width:{{ $tiLe }}%"></div>
                                     </div>
@@ -250,7 +253,11 @@
                                 @endif
                             </td>
                             <td class="nb-date">
-                                {{ optional($tb->ngayGui ?? $tb->created_at)->format('d/m/Y H:i') }}
+                                @if ((int) $tb->sendTrangThai === App\Models\Interaction\ThongBao::SEND_TRANG_THAI_DA_LEN_LICH && $tb->scheduled_at)
+                                    Hẹn: {{ optional($tb->scheduled_at)->format('d/m/Y H:i') }}
+                                @else
+                                    {{ optional($tb->ngayGui ?? $tb->created_at)->format('d/m/Y H:i') }}
+                                @endif
                             </td>
                             <td>
                                 <div class="nb-actions">

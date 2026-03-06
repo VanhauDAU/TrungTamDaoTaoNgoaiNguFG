@@ -83,9 +83,21 @@ function goStep(n) {
     if (n === 3) {
         const doiTuong = Number(document.querySelector('[name=doiTuongGui]:checked')?.value ?? 0);
         const doiTuongId = document.querySelector('.ss-panel:not([style*="none"]) select')?.value ?? '';
+        const kieuGui = document.querySelector('[name=kieuGui]:checked')?.value ?? 'now';
+        const scheduledAt = document.getElementById('scheduled-at-input')?.value ?? '';
         if (doiTuong !== 0 && !doiTuongId) {
             Toast.fire({ icon: 'warning', title: 'Vui lòng chọn đúng đối tượng nhận thông báo!' });
             return;
+        }
+        if (kieuGui === 'schedule') {
+            if (!scheduledAt) {
+                Toast.fire({ icon: 'warning', title: 'Vui lòng chọn thời gian hẹn gửi.' });
+                return;
+            }
+            if (new Date(scheduledAt).getTime() <= Date.now()) {
+                Toast.fire({ icon: 'warning', title: 'Thời gian hẹn gửi phải lớn hơn hiện tại.' });
+                return;
+            }
         }
         buildConfirmStep();
     }
@@ -117,6 +129,8 @@ function buildConfirmStep() {
     const loai     = document.querySelector('[name=loaiGui]').value;
     const uuTien   = document.querySelector('[name=uuTien]').value;
     const doiTuong = document.querySelector('[name=doiTuongGui]:checked')?.value ?? 0;
+    const kieuGui = document.querySelector('[name=kieuGui]:checked')?.value ?? 'now';
+    const scheduledAt = document.getElementById('scheduled-at-input')?.value ?? '';
 
     document.getElementById('cf-tieu-de').textContent   = tieuDe;
     document.getElementById('cf-noi-dung').innerHTML    = quill.root.innerHTML;
@@ -124,6 +138,12 @@ function buildConfirmStep() {
     document.getElementById('cf-uu-tien').textContent   = window.UU_TIEN_LABELS[uuTien]  ?? '—';
     document.getElementById('cf-doi-tuong').textContent = window.DOI_TUONG_LABELS[doiTuong] ?? '—';
     document.getElementById('cf-count').textContent     = previewCount;
+    const sendTimeEl = document.getElementById('cf-send-time');
+    if (sendTimeEl) {
+        sendTimeEl.textContent = kieuGui === 'schedule'
+            ? `Hẹn giờ: ${scheduledAt.replace('T', ' ')}`
+            : 'Gửi ngay';
+    }
     updateComposeSummary();
 }
 
@@ -226,6 +246,19 @@ async function fetchRecipientPreview() {
 
 // ── Init ─────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+    const scheduledInput = document.getElementById('scheduled-at-input');
+    const submitSendBtn = document.getElementById('btn-submit-send');
+    const updateScheduleInput = () => {
+        const kieuGui = document.querySelector('[name=kieuGui]:checked')?.value ?? 'now';
+        if (!scheduledInput) return;
+        scheduledInput.disabled = kieuGui !== 'schedule';
+        if (submitSendBtn) {
+            submitSendBtn.innerHTML = kieuGui === 'schedule'
+                ? '<i class="fas fa-clock"></i> Lên lịch gửi'
+                : '<i class="fas fa-paper-plane"></i> Gửi thông báo ngay';
+        }
+    };
+
     // Lắng nghe sub-selects
     ['sel-lop', 'sel-khoa', 'sel-canhan', 'sel-role', 'sel-coso'].forEach(id => {
         const el = document.getElementById(id);
@@ -241,6 +274,13 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelector('[name=uuTien]')?.addEventListener('change', updateComposeSummary);
     document.querySelector('[name=ghim]')?.addEventListener('change', updateComposeSummary);
     document.querySelectorAll('[name=doiTuongGui]').forEach(el => el.addEventListener('change', updateComposeSummary));
+    document.querySelectorAll('[name=kieuGui]').forEach(el => {
+        el.addEventListener('change', () => {
+            updateScheduleInput();
+            updateComposeSummary();
+        });
+    });
+    scheduledInput?.addEventListener('change', updateComposeSummary);
 
     const prechecked = document.querySelector('[name=doiTuongGui]:checked');
     if (prechecked) {
@@ -248,5 +288,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (card) selectDoiTuong(Number(prechecked.value), card);
     }
 
+    updateScheduleInput();
     updateComposeSummary();
 });
