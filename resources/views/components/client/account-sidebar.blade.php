@@ -36,6 +36,13 @@
                 </a>
             </li>
             <li class="menu-item">
+                <a href="{{ route('home.student.chat') }}"
+                    class="menu-link {{ request()->routeIs('home.student.chat') ? 'active' : '' }}">
+                    <i class="fas fa-comments"></i>
+                    <span>Chat lớp học</span>
+                </a>
+            </li>
+            <li class="menu-item">
                 <a href="{{ route('home.thong-bao.index') }}"
                     class="menu-link {{ request()->routeIs('home.thong-bao.*') ? 'active' : '' }}">
                     <i class="fas fa-bell"></i>
