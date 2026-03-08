@@ -23,11 +23,12 @@ class ChatAccessService
             return true;
         }
 
-        return DangKyLopHoc::query()
+        $registration = DangKyLopHoc::query()
             ->where('lopHocId', $room->lopHocId)
             ->where('taiKhoanId', $taiKhoan->taiKhoanId)
-            ->eligibleForChat()
-            ->exists();
+            ->first();
+
+        return $registration?->canJoinChat($room->lopHoc) ?? false;
     }
 
     public function canAccessRoom(int|TaiKhoan $taiKhoan, ChatRoom $room): bool
@@ -38,11 +39,17 @@ class ChatAccessService
             return true;
         }
 
-        return ChatRoomMember::query()
+        $isMember = ChatRoomMember::query()
             ->where('chatRoomId', $room->chatRoomId)
             ->where('taiKhoanId', $taiKhoan->taiKhoanId)
             ->whereNull('roiAt')
             ->exists();
+
+        if ($isMember) {
+            return true;
+        }
+
+        return $this->canJoinRoom($taiKhoan, $room);
     }
 
     public function canSendMessage(int|TaiKhoan $taiKhoan, ChatRoom $room): bool
@@ -61,11 +68,12 @@ class ChatAccessService
             return true;
         }
 
-        return DangKyLopHoc::query()
+        $registration = DangKyLopHoc::query()
             ->where('lopHocId', $room->lopHocId)
             ->where('taiKhoanId', $taiKhoan->taiKhoanId)
-            ->eligibleForChat()
-            ->exists();
+            ->first();
+
+        return $registration?->canSendChat($room->lopHoc) ?? false;
     }
 
     public function canCreateDirectConversation(int|TaiKhoan $firstUser, int|TaiKhoan $secondUser): bool
@@ -90,7 +98,20 @@ class ChatAccessService
         if ($taiKhoan->role === TaiKhoan::ROLE_HOC_VIEN) {
             return DangKyLopHoc::query()
                 ->where('taiKhoanId', $taiKhoan->taiKhoanId)
-                ->eligibleForChat()
+                ->whereIn('trangThai', [
+                    DangKyLopHoc::TRANG_THAI_DA_XAC_NHAN,
+                    DangKyLopHoc::TRANG_THAI_DANG_HOC,
+                    DangKyLopHoc::TRANG_THAI_TAM_DUNG_NO_HOC_PHI,
+                    DangKyLopHoc::TRANG_THAI_BAO_LUU,
+                    DangKyLopHoc::TRANG_THAI_HOAN_THANH,
+                ])
+                ->whereHas('lopHoc', function ($query) {
+                    $query->whereIn('trangThai', [
+                        LopHoc::TRANG_THAI_CHOT_DANH_SACH,
+                        LopHoc::TRANG_THAI_DANG_HOC,
+                        LopHoc::TRANG_THAI_DA_KET_THUC,
+                    ]);
+                })
                 ->pluck('lopHocId')
                 ->unique()
                 ->values();
@@ -99,6 +120,11 @@ class ChatAccessService
         if ($taiKhoan->role === TaiKhoan::ROLE_GIAO_VIEN) {
             return LopHoc::query()
                 ->where('taiKhoanId', $taiKhoan->taiKhoanId)
+                ->whereIn('trangThai', [
+                    LopHoc::TRANG_THAI_CHOT_DANH_SACH,
+                    LopHoc::TRANG_THAI_DANG_HOC,
+                    LopHoc::TRANG_THAI_DA_KET_THUC,
+                ])
                 ->pluck('lopHocId')
                 ->unique()
                 ->values();

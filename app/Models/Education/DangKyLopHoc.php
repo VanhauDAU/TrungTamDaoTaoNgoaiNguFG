@@ -9,10 +9,13 @@ use App\Models\Finance\HoaDon;
 class DangKyLopHoc extends Model
 {
     // ── Trạng thái đăng ký lớp học ──────────────────────────────────
-    public const TRANG_THAI_HUY = 0;
-    public const TRANG_THAI_CHO_THANH_TOAN = 1;
-    public const TRANG_THAI_DA_XAC_NHAN = 2;
+    public const TRANG_THAI_CHO_THANH_TOAN = 0;
+    public const TRANG_THAI_DA_XAC_NHAN = 1;
+    public const TRANG_THAI_DANG_HOC = 2;
     public const TRANG_THAI_TAM_DUNG_NO_HOC_PHI = 3;
+    public const TRANG_THAI_BAO_LUU = 4;
+    public const TRANG_THAI_HOAN_THANH = 5;
+    public const TRANG_THAI_HUY = 6;
 
     protected $table      = 'dangKyLopHoc';
     protected $primaryKey = 'dangKyLopHocId';
@@ -57,7 +60,10 @@ class DangKyLopHoc extends Model
         return match ((int) $this->trangThai) {
             self::TRANG_THAI_CHO_THANH_TOAN => 'Chờ thanh toán',
             self::TRANG_THAI_DA_XAC_NHAN => 'Đã xác nhận',
+            self::TRANG_THAI_DANG_HOC => 'Đang học',
             self::TRANG_THAI_TAM_DUNG_NO_HOC_PHI => 'Tạm dừng do nợ học phí',
+            self::TRANG_THAI_BAO_LUU => 'Bảo lưu',
+            self::TRANG_THAI_HOAN_THANH => 'Hoàn thành',
             self::TRANG_THAI_HUY => 'Đã hủy',
             default => 'Không xác định',
         };
@@ -78,9 +84,24 @@ class DangKyLopHoc extends Model
         return (int) $this->trangThai === self::TRANG_THAI_DA_XAC_NHAN;
     }
 
+    public function isStudying(): bool
+    {
+        return (int) $this->trangThai === self::TRANG_THAI_DANG_HOC;
+    }
+
     public function isSuspendedForDebt(): bool
     {
         return (int) $this->trangThai === self::TRANG_THAI_TAM_DUNG_NO_HOC_PHI;
+    }
+
+    public function isOnLeave(): bool
+    {
+        return (int) $this->trangThai === self::TRANG_THAI_BAO_LUU;
+    }
+
+    public function isCompleted(): bool
+    {
+        return (int) $this->trangThai === self::TRANG_THAI_HOAN_THANH;
     }
 
     public function isCancelled(): bool
@@ -98,18 +119,45 @@ class DangKyLopHoc extends Model
         return in_array((int) $this->trangThai, [
             self::TRANG_THAI_CHO_THANH_TOAN,
             self::TRANG_THAI_DA_XAC_NHAN,
+            self::TRANG_THAI_DANG_HOC,
             self::TRANG_THAI_TAM_DUNG_NO_HOC_PHI,
         ], true);
     }
 
-    public function canJoinChat(): bool
+    public function canJoinChat(?LopHoc $lopHoc = null): bool
     {
-        return (int) $this->trangThai === self::TRANG_THAI_DA_XAC_NHAN;
+        $allowed = in_array((int) $this->trangThai, [
+            self::TRANG_THAI_DA_XAC_NHAN,
+            self::TRANG_THAI_DANG_HOC,
+        ], true);
+
+        if (!$allowed) {
+            return false;
+        }
+
+        return $lopHoc ? $lopHoc->canStudentJoinChat() : true;
     }
 
-    public function canAccessSchedule(): bool
+    public function canSendChat(?LopHoc $lopHoc = null): bool
     {
-        return (int) $this->trangThai === self::TRANG_THAI_DA_XAC_NHAN;
+        $allowed = (int) $this->trangThai === self::TRANG_THAI_DANG_HOC;
+
+        if (!$allowed) {
+            return false;
+        }
+
+        return $lopHoc ? $lopHoc->canStudentSendChat() : true;
+    }
+
+    public function canAccessSchedule(?LopHoc $lopHoc = null): bool
+    {
+        $allowed = (int) $this->trangThai === self::TRANG_THAI_DANG_HOC;
+
+        if (!$allowed) {
+            return false;
+        }
+
+        return $lopHoc ? $lopHoc->isInProgress() : true;
     }
 
     public function scopeBlockingSeat($query)
@@ -117,6 +165,7 @@ class DangKyLopHoc extends Model
         return $query->whereIn('trangThai', [
             self::TRANG_THAI_CHO_THANH_TOAN,
             self::TRANG_THAI_DA_XAC_NHAN,
+            self::TRANG_THAI_DANG_HOC,
             self::TRANG_THAI_TAM_DUNG_NO_HOC_PHI,
         ]);
     }
@@ -126,18 +175,35 @@ class DangKyLopHoc extends Model
         return $query->whereIn('trangThai', [
             self::TRANG_THAI_CHO_THANH_TOAN,
             self::TRANG_THAI_DA_XAC_NHAN,
+            self::TRANG_THAI_DANG_HOC,
             self::TRANG_THAI_TAM_DUNG_NO_HOC_PHI,
+            self::TRANG_THAI_BAO_LUU,
+            self::TRANG_THAI_HOAN_THANH,
+            self::TRANG_THAI_HUY,
         ]);
     }
 
     public function scopeEligibleForSchedule($query)
     {
-        return $query->where('trangThai', self::TRANG_THAI_DA_XAC_NHAN);
+        return $query->where('trangThai', self::TRANG_THAI_DANG_HOC);
+    }
+
+    public function scopeCanJoinChat($query)
+    {
+        return $query->whereIn('trangThai', [
+            self::TRANG_THAI_DA_XAC_NHAN,
+            self::TRANG_THAI_DANG_HOC,
+        ]);
+    }
+
+    public function scopeCanSendChat($query)
+    {
+        return $query->where('trangThai', self::TRANG_THAI_DANG_HOC);
     }
 
     public function scopeEligibleForChat($query)
     {
-        return $query->where('trangThai', self::TRANG_THAI_DA_XAC_NHAN);
+        return $query->canJoinChat();
     }
 
     public function scopePreventingClassDeletion($query)

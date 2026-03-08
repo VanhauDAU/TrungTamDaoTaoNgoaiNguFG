@@ -54,14 +54,20 @@
                             @elseif ($class->isOpenForRegistration())
                                 <span class="status-badge status-open"><i class="fas fa-check-circle me-1"></i> Đang mở đăng
                                     ký</span>
+                            @elseif ($class->isClosedForRegistration())
+                                <span class="status-badge" style="background:#fef3c7;color:#92400e"><i
+                                        class="fas fa-user-check me-1"></i> Chốt danh sách</span>
                             @elseif ($class->isInProgress())
                                 <span class="status-badge" style="background:#e8f5e9;color:#2e7d32"><i
                                         class="fas fa-chalkboard-teacher me-1"></i> Đang học</span>
+                            @elseif ($class->isCompleted())
+                                <span class="status-badge" style="background:#e2e8f0;color:#334155"><i
+                                        class="fas fa-flag-checkered me-1"></i> Đã kết thúc</span>
                             @elseif ($class->isCancelled())
                                 <span class="status-badge status-closed"><i class="fas fa-ban me-1"></i> Đã hủy</span>
                             @else
-                                <span class="status-badge status-closed"><i class="fas fa-lock me-1"></i> Đã đóng đăng
-                                    ký</span>
+                                <span class="status-badge status-closed"><i class="fas fa-lock me-1"></i>
+                                    {{ $class->trangThaiLabel }}</span>
                             @endif
                         </div>
 
@@ -121,7 +127,7 @@
                                     <div>
                                         <div class="info-label">Sĩ số</div>
                                         <div class="info-value">
-                                            {{ $class->dangKyLopHocs->where('trangThai', '!=', 0)->count() }}/{{ $class->soHocVienToiDa }}
+                                            {{ $class->dangKyLopHocs->filter(fn ($registration) => $registration->blocksSeat())->count() }}/{{ $class->soHocVienToiDa }}
                                             học viên</div>
                                     </div>
                                 </div>
@@ -257,10 +263,12 @@
                                                 <i class="fas fa-info-circle me-1"></i>
                                                 @if ($existingReg->isPendingPayment())
                                                     Bạn đã đăng ký lớp này. Vui lòng hoàn tất thanh toán.
+                                                @elseif ($existingReg->isStudying())
+                                                    Bạn đang học trong lớp này.
                                                 @elseif ($existingReg->isSuspendedForDebt())
                                                     Đăng ký của bạn đang tạm dừng do nợ học phí.
                                                 @else
-                                                    Đăng ký đã được xác nhận.
+                                                    {{ $existingReg->trangThaiLabel }}.
                                                 @endif
                                             </p>
                                         @else
@@ -298,13 +306,25 @@
                                 </button>
                                 <p class="small text-muted mb-0 mt-2"><i class="fas fa-info-circle me-1"></i> Lớp học đang
                                     trong quá trình học</p>
+                            @elseif ($class->isClosedForRegistration())
+                                <button class="btn w-100 py-3 rounded-3 fw-bold disabled"
+                                    style="background:#fef3c7;color:#92400e;border:none;">
+                                    <i class="fas fa-user-check me-2"></i> ĐÃ CHỐT DANH SÁCH
+                                </button>
+                                <p class="small text-muted mb-0 mt-2"><i class="fas fa-info-circle me-1"></i> Lớp đã ngưng
+                                    nhận đăng ký mới</p>
+                            @elseif ($class->isCompleted())
+                                <button class="btn w-100 py-3 rounded-3 fw-bold disabled"
+                                    style="background:#e2e8f0;color:#334155;border:none;">
+                                    <i class="fas fa-flag-checkered me-2"></i> LỚP ĐÃ KẾT THÚC
+                                </button>
                             @elseif ($class->isCancelled())
                                 <button class="btn btn-danger w-100 py-3 rounded-3 fw-bold disabled opacity-75">
                                     <i class="fas fa-ban me-2"></i> LỚP ĐÃ HỦY
                                 </button>
                             @else
                                 <button class="btn btn-secondary w-100 py-3 rounded-3 fw-bold disabled">
-                                    <i class="fas fa-lock me-2"></i> ĐÃ ĐÓNG ĐĂNG KÝ
+                                    <i class="fas fa-lock me-2"></i> {{ mb_strtoupper($class->trangThaiLabel) }}
                                 </button>
                             @endif
                         </div>

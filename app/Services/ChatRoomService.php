@@ -9,7 +9,6 @@ use App\Models\Interaction\Chat\ChatRoom;
 use App\Models\Interaction\Chat\ChatRoomMember;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 
 class ChatRoomService
 {
@@ -198,7 +197,7 @@ class ChatRoomService
             'canAccess' => $accessService->canAccessRoom($taiKhoan, $room),
             'canSend' => $accessService->canSendMessage($taiKhoan, $room),
             'isMember' => $member !== null || ((int) $taiKhoan->taiKhoanId === (int) optional($room->lopHoc)->taiKhoanId),
-            'requiresPassword' => !empty($room->matKhauHash),
+            'requiresPassword' => false,
             'memberRole' => $member?->vaiTro,
             'lastMessagePreview' => $this->makeLastMessagePreview($lastMessage),
             'lastMessageAt' => optional($lastMessage?->guiLuc ?? $lastMessage?->created_at)?->toIso8601String(),
@@ -208,40 +207,29 @@ class ChatRoomService
         ];
     }
 
-    public function joinClassRoom(ChatRoom $room, TaiKhoan $taiKhoan, ?string $password = null): ChatRoomMember
+    public function joinClassRoom(ChatRoom $room, TaiKhoan $taiKhoan): ChatRoomMember
     {
-        $attributes = [
-            'vaiTro' => (int) $taiKhoan->taiKhoanId === (int) optional($room->lopHoc)->taiKhoanId
-                ? ChatRoomMember::ROLE_TEACHER
-                : ChatRoomMember::ROLE_MEMBER,
-            'joinedAt' => now(),
-            'roiAt' => null,
-        ];
-
-        if ($password !== null) {
-            $attributes['joinedByPasswordAt'] = now();
-        }
-
         return ChatRoomMember::query()->updateOrCreate(
             [
                 'chatRoomId' => $room->chatRoomId,
                 'taiKhoanId' => $taiKhoan->taiKhoanId,
             ],
-            $attributes
+            [
+                'vaiTro' => (int) $taiKhoan->taiKhoanId === (int) optional($room->lopHoc)->taiKhoanId
+                    ? ChatRoomMember::ROLE_TEACHER
+                    : ChatRoomMember::ROLE_MEMBER,
+                'joinedAt' => now(),
+                'roiAt' => null,
+            ]
         );
-    }
-
-    public function roomPasswordMatches(ChatRoom $room, ?string $password): bool
-    {
-        if (empty($room->matKhauHash)) {
-            return true;
-        }
-
-        return $password !== null && Hash::check($password, $room->matKhauHash);
     }
 
     private function getUnreadCount(ChatRoom $room, TaiKhoan $taiKhoan, ?ChatRoomMember $member): int
     {
+        if (!$member) {
+            return 0;
+        }
+
         $lastReadMessageId = $member?->lastReadMessageId ?? 0;
 
         return ChatMessage::query()

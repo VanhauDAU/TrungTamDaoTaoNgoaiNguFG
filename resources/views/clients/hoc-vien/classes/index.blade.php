@@ -46,10 +46,26 @@
                                             $regStatusClass = 'status-pending';
                                             $regStatusText = 'Chờ thanh toán';
                                             $regStatusIcon = 'fas fa-clock';
+                                        } elseif ($registration->isStudying()) {
+                                            $regStatusClass = 'status-confirmed';
+                                            $regStatusText = 'Đang học';
+                                            $regStatusIcon = 'fas fa-chalkboard-teacher';
                                         } elseif ($registration->isSuspendedForDebt()) {
                                             $regStatusClass = 'status-pending';
                                             $regStatusText = 'Tạm dừng do nợ học phí';
                                             $regStatusIcon = 'fas fa-pause-circle';
+                                        } elseif ($registration->isOnLeave()) {
+                                            $regStatusClass = 'status-pending';
+                                            $regStatusText = 'Bảo lưu';
+                                            $regStatusIcon = 'fas fa-box-open';
+                                        } elseif ($registration->isCompleted()) {
+                                            $regStatusClass = 'status-confirmed';
+                                            $regStatusText = 'Hoàn thành';
+                                            $regStatusIcon = 'fas fa-flag-checkered';
+                                        } elseif ($registration->isCancelled()) {
+                                            $regStatusClass = 'status-pending';
+                                            $regStatusText = 'Đã hủy';
+                                            $regStatusIcon = 'fas fa-ban';
                                         } else {
                                             $regStatusClass = 'status-confirmed';
                                             $regStatusText = $registration->trangThaiLabel;
@@ -66,9 +82,15 @@
                                         } elseif ($class->isOpenForRegistration()) {
                                             $classStatusClass = 'class-open';
                                             $classStatusText = 'Đang tuyển sinh';
+                                        } elseif ($class->isClosedForRegistration()) {
+                                            $classStatusClass = 'class-open';
+                                            $classStatusText = 'Chốt danh sách';
                                         } elseif ($class->isInProgress()) {
                                             $classStatusClass = 'class-active';
                                             $classStatusText = 'Đang học';
+                                        } elseif ($class->isCompleted()) {
+                                            $classStatusClass = 'class-closed';
+                                            $classStatusText = 'Đã kết thúc';
                                         } elseif ($class->isCancelled()) {
                                             $classStatusClass = 'class-closed';
                                             $classStatusText = 'Đã hủy';

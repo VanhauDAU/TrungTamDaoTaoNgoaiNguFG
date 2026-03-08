@@ -7,7 +7,6 @@ use App\Services\ChatAccessService;
 use App\Services\ChatMessageService;
 use App\Services\ChatRoomService;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
 
 class ClientChatController extends Controller
 {
@@ -97,10 +96,6 @@ class ClientChatController extends Controller
 
     public function join(Request $request, int $roomId, ChatRoomService $chatRoomService, ChatAccessService $chatAccessService)
     {
-        $validated = $request->validate([
-            'password' => 'nullable|string|max:100',
-        ]);
-
         $user = $request->user();
         $room = $chatRoomService->getVisibleRoomForUser($roomId, $user, $chatAccessService);
 
@@ -112,13 +107,7 @@ class ClientChatController extends Controller
             ], 403);
         }
 
-        if (!$chatRoomService->roomPasswordMatches($room, $validated['password'] ?? null)) {
-            throw ValidationException::withMessages([
-                'password' => 'Mật khẩu nhóm chat không đúng.',
-            ]);
-        }
-
-        $chatRoomService->joinClassRoom($room, $user, $validated['password'] ?? null);
+        $chatRoomService->joinClassRoom($room, $user);
         $room->refresh();
 
         return response()->json([

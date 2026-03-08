@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
 use App\Models\Education\DangKyLopHoc;
+use App\Models\Education\LopHoc;
 use App\Models\Auth\HoSoNguoiDung;
 use App\Models\Finance\HoaDon;
 use Illuminate\Http\Request;
@@ -187,6 +188,7 @@ class StudentController extends Controller
 
         $lopHocIds = DangKyLopHoc::where('taiKhoanId', $userId)
             ->eligibleForSchedule()
+            ->whereHas('lopHoc', fn($query) => $query->where('trangThai', LopHoc::TRANG_THAI_DANG_HOC))
             ->pluck('lopHocId');
 
         // Lấy buổi học trong tuần được chọn
