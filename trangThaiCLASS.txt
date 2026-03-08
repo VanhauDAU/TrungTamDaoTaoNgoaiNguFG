@@ -1,58 +1,327 @@
-Danh Sách Các Trạng Thái (trangThai) Trong Hệ Thống
-Tài liệu này liệt kê tất cả các trường trangThai và phuongThucThanhToan trong các bảng của hệ thống.
+KE HOACH CHUAN HOA STATE MACHINE CHO LopHoc VA DangKyLopHoc
 
-📌 Các Bảng Có Trường trangThai
-1. LopHoc (Lớp Học)
-0: Sắp mở
-1: Đang mở (đang nhận đăng ký)
-2: Đã đóng
-3: Đã hủy
-4: Đang học
-File: 
-LopHoc.php
+Muc tieu
+- Sua loi lech nghia giua model, controller, view, chat, dashboard.
+- Tao 1 nguon su that duy nhat cho trangThai.
+- Dinh nghia ro rang chuyen trang thai nao duoc phep, ai duoc phep chuyen.
+- Dat quy tac de cac module moi khong dung so "magic number" nua.
 
-2. DangKyLopHoc (Đăng Ký Lớp Học)
-0: Đã hủy
-1: Chờ thanh toán
-2: Đã xác nhận (đã thanh toán)
-File: 
-DangKyLopHoc.php
+Van de hien tai
+- LopHoc dang bi hieu khac nhau giua dashboard va cac trang client/admin.
+- DangKyLopHoc dang bi hieu khac nhau giua model, man hinh hoc vien, checkout, chat, cong no.
+- Nhieu noi dang hard-code [1, 2], [4], "dang hoc", "cho thanh toan" ma khong thong qua constant chung.
+- Khi phat trien tiep rat de lap lai loi vi khong co tai lieu state machine chuan.
 
-3. HoaDon (Hóa Đơn)
-0: Chưa thanh toán
-1: Đã thanh toán một phần
-2: Đã thanh toán đủ
-File: 
-HoaDon.php
+==================================================
+1. NGUYEN TAC CHUAN HOA
+==================================================
 
-4. KhoaHoc (Khóa Học)
-0: Ngừng hoạt động
-1: Đang hoạt động
-File: 
-KhoaHoc.php
+1. Moi bang co trangThai phai co:
+- 1 bo constant duy nhat trong Model.
+- 1 ham tra nhan hien thi.
+- 1 ham tra badge/color neu can.
+- 1 bo helper/scopes cho nghiep vu.
 
-5. TaiKhoan (Tài Khoản)
-0: Chưa kích hoạt
-1: Đã kích hoạt
-2: Bị khóa
-File: 
-TaiKhoan.php
+2. Khong dung so truc tiep trong controller/view/javascript.
+- Khong viet whereIn('trangThai', [1, 2]).
+- Phai viet bang constant hoac scope ro nghia.
 
-6. BuoiHoc (Buổi Học)
-0: Chưa diễn ra
-1: Đã hoàn thành
-2: Đã hủy
-File: 
-BuoiHoc.php
+3. Quyen va nghiep vu phai dua tren "nghia", khong dua tren "so".
+- Vi du: canRegister(), canJoinChat(), canViewSchedule(), isActiveForTeaching().
 
-7. PhongHoc (Phòng Học)
-0: Không khả dụng
-1: Khả dụng
-File: 
-PhongHoc.php
+4. Neu doi nghia trangThai:
+- Cap nhat Model.
+- Cap nhat service nghiep vu.
+- Cap nhat controller.
+- Cap nhat view.
+- Cap nhat test.
+- Cap nhat tai lieu nay.
 
-8. CaHoc (Ca Học)
-0: Không hoạt động
-1: Đang hoạt động
-File: 
-CaHoc.php
+==================================================
+2. STATE MACHINE MUC TIEU CHO LopHoc
+==================================================
+
+Ten bang: LopHoc
+Muc dich: quan ly vong doi cua 1 lop tu luc tao den luc ket thuc.
+
+De xuat bo trang thai chuan
+- 0 = NHAP / SAP_MO
+  Nghia: lop da duoc tao, chua mo tuyen sinh.
+  Hien thi: Sap mo.
+
+- 1 = DANG_TUYEN_SINH
+  Nghia: cho phep hoc vien dang ky.
+  Hien thi: Dang mo dang ky.
+
+- 2 = CHOT_DANH_SACH
+  Nghia: ngung nhan dang ky moi, cho khai giang hoac cho sap lop.
+  Hien thi: Da dong dang ky.
+
+- 3 = DANG_HOC
+  Nghia: lop da bat dau hoc.
+  Hien thi: Dang hoc.
+
+- 4 = DA_KET_THUC
+  Nghia: lop da hoc xong.
+  Hien thi: Da ket thuc.
+
+- 5 = DA_HUY
+  Nghia: lop khong con gia tri van hanh.
+  Hien thi: Da huy.
+
+Chuyen trang thai hop le
+- NHAP / SAP_MO -> DANG_TUYEN_SINH
+- DANG_TUYEN_SINH -> CHOT_DANH_SACH
+- DANG_TUYEN_SINH -> DA_HUY
+- CHOT_DANH_SACH -> DANG_HOC
+- CHOT_DANH_SACH -> DA_HUY
+- DANG_HOC -> DA_KET_THUC
+- DANG_HOC -> DA_HUY
+
+Khong cho phep
+- DA_KET_THUC -> DANG_TUYEN_SINH
+- DA_HUY -> quay lai trang thai dang van hanh neu khong co quy trinh mo lai ro rang
+
+Quy tac nghiep vu
+- Chi LopHoc o DANG_TUYEN_SINH moi duoc dang ky moi.
+- LopHoc o CHOT_DANH_SACH khong nhan dang ky moi nhung van cho phep hoc vu thao tac noi bo.
+- LopHoc o DANG_HOC moi duoc mo chat day/hoc chinh thuc, diem danh, day bu.
+- LopHoc o DA_KET_THUC chi duoc xem lich su.
+
+Goi y dong bo code
+- Dashboard "lop dang hoat dong" nen tinh tren DANG_TUYEN_SINH + CHOT_DANH_SACH + DANG_HOC neu muon KPI van hanh.
+- Neu KPI chi tinh "dang giang day" thi chi lay DANG_HOC.
+- Client class detail phai map dung nhan theo constant moi.
+
+==================================================
+3. STATE MACHINE MUC TIEU CHO DangKyLopHoc
+==================================================
+
+Ten bang: DangKyLopHoc
+Muc dich: quan ly hanh trinh cua 1 hoc vien trong 1 lop.
+
+De xuat bo trang thai chuan
+- 0 = CHO_THANH_TOAN
+  Nghia: vua dang ky, chua thanh toan du de giu cho.
+  Hien thi: Cho thanh toan.
+
+- 1 = DA_XAC_NHAN
+  Nghia: da dat dieu kien tai chinh/hoc vu de duoc giu cho.
+  Hien thi: Da xac nhan.
+
+- 2 = DANG_HOC
+  Nghia: hoc vien dang hoc trong lop.
+  Hien thi: Dang hoc.
+
+- 3 = TAM_DUNG_NO_HOC_PHI
+  Nghia: tam khoa quyen hoc vi cong no.
+  Hien thi: Tam dung do no hoc phi.
+
+- 4 = BAO_LUU
+  Nghia: hoc vien duoc bao luu theo quy trinh.
+  Hien thi: Bao luu.
+
+- 5 = HOAN_THANH
+  Nghia: hoc vien hoc xong lop.
+  Hien thi: Hoan thanh.
+
+- 6 = HUY
+  Nghia: huy dang ky, khong con theo lop nay.
+  Hien thi: Da huy.
+
+Chuyen trang thai hop le
+- CHO_THANH_TOAN -> DA_XAC_NHAN
+- CHO_THANH_TOAN -> HUY
+- DA_XAC_NHAN -> DANG_HOC
+- DA_XAC_NHAN -> HUY
+- DANG_HOC -> TAM_DUNG_NO_HOC_PHI
+- DANG_HOC -> BAO_LUU
+- DANG_HOC -> HOAN_THANH
+- DANG_HOC -> HUY
+- TAM_DUNG_NO_HOC_PHI -> DANG_HOC
+- BAO_LUU -> DANG_HOC
+
+Quy tac nghiep vu
+- CHO_THANH_TOAN:
+  Duoc xem hoa don.
+  Chua duoc xem lich hoc chinh thuc.
+  Chua duoc tham gia chat hoc tap.
+
+- DA_XAC_NHAN:
+  Duoc giu cho.
+  Duoc xuat hien trong danh sach lop cua toi.
+  Co the duoc tham gia chat pre-class neu trung tam muon.
+
+- DANG_HOC:
+  Duoc xem lich hoc, diem danh, chat, tai lieu.
+
+- TAM_DUNG_NO_HOC_PHI:
+  Van giu lich su dang ky.
+  Co the bi khoa mot phan quyen hoc tap.
+  Chi mo lai khi cong no hop le.
+
+- BAO_LUU:
+  Khong tinh vao si so hoc thuc te.
+  Khong diem danh.
+
+- HOAN_THANH:
+  Chi doc lich su.
+
+- HUY:
+  Khong con quyen hoc.
+
+==================================================
+4. QUY TAC DONG BO GIUA LopHoc VA DangKyLopHoc
+==================================================
+
+1. Khi hoc vien tu dang ky tren website
+- Tao DangKyLopHoc = CHO_THANH_TOAN.
+- Tao HoaDon = CHUA_THANH_TOAN.
+
+2. Khi thanh toan du
+- Neu LopHoc chua bat dau: CHO_THANH_TOAN -> DA_XAC_NHAN.
+- Neu LopHoc da vao trang thai DANG_HOC: CHO_THANH_TOAN -> DANG_HOC.
+
+3. Khi LopHoc chuyen tu CHOT_DANH_SACH -> DANG_HOC
+- Toan bo DangKyLopHoc = DA_XAC_NHAN cua lop se duoc chuyen sang DANG_HOC.
+
+4. Khi hoa don qua han
+- Neu hoc vien dang hoc: DANG_HOC -> TAM_DUNG_NO_HOC_PHI.
+
+5. Khi hoc vien thanh toan no
+- TAM_DUNG_NO_HOC_PHI -> DANG_HOC.
+
+6. Khi LopHoc DA_KET_THUC
+- DangKyLopHoc dang DANG_HOC cua lop -> HOAN_THANH.
+
+7. Khi LopHoc DA_HUY
+- DangKyLopHoc chua hoan thanh -> HUY hoac xu ly chuyen lop theo quy trinh rieng.
+
+==================================================
+5. QUY TAC TRUY CAP THEO TRANG THAI
+==================================================
+
+Dang ky moi
+- Chi cho phep khi LopHoc = DANG_TUYEN_SINH.
+
+Trang "Lop hoc cua toi"
+- Hien thi tab theo nhom:
+  Cho xu ly: CHO_THANH_TOAN, DA_XAC_NHAN
+  Dang hoc: DANG_HOC, TAM_DUNG_NO_HOC_PHI, BAO_LUU
+  Lich su: HOAN_THANH, HUY
+
+Lich hoc
+- Chi cho phep xem khi DangKyLopHoc = DANG_HOC.
+- Co the cho DA_XAC_NHAN xem lich sap toi neu muon, nhung phai thong nhat toan he thong.
+
+Chat lop
+- Join room: DA_XAC_NHAN hoac DANG_HOC.
+- Gui tin: DANG_HOC.
+- TAM_DUNG_NO_HOC_PHI: tuy chinh sach, mac dinh khong gui tin.
+
+Diem danh
+- Chi tao/ghi nhan cho DANG_HOC.
+
+Tai lieu hoc tap
+- Chi cho DANG_HOC.
+
+==================================================
+6. KE HOACH SUA LOI TRONG CODE
+==================================================
+
+Giai doan 1 - Chot tai lieu va constant
+- Chot nghia chinh thuc cua LopHoc va DangKyLopHoc theo tai lieu nay.
+- Tao constant moi trong Model.
+- Tao helper nhu:
+  canRegister()
+  canJoinChat()
+  canSendChat()
+  canViewSchedule()
+  isOperational()
+
+Giai doan 2 - Loai bo magic number
+- Tim toan bo noi dung dang dung [1, 2], [4], "dang hoc" trong controller/view/service.
+- Thay bang constant va helper.
+- Dac biet kiem tra:
+  CourseController
+  StudentController
+  ChatAccessService
+  DashboardService
+  LopHocController
+  cac view client/admin
+
+Giai doan 3 - Migration du lieu
+- Lap script mapping du lieu cu sang state machine moi.
+- Mapping de xuat cho DangKyLopHoc:
+  Neu trangThai cu = 1 va HoaDon chua thanh toan du -> CHO_THANH_TOAN
+  Neu trangThai cu = 1 va HoaDon da thanh toan du -> DA_XAC_NHAN hoac DANG_HOC tuy LopHoc
+  Neu trangThai cu = 2 -> can review theo du lieu thuc te vi hien dang bi dung lech nghia
+- Mapping de xuat cho LopHoc:
+  Chuyen cac record dang dung 4 = DANG_HOC sang constant moi neu doi ma so
+
+Giai doan 4 - Dong bo UI/UX
+- Admin list/show/edit LopHoc.
+- Client chi tiet lop.
+- Client "lop hoc cua toi".
+- Client lich hoc.
+- Badge/thong bao/chat.
+
+Giai doan 5 - Dong bo service va automation
+- Finance: recalculate hoa don.
+- Cong no qua han.
+- Chat access.
+- Dashboard KPI.
+- Cron/job cap nhat trang thai theo ngay bat dau/ngay ket thuc neu can.
+
+Giai doan 6 - Test
+- Test dang ky moi.
+- Test thanh toan du.
+- Test qua han hoc phi.
+- Test vao chat.
+- Test xem lich hoc.
+- Test lop ket thuc.
+
+==================================================
+7. QUY TAC PHAT TRIEN TRONG TUONG LAI
+==================================================
+
+Bat buoc
+- Moi trangThai moi phai co tai lieu.
+- Moi transition moi phai co test.
+- Moi view chi hien thi label qua accessor/helper, khong so sanh so truc tiep.
+- Moi query nghiep vu phai doc bang ten nghia, khong doc bang so.
+
+Khuyen nghi
+- Tao enum hoac Value Object neu du an len version PHP phu hop.
+- Tao file StateMap hoac service rieng cho state machine.
+- Tach "trangThai nghiep vu" va "trangThai hien thi" neu can.
+
+==================================================
+8. QUYET DINH DE XUAT DE CHOT TEAM
+==================================================
+
+Can chot voi team 4 diem sau truoc khi sua code:
+- LopHoc co giu ma 4 = DANG_HOC nhu hien tai hay migrate ve bo ma moi?
+- DangKyLopHoc co tach DA_XAC_NHAN va DANG_HOC thanh 2 trang thai rieng hay khong?
+- Chat lop duoc mo tu luc DA_XAC_NHAN hay chi khi DANG_HOC?
+- Lich hoc cua hoc vien hien tu DA_XAC_NHAN hay chi hien tu DANG_HOC?
+
+Neu can uu tien sua nhanh, de xuat chot nhu sau:
+- LopHoc:
+  0 SAP_MO
+  1 DANG_TUYEN_SINH
+  2 CHOT_DANH_SACH
+  3 DA_HUY
+  4 DANG_HOC
+  5 DA_KET_THUC
+
+- DangKyLopHoc:
+  0 CHO_THANH_TOAN
+  1 DA_XAC_NHAN
+  2 DANG_HOC
+  3 TAM_DUNG_NO_HOC_PHI
+  4 BAO_LUU
+  5 HOAN_THANH
+  6 HUY
+
+Day la bo state machine de xuat lam "source of truth" cho cac lan phat trien tiep theo.
