@@ -17,6 +17,7 @@ use App\Models\Auth\NhanSu;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Carbon\Carbon;
 
 class LopHocController extends Controller
 {
@@ -54,6 +55,16 @@ class LopHocController extends Controller
             $query->where('coSoId', $request->coSoId);
         }
 
+        // ── Lọc năm bắt đầu ────────────────────────────────────
+        if ($request->filled('namBatDau')) {
+            $query->whereYear('ngayBatDau', $request->namBatDau);
+        }
+
+        // ── Lọc tháng bắt đầu ──────────────────────────────────
+        if ($request->filled('thangBatDau')) {
+            $query->whereMonth('ngayBatDau', $request->thangBatDau);
+        }
+
         // ── Lọc trạng thái ───────────────────────────────────
         if ($request->filled('trangThai') && $request->trangThai !== '') {
             $query->where('trangThai', $request->trangThai);
@@ -77,6 +88,14 @@ class LopHocController extends Controller
         // ── Data cho filter ───────────────────────────────────
         $khoaHocs = KhoaHoc::where('trangThai', 1)->orderBy('tenKhoaHoc')->get();
         $coSos = CoSoDaoTao::where('trangThai', 1)->orderBy('tenCoSo')->get();
+        $namBatDauOptions = LopHoc::query()
+            ->whereNotNull('ngayBatDau')
+            ->orderByDesc('ngayBatDau')
+            ->get(['ngayBatDau'])
+            ->map(fn($lopHoc) => Carbon::parse($lopHoc->ngayBatDau)->year)
+            ->unique()
+            ->values();
+        $thangBatDauOptions = collect(range(1, 12));
 
         return view('admin.lop-hoc.index', compact(
             'lopHocs',
@@ -85,7 +104,9 @@ class LopHocController extends Controller
             'sapMo',
             'tongDaXoa',
             'khoaHocs',
-            'coSos'
+            'coSos',
+            'namBatDauOptions',
+            'thangBatDauOptions'
         ));
     }
 

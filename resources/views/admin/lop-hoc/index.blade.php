@@ -6,6 +6,94 @@
 
 @section('stylesheet')
     <link rel="stylesheet" href="{{ asset('assets/admin/css/pages/lop-hoc/index.css') }}">
+    <style>
+        .lh-filter-advanced {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 18px;
+            margin-bottom: 18px;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, .05);
+        }
+
+        .lh-filter-advanced-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            align-items: end;
+        }
+
+        .lh-filter-advanced .search-wrap {
+            position: relative;
+        }
+
+        .lh-filter-advanced .search-wrap i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #64748b;
+            font-size: .85rem;
+        }
+
+        .lh-filter-field label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: .76rem;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: .4px;
+        }
+
+        .lh-filter-field select,
+        .lh-filter-field input {
+            width: 100%;
+            height: 40px;
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: .875rem;
+            outline: none;
+            background: #fff;
+            color: #1e293b;
+            transition: border-color .15s, box-shadow .15s;
+        }
+
+        .lh-filter-field .search-input {
+            padding-left: 36px;
+        }
+
+        .lh-filter-field select:focus,
+        .lh-filter-field input:focus {
+            border-color: #a78bfa;
+            box-shadow: 0 0 0 3px rgba(167, 139, 250, .14);
+        }
+
+        .lh-filter-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 768px) {
+            .lh-filter-field[style] {
+                grid-column: auto !important;
+            }
+
+            .lh-filter-actions {
+                justify-content: stretch;
+            }
+
+            .lh-filter-actions .lh-btn-filter {
+                flex: 1 1 calc(50% - 5px);
+                justify-content: center;
+            }
+        }
+
+    </style>
 @endsection
 
 @section('content')
@@ -76,53 +164,97 @@
     </div>
 
     {{-- ── Filter bar ────────────────────────────────────────────── --}}
-    <form action="{{ route('admin.lop-hoc.index') }}" method="GET" class="lh-filter-bar" id="lh-filter-form">
-        <div class="search-wrap">
-            <i class="fas fa-search"></i>
-            <input type="text" name="q" class="search-input" placeholder="Tìm tên lớp, khóa học..."
-                value="{{ request('q') }}" autocomplete="off">
+    <form action="{{ route('admin.lop-hoc.index') }}" method="GET" id="lh-filter-form">
+        <div class="lh-filter-advanced">
+            <div class="lh-filter-advanced-grid">
+                <div class="lh-filter-field" style="grid-column: span 2;">
+                    <label>Tìm kiếm</label>
+                    <div class="search-wrap">
+                        <i class="fas fa-search"></i>
+                        <input type="text" name="q" class="search-input" placeholder="Tìm tên lớp, mã lớp, khóa học..."
+                            value="{{ request('q') }}" autocomplete="off">
+                    </div>
+                </div>
+
+                <div class="lh-filter-field">
+                    <label>Năm bắt đầu</label>
+                    <select name="namBatDau" onchange="this.form.submit()">
+                        <option value="">Tất cả năm</option>
+                        @foreach ($namBatDauOptions as $namBatDau)
+                            <option value="{{ $namBatDau }}" {{ request('namBatDau') === (string) $namBatDau ? 'selected' : '' }}>
+                                {{ $namBatDau }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="lh-filter-field">
+                    <label>Tháng bắt đầu</label>
+                    <select name="thangBatDau" onchange="this.form.submit()">
+                        <option value="">Tất cả tháng</option>
+                        @foreach ($thangBatDauOptions as $thangBatDau)
+                            <option value="{{ $thangBatDau }}" {{ request('thangBatDau') === (string) $thangBatDau ? 'selected' : '' }}>
+                                Tháng {{ $thangBatDau }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="lh-filter-field">
+                    <label>Khóa học</label>
+                    <select name="khoaHocId" onchange="this.form.submit()">
+                        <option value="">Tất cả khóa học</option>
+                        @foreach ($khoaHocs as $kh)
+                            <option value="{{ $kh->khoaHocId }}" {{ request('khoaHocId') == $kh->khoaHocId ? 'selected' : '' }}>
+                                {{ $kh->tenKhoaHoc }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="lh-filter-field">
+                    <label>Cơ sở</label>
+                    <select name="coSoId" onchange="this.form.submit()">
+                        <option value="">Tất cả cơ sở</option>
+                        @foreach ($coSos as $cs)
+                            <option value="{{ $cs->coSoId }}" {{ request('coSoId') == $cs->coSoId ? 'selected' : '' }}>
+                                {{ $cs->tenCoSo }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="lh-filter-field">
+                    <label>Trạng thái</label>
+                    <select name="trangThai" onchange="this.form.submit()">
+                        <option value="">Tất cả trạng thái</option>
+                        @foreach (\App\Models\Education\LopHoc::trangThaiOptions() as $value => $label)
+                            <option value="{{ $value }}" {{ request('trangThai') === (string) $value ? 'selected' : '' }}>
+                                {{ $label }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="lh-filter-field">
+                    <label>Sắp xếp theo</label>
+                    <select name="orderBy" onchange="this.form.submit()">
+                        <option value="lopHocId" {{ request('orderBy', 'lopHocId') === 'lopHocId' ? 'selected' : '' }}>Mới nhất</option>
+                        <option value="tenLopHoc" {{ request('orderBy') === 'tenLopHoc' ? 'selected' : '' }}>Tên A-Z</option>
+                        <option value="ngayBatDau" {{ request('orderBy') === 'ngayBatDau' ? 'selected' : '' }}>Ngày bắt đầu</option>
+                    </select>
+                </div>
+
+                <div class="lh-filter-actions">
+                    <button type="submit" class="lh-btn-filter lh-btn-filter-primary">
+                        <i class="fas fa-filter"></i> Lọc
+                    </button>
+                    <a href="{{ route('admin.lop-hoc.index') }}" class="lh-btn-filter lh-btn-filter-reset">
+                        <i class="fas fa-times"></i> Đặt lại
+                    </a>
+                </div>
+            </div>
         </div>
-
-        <select name="khoaHocId" onchange="this.form.submit()">
-            <option value="">Tất cả khóa học</option>
-            @foreach ($khoaHocs as $kh)
-                <option value="{{ $kh->khoaHocId }}" {{ request('khoaHocId') == $kh->khoaHocId ? 'selected' : '' }}>
-                    {{ $kh->tenKhoaHoc }}
-                </option>
-            @endforeach
-        </select>
-
-        <select name="coSoId" onchange="this.form.submit()">
-            <option value="">Tất cả cơ sở</option>
-            @foreach ($coSos as $cs)
-                <option value="{{ $cs->coSoId }}" {{ request('coSoId') == $cs->coSoId ? 'selected' : '' }}>
-                    {{ $cs->tenCoSo }}
-                </option>
-            @endforeach
-        </select>
-
-        <select name="trangThai" onchange="this.form.submit()">
-            <option value="">Tất cả trạng thái</option>
-            @foreach (\App\Models\Education\LopHoc::trangThaiOptions() as $value => $label)
-                <option value="{{ $value }}" {{ request('trangThai') === (string) $value ? 'selected' : '' }}>
-                    {{ $label }}
-                </option>
-            @endforeach
-        </select>
-
-        <select name="orderBy" onchange="this.form.submit()">
-            <option value="lopHocId" {{ request('orderBy', 'lopHocId') === 'lopHocId' ? 'selected' : '' }}>Mới nhất
-            </option>
-            <option value="tenLopHoc" {{ request('orderBy') === 'tenLopHoc' ? 'selected' : '' }}>Tên A-Z</option>
-            <option value="ngayBatDau" {{ request('orderBy') === 'ngayBatDau' ? 'selected' : '' }}>Ngày bắt đầu</option>
-        </select>
-
-        <button type="submit" class="lh-btn-filter lh-btn-filter-primary">
-            <i class="fas fa-filter"></i> Lọc
-        </button>
-        <a href="{{ route('admin.lop-hoc.index') }}" class="lh-btn-filter lh-btn-filter-reset">
-            <i class="fas fa-times"></i> Đặt lại
-        </a>
     </form>
 
     {{-- ── Table card ────────────────────────────────────────────── --}}
@@ -138,7 +270,7 @@
             <div class="lh-empty">
                 <i class="fas fa-chalkboard"></i>
                 <p>Không tìm thấy lớp học nào.</p>
-                @if (request()->anyFilled(['q', 'khoaHocId', 'coSoId', 'trangThai']))
+                @if (request()->anyFilled(['q', 'khoaHocId', 'coSoId', 'trangThai', 'namBatDau', 'thangBatDau']))
                     <a href="{{ route('admin.lop-hoc.index') }}" class="lh-btn-filter lh-btn-filter-reset"
                         style="margin-top:10px;display:inline-flex">Xóa bộ lọc</a>
                 @endif
