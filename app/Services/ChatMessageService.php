@@ -33,6 +33,22 @@ class ChatMessageService
             ->map(fn(ChatMessage $message) => $this->transformMessage($message, $taiKhoan));
     }
 
+    public function getMessagesAfterForUser(ChatRoom $room, TaiKhoan $taiKhoan, int $afterMessageId = 0, int $limit = 50): Collection
+    {
+        return ChatMessage::query()
+            ->with(['nguoiGui.hoSoNguoiDung', 'replyTo.nguoiGui.hoSoNguoiDung'])
+            ->where('chatRoomId', $room->chatRoomId)
+            ->where('chatMessageId', '>', $afterMessageId)
+            ->whereDoesntHave('deletes', function ($subQuery) use ($taiKhoan) {
+                $subQuery->where('taiKhoanId', $taiKhoan->taiKhoanId);
+            })
+            ->orderBy('chatMessageId')
+            ->limit($limit)
+            ->get()
+            ->values()
+            ->map(fn(ChatMessage $message) => $this->transformMessage($message, $taiKhoan));
+    }
+
     public function sendTextMessage(ChatRoom $room, TaiKhoan $taiKhoan, string $content): array
     {
         $message = DB::transaction(function () use ($room, $taiKhoan, $content) {

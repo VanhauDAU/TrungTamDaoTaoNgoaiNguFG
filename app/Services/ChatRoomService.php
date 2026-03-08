@@ -25,6 +25,17 @@ class ChatRoomService
                 ]
             );
 
+            $room->fill([
+                'loai' => ChatRoom::TYPE_CLASS_GROUP,
+                'tenPhong' => $lopHoc->tenLopHoc,
+                'taoBoiId' => $room->taoBoiId ?: ($creatorId ?? $lopHoc->taiKhoanId),
+                'trangThai' => ChatRoom::STATUS_ACTIVE,
+            ]);
+
+            if ($room->isDirty()) {
+                $room->save();
+            }
+
             $this->ensureTeacherMember($room, $lopHoc->taiKhoanId);
 
             return $room->fresh();
@@ -114,6 +125,8 @@ class ChatRoomService
             return collect();
         }
 
+        $this->ensureRoomsForClassIds($classIds);
+
         $rooms = ChatRoom::query()
             ->with([
                 'lopHoc.khoaHoc',
@@ -140,12 +153,16 @@ class ChatRoomService
             ->values();
     }
 
-    public function getVisibleRoomForUser(int $roomId, TaiKhoan $taiKhoan, ChatAccessService $accessService): ?ChatRoom
+    public function getVisibleRoomForUser(int $roomId, TaiKhoan $taiKhoan, ChatAccessService $accessService, bool $ensureRooms = true): ?ChatRoom
     {
         $classIds = $accessService->getAccessibleClassIds($taiKhoan);
 
         if ($classIds->isEmpty()) {
             return null;
+        }
+
+        if ($ensureRooms) {
+            $this->ensureRoomsForClassIds($classIds);
         }
 
         $room = ChatRoom::query()
@@ -255,5 +272,17 @@ class ChatRoomService
             ChatMessage::TYPE_LOCATION => '[Vị trí]',
             default => \Illuminate\Support\Str::limit(trim(strip_tags((string) $message->noiDung)), 80),
         };
+    }
+
+    private function ensureRoomsForClassIds(Collection $classIds): void
+    {
+        LopHoc::query()
+            ->whereIn('lopHocId', $classIds->all())
+            ->get()
+            ->each(function (LopHoc $lopHoc) {
+                if ($lopHoc->canStudentJoinChat() || $lopHoc->isCompleted()) {
+                    $this->findOrCreateClassRoom($lopHoc);
+                }
+            });
     }
 }
