@@ -863,27 +863,33 @@
                         </div>
 
                         <div class="bh-actions">
-                            <button type="button" class="lh-btn-action lh-btn-edit" title="Chỉnh sửa buổi học"
-                                onclick='openEditModal(
-                                    {{ $bh->buoiHocId }},
-                                    @js($bh->tenBuoiHoc ?? ""),
-                                    @js($bh->ngayHoc),
-                                    {{ $bh->caHocId ?? 'null' }},
-                                    {{ $bh->phongHocId ?? 'null' }},
-                                    {{ $bh->taiKhoanId ?? 'null' }},
-                                    {{ $bh->trangThai ?? 0 }},
-                                    @js($bh->ghiChu ?? ""),
-                                    {{ $bh->daHoanThanh ? 1 : 0 }}
-                                )'>
+                            <button type="button"
+                                class="lh-btn-action lh-btn-edit js-edit-bh"
+                                title="Chỉnh sửa buổi học"
+                                data-id="{{ $bh->buoiHocId }}"
+                                data-ten="{{ e($bh->tenBuoiHoc ?? '') }}"
+                                data-ngay="{{ e($bh->ngayHoc) }}"
+                                data-ca-id="{{ $bh->caHocId ?? '' }}"
+                                data-phong-id="{{ $bh->phongHocId ?? '' }}"
+                                data-gv-id="{{ $bh->taiKhoanId ?? '' }}"
+                                data-trang-thai="{{ $bh->trangThai ?? 0 }}"
+                                data-ghi-chu="{{ e($bh->ghiChu ?? '') }}"
+                                data-hoan-thanh="{{ $bh->daHoanThanh ? 1 : 0 }}">
                                 <i class="fas fa-pen"></i>
                             </button>
-                            <button type="button" class="lh-btn-action lh-btn-edit" title="Đánh dấu hoàn thành"
-                                onclick="toggleHoanThanh({{ $bh->buoiHocId }}, {{ $bh->daHoanThanh ? 0 : 1 }})"
+                            <button type="button"
+                                class="lh-btn-action lh-btn-edit js-toggle-hoan-thanh"
+                                title="Đánh dấu hoàn thành"
+                                data-id="{{ $bh->buoiHocId }}"
+                                data-new-val="{{ $bh->daHoanThanh ? 0 : 1 }}"
                                 style="width:auto;padding:0 10px;font-size:.72rem;gap:4px;color:{{ $bh->daHoanThanh ? '#16a34a' : '#d97706' }}">
                                 <i class="fas fa-{{ $bh->daHoanThanh ? 'check-circle' : 'circle' }}"></i>
                             </button>
-                            <button type="button" class="lh-btn-action lh-btn-del" title="Xóa buổi học"
-                                onclick='deleteBuoiHoc({{ $bh->buoiHocId }}, @js($bh->tenBuoiHoc ?? ("Buổi " . ($i + 1))))'>
+                            <button type="button"
+                                class="lh-btn-action lh-btn-del js-delete-bh"
+                                title="Xóa buổi học"
+                                data-id="{{ $bh->buoiHocId }}"
+                                data-name="{{ e($bh->tenBuoiHoc ?? ('Buổi ' . ($i + 1))) }}">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
@@ -1052,6 +1058,42 @@
             return template.replace('__ID__', String(id));
         }
 
+        function bindBuoiHocActionButtons() {
+            document.querySelectorAll('.js-edit-bh').forEach(button => {
+                button.addEventListener('click', () => {
+                    openEditModal(
+                        Number(button.dataset.id),
+                        button.dataset.ten || '',
+                        button.dataset.ngay || '',
+                        button.dataset.caId || '',
+                        button.dataset.phongId || '',
+                        button.dataset.gvId || '',
+                        Number(button.dataset.trangThai || 0),
+                        button.dataset.ghiChu || '',
+                        Number(button.dataset.hoanThanh || 0)
+                    );
+                });
+            });
+
+            document.querySelectorAll('.js-toggle-hoan-thanh').forEach(button => {
+                button.addEventListener('click', () => {
+                    toggleHoanThanh(
+                        Number(button.dataset.id),
+                        Number(button.dataset.newVal)
+                    );
+                });
+            });
+
+            document.querySelectorAll('.js-delete-bh').forEach(button => {
+                button.addEventListener('click', () => {
+                    deleteBuoiHoc(
+                        Number(button.dataset.id),
+                        button.dataset.name || ''
+                    );
+                });
+            });
+        }
+
         function toggleAddForm() {
             const f = document.getElementById('addBhForm');
             f.style.display = f.style.display === 'block' ? 'none' : 'block';
@@ -1125,6 +1167,7 @@
 
         // Đóng modal khi click backdrop
         document.addEventListener('DOMContentLoaded', function() {
+            bindBuoiHocActionButtons();
             document.getElementById('editBuoiHocModal').addEventListener('click', function(e) {
                 if (e.target === this) closeEditModal();
             });
