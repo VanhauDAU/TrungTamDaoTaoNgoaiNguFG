@@ -394,9 +394,15 @@
                 } elseif ($lopHoc->isOpenForRegistration()) {
                     $lopHocBadgeBg = '#dbeafe';
                     $lopHocBadgeText = '#1e3a8a';
+                } elseif ($lopHoc->isClosedForRegistration()) {
+                    $lopHocBadgeBg = '#fde68a';
+                    $lopHocBadgeText = '#854d0e';
                 } elseif ($lopHoc->isInProgress()) {
                     $lopHocBadgeBg = '#dcfce7';
                     $lopHocBadgeText = '#166534';
+                } elseif ($lopHoc->isCompleted()) {
+                    $lopHocBadgeBg = '#e2e8f0';
+                    $lopHocBadgeText = '#334155';
                 } elseif ($lopHoc->isCancelled()) {
                     $lopHocBadgeBg = '#fee2e2';
                     $lopHocBadgeText = '#991b1b';

@@ -14,7 +14,7 @@ class DashboardService
 {
     /**
      * Lớp đang hoạt động.
-     * Bao gồm lớp đang tuyển sinh và lớp đang học.
+     * Bao gồm lớp đang tuyển sinh, chốt danh sách và đang học.
      */
     public function getActiveClassesCount(): int
     {

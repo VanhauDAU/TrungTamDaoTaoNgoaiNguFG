@@ -197,20 +197,26 @@
         }
 
         if (!state.selectedRoom.canAccess) {
+            if (!state.selectedRoom.canJoin) {
+                return `
+                    <div class="chat-join-box">
+                        <i class="fas fa-comments-slash"></i>
+                        <h4>Phòng chat chưa mở</h4>
+                        <p class="mb-0">
+                            Bạn chưa thể vào nhóm <strong>${escapeHtml(state.selectedRoom.name)}</strong> ở giai đoạn hiện tại.
+                        </p>
+                    </div>
+                `;
+            }
+
             return `
                 <div class="chat-join-box">
-                    <i class="fas fa-user-lock"></i>
+                    <i class="fas fa-user-plus"></i>
                     <h4>Tham gia nhóm chat lớp</h4>
                     <p class="mb-2">
                         Nhóm <strong>${escapeHtml(state.selectedRoom.name)}</strong> hiện chưa được bạn tham gia.
                     </p>
-                    <p class="text-muted mb-0">
-                        ${state.selectedRoom.requiresPassword
-                            ? 'Nhập mật khẩu để tham gia nhóm chat.'
-                            : 'Phòng chat chưa cấu hình mật khẩu, bạn có thể tham gia ngay trong giai đoạn MVP.'}
-                    </p>
                     <form id="chat-join-form" class="chat-join-form">
-                        ${state.selectedRoom.requiresPassword ? '<input type="password" id="chat-join-password" placeholder="Nhập mật khẩu nhóm chat" autocomplete="current-password">' : ''}
                         <button type="submit" class="chat-join-btn">Tham gia nhóm chat</button>
                     </form>
                 </div>
@@ -381,13 +387,10 @@
             return;
         }
 
-        const passwordInput = document.getElementById('chat-join-password');
-        const password = passwordInput ? passwordInput.value.trim() : '';
-
         try {
             const data = await requestJson(endpoint(bootstrap.endpoints.join, state.selectedRoom.id), {
                 method: 'POST',
-                body: JSON.stringify({ password }),
+                body: JSON.stringify({}),
             });
 
             syncRoom(data.room);
@@ -395,8 +398,7 @@
             setNotice('success', data.message || 'Tham gia nhóm chat thành công.');
             await loadMessages(state.selectedRoom.id);
         } catch (error) {
-            const validationMessage = error.payload?.errors?.password?.[0];
-            setNotice('error', validationMessage || error.payload?.message || error.message);
+            setNotice('error', error.payload?.message || error.message);
         }
     }
 

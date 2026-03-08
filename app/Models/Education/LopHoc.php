@@ -16,9 +16,10 @@ class LopHoc extends Model
 
     public const TRANG_THAI_SAP_MO = 0;
     public const TRANG_THAI_DANG_TUYEN_SINH = 1;
-    public const TRANG_THAI_DA_DONG = 2;
+    public const TRANG_THAI_CHOT_DANH_SACH = 2;
     public const TRANG_THAI_DA_HUY = 3;
     public const TRANG_THAI_DANG_HOC = 4;
+    public const TRANG_THAI_DA_KET_THUC = 5;
 
     protected $table = 'lophoc';
     protected $primaryKey = 'lopHocId';
@@ -95,10 +96,11 @@ class LopHoc extends Model
     {
         return [
             self::TRANG_THAI_SAP_MO => 'Sắp mở',
-            self::TRANG_THAI_DANG_TUYEN_SINH => 'Đang mở đăng ký',
-            self::TRANG_THAI_DA_DONG => 'Đã đóng đăng ký',
+            self::TRANG_THAI_DANG_TUYEN_SINH => 'Đang tuyển sinh',
+            self::TRANG_THAI_CHOT_DANH_SACH => 'Chốt danh sách',
             self::TRANG_THAI_DA_HUY => 'Đã hủy',
             self::TRANG_THAI_DANG_HOC => 'Đang học',
+            self::TRANG_THAI_DA_KET_THUC => 'Đã kết thúc',
         ];
     }
 
@@ -107,8 +109,9 @@ class LopHoc extends Model
         return [
             self::TRANG_THAI_SAP_MO => self::trangThaiLabels()[self::TRANG_THAI_SAP_MO],
             self::TRANG_THAI_DANG_TUYEN_SINH => self::trangThaiLabels()[self::TRANG_THAI_DANG_TUYEN_SINH],
+            self::TRANG_THAI_CHOT_DANH_SACH => self::trangThaiLabels()[self::TRANG_THAI_CHOT_DANH_SACH],
             self::TRANG_THAI_DANG_HOC => self::trangThaiLabels()[self::TRANG_THAI_DANG_HOC],
-            self::TRANG_THAI_DA_DONG => self::trangThaiLabels()[self::TRANG_THAI_DA_DONG],
+            self::TRANG_THAI_DA_KET_THUC => self::trangThaiLabels()[self::TRANG_THAI_DA_KET_THUC],
             self::TRANG_THAI_DA_HUY => self::trangThaiLabels()[self::TRANG_THAI_DA_HUY],
         ];
     }
@@ -130,7 +133,7 @@ class LopHoc extends Model
 
     public function isClosedForRegistration(): bool
     {
-        return (int) $this->trangThai === self::TRANG_THAI_DA_DONG;
+        return (int) $this->trangThai === self::TRANG_THAI_CHOT_DANH_SACH;
     }
 
     public function isInProgress(): bool
@@ -143,12 +146,31 @@ class LopHoc extends Model
         return (int) $this->trangThai === self::TRANG_THAI_DA_HUY;
     }
 
+    public function isCompleted(): bool
+    {
+        return (int) $this->trangThai === self::TRANG_THAI_DA_KET_THUC;
+    }
+
     public function isOperational(): bool
     {
         return in_array((int) $this->trangThai, [
             self::TRANG_THAI_DANG_TUYEN_SINH,
+            self::TRANG_THAI_CHOT_DANH_SACH,
             self::TRANG_THAI_DANG_HOC,
         ], true);
+    }
+
+    public function canStudentJoinChat(): bool
+    {
+        return in_array((int) $this->trangThai, [
+            self::TRANG_THAI_CHOT_DANH_SACH,
+            self::TRANG_THAI_DANG_HOC,
+        ], true);
+    }
+
+    public function canStudentSendChat(): bool
+    {
+        return (int) $this->trangThai === self::TRANG_THAI_DANG_HOC;
     }
 
     public function scopeOpenForRegistration($query)
@@ -156,15 +178,26 @@ class LopHoc extends Model
         return $query->where('trangThai', self::TRANG_THAI_DANG_TUYEN_SINH);
     }
 
+    public function scopeEnrollmentClosed($query)
+    {
+        return $query->where('trangThai', self::TRANG_THAI_CHOT_DANH_SACH);
+    }
+
     public function scopeInProgress($query)
     {
         return $query->where('trangThai', self::TRANG_THAI_DANG_HOC);
+    }
+
+    public function scopeCompleted($query)
+    {
+        return $query->where('trangThai', self::TRANG_THAI_DA_KET_THUC);
     }
 
     public function scopeOperational($query)
     {
         return $query->whereIn('trangThai', [
             self::TRANG_THAI_DANG_TUYEN_SINH,
+            self::TRANG_THAI_CHOT_DANH_SACH,
             self::TRANG_THAI_DANG_HOC,
         ]);
     }

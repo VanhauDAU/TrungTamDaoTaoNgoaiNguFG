@@ -203,7 +203,8 @@ class LopHocController extends Controller
             }
         }
 
-        LopHoc::create($data);
+        $lopHoc = LopHoc::create($data);
+        $this->syncRegistrationStatusesForClass($lopHoc);
 
         return redirect()->route('admin.lop-hoc.index')
             ->with('success', 'Đã thêm lớp học «' . $request->tenLopHoc . '» thành công.');
@@ -334,6 +335,7 @@ class LopHocController extends Controller
         }
 
         $lopHoc->update($data);
+        $this->syncRegistrationStatusesForClass($lopHoc->fresh());
 
         return redirect()->route('admin.lop-hoc.show', $lopHoc->fresh()->slug)
             ->with('success', 'Đã cập nhật lớp học «' . $lopHoc->tenLopHoc . '» thành công.');
@@ -353,6 +355,7 @@ class LopHocController extends Controller
         if (! $lopHoc->isCancelled()) {
             $lopHoc->trangThai = LopHoc::TRANG_THAI_DA_HUY;
             $lopHoc->save();
+            $this->syncRegistrationStatusesForClass($lopHoc->fresh());
         }
 
         $lopHoc->delete();
@@ -432,6 +435,34 @@ class LopHocController extends Controller
     }
 
     /** Tạo slug duy nhất */
+    private function syncRegistrationStatusesForClass(LopHoc $lopHoc): void
+    {
+        if ($lopHoc->isInProgress()) {
+            DangKyLopHoc::where('lopHocId', $lopHoc->lopHocId)
+                ->where('trangThai', DangKyLopHoc::TRANG_THAI_DA_XAC_NHAN)
+                ->update(['trangThai' => DangKyLopHoc::TRANG_THAI_DANG_HOC]);
+
+            return;
+        }
+
+        if ($lopHoc->isCompleted()) {
+            DangKyLopHoc::where('lopHocId', $lopHoc->lopHocId)
+                ->where('trangThai', DangKyLopHoc::TRANG_THAI_DANG_HOC)
+                ->update(['trangThai' => DangKyLopHoc::TRANG_THAI_HOAN_THANH]);
+
+            return;
+        }
+
+        if ($lopHoc->isCancelled()) {
+            DangKyLopHoc::where('lopHocId', $lopHoc->lopHocId)
+                ->whereNotIn('trangThai', [
+                    DangKyLopHoc::TRANG_THAI_HOAN_THANH,
+                    DangKyLopHoc::TRANG_THAI_HUY,
+                ])
+                ->update(['trangThai' => DangKyLopHoc::TRANG_THAI_HUY]);
+        }
+    }
+
     private function generateUniqueSlug(string $name, ?int $excludeId = null): string
     {
         $slug = Str::slug($name, '-');

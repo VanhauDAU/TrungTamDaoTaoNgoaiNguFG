@@ -85,13 +85,20 @@
                                                                 <span class="badge-status badge-coming">Sắp mở</span>
                                                             @elseif ($lopHoc->isOpenForRegistration())
                                                                 <span class="badge-status badge-open">Đang mở</span>
+                                                            @elseif ($lopHoc->isClosedForRegistration())
+                                                                <span class="badge-status badge-coming">Chốt danh
+                                                                    sách</span>
                                                             @elseif ($lopHoc->isInProgress())
                                                                 <span class="badge-status"
                                                                     style="background:#e8f5e9;color:#2e7d32">Đang học</span>
+                                                            @elseif ($lopHoc->isCompleted())
+                                                                <span class="badge-status"
+                                                                    style="background:#e2e8f0;color:#334155">Đã kết
+                                                                    thúc</span>
                                                             @elseif ($lopHoc->isCancelled())
                                                                 <span class="badge-status badge-full">Đã hủy</span>
                                                             @else
-                                                                <span class="badge-status badge-full">Đã đóng</span>
+                                                                <span class="badge-status badge-full">{{ $lopHoc->trangThaiLabel }}</span>
                                                             @endif
                                                         </div>
                                                     </div>
@@ -154,7 +161,7 @@
                                                             <span class="btn-action btn-register disabled"
                                                                 style="opacity:0.5;cursor:not-allowed;pointer-events:none;">
                                                                 <i class="fas fa-lock me-1"></i>
-                                                                Không khả dụng
+                                                                {{ $lopHoc->trangThaiLabel }}
                                                             </span>
                                                         @endif
                                                     </div>

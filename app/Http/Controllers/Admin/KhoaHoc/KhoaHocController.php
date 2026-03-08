@@ -186,11 +186,12 @@ class KhoaHocController extends Controller
         try {
             $khoaHoc = KhoaHoc::where('slug', $slug)->firstOrFail();
 
-            // Kiểm tra lớp học đang hoạt động (trạng thái: 0=sắp mở, 1=đang mở, 4=đang học)
+            // Kiểm tra lớp học còn đang vận hành theo state machine hiện tại
             $lopDangHoatDong = $khoaHoc->lopHoc()
                 ->whereIn('trangThai', [
                     LopHoc::TRANG_THAI_SAP_MO,
                     LopHoc::TRANG_THAI_DANG_TUYEN_SINH,
+                    LopHoc::TRANG_THAI_CHOT_DANH_SACH,
                     LopHoc::TRANG_THAI_DANG_HOC,
                 ])
                 ->count();

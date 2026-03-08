@@ -190,7 +190,12 @@ class ThongBaoService
                 // Học viên đã đăng ký lớp học đó
                 if (!$doiTuongId) return collect();
                 return DangKyLopHoc::where('lopHocId', $doiTuongId)
-                    ->where('trangThai', 1)
+                    ->whereIn('trangThai', [
+                        DangKyLopHoc::TRANG_THAI_DA_XAC_NHAN,
+                        DangKyLopHoc::TRANG_THAI_DANG_HOC,
+                        DangKyLopHoc::TRANG_THAI_TAM_DUNG_NO_HOC_PHI,
+                        DangKyLopHoc::TRANG_THAI_BAO_LUU,
+                    ])
                     ->pluck('taiKhoanId')
                     ->unique();
 
@@ -199,7 +204,12 @@ class ThongBaoService
                 if (!$doiTuongId) return collect();
                 $lopHocIds = LopHoc::where('khoaHocId', $doiTuongId)->pluck('lopHocId');
                 return DangKyLopHoc::whereIn('lopHocId', $lopHocIds)
-                    ->where('trangThai', 1)
+                    ->whereIn('trangThai', [
+                        DangKyLopHoc::TRANG_THAI_DA_XAC_NHAN,
+                        DangKyLopHoc::TRANG_THAI_DANG_HOC,
+                        DangKyLopHoc::TRANG_THAI_TAM_DUNG_NO_HOC_PHI,
+                        DangKyLopHoc::TRANG_THAI_BAO_LUU,
+                    ])
                     ->pluck('taiKhoanId')
                     ->unique();
 

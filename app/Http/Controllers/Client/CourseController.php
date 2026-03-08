@@ -242,7 +242,7 @@ class CourseController extends Controller
      * Trả về true nếu hợp lệ, hoặc chuỗi thông báo lỗi nếu không.
      *
      * Các kiểm tra (theo thứ tự):
-     *  1. Trạng thái lớp phải là "Đang mở đăng ký" (trangThai = 1)
+     *  1. Trạng thái lớp phải là "Đang tuyển sinh"
      *  2. Sĩ số tối đa (nếu có đặt) chưa đầy
      *  3. Học viên chưa đăng ký lớp này
      *  4a. Tầng 1 - Nếu lớp mới đã có buổi học: so sánh từng buổi cụ thể
@@ -283,7 +283,7 @@ class CourseController extends Controller
         if ($newSessions && $newSessions->count() > 0) {
             foreach ($activeRegistrations as $reg) {
                 $existingClass = $reg->lopHoc;
-                if (!$existingClass || $existingClass->isCancelled() || $existingClass->isSapMo()) {
+                if (!$existingClass || $existingClass->isCancelled() || $existingClass->isCompleted() || $existingClass->isSapMo()) {
                     continue;
                 }
 
@@ -321,6 +321,10 @@ class CourseController extends Controller
 
         foreach ($activeRegistrations as $reg) {
             $existingClass = $reg->lopHoc;
+
+            if (!$existingClass || $existingClass->isCancelled() || $existingClass->isCompleted()) {
+                continue;
+            }
 
             if (
                 !$existingClass->lichHoc || !$existingClass->ngayBatDau ||
