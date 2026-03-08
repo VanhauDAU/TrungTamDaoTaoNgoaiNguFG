@@ -25,7 +25,7 @@ class DanhMucKhoaHocController extends Controller
             }))
             ->when($request->filled('trangThai'), fn($query) =>
                 $query->where('trangThai', $request->trangThai))
-            ->orderBy('tenDanhMuc')
+            ->ordered()
             ->get();
 
         $tongSo       = DanhMucKhoaHoc::count();
@@ -64,6 +64,7 @@ class DanhMucKhoaHocController extends Controller
 
         $data['slug'] = $this->generateUniqueSlug($request->tenDanhMuc);
         $data['maDanhMuc'] = DanhMucKhoaHoc::generateMaDanhMuc($request->tenDanhMuc);
+        $data['sort_order'] = DanhMucKhoaHoc::nextSortOrder($data['parent_id'] ?? null);
         DanhMucKhoaHoc::create($data);
 
         return redirect()->route('admin.danh-muc-khoa-hoc.index')
@@ -116,6 +117,10 @@ class DanhMucKhoaHocController extends Controller
             $data['slug'] = $this->generateUniqueSlug($request->tenDanhMuc, $id);
         }
 
+        if (($data['parent_id'] ?? null) != $danhMuc->parent_id) {
+            $data['sort_order'] = DanhMucKhoaHoc::nextSortOrder($data['parent_id'] ?? null);
+        }
+
         $danhMuc->update($data);
 
         return redirect()->route('admin.danh-muc-khoa-hoc.index')
@@ -148,6 +153,49 @@ class DanhMucKhoaHocController extends Controller
             return redirect()->route('admin.danh-muc-khoa-hoc.index')
                 ->with('error', 'Đã xảy ra lỗi: ' . $e->getMessage());
         }
+    }
+
+    public function reorder(Request $request)
+    {
+        $data = $request->validate([
+            'parent_id' => 'nullable|integer|exists:danhmuckhoahoc,danhMucId',
+            'ordered_ids' => 'required|array|min:1',
+            'ordered_ids.*' => 'required|integer|exists:danhmuckhoahoc,danhMucId',
+        ]);
+
+        $expectedIds = DanhMucKhoaHoc::where('parent_id', $data['parent_id'] ?? null)
+            ->ordered()
+            ->pluck('danhMucId')
+            ->map(fn($id) => (int) $id)
+            ->values()
+            ->all();
+
+        $orderedIds = collect($data['ordered_ids'])
+            ->map(fn($id) => (int) $id)
+            ->values()
+            ->all();
+
+        sort($expectedIds);
+        $sortedOrderedIds = $orderedIds;
+        sort($sortedOrderedIds);
+
+        if ($expectedIds !== $sortedOrderedIds) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Danh sách sắp xếp không hợp lệ hoặc đang bị thiếu danh mục do bộ lọc.',
+            ], 422);
+        }
+
+        foreach ($orderedIds as $index => $id) {
+            DanhMucKhoaHoc::where('danhMucId', $id)->update([
+                'sort_order' => $index + 1,
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã cập nhật thứ tự hiển thị danh mục.',
+        ]);
     }
 
     // ── HELPERS ────────────────────────────────────────────────────

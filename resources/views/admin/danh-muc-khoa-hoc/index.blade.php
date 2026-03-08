@@ -8,6 +8,9 @@
 @endsection
 
 @section('content')
+    @php
+        $sortingLocked = request()->filled('q') || request()->filled('trangThai');
+    @endphp
 
     <div class="dm-page-header">
         <div class="dm-page-title">
@@ -71,6 +74,18 @@
         </a>
     </form>
 
+    @if ($sortingLocked)
+        <div class="dm-alert-error">
+            <i class="fas fa-lock"></i>
+            <div>Tạm khóa kéo thả khi đang dùng bộ lọc. Hãy đặt lại bộ lọc để sắp xếp thứ tự hiển thị.</div>
+        </div>
+    @else
+        <div class="dm-alert-success">
+            <i class="fas fa-up-down-left-right"></i>
+            <div>Kéo thả từng danh mục để ưu tiên thứ tự hiển thị. Chỉ có thể đổi chỗ giữa các mục cùng cấp.</div>
+        </div>
+    @endif
+
     {{-- Tree Table --}}
     @if ($roots->isEmpty())
         <div class="dm-empty">
@@ -86,7 +101,7 @@
             <table class="dm-table">
                 <thead>
                     <tr>
-                        <th style="width:36px"></th>
+                        <th style="width:70px"></th>
                         <th>Tên danh mục</th>
                         <th>Slug</th>
                         <th>Mô tả</th>
@@ -99,16 +114,25 @@
                     @foreach ($roots as $root)
                         {{-- ── ROW CHA ────────────────────────────── --}}
                         <tr class="dm-row-parent {{ $root->childrenRecursive->isNotEmpty() ? 'has-children' : '' }}"
-                            data-tree-id="{{ $root->danhMucId }}">
+                            data-tree-id="{{ $root->danhMucId }}"
+                            data-parent="root"
+                            data-depth="0"
+                            @if (!$sortingLocked) draggable="true" @endif>
                             <td style="text-align:center">
-                                @if ($root->childrenRecursive->isNotEmpty())
-                                    <button type="button" class="dm-toggle-tree"
-                                        onclick="toggleChildren({{ $root->danhMucId }}, this)" title="Thu gọn/Mở rộng">
-                                        <i class="fas fa-chevron-down"></i>
-                                    </button>
-                                @else
-                                    <span style="color:#d1d5db;font-size:.8rem"><i class="fas fa-minus"></i></span>
-                                @endif
+                                <div class="dm-tree-tools">
+                                    <span class="dm-drag-handle {{ $sortingLocked ? 'is-disabled' : '' }}"
+                                        title="{{ $sortingLocked ? 'Bỏ bộ lọc để kéo thả' : 'Kéo để đổi thứ tự' }}">
+                                        <i class="fas fa-grip-vertical"></i>
+                                    </span>
+                                    @if ($root->childrenRecursive->isNotEmpty())
+                                        <button type="button" class="dm-toggle-tree"
+                                            onclick="toggleChildren({{ $root->danhMucId }}, this)" title="Thu gọn/Mở rộng">
+                                            <i class="fas fa-chevron-down"></i>
+                                        </button>
+                                    @else
+                                        <span style="color:#d1d5db;font-size:.8rem"><i class="fas fa-minus"></i></span>
+                                    @endif
+                                </div>
                             </td>
                             <td>
                                 <div style="display:flex;align-items:center;gap:.5rem">
@@ -158,6 +182,7 @@
                                 'node' => $child,
                                 'depth' => 1,
                                 'parentId' => $root->danhMucId,
+                                'sortingLocked' => $sortingLocked,
                             ])
                         @endforeach
                     @endforeach
@@ -173,6 +198,9 @@
 
 @section('script')
     <script>
+        const DM_REORDER_URL = @js(route('admin.danh-muc-khoa-hoc.reorder'));
+        const DM_SORTING_LOCKED = @json($sortingLocked);
+
         // Thu gọn / mở rộng cây đệ quy
         function setSubtreeVisible(parentId, visible) {
             // Tìm tất cả hàng con trực tiếp
@@ -247,5 +275,107 @@
         document.querySelector('.search-input')?.addEventListener('keydown', e => {
             if (e.key === 'Enter') document.getElementById('dm-filter-form').submit();
         });
+
+        function getRowDepth(row) {
+            return Number(row.dataset.depth || 0);
+        }
+
+        function getRowParent(row) {
+            return row.dataset.parent || 'root';
+        }
+
+        function getRowBlock(row) {
+            const rows = [row];
+            const currentDepth = getRowDepth(row);
+            let cursor = row.nextElementSibling;
+
+            while (cursor && getRowDepth(cursor) > currentDepth) {
+                rows.push(cursor);
+                cursor = cursor.nextElementSibling;
+            }
+
+            return rows;
+        }
+
+        async function persistSiblingOrder(parentValue, depth) {
+            const rows = [...document.querySelectorAll(`tr[data-parent="${parentValue}"][data-depth="${depth}"]`)];
+            const orderedIds = rows.map(row => Number(row.dataset.treeId));
+
+            const response = await fetch(DM_REORDER_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                },
+                body: JSON.stringify({
+                    parent_id: parentValue === 'root' ? null : Number(parentValue),
+                    ordered_ids: orderedIds,
+                }),
+            });
+
+            const data = await response.json().catch(() => ({}));
+
+            if (!response.ok || !data.success) {
+                throw new Error(data.message || 'Không thể cập nhật thứ tự danh mục.');
+            }
+        }
+
+        function initDragSort() {
+            if (DM_SORTING_LOCKED) return;
+
+            let draggedRow = null;
+
+            document.querySelectorAll('tr[data-tree-id]').forEach(row => {
+                row.addEventListener('dragstart', event => {
+                    draggedRow = row;
+                    row.classList.add('dm-row-dragging');
+                    event.dataTransfer.effectAllowed = 'move';
+                    event.dataTransfer.setData('text/plain', row.dataset.treeId);
+                });
+
+                row.addEventListener('dragend', () => {
+                    row.classList.remove('dm-row-dragging');
+                    document.querySelectorAll('.dm-drop-target').forEach(el => el.classList.remove('dm-drop-target'));
+                });
+
+                row.addEventListener('dragover', event => {
+                    if (!draggedRow || draggedRow === row) return;
+                    if (getRowParent(draggedRow) !== getRowParent(row) || getRowDepth(draggedRow) !== getRowDepth(row)) return;
+
+                    event.preventDefault();
+                    row.classList.add('dm-drop-target');
+                });
+
+                row.addEventListener('dragleave', () => {
+                    row.classList.remove('dm-drop-target');
+                });
+
+                row.addEventListener('drop', async event => {
+                    if (!draggedRow || draggedRow === row) return;
+                    if (getRowParent(draggedRow) !== getRowParent(row) || getRowDepth(draggedRow) !== getRowDepth(row)) return;
+
+                    event.preventDefault();
+                    row.classList.remove('dm-drop-target');
+
+                    const draggedBlock = getRowBlock(draggedRow);
+                    const targetBlock = getRowBlock(row);
+                    const targetRect = row.getBoundingClientRect();
+                    const insertAfter = event.clientY > targetRect.top + targetRect.height / 2;
+                    const referenceNode = insertAfter ? targetBlock[targetBlock.length - 1].nextElementSibling : targetBlock[0];
+
+                    draggedBlock.forEach(blockRow => blockRow.parentNode.insertBefore(blockRow, referenceNode));
+
+                    try {
+                        await persistSiblingOrder(getRowParent(row), getRowDepth(row));
+                    } catch (error) {
+                        Swal.fire('Lỗi', error.message || 'Không thể lưu thứ tự mới.', 'error');
+                        location.reload();
+                    }
+                });
+            });
+        }
+
+        initDragSort();
     </script>
 @endsection

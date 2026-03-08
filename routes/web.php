@@ -211,6 +211,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
         Route::get('/', [AdminDanhMucKhoaHocController::class, 'index'])->name('index');
         Route::get('/tao-moi', [AdminDanhMucKhoaHocController::class, 'create'])->name('create');
         Route::post('/', [AdminDanhMucKhoaHocController::class, 'store'])->name('store');
+        Route::post('/sap-xep', [AdminDanhMucKhoaHocController::class, 'reorder'])->name('reorder');
         Route::get('/{slug}/sua', [AdminDanhMucKhoaHocController::class, 'edit'])->name('edit');
         Route::put('/{slug}', [AdminDanhMucKhoaHocController::class, 'update'])->name('update');
         Route::delete('/{slug}', [AdminDanhMucKhoaHocController::class, 'destroy'])->name('destroy');
