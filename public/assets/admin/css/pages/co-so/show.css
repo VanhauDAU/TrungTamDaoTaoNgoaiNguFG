@@ -258,6 +258,22 @@
     background: #fee2e2;
 }
 
+/* Nút chuyển bảo trì (amber) */
+.btn-room-act.btn-bao-tri {
+    color: #d97706;
+}
+.btn-room-act.btn-bao-tri:hover {
+    background: #fef3c7;
+}
+
+/* Nút đánh dấu sẵn sàng (green) */
+.btn-room-act.btn-san-sang {
+    color: #16a34a;
+}
+.btn-room-act.btn-san-sang:hover {
+    background: #dcfce7;
+}
+
 .empty-rooms {
     text-align: center;
     padding: 40px 20px;

@@ -148,15 +148,25 @@
                                             {{ $room->sucChua ?? 0 }}</span>
                                     </td>
                                     <td>
-                                        @if ($room->trangThai == 1)
+                                        @if ($room->trangThai == 0)
                                             <div
-                                                style="display:flex; align-items:center; gap:6px; color:#16a34a; font-size:0.85rem; font-weight:600;">
-                                                <i class="fas fa-circle" style="font-size:0.5em;"></i> Sẵn sàng
+                                                style="display:flex; align-items:center; gap:6px; color:#64748b; font-size:0.85rem; font-weight:600;">
+                                                <i class="fas fa-ban"></i> Vô hiệu hóa
+                                            </div>
+                                        @elseif ($room->trangThai == 3)
+                                            <div
+                                                style="display:flex; align-items:center; gap:6px; color:#d97706; font-size:0.85rem; font-weight:600;">
+                                                <i class="fas fa-tools"></i> Bảo trì
+                                            </div>
+                                        @elseif ($room->isCurrentlyInUse())
+                                            <div
+                                                style="display:flex; align-items:center; gap:6px; color:#0ea5e9; font-size:0.85rem; font-weight:600;">
+                                                <i class="fas fa-circle" style="font-size:0.5em;"></i> Đang sử dụng
                                             </div>
                                         @else
                                             <div
-                                                style="display:flex; align-items:center; gap:6px; color:#dc2626; font-size:0.85rem; font-weight:600;">
-                                                <i class="fas fa-circle" style="font-size:0.5em;"></i> Bảo trì
+                                                style="display:flex; align-items:center; gap:6px; color:#16a34a; font-size:0.85rem; font-weight:600;">
+                                                <i class="fas fa-circle" style="font-size:0.5em;"></i> Sẵn sàng
                                             </div>
                                         @endif
                                     </td>
@@ -168,6 +178,18 @@
                                         <button class="btn-room-act edit" title="Sửa"
                                             onclick="openRoomModal({{ $room->phongHocId }}, '{{ addslashes($room->tenPhong) }}', '{{ $room->sucChua }}', '{{ addslashes($room->trangThietBi) }}', {{ $room->trangThai }})">
                                             <i class="fas fa-pen"></i>
+                                        </button>
+                                        <button class="btn-room-act" title="Lịch sử sử dụng"
+                                            onclick="openLichSuModal({{ $room->phongHocId }}, '{{ addslashes($room->tenPhong) }}')"
+                                            style="background:#e0f2fe; color:#0369a1;">
+                                            <i class="fas fa-history"></i>
+                                        </button>
+                                        <button
+                                            class="btn-room-act {{ $room->trangThai == 1 ? 'btn-bao-tri' : 'btn-san-sang' }}"
+                                            title="{{ $room->trangThai == 1 ? 'Chuyển bảo trì' : 'Đánh dấu sẵn sàng' }}"
+                                            onclick="confirmToggleStatus(this, {{ $room->phongHocId }}, '{{ addslashes($room->tenPhong) }}', {{ $room->trangThai }})">
+                                            <i
+                                                class="fas {{ $room->trangThai == 1 ? 'fa-tools' : 'fa-check-circle' }}"></i>
                                         </button>
                                         <button class="btn-room-act del" title="Xóa"
                                             onclick="confirmDeleteRoom(this, {{ $room->phongHocId }}, '{{ addslashes($room->tenPhong) }}')">
@@ -277,7 +299,8 @@
                                 style="color:#ef4444">*</span></label>
                         <select id="roomTrangThai" name="trangThai" class="form-control" required>
                             <option value="1">Sẵn sàng sử dụng</option>
-                            <option value="0">Đang bảo trì / Khoá</option>
+                            <option value="3">Bảo trì / Sửa chữa</option>
+                            <option value="0">Vô hiệu hóa / Đóng cửa</option>
                         </select>
                     </div>
 
@@ -301,6 +324,46 @@
         @csrf
         @method('DELETE')
     </form>
+
+    {{-- Modal Lịch Sử Sử Dụng Phòng --}}
+    <div class="custom-modal" id="lichSuModal">
+        <div class="modal-content" style="max-width:780px;">
+            <div class="modal-header">
+                <div class="modal-title" id="lichSuModalTitle"><i class="fas fa-history"
+                        style="color:#0369a1; margin-right:8px;"></i> Lịch sử sử dụng phòng</div>
+                <button type="button" class="btn-close" onclick="closeLichSuModal()"><i
+                        class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body" id="lichSuBody">
+                <div style="text-align:center; padding:2rem; color:#94a3b8;"><i class="fas fa-spinner fa-spin fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Modal Ghi Chú Bảo Trì --}}
+    <div class="custom-modal" id="baoTriModal">
+        <div class="modal-content" style="max-width:480px;">
+            <div class="modal-header">
+                <div class="modal-title"><i class="fas fa-tools" style="color:#d97706; margin-right:8px;"></i> Chuyển
+                    sang bảo trì</div>
+                <button type="button" class="btn-close" onclick="closeBaoTriModal()"><i
+                        class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom:1rem; color:#6b7280; font-size:.9rem;">Phòng: <strong
+                        id="baoTriRoomName"></strong></p>
+                <label class="form-label" for="baoTriGhiChu">Lý do / Ghi chú bảo trì <span
+                        style="color:#9ca3af; font-size:.82rem;">(tuỳ chọn)</span></label>
+                <textarea id="baoTriGhiChu" class="form-control" rows="3" placeholder="VD: Sửa máy lạnh, thay bảng, v.v..."></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-cancel" onclick="closeBaoTriModal()">Hủy</button>
+                <button type="button" class="btn-submit" id="baoTriConfirmBtn" style="background:#d97706;">Xác nhận bảo
+                    trì</button>
+            </div>
+        </div>
+    </div>
 
 @endsection
 
@@ -355,9 +418,20 @@
         }
 
         function createRowHTML(room, index = '-') {
-            let statusBadge = room.trangThai == 1 ?
-                `<div style="display:flex; align-items:center; gap:6px; color:#16a34a; font-size:0.85rem; font-weight:600;"><i class="fas fa-circle" style="font-size:0.5em;"></i> Sẵn sàng</div>` :
-                `<div style="display:flex; align-items:center; gap:6px; color:#dc2626; font-size:0.85rem; font-weight:600;"><i class="fas fa-circle" style="font-size:0.5em;"></i> Bảo trì</div>`;
+            let statusBadge = '';
+            if (room.trangThai == 0) {
+                statusBadge =
+                    `<div style="display:flex; align-items:center; gap:6px; color:#64748b; font-size:0.85rem; font-weight:600;"><i class="fas fa-ban"></i> Vô hiệu hóa</div>`;
+            } else if (room.trangThai == 3) {
+                statusBadge =
+                    `<div style="display:flex; align-items:center; gap:6px; color:#d97706; font-size:0.85rem; font-weight:600;"><i class="fas fa-tools"></i> Bảo trì</div>`;
+            } else if (room.is_currently_in_use) {
+                statusBadge =
+                    `<div style="display:flex; align-items:center; gap:6px; color:#0ea5e9; font-size:0.85rem; font-weight:600;"><i class="fas fa-circle" style="font-size:0.5em;"></i> Đang sử dụng</div>`;
+            } else {
+                statusBadge =
+                    `<div style="display:flex; align-items:center; gap:6px; color:#16a34a; font-size:0.85rem; font-weight:600;"><i class="fas fa-circle" style="font-size:0.5em;"></i> Sẵn sàng</div>`;
+            }
 
             return `
                 <td style="color:#64748b;" class="row-index">${index}</td>
@@ -378,6 +452,15 @@
                     <button class="btn-room-act edit" title="Sửa"
                         onclick="openRoomModal(${room.phongHocId}, '${room.tenPhong}', '${room.sucChua || ''}', '${room.trangThietBi || ''}', ${room.trangThai})">
                         <i class="fas fa-pen"></i>
+                    </button>
+                    <button class="btn-room-act" title="Lịch sử sử dụng"
+                        onclick="openLichSuModal(${room.phongHocId}, '${room.tenPhong}')"
+                        style="background:#e0f2fe; color:#0369a1;">
+                        <i class="fas fa-history"></i>
+                    </button>
+                    <button class="btn-room-act ${room.trangThai == 1 ? 'btn-bao-tri' : 'btn-san-sang'}" title="${room.trangThai == 1 ? 'Chuyển bảo trì' : 'Đánh dấu sẵn sàng'}"
+                        onclick="confirmToggleStatus(this, ${room.phongHocId}, '${room.tenPhong}', ${room.trangThai})">
+                        <i class="fas ${room.trangThai == 1 ? 'fa-tools' : 'fa-check-circle'}"></i>
                     </button>
                     <button class="btn-room-act del" title="Xóa"
                         onclick="confirmDeleteRoom(this, ${room.phongHocId}, '${room.tenPhong}')">
@@ -407,9 +490,17 @@
                                 'Accept': 'application/json'
                             }
                         })
-                        .then(res => res.json())
-                        .then(data => {
-                            if (data.success) {
+                        .then(async res => {
+                            const data = await res.json();
+                            if (res.status === 422 || !data.success) {
+                                // Không cho xóa vì còn lớp đang hoạt động
+                                Swal.fire({
+                                    icon: 'warning',
+                                    title: 'Không thể xóa',
+                                    text: data.message || 'Phòng đang được sử dụng.',
+                                    confirmButtonColor: '#0284c7',
+                                });
+                            } else if (data.success) {
                                 RoomToast.fire({
                                     icon: 'success',
                                     title: data.message
@@ -431,6 +522,175 @@
                 }
             });
         }
+
+        // ─── Toggle trạng thái bảo trì ─────────────────────────────────────
+        let _toggleId = null,
+            _toggleBtn = null;
+
+        function closeBaoTriModal() {
+            document.getElementById('baoTriModal').classList.remove('show');
+        }
+
+        function confirmToggleStatus(btn, id, name, currentStatus) {
+            if (currentStatus == 1) {
+                // Đang sẵn sàng → muốn chuyển bảo trì → hiện modal ghi chú
+                _toggleId = id;
+                _toggleBtn = btn;
+                document.getElementById('baoTriRoomName').textContent = name;
+                document.getElementById('baoTriGhiChu').value = '';
+                document.getElementById('baoTriModal').classList.add('show');
+            } else {
+                // Đang bảo trì → muốn về sẵn sàng
+                Swal.fire({
+                    title: 'Đánh dấu sẵn sàng?',
+                    html: `Đánh dấu phòng <strong>${name}</strong> là Sẵn sàng sử dụng?`,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#16a34a',
+                    confirmButtonText: 'Sẵn sàng!',
+                    cancelButtonText: 'Hủy'
+                }).then(r => {
+                    if (r.isConfirmed) doToggle(btn, id, null);
+                });
+            }
+        }
+
+        document.getElementById('baoTriConfirmBtn').addEventListener('click', function() {
+            const ghiChu = document.getElementById('baoTriGhiChu').value;
+            closeBaoTriModal();
+            doToggle(_toggleBtn, _toggleId, ghiChu);
+        });
+
+        function doToggle(btn, id, ghiChu) {
+            const fd = new FormData();
+            fd.append('_method', 'PATCH');
+            fd.append('_token', '{{ csrf_token() }}');
+            if (ghiChu) fd.append('ghiChuBaoTri', ghiChu);
+
+            fetch(`/admin/phong-hoc/${id}/toggle-status`, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json'
+                    },
+                    body: fd
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        RoomToast.fire({
+                            icon: 'success',
+                            title: data.message
+                        });
+                        // Cập nhật DOM
+                        const tr = btn.closest('tr');
+                        const newStatus = data.trangThai;
+                        // Cập nhật badge trạng thái
+                        const tdStatus = tr.querySelectorAll('td')[3];
+                        if (newStatus == 1) {
+                            tdStatus.innerHTML =
+                                `<div style="display:flex;align-items:center;gap:6px;color:#16a34a;font-size:.85rem;font-weight:600;"><i class="fas fa-circle" style="font-size:.5em;"></i> Sẵn sàng</div>`;
+                            btn.className = 'btn-room-act btn-bao-tri';
+                            btn.title = 'Chuyển bảo trì';
+                            btn.innerHTML = '<i class="fas fa-tools"></i>';
+                            btn.setAttribute('onclick', `confirmToggleStatus(this, ${id}, '${data.room.tenPhong}', 1)`);
+                        } else {
+                            tdStatus.innerHTML =
+                                `<div style="display:flex;align-items:center;gap:6px;color:#d97706;font-size:.85rem;font-weight:600;"><i class="fas fa-tools"></i> Bảo trì</div>`;
+                            btn.className = 'btn-room-act btn-san-sang';
+                            btn.title = 'Đánh dấu sẵn sàng';
+                            btn.innerHTML = '<i class="fas fa-check-circle"></i>';
+                            btn.setAttribute('onclick', `confirmToggleStatus(this, ${id}, '${data.room.tenPhong}', 3)`);
+                        }
+                    } else {
+                        RoomToast.fire({
+                            icon: 'error',
+                            title: data.message || 'Thao tác thất bại.'
+                        });
+                    }
+                }).catch(() => {
+                    RoomToast.fire({
+                        icon: 'error',
+                        title: 'Lỗi kết nối.'
+                    });
+                });
+        }
+
+        // ─── Lịch sử sử dụng phòng ─────────────────────────────────────────
+        function closeLichSuModal() {
+            document.getElementById('lichSuModal').classList.remove('show');
+        }
+
+        function openLichSuModal(id, name) {
+            document.getElementById('lichSuModalTitle').innerHTML =
+                `<i class="fas fa-history" style="color:#0369a1; margin-right:8px;"></i> Lịch sử sử dụng: ${name}`;
+            document.getElementById('lichSuBody').innerHTML =
+                '<div style="text-align:center;padding:2rem;color:#94a3b8;"><i class="fas fa-spinner fa-spin fa-2x"></i><p style="margin-top:.75rem;">Đang tải...</p></div>';
+            document.getElementById('lichSuModal').classList.add('show');
+
+            fetch(`/admin/phong-hoc/${id}/lich-su`, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.success || data.data.length === 0) {
+                        document.getElementById('lichSuBody').innerHTML =
+                            '<div style="text-align:center;padding:2rem;color:#94a3b8;"><i class="fas fa-inbox fa-2x"></i><p style="margin-top:.75rem;">Phòng này chưa được sử dụng trong bất kỳ lớp học nào.</p></div>';
+                        return;
+                    }
+
+                    const statusColors = {
+                        0: '#64748b',
+                        1: '#0284c7',
+                        2: '#7c3aed',
+                        3: '#dc2626',
+                        4: '#16a34a',
+                        5: '#d97706'
+                    };
+
+                    let rows = data.data.map((lop, i) => `
+                    <tr>
+                        <td style="color:#64748b;font-size:.82rem;">${i+1}</td>
+                        <td><span style="font-weight:600;color:#0f172a;">${lop.maLopHoc || '—'}</span><br><small style="color:#64748b;">${lop.tenLopHoc}</small></td>
+                        <td style="font-size:.85rem;">${lop.tenKhoaHoc}</td>
+                        <td style="font-size:.82rem;color:#64748b;">${lop.tenGiaoVien}</td>
+                        <td style="font-size:.82rem;">${lop.ngayBatDau} → ${lop.ngayKetThuc}</td>
+                        <td><span style="background:${statusColors[lop.trangThai]}22;color:${statusColors[lop.trangThai]};font-size:.75rem;font-weight:600;padding:.2rem .6rem;border-radius:20px;">${lop.trangThaiLabel}</span></td>
+                    </tr>
+                `).join('');
+
+                    document.getElementById('lichSuBody').innerHTML = `
+                    <p style="color:#64748b;font-size:.85rem;margin-bottom:.75rem;">Tổng cộng <strong>${data.total}</strong> lớp học đã dùng phòng này ${data.total > 20 ? '(hiển thị 20 gần nhất)' : ''}.</p>
+                    <div style="overflow-x:auto;">
+                    <table style="width:100%;border-collapse:collapse;font-size:.85rem;">
+                        <thead>
+                            <tr style="background:#f8fafc;">
+                                <th style="padding:.6rem .8rem;text-align:left;color:#6b7280;font-size:.75rem;font-weight:600;">#</th>
+                                <th style="padding:.6rem .8rem;text-align:left;color:#6b7280;font-size:.75rem;font-weight:600;">Mã / Tên lớp</th>
+                                <th style="padding:.6rem .8rem;text-align:left;color:#6b7280;font-size:.75rem;font-weight:600;">Khóa học</th>
+                                <th style="padding:.6rem .8rem;text-align:left;color:#6b7280;font-size:.75rem;font-weight:600;">Giáo viên</th>
+                                <th style="padding:.6rem .8rem;text-align:left;color:#6b7280;font-size:.75rem;font-weight:600;">Thời gian</th>
+                                <th style="padding:.6rem .8rem;text-align:left;color:#6b7280;font-size:.75rem;font-weight:600;">Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                    </div>
+                `;
+                }).catch(() => {
+                    document.getElementById('lichSuBody').innerHTML =
+                        '<div style="text-align:center;padding:2rem;color:#dc2626;">Không thể tải lịch sử sử dụng.</div>';
+                });
+        }
+
+        document.getElementById('lichSuModal').addEventListener('click', e => {
+            if (e.target === document.getElementById('lichSuModal')) closeLichSuModal();
+        });
+        document.getElementById('baoTriModal').addEventListener('click', e => {
+            if (e.target === document.getElementById('baoTriModal')) closeBaoTriModal();
+        });
 
         // Xử lý Modal & AJAX Form Submit
         const modal = document.getElementById('roomModal');
