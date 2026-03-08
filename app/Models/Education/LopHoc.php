@@ -16,6 +16,7 @@ class LopHoc extends Model
     protected $primaryKey = 'lopHocId';
     protected $fillable = [
         'slug',
+        'maLopHoc',
         'khoaHocId',
         'tenLopHoc',
         'phongHocId',
@@ -31,6 +32,27 @@ class LopHoc extends Model
         'lichHoc', // Lịch học trong tuần: "2,4,6" (Thứ 2, 4, 6)
         'trangThai' // 0: sắp mở, 1: đang mở, 2: đã đóng, 3: đã hủy, 4: đang học
     ];
+
+    public static function generateMaLopHoc($khoaHocId)
+    {
+        $khoaHoc = KhoaHoc::find($khoaHocId);
+        $maVietTatKhoa = 'KH';
+
+        if ($khoaHoc && $khoaHoc->maKhoaHoc) {
+            $parts = explode('-', $khoaHoc->maKhoaHoc);
+            // Prefix dựa vào maDanhMuc hoặc ký tự đầu của maKhoaHoc
+            $maVietTatKhoa = $parts[0] ?? substr($khoaHoc->maKhoaHoc, 0, 2);
+        }
+
+        $namCuoi = substr(date('Y'), -2); // vd 2026 -> "26"
+        $prefix = $namCuoi . strtoupper(substr($maVietTatKhoa, 0, 2));
+
+        $count = self::where('maLopHoc', 'LIKE', $prefix . '%')->count();
+        $so = str_pad($count + 1, 3, '0', STR_PAD_LEFT);
+
+        return $prefix . $so;
+    }
+
     public function khoaHoc(){
         return $this->belongsTo(KhoaHoc::class, 'khoaHocId', 'khoaHocId');
     }

@@ -42,8 +42,7 @@
                 </div>
             </div>
             <div class="nb-stat-card">
-                <div class="nb-stat-icon" style="background:rgba(148,163,184,.14);color:#475569"><i
-                        class="fas fa-file-lines"></i>
+                <div class="nb-stat-icon" style="background:rgba(148,163,184,.14);color:#475569"><i class="fas fa-file-lines"></i>
                 </div>
                 <div>
                     <div class="nb-stat-num">{{ number_format($stats['nhap']) }}</div>
@@ -116,33 +115,38 @@
                     </select>
                 </div>
 
-                <div class="nb-filter-field">
-                    <label for="filter-send-status" class="nb-filter-label">Trạng thái gửi</label>
-                    <select id="filter-send-status" name="sendTrangThai" onchange="this.form.submit()">
-                        <option value="">Mọi trạng thái gửi</option>
-                        @foreach (App\Models\Interaction\ThongBao::sendTrangThaiLabels() as $k => $v)
-                            <option value="{{ $k }}"
-                                {{ request('sendTrangThai') !== null && request('sendTrangThai') !== '' && (int) request('sendTrangThai') === $k ? 'selected' : '' }}>
-                                {{ $v }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
+                <select name="sendTrangThai" onchange="this.form.submit()">
+                    <option value="">Mọi trạng thái gửi</option>
+                    @foreach (App\Models\Interaction\ThongBao::sendTrangThaiLabels() as $k => $v)
+                        <option value="{{ $k }}" {{ request('sendTrangThai') !== null && request('sendTrangThai') !== '' && (int) request('sendTrangThai') === $k ? 'selected' : '' }}>
+                            {{ $v }}
+                        </option>
+                    @endforeach
+                </select>
+
+                {{-- Date range filters --}}
+                <input type="date" name="tu_ngay" value="{{ request('tu_ngay') }}" title="Từ ngày"
+                    max="{{ date('Y-m-d') }}" onchange="this.form.submit()"
+                    style="border:1px solid #e5e7eb;border-radius:8px;padding:.35rem .75rem;font-size:.85rem;color:#374151;background:#fff;cursor:pointer;">
+                <input type="date" name="den_ngay" value="{{ request('den_ngay') }}" title="Đến ngày"
+                    max="{{ date('Y-m-d') }}" onchange="this.form.submit()"
+                    style="border:1px solid #e5e7eb;border-radius:8px;padding:.35rem .75rem;font-size:.85rem;color:#374151;background:#fff;cursor:pointer;">
 
                 <button type="submit" class="nb-btn nb-btn-primary nb-btn-sm">
                     <i class="fas fa-search"></i>
                 </button>
 
-                @if (request()->hasAny(['q', 'loaiGui', 'doiTuongGui', 'uuTien', 'ghim', 'sendTrangThai']))
+                @if (request()->hasAny(['q', 'loaiGui', 'doiTuongGui', 'uuTien', 'ghim', 'sendTrangThai', 'tu_ngay', 'den_ngay']))
                     <a href="{{ route('admin.thong-bao.index') }}" class="nb-btn nb-btn-secondary nb-btn-sm">
                         <i class="fas fa-times"></i>
                     </a>
                 @endif
 
                 <div class="nb-spacer"></div>
-                <a href="{{ route('admin.thong-bao.trash') }}" class="nb-btn nb-btn-secondary">
-                    <i class="fas fa-trash-can"></i> Thùng rác ({{ $trashCount ?? 0 }})
-                </a>
+
+                <button type="button" id="btnBulkDelete" class="nb-btn nb-btn-danger nb-btn-sm" disabled>
+                    <i class="fas fa-trash"></i> Xóa (<span id="selectedCount">0</span>)
+                </button>
 
                 <a href="{{ route('admin.thong-bao.create') }}" class="nb-btn nb-btn-primary">
                     <i class="fas fa-plus"></i> Tạo thông báo

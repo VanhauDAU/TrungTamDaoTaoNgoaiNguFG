@@ -10,31 +10,45 @@
 @endsection
 
 @section('content')
-    <div class="container-fluid px-4 py-2" style="max-width:860px; margin:auto;">
+    <div class="container-fluid px-4 py-2" style="max-width:1220px; margin:auto;">
+        <div class="nb-editor-hero">
+            <div>
+                <div class="nb-editor-hero-title">Soạn Và Gửi Thông Báo</div>
+                <div class="nb-editor-hero-subtitle">Bố cục 3 bước: soạn nội dung, chọn đúng đối tượng, xác nhận trước khi
+                    gửi.</div>
+            </div>
+            <div class="nb-hero-chips">
+                <span class="nb-hero-chip"><i class="fas fa-bolt"></i> Gửi ngay tức thì</span>
+                <span class="nb-hero-chip"><i class="fas fa-users"></i> Preview người nhận</span>
+                <span class="nb-hero-chip"><i class="fas fa-paperclip"></i> Tối đa 5 tệp</span>
+            </div>
+        @endif
 
-        {{-- ── WIZARD STEPS HEADER ──────────────────────────────── --}}
-        <div class="wizard-steps" id="wizardSteps">
-            <div class="wz-step active" id="step-dot-1">
-                <div class="wz-step-inner">
-                    <div class="wz-circle">1</div>
-                    <div class="wz-label">Soạn nội dung</div>
+        <div class="nb-compose-layout">
+            <div class="nb-compose-main">
+                {{-- ── WIZARD STEPS HEADER ──────────────────────────────── --}}
+                <div class="wizard-steps" id="wizardSteps">
+                    <div class="wz-step active" id="step-dot-1">
+                        <div class="wz-step-inner">
+                            <div class="wz-circle">1</div>
+                            <div class="wz-label">Soạn nội dung</div>
+                        </div>
+                    </div>
+                    <div class="wz-connector" id="conn-1"></div>
+                    <div class="wz-step" id="step-dot-2">
+                        <div class="wz-step-inner">
+                            <div class="wz-circle">2</div>
+                            <div class="wz-label">Chọn đối tượng</div>
+                        </div>
+                    </div>
+                    <div class="wz-connector" id="conn-2"></div>
+                    <div class="wz-step" id="step-dot-3">
+                        <div class="wz-step-inner">
+                            <div class="wz-circle">3</div>
+                            <div class="wz-label">Xác nhận & Gửi</div>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div class="wz-connector" id="conn-1"></div>
-            <div class="wz-step" id="step-dot-2">
-                <div class="wz-step-inner">
-                    <div class="wz-circle">2</div>
-                    <div class="wz-label">Chọn đối tượng</div>
-                </div>
-            </div>
-            <div class="wz-connector" id="conn-2"></div>
-            <div class="wz-step" id="step-dot-3">
-                <div class="wz-step-inner">
-                    <div class="wz-circle">3</div>
-                    <div class="wz-label">Xác nhận & Gửi</div>
-                </div>
-            </div>
-        </div>
 
         <form method="POST" action="{{ route('admin.thong-bao.store') }}" id="wizardForm" enctype="multipart/form-data">
             @csrf
@@ -274,32 +288,6 @@
                                     <i class="fas fa-paperclip me-1"></i> <span id="cf-file-count">0</span> file đính kèm
                                 </div>
                             </div>
-
-                            <div class="nb-form-group" style="margin-top:1.25rem;">
-                                <label class="nb-form-label">Thời điểm gửi</label>
-                                <div style="display:flex;flex-wrap:wrap;gap:1rem;align-items:center;">
-                                    <label class="nb-toggle-pin" style="background:#eef2ff;border-color:#c7d2fe;color:#4338ca;">
-                                        <input type="radio" name="kieuGui" value="now"
-                                            {{ old('kieuGui', 'now') !== 'schedule' ? 'checked' : '' }}>
-                                        <i class="fas fa-paper-plane"></i> Gửi ngay
-                                    </label>
-                                    <label class="nb-toggle-pin" style="background:#eef2ff;border-color:#c7d2fe;color:#4338ca;">
-                                        <input type="radio" name="kieuGui" value="schedule"
-                                            {{ old('kieuGui') === 'schedule' ? 'checked' : '' }}>
-                                        <i class="fas fa-clock"></i> Hẹn giờ gửi
-                                    </label>
-                                    <input type="datetime-local" id="scheduled-at-input" name="scheduled_at"
-                                        class="nb-input" style="max-width:260px;"
-                                        min="{{ now()->addMinute()->format('Y-m-d\TH:i') }}"
-                                        value="{{ old('scheduled_at') }}">
-                                </div>
-                                <div style="font-size:.78rem;color:#6b7280;margin-top:.35rem;">
-                                    Nếu chọn hẹn giờ, hệ thống sẽ tự gửi thông báo đúng thời điểm bạn đặt.
-                                </div>
-                                @error('scheduled_at')
-                                    <div style="font-size:.78rem;color:#dc2626;margin-top:.35rem;">{{ $message }}</div>
-                                @enderror
-                            </div>
                         </div>
 
                         <div class="wizard-nav">
@@ -310,8 +298,7 @@
                             <button type="submit" class="nb-btn nb-btn-secondary" name="hanhDong" value="draft">
                                 <i class="fas fa-file-lines"></i> Lưu nháp
                             </button>
-                            <button type="submit" class="nb-btn nb-btn-success" name="hanhDong" value="send"
-                                id="btn-submit-send">
+                            <button type="submit" class="nb-btn nb-btn-success" name="hanhDong" value="send">
                                 <i class="fas fa-paper-plane"></i> Gửi thông báo ngay
                             </button>
                         </div>
@@ -498,6 +485,51 @@
             const asideCount = document.getElementById('compose-files');
             if (asideCount) asideCount.textContent = selectedFiles.length;
         }
+
+        // ── Chế độ gửi: Gửi ngay / Lên lịch ──────────────────────
+        let currentSendMode = 'send';
+
+        function setSendMode(mode, el) {
+            currentSendMode = mode;
+
+            // Reset styles
+            document.querySelectorAll('.send-mode-card').forEach(c => {
+                c.style.border = '2px solid #e5e7eb';
+                c.style.background = '#fff';
+            });
+
+            // Highlight selected
+            el.style.border = '2px solid #6366f1';
+            el.style.background = '#eef2ff';
+
+            const picker = document.getElementById('schedule-picker');
+            const btnSend = document.getElementById('btnSubmitSend');
+
+            if (mode === 'schedule') {
+                picker.style.display = 'block';
+                btnSend.value = 'schedule';
+                btnSend.innerHTML = '<i class="fas fa-clock"></i> Lên lịch gửi';
+                btnSend.className = 'nb-btn nb-btn-primary';
+            } else {
+                picker.style.display = 'none';
+                document.getElementById('scheduled_at_input').value = '';
+                btnSend.value = 'send';
+                btnSend.innerHTML = '<i class="fas fa-paper-plane"></i> Gửi thông báo ngay';
+                btnSend.className = 'nb-btn nb-btn-success';
+            }
+        }
+
+        // Validate: khi submit, nếu mode là schedule thì scheduled_at phải có giá trị
+        document.getElementById('wizardForm').addEventListener('submit', function(e) {
+            if (currentSendMode === 'schedule') {
+                const dt = document.getElementById('scheduled_at_input').value;
+                if (!dt) {
+                    e.preventDefault();
+                    alert('Vui lòng chọn thời gian gửi thông báo.');
+                    document.getElementById('scheduled_at_input').focus();
+                }
+            }
+        });
     </script>
 
     <script src="{{ asset('assets/admin/js/pages/thong-bao/create.js') }}"></script>

@@ -46,7 +46,7 @@
         </div>
     @endif
 
-    <form action="{{ route('admin.khoa-hoc.update', $khoaHoc->khoaHocId) }}" method="POST" enctype="multipart/form-data">
+    <form action="{{ route('admin.khoa-hoc.update', $khoaHoc->slug) }}" method="POST" enctype="multipart/form-data">
         @csrf
         @method('PUT')
 

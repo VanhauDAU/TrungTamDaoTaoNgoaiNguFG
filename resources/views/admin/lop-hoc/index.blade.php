@@ -164,6 +164,8 @@
                                 <td>
                                     <a href="{{ route('admin.lop-hoc.show', $lop->slug) }}"
                                         style="font-weight:600;color:#4c1d95;text-decoration:none">
+                                        <span class="badge"
+                                            style="background:#e0f2fe;color:#0284c7;border:1px solid #bae6fd;font-size:0.75rem;padding:2px 6px;margin-right:5px;border-radius:4px;">{{ $lop->maLopHoc }}</span>
                                         {{ $lop->tenLopHoc }}
                                     </a>
                                     @if ($lop->soBuoiDuKien)

@@ -2,19 +2,22 @@
 
 namespace App\Http\Controllers\Admin\HocVien;
 
+use App\Exports\HocViensExport;
 use App\Http\Controllers\Controller;
 use App\Models\Auth\TaiKhoan;
 use App\Models\Auth\HoSoNguoiDung;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Maatwebsite\Excel\Facades\Excel;
 
 class HocVienController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:hoc_vien,xem')->only('index', 'trash');
+        $this->middleware('permission:hoc_vien,xem')->only('index', 'export', 'trash');
         $this->middleware('permission:hoc_vien,them')->only('create', 'store', 'restore');
         $this->middleware('permission:hoc_vien,sua')->only('edit', 'update');
         $this->middleware('permission:hoc_vien,xoa')->only('destroy');
@@ -23,33 +26,7 @@ class HocVienController extends Controller
     /** Danh sách học viên */
     public function index(Request $request)
     {
-        $query = TaiKhoan::with(['hoSoNguoiDung', 'dangKyLopHocs'])
-            ->where('role', TaiKhoan::ROLE_HOC_VIEN);
-
-        // ── Tìm kiếm (tên, email, sđt) ──────────────────────
-        if ($search = $request->q) {
-            $query->where(function ($q) use ($search) {
-                $q->where('taiKhoan', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhereHas('hoSoNguoiDung', function ($q2) use ($search) {
-                      $q2->where('hoTen', 'like', "%{$search}%")
-                         ->orWhere('soDienThoai', 'like', "%{$search}%");
-                  });
-            });
-        }
-
-        // ── Lọc trạng thái ──────────────────────────────────
-        if ($request->filled('trangThai') && $request->trangThai !== '') {
-            $query->where('trangThai', $request->trangThai);
-        }
-
-        // ── Sắp xếp ─────────────────────────────────────────
-        $orderBy = $request->get('orderBy', 'taiKhoanId');
-        $dir     = $request->get('dir', 'desc');
-        if (in_array($orderBy, ['taiKhoanId', 'email', 'lastLogin'])) {
-            $query->orderBy($orderBy, $dir === 'asc' ? 'asc' : 'desc');
-        }
-
+        $query = $this->buildIndexQuery($request);
         $hocViens = $query->paginate(15)->withQueryString();
 
         // ── Thống kê nhanh ──────────────────────────────────
@@ -66,6 +43,17 @@ class HocVienController extends Controller
             'dangHoatDong',
             'thangNay'
         ));
+    }
+
+    /** Xuất danh sách học viên ra Excel theo bộ lọc hiện tại */
+    public function export(Request $request)
+    {
+        $fileName = 'hoc-vien-' . now()->format('Y-m-d_H-i-s') . '.xlsx';
+
+        return Excel::download(
+            new HocViensExport($this->buildIndexQuery($request)),
+            $fileName
+        );
     }
 
     /** Form thêm học viên mới */
@@ -297,5 +285,38 @@ class HocVienController extends Controller
         }
 
         return $candidate;
+    }
+
+    /** Tạo query chung cho danh sách và export */
+    private function buildIndexQuery(Request $request): Builder
+    {
+        $query = TaiKhoan::query()
+            ->with('hoSoNguoiDung')
+            ->withCount('dangKyLopHocs')
+            ->where('role', TaiKhoan::ROLE_HOC_VIEN);
+
+        if ($search = $request->q) {
+            $query->where(function ($q) use ($search) {
+                $q->where('taiKhoan', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhereHas('hoSoNguoiDung', function ($q2) use ($search) {
+                        $q2->where('hoTen', 'like', "%{$search}%")
+                            ->orWhere('soDienThoai', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        if ($request->filled('trangThai') && $request->trangThai !== '') {
+            $query->where('trangThai', $request->trangThai);
+        }
+
+        $orderBy = $request->get('orderBy', 'taiKhoanId');
+        $dir     = $request->get('dir', 'desc');
+
+        if (in_array($orderBy, ['taiKhoanId', 'email', 'lastLogin'], true)) {
+            $query->orderBy($orderBy, $dir === 'asc' ? 'asc' : 'desc');
+        }
+
+        return $query;
     }
 }

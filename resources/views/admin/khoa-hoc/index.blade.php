@@ -130,7 +130,11 @@
                         @if ($kh->danhMuc)
                             <span class="kh-card-loai">{{ $kh->danhMuc->tenDanhMuc }}</span>
                         @endif
-                        <div class="kh-card-title" title="{{ $kh->tenKhoaHoc }}">{{ $kh->tenKhoaHoc }}</div>
+                        <div class="kh-card-title" title="{{ $kh->tenKhoaHoc }}">
+                            <span class="badge"
+                                style="background:#0f766e;color:#fff;font-size:0.75rem;padding:2px 6px;margin-right:5px;border-radius:4px;">{{ $kh->maKhoaHoc }}</span>
+                            {{ $kh->tenKhoaHoc }}
+                        </div>
 
                         <div class="kh-card-meta">
                             <span><i class="fas fa-chalkboard"></i> {{ $soLop }} lớp</span>

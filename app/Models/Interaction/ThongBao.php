@@ -102,6 +102,7 @@ class ThongBao extends Model
         'hinhAnh',
         'created_at',
         'updated_at',
+        'deleted_at',
     ];
 
     protected $casts = [

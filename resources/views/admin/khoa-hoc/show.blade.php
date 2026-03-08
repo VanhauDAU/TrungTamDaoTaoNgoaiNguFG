@@ -255,7 +255,7 @@
                     </span>
                 @endif
             </div>
-            <h1>{{ $khoaHoc->tenKhoaHoc }}</h1>
+            <h1>[<span style="color:#fde68a;">{{ $khoaHoc->maKhoaHoc }}</span>] {{ $khoaHoc->tenKhoaHoc }}</h1>
             <div class="meta">
                 @if ($khoaHoc->doiTuong)
                     <span><i class="fas fa-user-graduate"></i> {{ $khoaHoc->doiTuong }}</span>

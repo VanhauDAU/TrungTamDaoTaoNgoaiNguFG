@@ -1,8 +1,8 @@
 @extends('layouts.admin')
 
-@section('title', 'Thùng rác Thông Báo')
-@section('page-title', 'Thùng rác Thông Báo')
-@section('breadcrumb', 'Nội dung & tương tác / Thông Báo / Thùng rác')
+@section('title', 'Thùng Rác - Thông Báo')
+@section('page-title', 'Thùng Rác Thông Báo')
+@section('breadcrumb', 'Nội dung & tương tác / Thông Báo / Thùng Rác')
 
 @section('stylesheet')
     <link rel="stylesheet" href="{{ asset('assets/admin/css/pages/thong-bao/thong-bao.css') }}">
@@ -10,149 +10,200 @@
 
 @section('content')
     <div class="container-fluid px-4 py-2">
-        <div style="display:flex;align-items:center;gap:.75rem;justify-content:space-between;flex-wrap:wrap;margin-bottom:1rem;">
-            <div style="font-size:1.05rem;font-weight:700;color:#111827;">
-                <i class="fas fa-trash-can" style="color:#dc2626;"></i> Thùng rác
-                <span style="font-size:.9rem;color:#6b7280;">({{ $thongBaos->total() }} thông báo)</span>
-            </div>
-            <a href="{{ route('admin.thong-bao.index') }}" class="nb-btn nb-btn-secondary">
-                <i class="fas fa-arrow-left"></i> Quay lại danh sách
-            </a>
-        </div>
 
+        {{-- ── ALERT ─────────────────────────────────────────────── --}}
         @if (session('success'))
-            <div class="locked-notice" style="background:#ecfdf5;border-color:#bbf7d0;color:#166534;">
-                <i class="fas fa-check-circle" style="color:#10b981;"></i>
-                {{ session('success') }}
+            <div class="nb-alert-success mb-3">
+                <i class="fas fa-circle-check"></i>
+                <div>{{ session('success') }}</div>
             </div>
         @endif
 
-        @if (session('error'))
-            <div class="nb-alert-error">
-                <i class="fas fa-circle-exclamation"></i>
-                <div>{{ session('error') }}</div>
-            </div>
-        @endif
-
-        <form method="GET" action="{{ route('admin.thong-bao.trash') }}" style="margin-bottom:1rem;">
+        {{-- ── TOOLBAR ─────────────────────────────────────────────── --}}
+        <form method="GET" action="{{ route('admin.thong-bao.trash') }}" id="filterForm">
             <div class="nb-toolbar">
-                <div class="nb-filter-field nb-filter-search">
-                    <label for="trash-q" class="nb-filter-label">Từ khóa</label>
-                    <div class="input-search">
-                        <i class="fas fa-search icon-search"></i>
-                        <input id="trash-q" type="text" name="q" value="{{ request('q') }}"
-                            placeholder="Tìm tiêu đề, nội dung đã xóa...">
-                    </div>
+                <div class="input-search">
+                    <i class="fas fa-search icon-search"></i>
+                    <input type="text" name="q" placeholder="Tìm tiêu đề, nội dung…" value="{{ request('q') }}">
                 </div>
+
                 <button type="submit" class="nb-btn nb-btn-primary nb-btn-sm">
-                    <i class="fas fa-search"></i> Tìm
+                    <i class="fas fa-search"></i>
                 </button>
+
                 @if (request()->filled('q'))
                     <a href="{{ route('admin.thong-bao.trash') }}" class="nb-btn nb-btn-secondary nb-btn-sm">
-                        <i class="fas fa-times"></i> Xóa lọc
+                        <i class="fas fa-times"></i>
                     </a>
                 @endif
+
+                <div class="nb-spacer"></div>
+
+                <button type="button" id="btnBulkRestore" class="nb-btn nb-btn-secondary nb-btn-sm" disabled>
+                    <i class="fas fa-rotate-left"></i> Khôi phục (<span id="selectedCount">0</span>)
+                </button>
+
+                <a href="{{ route('admin.thong-bao.index') }}" class="nb-btn nb-btn-primary">
+                    <i class="fas fa-arrow-left"></i> Quay lại danh sách
+                </a>
             </div>
         </form>
 
-        @if ($thongBaos->isEmpty())
-            <div class="nb-empty nb-table-card">
-                <div class="icon-empty"><i class="fas fa-trash"></i></div>
-                <p>Thùng rác đang trống.</p>
-            </div>
-        @else
-            <div class="nb-table-card">
-                <table class="nb-table">
-                    <thead>
+        {{-- ── EMPTY / COUNT ───────────────────────────────────────── --}}
+        <div class="mb-3" style="color:#6b7280;font-size:.9rem;">
+            <i class="fas fa-trash-can me-1"></i>
+            Có <strong>{{ $soLuong }}</strong> thông báo trong thùng rác.
+            Các thông báo sẽ <strong>không tự động xóa vĩnh viễn</strong>, bạn cần thao tác thủ công.
+        </div>
+
+        {{-- ── TABLE ─────────────────────────────────────────────── --}}
+        <div class="nb-table-card">
+            <table class="nb-table">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" class="cb-check" id="checkAll"></th>
+                        <th>LOẠI</th>
+                        <th>THÔNG BÁO</th>
+                        <th>NGƯỜI GỬI</th>
+                        <th>NGÀY XÓA</th>
+                        <th>THAO TÁC</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($thongBaos as $tb)
                         <tr>
-                            <th>THÔNG BÁO</th>
-                            <th>NGƯỜI GỬI</th>
-                            <th>LOẠI</th>
-                            <th>TRẠNG THÁI</th>
-                            <th>TỆP ĐÍNH KÈM</th>
-                            <th>NGÀY XÓA</th>
-                            <th>THAO TÁC</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($thongBaos as $tb)
-                            @php
-                                $g = $tb->nguoiGui;
-                                $ten = $g ? $g->hoSoNguoiDung->hoTen ?? ($g->nhanSu->hoTen ?? $g->taiKhoan) : 'Hệ thống';
-                            @endphp
-                            <tr>
-                                <td class="nb-title-cell">
-                                    <div class="tb-title">{{ \Illuminate\Support\Str::limit($tb->tieuDe, 70) }}</div>
-                                    <div class="tb-preview">{{ \Illuminate\Support\Str::limit(strip_tags($tb->noiDung), 85) }}</div>
-                                </td>
-                                <td class="nb-date">{{ $ten }}</td>
-                                <td>
-                                    <span class="nb-badge {{ $tb->getLoaiBadgeClass() }}">{{ $tb->getLoaiLabel() }}</span>
-                                </td>
-                                <td>
-                                    <span class="nb-badge {{ $tb->getSendTrangThaiBadgeClass() }}">
-                                        {{ $tb->getSendTrangThaiLabel() }}
-                                    </span>
-                                </td>
-                                <td class="nb-date">{{ $tb->tep_dinhs_count ?? 0 }} file</td>
-                                <td class="nb-date">{{ optional($tb->deleted_at)->format('d/m/Y H:i') }}</td>
-                                <td>
-                                    <div class="nb-actions">
-                                        <form method="POST" action="{{ route('admin.thong-bao.restore', $tb->thongBaoId) }}"
-                                            style="display:inline-block;">
-                                            @csrf
-                                            @method('PATCH')
-                                            <button type="submit" class="nb-action-btn unpin" title="Khôi phục">
-                                                <i class="fas fa-undo"></i>
-                                            </button>
-                                        </form>
-                                        <button class="nb-action-btn del" title="Xóa vĩnh viễn"
-                                            onclick="confirmForceDelete({{ $tb->thongBaoId }}, @js($tb->tieuDe))">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
+                            <td><input type="checkbox" class="cb-check cb-row" value="{{ $tb->thongBaoId }}"></td>
+                            <td>
+                                <span class="nb-badge {{ $tb->getLoaiBadgeClass() }}">
+                                    {{ $tb->getLoaiLabel() }}
+                                </span>
+                            </td>
+                            <td class="nb-title-cell">
+                                <div class="tb-title">{{ Str::limit($tb->tieuDe, 60) }}</div>
+                                <div class="tb-preview">{{ Str::limit(strip_tags($tb->noiDung), 80) }}</div>
+                            </td>
+                            <td>
+                                @if ($tb->nguoiGui)
+                                    @php
+                                        $g = $tb->nguoiGui;
+                                        $ten = $g->hoSoNguoiDung->hoTen ?? ($g->nhanSu->hoTen ?? $g->taiKhoan);
+                                    @endphp
+                                    <div class="nb-sender">
+                                        <div class="nb-avatar">{{ strtoupper(mb_substr($ten, 0, 1)) }}</div>
+                                        <div class="nb-sender-name">{{ $ten }}</div>
                                     </div>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+                                @else
+                                    <span class="nb-date">Hệ thống</span>
+                                @endif
+                            </td>
+                            <td class="nb-date">
+                                {{ optional($tb->deleted_at)->format('d/m/Y H:i') }}
+                            </td>
+                            <td>
+                                <div class="nb-actions">
+                                    {{-- Khôi phục --}}
+                                    <form method="POST" action="{{ route('admin.thong-bao.restore', $tb->thongBaoId) }}"
+                                        style="display:inline">
+                                        @csrf @method('PATCH')
+                                        <button type="submit" class="nb-action-btn view" title="Khôi phục"
+                                            onclick="return confirm('Khôi phục thông báo này?')">
+                                            <i class="fas fa-rotate-left"></i>
+                                        </button>
+                                    </form>
 
-                @if ($thongBaos->hasPages())
-                    <div class="nb-pagination">
-                        <div class="page-info">
-                            Hiển thị {{ $thongBaos->firstItem() }}–{{ $thongBaos->lastItem() }} / {{ $thongBaos->total() }}
-                            thông báo đã xóa
-                        </div>
-                        {{ $thongBaos->links() }}
+                                    {{-- Xóa vĩnh viễn --}}
+                                    <button class="nb-action-btn del" title="Xóa vĩnh viễn"
+                                        onclick="forceDelete({{ $tb->thongBaoId }})">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+
+                                    <form id="force-del-form-{{ $tb->thongBaoId }}" method="POST"
+                                        action="{{ route('admin.thong-bao.force-destroy', $tb->thongBaoId) }}"
+                                        style="display:none">
+                                        @csrf @method('DELETE')
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="6">
+                                <div class="nb-empty">
+                                    <div class="icon-empty"><i class="fas fa-trash-can"></i></div>
+                                    <p>Thùng rác trống.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+
+            @if ($thongBaos->hasPages())
+                <div class="nb-pagination">
+                    <div class="page-info">
+                        Hiển thị {{ $thongBaos->firstItem() }}–{{ $thongBaos->lastItem() }} / {{ $thongBaos->total() }}
+                        thông báo
                     </div>
-                @endif
-            </div>
-        @endif
-    </div>
+                    {{ $thongBaos->links() }}
+                </div>
+            @endif
+        </div>
 
-    <form id="force-delete-form" method="POST" style="display:none;">
-        @csrf
-        @method('DELETE')
-    </form>
+    </div>
 @endsection
 
 @section('script')
     <script>
-        function confirmForceDelete(id, title) {
-            Swal.fire({
-                title: 'Xóa vĩnh viễn thông báo?',
-                html: `<strong>${title}</strong><br><small style="color:#dc2626;">Hành động này không thể hoàn tác.</small>`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Xóa vĩnh viễn',
-                confirmButtonColor: '#dc2626',
-                cancelButtonText: 'Huỷ',
-            }).then((result) => {
-                if (!result.isConfirmed) return;
-                const form = document.getElementById('force-delete-form');
-                form.action = `/admin/thong-bao/${id}/xoa-vinh-vien`;
-                form.submit();
-            });
+        const BULK_RESTORE_URL = '{{ route('admin.thong-bao.bulk-restore') }}';
+
+        // ── Checkbox logic ─────────────────────────────────────────
+        const checkAll = document.getElementById('checkAll');
+        const rows = () => document.querySelectorAll('.cb-row');
+        const counter = document.getElementById('selectedCount');
+        const btnBulkRestore = document.getElementById('btnBulkRestore');
+
+        function updateBulkBtn() {
+            const cnt = document.querySelectorAll('.cb-row:checked').length;
+            counter.textContent = cnt;
+            btnBulkRestore.disabled = cnt === 0;
         }
+
+        checkAll.addEventListener('change', function() {
+            rows().forEach(cb => cb.checked = this.checked);
+            updateBulkBtn();
+        });
+
+        document.addEventListener('change', function(e) {
+            if (e.target.classList.contains('cb-row')) updateBulkBtn();
+        });
+
+        // ── Force delete (single) ───────────────────────────────────
+        function forceDelete(id) {
+            if (!confirm('Xóa VĨNH VIỄN thông báo này? Hành động này không thể hoàn tác!')) return;
+            document.getElementById('force-del-form-' + id).submit();
+        }
+
+        // ── Bulk restore ─────────────────────────────────────────────
+        btnBulkRestore.addEventListener('click', function() {
+            const ids = [...document.querySelectorAll('.cb-row:checked')].map(cb => cb.value);
+            if (!ids.length) return;
+            if (!confirm(`Khôi phục ${ids.length} thông báo?`)) return;
+
+            fetch(BULK_RESTORE_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    },
+                    body: JSON.stringify({
+                        ids
+                    }),
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) location.reload();
+                    else alert('Có lỗi xảy ra!');
+                });
+        });
     </script>
 @endsection

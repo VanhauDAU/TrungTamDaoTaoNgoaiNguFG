@@ -95,6 +95,7 @@ class KhoaHocController extends Controller
 
         // Tạo slug
         $data['slug'] = $this->generateUniqueSlug($request->tenKhoaHoc);
+        $data['maKhoaHoc'] = KhoaHoc::generateMaKhoaHoc($request->danhMucId);
 
         KhoaHoc::create($data);
 
@@ -175,7 +176,7 @@ class KhoaHocController extends Controller
 
         $khoaHoc->update($data);
 
-        return redirect()->route('admin.khoa-hoc.show', $slug)
+        return redirect()->route('admin.khoa-hoc.show', $khoaHoc->slug)
             ->with('success', 'Đã cập nhật khóa học «' . $khoaHoc->tenKhoaHoc . '» thành công.');
     }
 

@@ -63,6 +63,7 @@ class DanhMucKhoaHocController extends Controller
         // (không giới hạn cấp — hỗ trợ cây sâu tùy ý)
 
         $data['slug'] = $this->generateUniqueSlug($request->tenDanhMuc);
+        $data['maDanhMuc'] = DanhMucKhoaHoc::generateMaDanhMuc($request->tenDanhMuc);
         DanhMucKhoaHoc::create($data);
 
         return redirect()->route('admin.danh-muc-khoa-hoc.index')

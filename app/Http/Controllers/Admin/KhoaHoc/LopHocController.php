@@ -134,6 +134,7 @@ class LopHocController extends Controller
         ]);
 
         $data['slug'] = $this->generateUniqueSlug($request->tenLopHoc);
+        $data['maLopHoc'] = LopHoc::generateMaLopHoc($request->khoaHocId);
 
         // Kiểm tra sĩ số không vượt sức chứa phòng học
         if (!empty($data['phongHocId']) && !empty($data['soHocVienToiDa'])) {
@@ -276,7 +277,7 @@ class LopHocController extends Controller
 
         $lopHoc->update($data);
 
-        return redirect()->route('admin.lop-hoc.show', $slug)
+        return redirect()->route('admin.lop-hoc.show', $lopHoc->fresh()->slug)
             ->with('success', 'Đã cập nhật lớp học «' . $lopHoc->tenLopHoc . '» thành công.');
     }
 
