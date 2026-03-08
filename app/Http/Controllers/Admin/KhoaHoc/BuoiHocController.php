@@ -42,16 +42,15 @@ class BuoiHocController extends Controller
             'phongHocId'  => 'nullable|exists:phonghoc,phongHocId',
             'taiKhoanId'  => 'nullable|exists:taikhoan,taiKhoanId',
             'ghiChu'      => 'nullable|string',
-            'trangThai'   => 'nullable|in:0,1,2,3,4',
+            'trangThai'   => 'nullable|in:' . implode(',', BuoiHoc::validTrangThaiValues()),
         ], [
             'lopHocId.required'   => 'Vui lòng chọn lớp học.',
             'ngayHoc.required'    => 'Vui lòng chọn ngày học.',
             'caHocId.required'    => 'Vui lòng chọn ca học.',
         ]);
 
-        $data['daHoanThanh'] = 0;
         $data['daDiemDanh']  = 0;
-        $data['trangThai']   = $data['trangThai'] ?? 0;
+        $data = BuoiHoc::normalizeStatePayload($data);
 
         if (empty($data['tenBuoiHoc'])) {
             $lopHoc = LopHoc::find($data['lopHocId']);
@@ -81,10 +80,10 @@ class BuoiHocController extends Controller
             'ghiChu'       => 'nullable|string',
             'daHoanThanh'  => 'nullable|in:0,1',
             'daDiemDanh'   => 'nullable|in:0,1',
-            'trangThai'    => 'nullable|in:0,1,2,3,4',
+            'trangThai'    => 'nullable|in:' . implode(',', BuoiHoc::validTrangThaiValues()),
         ]);
 
-
+        $data = BuoiHoc::normalizeStatePayload($data, $buoiHoc);
         $buoiHoc->update($data);
 
         if ($request->wantsJson()) {
@@ -136,7 +135,9 @@ class BuoiHocController extends Controller
         ]);
 
         if ($request->xoa_cu) {
-            BuoiHoc::where('lopHocId', $lopHocId)->where('daHoanThanh', 0)->delete();
+            BuoiHoc::where('lopHocId', $lopHocId)
+                ->where('trangThai', '!=', BuoiHoc::TRANG_THAI_DA_HOAN_THANH)
+                ->delete();
         }
 
         // Parse lịch học
@@ -180,7 +181,7 @@ class BuoiHocController extends Controller
                         'taiKhoanId'  => $lopHoc->taiKhoanId,
                         'daHoanThanh' => 0,
                         'daDiemDanh'  => 0,
-                        'trangThai'   => 0,
+                        'trangThai'   => BuoiHoc::TRANG_THAI_SAP_DIEN_RA,
                     ]);
                     $count++;
                 }

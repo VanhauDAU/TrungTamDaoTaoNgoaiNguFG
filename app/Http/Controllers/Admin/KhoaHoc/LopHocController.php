@@ -244,8 +244,12 @@ class LopHocController extends Controller
             ->get();
 
         $soHocVienDangKy = $lopHoc->dangKyLopHocs->count();
-        $soBuoiDaHoc = $lopHoc->buoiHocs->where('daHoanThanh', 1)->count();
-        $soBuoiChuaHoc = $lopHoc->buoiHocs->where('daHoanThanh', 0)->count();
+        $soBuoiDaHoc = $lopHoc->buoiHocs
+            ->where('trangThai', BuoiHoc::TRANG_THAI_DA_HOAN_THANH)
+            ->count();
+        $soBuoiChuaHoc = $lopHoc->buoiHocs
+            ->where('trangThai', '!=', BuoiHoc::TRANG_THAI_DA_HOAN_THANH)
+            ->count();
 
         return view('admin.lop-hoc.show', compact(
             'lopHoc',

@@ -277,7 +277,12 @@ class CourseController extends Controller
             ->with('lopHoc.buoiHocs.caHoc')
             ->get();
 
-        $newSessions = $class->buoiHocs;
+        $newSessions = $class->buoiHocs->reject(function ($session) {
+            return in_array((int) $session->trangThai, [
+                BuoiHoc::TRANG_THAI_DA_HUY,
+                BuoiHoc::TRANG_THAI_DOI_LICH,
+            ], true);
+        })->values();
 
         // TẦNG 1: Nếu lớp mới đã có buổi học -> so sánh từng buổi cụ thể
         if ($newSessions && $newSessions->count() > 0) {
@@ -287,7 +292,12 @@ class CourseController extends Controller
                     continue;
                 }
 
-                $existingSessions = $existingClass->buoiHocs;
+                $existingSessions = $existingClass->buoiHocs->reject(function ($session) {
+                    return in_array((int) $session->trangThai, [
+                        BuoiHoc::TRANG_THAI_DA_HUY,
+                        BuoiHoc::TRANG_THAI_DOI_LICH,
+                    ], true);
+                })->values();
                 foreach ($existingSessions as $existingSession) {
                     foreach ($newSessions as $newSession) {
                         if ($existingSession->ngayHoc !== $newSession->ngayHoc) {
