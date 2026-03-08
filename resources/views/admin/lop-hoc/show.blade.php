@@ -875,6 +875,7 @@
                                 data-trang-thai="{{ $bh->trangThai ?? 0 }}"
                                 data-ghi-chu="{{ e($bh->ghiChu ?? '') }}"
                                 data-hoan-thanh="{{ $bh->daHoanThanh ? 1 : 0 }}">
+
                                 <i class="fas fa-pen"></i>
                             </button>
                             <button type="button"
@@ -890,6 +891,7 @@
                                 title="Xóa buổi học"
                                 data-id="{{ $bh->buoiHocId }}"
                                 data-name="{{ e($bh->tenBuoiHoc ?? ('Buổi ' . ($i + 1))) }}">
+
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>

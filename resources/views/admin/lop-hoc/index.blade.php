@@ -199,7 +199,6 @@
                         @endforeach
                     </select>
                 </div>
-
                 <div class="lh-filter-field">
                     <label>Khóa học</label>
                     <select name="khoaHocId" onchange="this.form.submit()">
