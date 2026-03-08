@@ -863,27 +863,35 @@
                         </div>
 
                         <div class="bh-actions">
-                            <button type="button" class="lh-btn-action lh-btn-edit" title="Chỉnh sửa buổi học"
-                                onclick='openEditModal(
-                                    {{ $bh->buoiHocId }},
-                                    @js($bh->tenBuoiHoc ?? ""),
-                                    @js($bh->ngayHoc),
-                                    {{ $bh->caHocId ?? 'null' }},
-                                    {{ $bh->phongHocId ?? 'null' }},
-                                    {{ $bh->taiKhoanId ?? 'null' }},
-                                    {{ $bh->trangThai ?? 0 }},
-                                    @js($bh->ghiChu ?? ""),
-                                    {{ $bh->daHoanThanh ? 1 : 0 }}
-                                )'>
+                            <button type="button"
+                                class="lh-btn-action lh-btn-edit js-edit-bh"
+                                title="Chỉnh sửa buổi học"
+                                data-id="{{ $bh->buoiHocId }}"
+                                data-ten="{{ e($bh->tenBuoiHoc ?? '') }}"
+                                data-ngay="{{ e($bh->ngayHoc) }}"
+                                data-ca-id="{{ $bh->caHocId ?? '' }}"
+                                data-phong-id="{{ $bh->phongHocId ?? '' }}"
+                                data-gv-id="{{ $bh->taiKhoanId ?? '' }}"
+                                data-trang-thai="{{ $bh->trangThai ?? 0 }}"
+                                data-ghi-chu="{{ e($bh->ghiChu ?? '') }}"
+                                data-hoan-thanh="{{ $bh->daHoanThanh ? 1 : 0 }}">
+
                                 <i class="fas fa-pen"></i>
                             </button>
-                            <button type="button" class="lh-btn-action lh-btn-edit" title="Đánh dấu hoàn thành"
-                                onclick="toggleHoanThanh({{ $bh->buoiHocId }}, {{ $bh->daHoanThanh ? 0 : 1 }})"
+                            <button type="button"
+                                class="lh-btn-action lh-btn-edit js-toggle-hoan-thanh"
+                                title="Đánh dấu hoàn thành"
+                                data-id="{{ $bh->buoiHocId }}"
+                                data-new-val="{{ $bh->daHoanThanh ? 0 : 1 }}"
                                 style="width:auto;padding:0 10px;font-size:.72rem;gap:4px;color:{{ $bh->daHoanThanh ? '#16a34a' : '#d97706' }}">
                                 <i class="fas fa-{{ $bh->daHoanThanh ? 'check-circle' : 'circle' }}"></i>
                             </button>
-                            <button type="button" class="lh-btn-action lh-btn-del" title="Xóa buổi học"
-                                onclick='deleteBuoiHoc({{ $bh->buoiHocId }}, @js($bh->tenBuoiHoc ?? ("Buổi " . ($i + 1))))'>
+                            <button type="button"
+                                class="lh-btn-action lh-btn-del js-delete-bh"
+                                title="Xóa buổi học"
+                                data-id="{{ $bh->buoiHocId }}"
+                                data-name="{{ e($bh->tenBuoiHoc ?? ('Buổi ' . ($i + 1))) }}">
+
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
@@ -1045,6 +1053,49 @@
 
 @section('script')
     <script>
+        const BUOI_HOC_UPDATE_URL_TEMPLATE = @js(route('admin.buoi-hoc.update', ['id' => '__ID__']));
+        const BUOI_HOC_DELETE_URL_TEMPLATE = @js(route('admin.buoi-hoc.destroy', ['id' => '__ID__']));
+
+        function getBuoiHocActionUrl(template, id) {
+            return template.replace('__ID__', String(id));
+        }
+
+        function bindBuoiHocActionButtons() {
+            document.querySelectorAll('.js-edit-bh').forEach(button => {
+                button.addEventListener('click', () => {
+                    openEditModal(
+                        Number(button.dataset.id),
+                        button.dataset.ten || '',
+                        button.dataset.ngay || '',
+                        button.dataset.caId || '',
+                        button.dataset.phongId || '',
+                        button.dataset.gvId || '',
+                        Number(button.dataset.trangThai || 0),
+                        button.dataset.ghiChu || '',
+                        Number(button.dataset.hoanThanh || 0)
+                    );
+                });
+            });
+
+            document.querySelectorAll('.js-toggle-hoan-thanh').forEach(button => {
+                button.addEventListener('click', () => {
+                    toggleHoanThanh(
+                        Number(button.dataset.id),
+                        Number(button.dataset.newVal)
+                    );
+                });
+            });
+
+            document.querySelectorAll('.js-delete-bh').forEach(button => {
+                button.addEventListener('click', () => {
+                    deleteBuoiHoc(
+                        Number(button.dataset.id),
+                        button.dataset.name || ''
+                    );
+                });
+            });
+        }
+
         function toggleAddForm() {
             const f = document.getElementById('addBhForm');
             f.style.display = f.style.display === 'block' ? 'none' : 'block';
@@ -1064,7 +1115,7 @@
             }).then(r => {
                 if (r.isConfirmed) {
                     const form = document.getElementById('delete-bh-form');
-                    form.action = `/admin/buoi-hoc/${id}`;
+                    form.action = getBuoiHocActionUrl(BUOI_HOC_DELETE_URL_TEMPLATE, id);
                     form.submit();
                 }
             });
@@ -1075,7 +1126,7 @@
             fd.append('_token', '{{ csrf_token() }}');
             fd.append('_method', 'PUT');
             fd.append('daHoanThanh', newVal);
-            fetch(`/admin/buoi-hoc/${id}`, {
+            fetch(getBuoiHocActionUrl(BUOI_HOC_UPDATE_URL_TEMPLATE, id), {
                 method: 'POST',
                 headers: {
                     'Accept': 'application/json'
@@ -1118,6 +1169,7 @@
 
         // Đóng modal khi click backdrop
         document.addEventListener('DOMContentLoaded', function() {
+            bindBuoiHocActionButtons();
             document.getElementById('editBuoiHocModal').addEventListener('click', function(e) {
                 if (e.target === this) closeEditModal();
             });
@@ -1153,26 +1205,32 @@
             fd.append('daHoanThanh', document.getElementById('ebh-hoanhthanh').value);
             fd.append('ghiChu', document.getElementById('ebh-ghichu').value);
 
-            fetch(`/admin/buoi-hoc/${_editBuoiHocId}`, {
+            fetch(getBuoiHocActionUrl(BUOI_HOC_UPDATE_URL_TEMPLATE, _editBuoiHocId), {
                     method: 'POST',
                     headers: {
                         'Accept': 'application/json'
                     },
                     body: fd,
                 })
-                .then(r => r.json())
+                .then(async r => {
+                    const data = await r.json().catch(() => ({}));
+                    if (!r.ok) {
+                        throw new Error(data.message || 'Không thể cập nhật buổi học.');
+                    }
+                    return data;
+                })
                 .then(data => {
                     if (data.success) {
                         closeEditModal();
                         location.reload();
                     } else {
-                        alert('Có lỗi xảy ra: ' + (data.message || 'Thử lại sau.'));
-                        btn.disabled = false;
-                        btn.innerHTML = '<i class="fas fa-save me-1"></i> Lưu thay đổi';
+                        throw new Error(data.message || 'Thử lại sau.');
                     }
                 })
-                .catch(() => {
-                    location.reload();
+                .catch((error) => {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-save me-1"></i> Lưu thay đổi';
+                    Swal.fire('Lỗi', error.message || 'Không thể cập nhật buổi học.', 'error');
                 });
         }
     </script>

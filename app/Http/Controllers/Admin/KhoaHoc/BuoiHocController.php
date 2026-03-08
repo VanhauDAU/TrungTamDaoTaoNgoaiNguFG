@@ -22,6 +22,15 @@ class BuoiHocController extends Controller
         'CN'=> Carbon::SUNDAY,
     ];
 
+    protected function redirectToLopHocShow(int $lopHocId, string $message, string $flashType = 'success')
+    {
+        $lopHoc = LopHoc::select('slug')->findOrFail($lopHocId);
+
+        return redirect()
+            ->route('admin.lop-hoc.show', $lopHoc->slug)
+            ->with($flashType, $message);
+    }
+
     /** Thêm buổi học thủ công */
     public function store(Request $request)
     {
@@ -52,8 +61,10 @@ class BuoiHocController extends Controller
 
         BuoiHoc::create($data);
 
-        return redirect()->route('admin.lop-hoc.show', $request->lopHocId)
-            ->with('success', 'Đã thêm buổi học thành công.');
+        return $this->redirectToLopHocShow(
+            (int) $request->lopHocId,
+            'Đã thêm buổi học thành công.'
+        );
     }
 
     /** Cập nhật buổi học */
@@ -80,8 +91,10 @@ class BuoiHocController extends Controller
             return response()->json(['success' => true, 'message' => 'Đã cập nhật buổi học.']);
         }
 
-        return redirect()->route('admin.lop-hoc.show', $buoiHoc->lopHocId)
-            ->with('success', 'Đã cập nhật buổi học thành công.');
+        return $this->redirectToLopHocShow(
+            (int) $buoiHoc->lopHocId,
+            'Đã cập nhật buổi học thành công.'
+        );
     }
 
     /** Xóa buổi học */
@@ -95,8 +108,10 @@ class BuoiHocController extends Controller
             return response()->json(['success' => true]);
         }
 
-        return redirect()->route('admin.lop-hoc.show', $lopHocId)
-            ->with('success', 'Đã xóa buổi học.');
+        return $this->redirectToLopHocShow(
+            (int) $lopHocId,
+            'Đã xóa buổi học.'
+        );
     }
 
     /**
@@ -108,8 +123,11 @@ class BuoiHocController extends Controller
         $lopHoc = LopHoc::with('caHoc')->findOrFail($lopHocId);
 
         if (empty($lopHoc->lichHoc) || empty($lopHoc->ngayBatDau) || empty($lopHoc->ngayKetThuc)) {
-            return redirect()->route('admin.lop-hoc.show', $lopHocId)
-                ->with('error', 'Lớp học chưa thiết lập đầy đủ lịch học, ngày bắt đầu / kết thúc.');
+            return $this->redirectToLopHocShow(
+                $lopHocId,
+                'Lớp học chưa thiết lập đầy đủ lịch học, ngày bắt đầu / kết thúc.',
+                'error'
+            );
         }
 
         // Xóa buổi học cũ chưa hoàn thành
@@ -131,8 +149,11 @@ class BuoiHocController extends Controller
         }
 
         if (empty($thuDays)) {
-            return redirect()->route('admin.lop-hoc.show', $lopHocId)
-                ->with('error', 'Lịch học không hợp lệ. Ví dụ: 2,4,6');
+            return $this->redirectToLopHocShow(
+                $lopHocId,
+                'Lịch học không hợp lệ. Ví dụ: 2,4,6',
+                'error'
+            );
         }
 
         $start  = Carbon::parse($lopHoc->ngayBatDau);
@@ -172,7 +193,9 @@ class BuoiHocController extends Controller
             $lopHoc->update(['soBuoiDuKien' => $soBuoi]);
         }
 
-        return redirect()->route('admin.lop-hoc.show', $lopHocId)
-            ->with('success', "Đã tự động tạo {$count} buổi học thành công.");
+        return $this->redirectToLopHocShow(
+            $lopHocId,
+            "Đã tự động tạo {$count} buổi học thành công."
+        );
     }
 }
