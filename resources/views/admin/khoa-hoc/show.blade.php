@@ -574,12 +574,8 @@
                             <th style="text-align:center">Thao tác</th>
                         </tr>
                     </thead>
-                    <tbody>
+                        <tbody>
                         @foreach ($khoaHoc->lopHoc as $i => $lop)
-                            @php
-                                $ttLabels = ['Sắp mở', 'Đang mở', 'Đã đóng', 'Đã hủy', 'Đang học'];
-                                $ttLabel = $ttLabels[$lop->trangThai] ?? '?';
-                            @endphp
                             <tr>
                                 <td style="color:#94a3b8;font-size:.78rem">{{ $i + 1 }}</td>
                                 <td>
@@ -603,7 +599,7 @@
                                     {{ $lop->ngayBatDau ? \Carbon\Carbon::parse($lop->ngayBatDau)->format('d/m/Y') : '—' }}
                                 </td>
                                 <td>
-                                    <span class="tt-badge tt-{{ $lop->trangThai }}">{{ $ttLabel }}</span>
+                                    <span class="tt-badge tt-{{ $lop->trangThai }}">{{ $lop->trangThaiLabel }}</span>
                                 </td>
                                 <td>
                                     <div style="display:flex;gap:5px;justify-content:center">

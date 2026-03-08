@@ -231,12 +231,14 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
     // ── Lớp Học ──────────────────────────────────────────────────────────────
     Route::prefix('lop-hoc')->name('lop-hoc.')->group(function () {
         Route::get('/', [AdminLopHocController::class, 'index'])->name('index');
+        Route::get('/thung-rac', [AdminLopHocController::class, 'trash'])->name('trash');
         Route::get('/tao-moi', [AdminLopHocController::class, 'create'])->name('create');
         Route::post('/', [AdminLopHocController::class, 'store'])->name('store');
         Route::get('/{slug}', [AdminLopHocController::class, 'show'])->name('show');
         Route::get('/{slug}/sua', [AdminLopHocController::class, 'edit'])->name('edit');
         Route::put('/{slug}', [AdminLopHocController::class, 'update'])->name('update');
         Route::delete('/{slug}', [AdminLopHocController::class, 'destroy'])->name('destroy');
+        Route::patch('/{slug}/khoi-phuc', [AdminLopHocController::class, 'restore'])->name('restore');
     });
 
     // ── Buổi Học ──────────────────────────────────────────────────────────────

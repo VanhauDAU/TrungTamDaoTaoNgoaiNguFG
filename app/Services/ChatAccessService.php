@@ -26,10 +26,7 @@ class ChatAccessService
         return DangKyLopHoc::query()
             ->where('lopHocId', $room->lopHocId)
             ->where('taiKhoanId', $taiKhoan->taiKhoanId)
-            ->whereIn('trangThai', [
-                DangKyLopHoc::TRANG_THAI_DANG_HOC,
-                DangKyLopHoc::TRANG_THAI_TAM_DUNG,
-            ])
+            ->eligibleForChat()
             ->exists();
     }
 
@@ -67,7 +64,7 @@ class ChatAccessService
         return DangKyLopHoc::query()
             ->where('lopHocId', $room->lopHocId)
             ->where('taiKhoanId', $taiKhoan->taiKhoanId)
-            ->where('trangThai', DangKyLopHoc::TRANG_THAI_DANG_HOC)
+            ->eligibleForChat()
             ->exists();
     }
 
@@ -93,10 +90,7 @@ class ChatAccessService
         if ($taiKhoan->role === TaiKhoan::ROLE_HOC_VIEN) {
             return DangKyLopHoc::query()
                 ->where('taiKhoanId', $taiKhoan->taiKhoanId)
-                ->whereIn('trangThai', [
-                    DangKyLopHoc::TRANG_THAI_DANG_HOC,
-                    DangKyLopHoc::TRANG_THAI_TAM_DUNG,
-                ])
+                ->eligibleForChat()
                 ->pluck('lopHocId')
                 ->unique()
                 ->values();

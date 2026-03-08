@@ -9,10 +9,10 @@ use App\Models\Finance\HoaDon;
 class DangKyLopHoc extends Model
 {
     // ── Trạng thái đăng ký lớp học ──────────────────────────────────
-    const TRANG_THAI_CHO_DUYET   = 0; // Chờ duyệt
-    const TRANG_THAI_DANG_HOC    = 1; // Đang học (active)
-    const TRANG_THAI_TAM_DUNG    = 2; // Tạm dừng – nợ học phí
-    const TRANG_THAI_HUY         = 3; // Đã hủy
+    public const TRANG_THAI_HUY = 0;
+    public const TRANG_THAI_CHO_THANH_TOAN = 1;
+    public const TRANG_THAI_DA_XAC_NHAN = 2;
+    public const TRANG_THAI_TAM_DUNG_NO_HOC_PHI = 3;
 
     protected $table      = 'dangKyLopHoc';
     protected $primaryKey = 'dangKyLopHocId';
@@ -23,6 +23,10 @@ class DangKyLopHoc extends Model
         'trangThai',
     ];
     public $timestamps = false;
+
+    protected $casts = [
+        'trangThai' => 'integer',
+    ];
 
     /* ── Relationships ──────────────────────────────────────────────── */
 
@@ -51,16 +55,93 @@ class DangKyLopHoc extends Model
     public function getTrangThaiLabelAttribute(): string
     {
         return match ((int) $this->trangThai) {
-            self::TRANG_THAI_CHO_DUYET => 'Chờ duyệt',
-            self::TRANG_THAI_DANG_HOC  => 'Đang học',
-            self::TRANG_THAI_TAM_DUNG  => '⏸ Tạm dừng (Nợ học phí)',
-            self::TRANG_THAI_HUY       => 'Đã hủy',
+            self::TRANG_THAI_CHO_THANH_TOAN => 'Chờ thanh toán',
+            self::TRANG_THAI_DA_XAC_NHAN => 'Đã xác nhận',
+            self::TRANG_THAI_TAM_DUNG_NO_HOC_PHI => 'Tạm dừng do nợ học phí',
+            self::TRANG_THAI_HUY => 'Đã hủy',
             default => 'Không xác định',
         };
     }
 
     public function getIsNoHocPhiAttribute(): bool
     {
-        return $this->trangThai === self::TRANG_THAI_TAM_DUNG;
+        return (int) $this->trangThai === self::TRANG_THAI_TAM_DUNG_NO_HOC_PHI;
+    }
+
+    public function isPendingPayment(): bool
+    {
+        return (int) $this->trangThai === self::TRANG_THAI_CHO_THANH_TOAN;
+    }
+
+    public function isConfirmed(): bool
+    {
+        return (int) $this->trangThai === self::TRANG_THAI_DA_XAC_NHAN;
+    }
+
+    public function isSuspendedForDebt(): bool
+    {
+        return (int) $this->trangThai === self::TRANG_THAI_TAM_DUNG_NO_HOC_PHI;
+    }
+
+    public function isCancelled(): bool
+    {
+        return (int) $this->trangThai === self::TRANG_THAI_HUY;
+    }
+
+    public function preventsClassDeletion(): bool
+    {
+        return ! $this->isCancelled();
+    }
+
+    public function blocksSeat(): bool
+    {
+        return in_array((int) $this->trangThai, [
+            self::TRANG_THAI_CHO_THANH_TOAN,
+            self::TRANG_THAI_DA_XAC_NHAN,
+            self::TRANG_THAI_TAM_DUNG_NO_HOC_PHI,
+        ], true);
+    }
+
+    public function canJoinChat(): bool
+    {
+        return (int) $this->trangThai === self::TRANG_THAI_DA_XAC_NHAN;
+    }
+
+    public function canAccessSchedule(): bool
+    {
+        return (int) $this->trangThai === self::TRANG_THAI_DA_XAC_NHAN;
+    }
+
+    public function scopeBlockingSeat($query)
+    {
+        return $query->whereIn('trangThai', [
+            self::TRANG_THAI_CHO_THANH_TOAN,
+            self::TRANG_THAI_DA_XAC_NHAN,
+            self::TRANG_THAI_TAM_DUNG_NO_HOC_PHI,
+        ]);
+    }
+
+    public function scopeVisibleToStudent($query)
+    {
+        return $query->whereIn('trangThai', [
+            self::TRANG_THAI_CHO_THANH_TOAN,
+            self::TRANG_THAI_DA_XAC_NHAN,
+            self::TRANG_THAI_TAM_DUNG_NO_HOC_PHI,
+        ]);
+    }
+
+    public function scopeEligibleForSchedule($query)
+    {
+        return $query->where('trangThai', self::TRANG_THAI_DA_XAC_NHAN);
+    }
+
+    public function scopeEligibleForChat($query)
+    {
+        return $query->where('trangThai', self::TRANG_THAI_DA_XAC_NHAN);
+    }
+
+    public function scopePreventingClassDeletion($query)
+    {
+        return $query->where('trangThai', '!=', self::TRANG_THAI_HUY);
     }
 }

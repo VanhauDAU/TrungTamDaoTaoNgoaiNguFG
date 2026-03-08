@@ -18,6 +18,15 @@
             <span>{{ $lopHocs->total() }} kết quả</span>
         </div>
         <div style="display:flex;gap:10px;align-items:center">
+            <a href="{{ route('admin.lop-hoc.trash') }}" class="btn-add-lh"
+                style="background:linear-gradient(135deg,#b91c1c,#ef4444)">
+                <i class="fas fa-trash-can"></i> Thùng rác
+                @if (($tongDaXoa ?? 0) > 0)
+                    <span style="margin-left:6px;background:rgba(255,255,255,.18);padding:2px 8px;border-radius:999px;font-size:.78rem">
+                        {{ $tongDaXoa }}
+                    </span>
+                @endif
+            </a>
             <a href="{{ route('admin.khoa-hoc.index') }}" class="btn-add-lh"
                 style="background:linear-gradient(135deg,#0f766e,#14b8a6)">
                 <i class="fas fa-graduation-cap"></i> Khóa học
@@ -94,11 +103,11 @@
 
         <select name="trangThai" onchange="this.form.submit()">
             <option value="">Tất cả trạng thái</option>
-            <option value="0" {{ request('trangThai') === '0' ? 'selected' : '' }}>Sắp mở</option>
-            <option value="1" {{ request('trangThai') === '1' ? 'selected' : '' }}>Đang mở</option>
-            <option value="4" {{ request('trangThai') === '4' ? 'selected' : '' }}>Đang học</option>
-            <option value="2" {{ request('trangThai') === '2' ? 'selected' : '' }}>Đã đóng</option>
-            <option value="3" {{ request('trangThai') === '3' ? 'selected' : '' }}>Đã hủy</option>
+            @foreach (\App\Models\Education\LopHoc::trangThaiOptions() as $value => $label)
+                <option value="{{ $value }}" {{ request('trangThai') === (string) $value ? 'selected' : '' }}>
+                    {{ $label }}
+                </option>
+            @endforeach
         </select>
 
         <select name="orderBy" onchange="this.form.submit()">
@@ -155,9 +164,8 @@
                     <tbody>
                         @foreach ($lopHocs as $lop)
                             @php
-                                $ttLabels = ['Sắp mở', 'Đang mở', 'Đã đóng', 'Đã hủy', 'Đang học'];
-                                $ttLabel = $ttLabels[$lop->trangThai] ?? '?';
                                 $soHV = $lop->dangKyLopHocs->count();
+                                $soDangKyHieuLuc = $lop->dangKyLopHocs->filter(fn($dangKy) => $dangKy->preventsClassDeletion())->count();
                             @endphp
                             <tr>
                                 <td style="color:#94a3b8;font-size:.78rem">{{ $lopHocs->firstItem() + $loop->index }}</td>
@@ -229,7 +237,7 @@
                                     {{ $lop->ngayBatDau ? \Carbon\Carbon::parse($lop->ngayBatDau)->format('d/m/Y') : '—' }}
                                 </td>
                                 <td>
-                                    <span class="lh-tt lh-tt-{{ $lop->trangThai }}">{{ $ttLabel }}</span>
+                                    <span class="lh-tt lh-tt-{{ $lop->trangThai }}">{{ $lop->trangThaiLabel }}</span>
                                 </td>
                                 <td>
                                     <div class="lh-actions">
@@ -241,8 +249,12 @@
                                             class="lh-btn-action lh-btn-edit" title="Chỉnh sửa">
                                             <i class="fas fa-pen"></i>
                                         </a>
-                                        <button type="button" class="lh-btn-action lh-btn-del" title="Xóa"
-                                            onclick="confirmDeleteLH({{ $lop->lopHocId }}, '{{ addslashes($lop->tenLopHoc) }}', {{ $soHV }})">
+                                        <button type="button"
+                                            class="lh-btn-action lh-btn-del js-delete-lh"
+                                            title="Xóa"
+                                            data-delete-url="{{ route('admin.lop-hoc.destroy', $lop->slug) }}"
+                                            data-name="{{ e($lop->tenLopHoc) }}"
+                                            data-active-registrations="{{ $soDangKyHieuLuc }}">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </div>
@@ -273,11 +285,11 @@
 
 @section('script')
     <script>
-        function confirmDeleteLH(id, name, soHV) {
-            if (soHV > 0) {
+        function confirmDeleteLH(deleteUrl, name, soDangKyHieuLuc) {
+            if (soDangKyHieuLuc > 0) {
                 Swal.fire({
                     title: 'Không thể xóa!',
-                    html: `Lớp học <strong>${name}</strong> đang có <strong>${soHV} học viên</strong> đăng ký.`,
+                    html: `Lớp học <strong>${name}</strong> đang còn <strong>${soDangKyHieuLuc} đăng ký có hiệu lực</strong>.`,
                     icon: 'warning',
                     confirmButtonText: 'Đã hiểu',
                     confirmButtonColor: '#7c3aed',
@@ -297,11 +309,22 @@
             }).then(r => {
                 if (r.isConfirmed) {
                     const form = document.getElementById('delete-lh-form');
-                    form.action = `/admin/lop-hoc/${id}`;
+                    form.action = deleteUrl;
                     form.submit();
                 }
             });
         }
+
+        document.querySelectorAll('.js-delete-lh').forEach(button => {
+            button.addEventListener('click', () => {
+                confirmDeleteLH(
+                    button.dataset.deleteUrl,
+                    button.dataset.name,
+                    Number(button.dataset.activeRegistrations || 0)
+                );
+            });
+        });
+
         document.querySelector('.search-input')?.addEventListener('keydown', e => {
             if (e.key === 'Enter') document.getElementById('lh-filter-form').submit();
         });

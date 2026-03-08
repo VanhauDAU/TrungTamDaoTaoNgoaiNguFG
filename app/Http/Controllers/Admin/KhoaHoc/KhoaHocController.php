@@ -115,8 +115,8 @@ class KhoaHocController extends Controller
         ])->where('slug', $slug)->firstOrFail();
 
         $tongLop        = $khoaHoc->lopHoc->count();
-        $lopDangHoc     = $khoaHoc->lopHoc->where('trangThai', 4)->count();
-        $lopSapMo       = $khoaHoc->lopHoc->where('trangThai', 0)->count();
+        $lopDangHoc     = $khoaHoc->lopHoc->where('trangThai', LopHoc::TRANG_THAI_DANG_HOC)->count();
+        $lopSapMo       = $khoaHoc->lopHoc->where('trangThai', LopHoc::TRANG_THAI_SAP_MO)->count();
         $tongHocVien    = $khoaHoc->lopHoc->sum(fn($l) => $l->dangKyLopHocs()->count() ?? 0);
         $hocPhis        = $khoaHoc->hocPhis->sortBy('soBuoi');
 
@@ -188,7 +188,11 @@ class KhoaHocController extends Controller
 
             // Kiểm tra lớp học đang hoạt động (trạng thái: 0=sắp mở, 1=đang mở, 4=đang học)
             $lopDangHoatDong = $khoaHoc->lopHoc()
-                ->whereIn('trangThai', [0, 1, 4])
+                ->whereIn('trangThai', [
+                    LopHoc::TRANG_THAI_SAP_MO,
+                    LopHoc::TRANG_THAI_DANG_TUYEN_SINH,
+                    LopHoc::TRANG_THAI_DANG_HOC,
+                ])
                 ->count();
 
             if ($lopDangHoatDong > 0) {

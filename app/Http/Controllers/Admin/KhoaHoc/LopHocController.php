@@ -16,9 +16,15 @@ use App\Models\Auth\TaiKhoan;
 use App\Models\Auth\NhanSu;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class LopHocController extends Controller
 {
+    protected function validTrangThaiValues(): array
+    {
+        return array_map('strval', array_keys(LopHoc::trangThaiLabels()));
+    }
+
     /** Danh sách lớp học */
     public function index(Request $request)
     {
@@ -64,8 +70,9 @@ class LopHocController extends Controller
 
         // ── Stats ─────────────────────────────────────────────
         $tongLop = LopHoc::count();
-        $dangHoc = LopHoc::where('trangThai', 4)->count();
-        $sapMo = LopHoc::where('trangThai', 0)->count();
+        $dangHoc = LopHoc::inProgress()->count();
+        $sapMo = LopHoc::where('trangThai', LopHoc::TRANG_THAI_SAP_MO)->count();
+        $tongDaXoa = LopHoc::onlyTrashed()->count();
 
         // ── Data cho filter ───────────────────────────────────
         $khoaHocs = KhoaHoc::where('trangThai', 1)->orderBy('tenKhoaHoc')->get();
@@ -76,9 +83,39 @@ class LopHocController extends Controller
             'tongLop',
             'dangHoc',
             'sapMo',
+            'tongDaXoa',
             'khoaHocs',
             'coSos'
         ));
+    }
+
+    /** Thùng rác lớp học */
+    public function trash(Request $request)
+    {
+        $query = LopHoc::onlyTrashed()->with([
+            'khoaHoc',
+            'coSo',
+            'caHoc',
+            'taiKhoan.hoSoNguoiDung',
+            'dangKyLopHocs',
+        ]);
+
+        if ($search = $request->q) {
+            $query->where(function ($q) use ($search) {
+                $q->where('tenLopHoc', 'like', "%{$search}%")
+                    ->orWhere('maLopHoc', 'like', "%{$search}%")
+                    ->orWhereHas('khoaHoc', fn($q2) => $q2->where('tenKhoaHoc', 'like', "%{$search}%"));
+            });
+        }
+
+        $lopHocs = $query
+            ->orderByDesc('deleted_at')
+            ->paginate(15)
+            ->withQueryString();
+
+        $tongDaXoa = LopHoc::onlyTrashed()->count();
+
+        return view('admin.lop-hoc.trash', compact('lopHocs', 'tongDaXoa'));
     }
 
     /** Form thêm lớp học */
@@ -122,7 +159,7 @@ class LopHocController extends Controller
             'donGiaDay' => 'nullable|numeric|min:0',
             'hocPhiId' => 'nullable|exists:hocphi,hocPhiId',
             'lichHoc' => 'nullable|string|max:20',
-            'trangThai' => 'required|in:0,1,2,3,4',
+            'trangThai' => ['required', Rule::in($this->validTrangThaiValues())],
         ], [
             'tenLopHoc.required' => 'Vui lòng nhập tên lớp học.',
             'khoaHocId.required' => 'Vui lòng chọn khóa học.',
@@ -263,7 +300,7 @@ class LopHocController extends Controller
             'donGiaDay' => 'nullable|numeric|min:0',
             'hocPhiId' => 'nullable|exists:hocphi,hocPhiId',
             'lichHoc' => 'nullable|string|max:20',
-            'trangThai' => 'required|in:0,1,2,3,4',
+            'trangThai' => ['required', Rule::in($this->validTrangThaiValues())],
         ]);
 
         // Kiểm tra sĩ số không vượt sức chứa phòng học
@@ -286,17 +323,32 @@ class LopHocController extends Controller
     {
         $lopHoc = LopHoc::where('slug', $slug)->firstOrFail();
 
-        if ($lopHoc->dangKyLopHocs()->count() > 0) {
+        if ($lopHoc->dangKyLopHocs()->preventingClassDeletion()->exists()) {
             return redirect()->route('admin.lop-hoc.index')
-                ->with('error', 'Không thể xóa lớp học đã có học viên đăng ký.');
+                ->with('error', 'Không thể xóa lớp học khi vẫn còn đăng ký có hiệu lực.');
         }
 
         $ten = $lopHoc->tenLopHoc;
-        $lopHoc->buoiHocs()->delete();
+        if (! $lopHoc->isCancelled()) {
+            $lopHoc->trangThai = LopHoc::TRANG_THAI_DA_HUY;
+            $lopHoc->save();
+        }
+
         $lopHoc->delete();
 
         return redirect()->route('admin.lop-hoc.index')
-            ->with('success', "Đã xóa lớp học «{$ten}» thành công.");
+            ->with('success', "Đã chuyển lớp học «{$ten}» vào trạng thái xóa mềm.");
+    }
+
+    /** Khôi phục lớp học đã xóa mềm */
+    public function restore(string $slug)
+    {
+        $lopHoc = LopHoc::onlyTrashed()->where('slug', $slug)->firstOrFail();
+
+        $lopHoc->restore();
+
+        return redirect()->route('admin.lop-hoc.show', $lopHoc->slug)
+            ->with('success', "Đã khôi phục lớp học «{$lopHoc->tenLopHoc}» thành công.");
     }
 
     /** API: Lấy HocPhi theo khóa học */

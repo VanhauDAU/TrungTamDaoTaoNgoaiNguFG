@@ -325,12 +325,12 @@
                 <div class="kf-form-group">
                     <label>Trạng thái <span class="req">*</span></label>
                     <select name="trangThai">
-                        @php $cur = old('trangThai', $lopHoc->trangThai); @endphp
-                        <option value="0" {{ $cur == 0 ? 'selected' : '' }}>Sắp mở</option>
-                        <option value="1" {{ $cur == 1 ? 'selected' : '' }}>Đang mở đăng ký</option>
-                        <option value="4" {{ $cur == 4 ? 'selected' : '' }}>Đang học</option>
-                        <option value="2" {{ $cur == 2 ? 'selected' : '' }}>Đã đóng</option>
-                        <option value="3" {{ $cur == 3 ? 'selected' : '' }}>Đã hủy</option>
+                        @php $cur = (string) old('trangThai', $lopHoc->trangThai); @endphp
+                        @foreach (\App\Models\Education\LopHoc::trangThaiOptions() as $value => $label)
+                            <option value="{{ $value }}" {{ $cur === (string) $value ? 'selected' : '' }}>
+                                {{ $label }}
+                            </option>
+                        @endforeach
                     </select>
                 </div>
             </div>

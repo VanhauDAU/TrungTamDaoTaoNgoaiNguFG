@@ -81,14 +81,14 @@
                                                     <div class="class-card-header">
                                                         <div class="class-name-wrapper">
                                                             <h4 class="class-name-compact">{{ $lopHoc->tenLopHoc }}</h4>
-                                                            @if ($lopHoc->trangThai == 0)
+                                                            @if ($lopHoc->isSapMo())
                                                                 <span class="badge-status badge-coming">Sắp mở</span>
-                                                            @elseif ($lopHoc->trangThai == 1)
+                                                            @elseif ($lopHoc->isOpenForRegistration())
                                                                 <span class="badge-status badge-open">Đang mở</span>
-                                                            @elseif ($lopHoc->trangThai == 4)
+                                                            @elseif ($lopHoc->isInProgress())
                                                                 <span class="badge-status"
                                                                     style="background:#e8f5e9;color:#2e7d32">Đang học</span>
-                                                            @elseif ($lopHoc->trangThai == 3)
+                                                            @elseif ($lopHoc->isCancelled())
                                                                 <span class="badge-status badge-full">Đã hủy</span>
                                                             @else
                                                                 <span class="badge-status badge-full">Đã đóng</span>
@@ -144,7 +144,7 @@
                                                             <i class="fas fa-info-circle me-1"></i>
                                                             Chi tiết
                                                         </a>
-                                                        @if ($lopHoc->trangThai == 1)
+                                                        @if ($lopHoc->isOpenForRegistration())
                                                             <a href="{{ route('home.classes.confirm', ['slug' => $lopHoc->khoaHoc->slug, 'slugLopHoc' => $lopHoc->slug]) }}"
                                                                 class="btn-action btn-register">
                                                                 <i class="fas fa-user-plus me-1"></i>
