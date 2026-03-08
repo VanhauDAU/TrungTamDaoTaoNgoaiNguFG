@@ -28,9 +28,9 @@
         window.CHAT_BOOTSTRAP = {
             rooms: @json($rooms),
             selectedRoom: @json($selectedRoom),
-            initialMessages: @json($initialMessages),
             csrf: '{{ csrf_token() }}',
             endpoints: {
+                poll: '{{ route('home.api.chat.poll') }}',
                 rooms: '{{ route('home.api.chat.rooms') }}',
                 messages: '{{ url('/api/chat/rooms/__ROOM__/messages') }}',
                 join: '{{ url('/api/chat/rooms/__ROOM__/join') }}',

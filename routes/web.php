@@ -95,6 +95,7 @@ Route::prefix('/')->name('home.')->group(function () {
     });
 
     Route::prefix('api/chat')->name('api.chat.')->middleware('auth')->group(function () {
+        Route::get('/poll', [ClientChatController::class, 'poll'])->name('poll');
         Route::get('/rooms', [ClientChatController::class, 'rooms'])->name('rooms');
         Route::get('/rooms/{id}/messages', [ClientChatController::class, 'messages'])->name('messages');
         Route::post('/rooms/{id}/join', [ClientChatController::class, 'join'])->name('join');
