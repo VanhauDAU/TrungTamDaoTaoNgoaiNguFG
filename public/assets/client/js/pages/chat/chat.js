@@ -6,6 +6,43 @@
     const POLL_MS = 1500;
     const ROOM_MS = 15000;
     const MOBILE_BREAKPOINT = 991.98;
+    const REACTION_EMOJIS = Array.isArray(BS?.reactionEmojis)
+        ? BS.reactionEmojis
+        : ["👍", "❤️", "😂", "😮", "😢", "🔥", "😡"];
+    const COMPOSER_EMOJIS = Array.isArray(BS?.composerEmojis)
+        ? BS.composerEmojis
+        : [
+              "😀",
+              "😁",
+              "😂",
+              "🤣",
+              "😊",
+              "😍",
+              "😘",
+              "😎",
+              "🤔",
+              "😮",
+              "😢",
+              "😭",
+              "😡",
+              "👍",
+              "👎",
+              "👏",
+              "🙏",
+              "❤️",
+              "💔",
+              "🔥",
+              "🎉",
+              "🌟",
+              "💯",
+              "🤝",
+              "👌",
+              "🙌",
+              "🥳",
+              "😴",
+              "🤯",
+              "🤗",
+          ];
 
     if (!BS || !root) return;
 
@@ -24,6 +61,8 @@
         messagesLoaded: false,
         replyingTo: null,
         openMessageMenuId: null,
+        openReactionPickerId: null,
+        composerEmojiOpen: false,
         roomMembers: [],
         roomMembersLoading: false,
     };
@@ -265,6 +304,19 @@
         );
     }
 
+    function reactionLabel(reaction) {
+        const count = Number(reaction?.count) || 0;
+        const label = count > 1 ? `${reaction.emoji} ${count}` : reaction.emoji;
+        if (reaction?.reactedByMe) return `${label} · Bạn đã thả cảm xúc`;
+        return label;
+    }
+
+    function reactionUsersText(reaction) {
+        const names = Array.isArray(reaction?.userNames) ? reaction.userNames : [];
+        if (!names.length) return reactionLabel(reaction);
+        return `${reactionLabel(reaction)}\n${names.join(", ")}`;
+    }
+
     function closeMessageMenu() {
         if (state.openMessageMenuId === null) return;
         state.openMessageMenuId = null;
@@ -273,12 +325,76 @@
         ).forEach((el) => el.classList.remove("is-open"));
     }
 
+    function closeReactionPicker() {
+        if (state.openReactionPickerId === null) return;
+        state.openReactionPickerId = null;
+        root.querySelectorAll(
+            ".chat-message-reaction-btn.is-open, .chat-message-reaction-popover.is-open",
+        ).forEach((el) => el.classList.remove("is-open"));
+    }
+
+    function toggleReactionPicker(messageId) {
+        const nextId =
+            state.openReactionPickerId === Number(messageId)
+                ? null
+                : Number(messageId);
+
+        state.openReactionPickerId = nextId;
+        closeMessageMenu();
+        closeComposerEmojiPicker();
+
+        root.querySelectorAll("[data-message-reaction-picker]").forEach(
+            (popover) => {
+                const isOpen =
+                    Number(popover.dataset.messageReactionPicker) === nextId;
+                popover.classList.toggle("is-open", isOpen);
+            },
+        );
+
+        root.querySelectorAll("[data-message-reaction-btn]").forEach(
+            (button) => {
+                const isOpen =
+                    Number(button.dataset.messageReactionBtn) === nextId;
+                button.classList.toggle("is-open", isOpen);
+            },
+        );
+    }
+
+    function closeComposerEmojiPicker() {
+        if (!state.composerEmojiOpen) return;
+        state.composerEmojiOpen = false;
+
+        root.querySelectorAll(
+            ".chat-composer-emoji-btn.is-open, .chat-composer-emoji-picker.is-open",
+        ).forEach((el) => el.classList.remove("is-open"));
+    }
+
+    function toggleComposerEmojiPicker() {
+        state.composerEmojiOpen = !state.composerEmojiOpen;
+        closeMessageMenu();
+        closeReactionPicker();
+
+        root.querySelectorAll("[data-toggle-composer-emoji]").forEach(
+            (button) => {
+                button.classList.toggle("is-open", state.composerEmojiOpen);
+            },
+        );
+
+        root.querySelectorAll(".chat-composer-emoji-picker").forEach(
+            (picker) => {
+                picker.classList.toggle("is-open", state.composerEmojiOpen);
+            },
+        );
+    }
+
     function toggleMessageMenu(messageId) {
         const nextId =
             state.openMessageMenuId === Number(messageId)
                 ? null
                 : Number(messageId);
         state.openMessageMenuId = nextId;
+        closeReactionPicker();
+        closeComposerEmojiPicker();
 
         root.querySelectorAll("[data-message-menu-id]").forEach((menu) => {
             const isOpen = Number(menu.dataset.messageMenuId) === nextId;
@@ -302,6 +418,8 @@
             : null;
 
         closeMessageMenu();
+        closeReactionPicker();
+        closeComposerEmojiPicker();
         renderComposer();
         document.getElementById("chat-message-input")?.focus();
     }
@@ -615,9 +733,65 @@
         const isMenuOpen =
             canShowMenu &&
             Number(state.openMessageMenuId) === Number(message.id);
+        const canReact = canShowMenu && !message.isRecalled;
+        const isReactionPickerOpen =
+            canReact &&
+            Number(state.openReactionPickerId) === Number(message.id);
+        const reactionsHtml =
+            Array.isArray(message.reactions) && message.reactions.length
+                ? `<div class="chat-message-reactions">
+                        ${message.reactions
+                            .map(
+                                (reaction) => `
+                                    <button
+                                        type="button"
+                                        class="chat-message-reaction-pill${reaction.reactedByMe ? " is-active" : ""}"
+                                        data-toggle-reaction="${message.id}"
+                                        data-emoji="${esc(reaction.emoji)}"
+                                        title="${esc(reactionUsersText(reaction))}"
+                                        aria-label="${esc(reactionUsersText(reaction))}"
+                                    >
+                                        <span class="chat-message-reaction-pill-emoji">${esc(reaction.emoji)}</span>
+                                        <span class="chat-message-reaction-pill-count">${esc(reaction.count)}</span>
+                                    </button>`,
+                            )
+                            .join("")}
+                   </div>`
+                : "";
         const menuHtml = canShowMenu
             ? `
                 <div class="chat-message-tools">
+                    ${
+                        canReact
+                            ? `<div class="chat-message-reaction-wrap">
+                                    <button
+                                        type="button"
+                                        class="chat-message-reaction-btn ${isReactionPickerOpen ? "is-open" : ""}"
+                                        data-message-reaction-btn="${message.id}"
+                                        aria-label="Thả cảm xúc"
+                                    >
+                                        <i class="fas fa-smile"></i>
+                                    </button>
+                                    <div
+                                        class="chat-message-reaction-popover ${isReactionPickerOpen ? "is-open" : ""}"
+                                        data-message-reaction-picker="${message.id}"
+                                    >
+                                        ${REACTION_EMOJIS.map(
+                                            (emoji) => `
+                                                <button
+                                                    type="button"
+                                                    class="chat-reaction-emoji-btn"
+                                                    data-picker-reaction="${message.id}"
+                                                    data-emoji="${esc(emoji)}"
+                                                    aria-label="Thả cảm xúc ${esc(emoji)}"
+                                                >
+                                                    ${esc(emoji)}
+                                                </button>`,
+                                        ).join("")}
+                                    </div>
+                               </div>`
+                            : ""
+                    }
                     <button
                         type="button"
                         class="chat-message-menu-btn ${isMenuOpen ? "is-open" : ""}"
@@ -659,6 +833,7 @@
                     </div>
                     ${menuHtml}
                 </div>
+                ${reactionsHtml}
             </div>`;
 
         return wrap;
@@ -902,7 +1077,32 @@
                                    </div>`
                                 : ""
                         }
-                        <textarea id="chat-message-input" placeholder="Nhập tin nhắn cho lớp học của bạn...">${esc(state.messageDraft)}</textarea>  
+                        <div class="chat-composer-input-shell">
+                            <textarea id="chat-message-input" placeholder="Nhập tin nhắn cho lớp học của bạn...">${esc(state.messageDraft)}</textarea>
+                            <div class="chat-composer-emoji">
+                                <button
+                                    type="button"
+                                    class="chat-composer-emoji-btn ${state.composerEmojiOpen ? "is-open" : ""}"
+                                    data-toggle-composer-emoji
+                                    aria-label="Thêm cảm xúc"
+                                >
+                                    <i class="fas fa-smile"></i>
+                                </button>
+                                <div class="chat-composer-emoji-picker ${state.composerEmojiOpen ? "is-open" : ""}">
+                                    ${COMPOSER_EMOJIS.map(
+                                        (emoji) => `
+                                            <button
+                                                type="button"
+                                                class="chat-reaction-emoji-btn"
+                                                data-composer-emoji="${esc(emoji)}"
+                                                aria-label="Chèn cảm xúc ${esc(emoji)}"
+                                            >
+                                                ${esc(emoji)}
+                                            </button>`,
+                                    ).join("")}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <button type="submit" class="chat-send-btn" ${state.submitting ? "disabled" : ""}>
                         <i class="fas fa-paper-plane"></i>
@@ -1184,6 +1384,7 @@
         polling = true;
         const roomId = Number(state.selectedRoom.id);
         const after = state.lastMessageId;
+        const previousUpdatedAt = state.selectedRoom.updatedAt || null;
 
         try {
             const url = new URL(BS.endpoints.poll, window.location.origin);
@@ -1204,7 +1405,13 @@
                 return;
 
             if (data && data.status === "ok") {
+                let roomChanged = false;
+
                 if (data.room) {
+                    roomChanged =
+                        Boolean(previousUpdatedAt) &&
+                        Boolean(data.room.updatedAt) &&
+                        previousUpdatedAt !== data.room.updatedAt;
                     syncRoomInList(data.room);
                     renderMainHeader();
                     renderInfoPanel();
@@ -1223,6 +1430,10 @@
                         renderInfoPanel();
                         markReadSilently(roomId, state.lastMessageId);
                     }
+                } else if (roomChanged) {
+                    await loadSelectedRoomMessages(roomId, {
+                        preservePosition: true,
+                    });
                 }
             }
         } catch (_) {
@@ -1335,6 +1546,8 @@
         state.messageDraft = "";
         state.replyingTo = null;
         state.openMessageMenuId = null;
+        state.openReactionPickerId = null;
+        state.composerEmojiOpen = false;
         state.roomMembers = [];
         state.roomMembersLoading = false;
 
@@ -1445,6 +1658,76 @@
         }
     }
 
+    function insertComposerEmoji(emoji) {
+        if (!emoji) return;
+
+        const input = document.getElementById("chat-message-input");
+        if (!input) return;
+
+        const currentValue = input.value || "";
+        const start = Number.isInteger(input.selectionStart)
+            ? input.selectionStart
+            : currentValue.length;
+        const end = Number.isInteger(input.selectionEnd)
+            ? input.selectionEnd
+            : start;
+        const nextValue =
+            currentValue.slice(0, start) + emoji + currentValue.slice(end);
+        const nextCursor = start + emoji.length;
+
+        input.value = nextValue;
+        state.messageDraft = nextValue;
+        closeComposerEmojiPicker();
+        resizeComposerTextarea(input);
+        input.focus();
+        input.setSelectionRange(nextCursor, nextCursor);
+    }
+
+    async function toggleReaction(messageId, emoji) {
+        if (!state.selectedRoom || !messageId || !emoji) return;
+
+        const targetMessage = findMessageById(messageId);
+        if (
+            !targetMessage ||
+            targetMessage._pending ||
+            targetMessage.isRecalled
+        ) {
+            return;
+        }
+
+        try {
+            closeMessageMenu();
+            closeReactionPicker();
+
+            const data = await api(
+                BS.endpoints.react.replace("__MESSAGE__", messageId),
+                {
+                    method: "POST",
+                    body: JSON.stringify({
+                        roomId: state.selectedRoom.id,
+                        emoji,
+                    }),
+                },
+            );
+
+            replaceMessageInState(data.chatMessage);
+            syncRoomInList({ ...data.room, unreadCount: 0 });
+            state.selectedRoom = {
+                ...state.selectedRoom,
+                ...data.room,
+                unreadCount: 0,
+            };
+
+            renderMessageBoard();
+            renderRoomList();
+            renderMainHeader();
+            renderInfoPanel();
+            notice("", "");
+        } catch (error) {
+            notice("error", error.payload?.message || error.message);
+        }
+    }
+
     async function sendMessage() {
         const input = document.getElementById("chat-message-input");
         if (!input || !state.selectedRoom) return;
@@ -1454,6 +1737,7 @@
         const replyTo = state.replyingTo ? { ...state.replyingTo } : null;
 
         state.submitting = true;
+        state.composerEmojiOpen = false;
         state.messageDraft = "";
         input.value = "";
         resizeComposerTextarea(input);
@@ -1546,6 +1830,20 @@
             closeMessageMenu();
         }
 
+        if (
+            !event.target.closest(".chat-message-reaction-wrap") &&
+            !event.target.closest(".chat-message-reactions")
+        ) {
+            closeReactionPicker();
+        }
+
+        if (
+            !event.target.closest(".chat-composer-emoji") &&
+            !event.target.closest("[data-toggle-composer-emoji]")
+        ) {
+            closeComposerEmojiPicker();
+        }
+
         if (event.target.closest("[data-toggle-rooms]")) {
             setMobilePanel("rooms", !state.mobileSidebarOpen);
             return;
@@ -1577,6 +1875,43 @@
 
         if (event.target.closest("[data-cancel-reply]")) {
             setReplyingTo(null);
+            return;
+        }
+
+        if (event.target.closest("[data-toggle-composer-emoji]")) {
+            toggleComposerEmojiPicker();
+            return;
+        }
+
+        const composerEmojiButton = event.target.closest("[data-composer-emoji]");
+        if (composerEmojiButton) {
+            insertComposerEmoji(composerEmojiButton.dataset.composerEmoji || "");
+            return;
+        }
+
+        const messageReactionButton = event.target.closest(
+            "[data-message-reaction-btn]",
+        );
+        if (messageReactionButton) {
+            toggleReactionPicker(messageReactionButton.dataset.messageReactionBtn);
+            return;
+        }
+
+        const pickerReactionButton = event.target.closest("[data-picker-reaction]");
+        if (pickerReactionButton) {
+            toggleReaction(
+                Number(pickerReactionButton.dataset.pickerReaction),
+                pickerReactionButton.dataset.emoji || "",
+            );
+            return;
+        }
+
+        const reactionPill = event.target.closest("[data-toggle-reaction]");
+        if (reactionPill) {
+            toggleReaction(
+                Number(reactionPill.dataset.toggleReaction),
+                reactionPill.dataset.emoji || "",
+            );
             return;
         }
 
@@ -1645,12 +1980,18 @@
 
         if (event.key === "Escape") {
             if (state.openMessageMenuId !== null) closeMessageMenu();
+            else if (state.openReactionPickerId !== null) closeReactionPicker();
+            else if (state.composerEmojiOpen) closeComposerEmojiPicker();
             else if (state.replyingTo) setReplyingTo(null);
         }
     });
 
     document.addEventListener("click", (event) => {
-        if (!root.contains(event.target)) closeMessageMenu();
+        if (!root.contains(event.target)) {
+            closeMessageMenu();
+            closeReactionPicker();
+            closeComposerEmojiPicker();
+        }
     });
 
     document.addEventListener("visibilitychange", () => {

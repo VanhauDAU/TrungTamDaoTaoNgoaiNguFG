@@ -7,6 +7,7 @@ use App\Services\ChatAccessService;
 use App\Services\ChatMessageService;
 use App\Services\ChatRoomService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class ClientChatController extends Controller
 {
@@ -246,6 +247,38 @@ class ClientChatController extends Controller
         return response()->json([
             'message' => 'Đã thu hồi tin nhắn.',
             'chatMessage' => $recalled,
+            'room' => $chatRoomService->buildRoomPayload($room, $user, $chatAccessService),
+        ]);
+    }
+
+    public function react(Request $request, int $messageId, ChatRoomService $chatRoomService, ChatAccessService $chatAccessService, ChatMessageService $chatMessageService)
+    {
+        $validated = $request->validate([
+            'roomId' => 'required|integer',
+            'emoji' => ['required', 'string', Rule::in(ChatMessageService::reactionEmojis())],
+        ]);
+
+        $user = $request->user();
+        $room = $chatRoomService->getVisibleRoomForUser((int) $validated['roomId'], $user, $chatAccessService);
+
+        abort_unless($room, 404);
+
+        if (!$chatAccessService->canAccessRoom($user, $room)) {
+            return response()->json(['message' => 'Bạn chưa tham gia nhóm chat này.'], 403);
+        }
+
+        $message = $chatMessageService->findVisibleMessageForUser($room, $user, $messageId);
+        if (!$message) {
+            return response()->json(['message' => 'Không tìm thấy tin nhắn cần thả cảm xúc.'], 404);
+        }
+
+        $reaction = $chatMessageService->toggleReaction($room, $user, $message, (string) $validated['emoji']);
+        $room->refresh();
+
+        return response()->json([
+            'message' => $reaction['reacted'] ? 'Đã thêm cảm xúc.' : 'Đã bỏ cảm xúc.',
+            'chatMessage' => $reaction['chatMessage'],
+            'reacted' => $reaction['reacted'],
             'room' => $chatRoomService->buildRoomPayload($room, $user, $chatAccessService),
         ]);
     }

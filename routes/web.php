@@ -104,6 +104,7 @@ Route::prefix('/')->name('home.')->group(function () {
         Route::post('/rooms/{id}/read', [ClientChatController::class, 'markRead'])->name('read');
         Route::post('/messages', [ClientChatController::class, 'send'])->name('send');
         Route::post('/messages/{id}/recall', [ClientChatController::class, 'recall'])->name('recall');
+        Route::post('/messages/{id}/react', [ClientChatController::class, 'react'])->name('react');
     });
 
 });

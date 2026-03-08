@@ -29,6 +29,8 @@
             rooms: @json($rooms),
             selectedRoom: @json($selectedRoom),
             csrf: '{{ csrf_token() }}',
+            reactionEmojis: @json(\App\Services\ChatMessageService::reactionEmojis()),
+            composerEmojis: @json(\App\Services\ChatMessageService::composerEmojis()),
             endpoints: {
                 poll: '{{ route('home.api.chat.poll') }}',
                 rooms: '{{ route('home.api.chat.rooms') }}',
@@ -39,6 +41,7 @@
                 read: '{{ url('/api/chat/rooms/__ROOM__/read') }}',
                 send: '{{ route('home.api.chat.send') }}',
                 recall: '{{ url('/api/chat/messages/__MESSAGE__/recall') }}',
+                react: '{{ url('/api/chat/messages/__MESSAGE__/react') }}',
             }
         };
     </script>
