@@ -167,6 +167,7 @@ class ThongBaoController extends Controller
     {
         $lopHocs    = LopHoc::select('lopHocId', 'tenLopHoc', 'khoaHocId')->orderBy('tenLopHoc')->get();
         $khoaHocs   = KhoaHoc::select('khoaHocId', 'tenKhoaHoc')->orderBy('tenKhoaHoc')->get();
+        $coSos      = CoSoDaoTao::select('coSoId', 'tenCoSo')->orderBy('tenCoSo')->get();
         $taiKhoans  = TaiKhoan::with('hoSoNguoiDung', 'nhanSu')
             ->where('trangThai', 1)
             ->orderBy('taiKhoanId')
@@ -226,22 +227,6 @@ class ThongBaoController extends Controller
             return redirect()
                 ->route('admin.thong-bao.edit', $tb->thongBaoId)
                 ->with('success', 'Đã lưu bản nháp. Bạn có thể chỉnh sửa thêm và bấm "Gửi thông báo ngay" để phát hành.');
-        }
-
-        if ($isScheduled) {
-            $this->ghiLichSu($tb->thongBaoId, 'scheduled', 'Đã lên lịch gửi thông báo.', [
-                'scheduled_at' => $scheduledAt?->toDateTimeString(),
-            ]);
-            return redirect()
-                ->route('admin.thong-bao.show', $tb->thongBaoId)
-                ->with('success', 'Đã lên lịch gửi thông báo vào ' . $scheduledAt->format('d/m/Y H:i') . '.');
-        }
-
-        if ($isSchedule) {
-            $this->ghiLichSu($tb->thongBaoId, 'scheduled', 'Đã lên lịch gửi thông báo vào ' . Carbon::parse($validated['scheduled_at'])->format('d/m/Y H:i') . '.');
-            return redirect()
-                ->route('admin.thong-bao.show', $tb->thongBaoId)
-                ->with('success', 'Đã lên lịch gửi thông báo vào ' . Carbon::parse($validated['scheduled_at'])->format('d/m/Y H:i') . '.');
         }
 
         // Gửi ngay
