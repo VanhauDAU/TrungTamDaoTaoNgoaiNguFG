@@ -1045,6 +1045,13 @@
 
 @section('script')
     <script>
+        const BUOI_HOC_UPDATE_URL_TEMPLATE = @js(route('admin.buoi-hoc.update', ['id' => '__ID__']));
+        const BUOI_HOC_DELETE_URL_TEMPLATE = @js(route('admin.buoi-hoc.destroy', ['id' => '__ID__']));
+
+        function getBuoiHocActionUrl(template, id) {
+            return template.replace('__ID__', String(id));
+        }
+
         function toggleAddForm() {
             const f = document.getElementById('addBhForm');
             f.style.display = f.style.display === 'block' ? 'none' : 'block';
@@ -1064,7 +1071,7 @@
             }).then(r => {
                 if (r.isConfirmed) {
                     const form = document.getElementById('delete-bh-form');
-                    form.action = `/admin/buoi-hoc/${id}`;
+                    form.action = getBuoiHocActionUrl(BUOI_HOC_DELETE_URL_TEMPLATE, id);
                     form.submit();
                 }
             });
@@ -1075,7 +1082,7 @@
             fd.append('_token', '{{ csrf_token() }}');
             fd.append('_method', 'PUT');
             fd.append('daHoanThanh', newVal);
-            fetch(`/admin/buoi-hoc/${id}`, {
+            fetch(getBuoiHocActionUrl(BUOI_HOC_UPDATE_URL_TEMPLATE, id), {
                 method: 'POST',
                 headers: {
                     'Accept': 'application/json'
@@ -1153,26 +1160,32 @@
             fd.append('daHoanThanh', document.getElementById('ebh-hoanhthanh').value);
             fd.append('ghiChu', document.getElementById('ebh-ghichu').value);
 
-            fetch(`/admin/buoi-hoc/${_editBuoiHocId}`, {
+            fetch(getBuoiHocActionUrl(BUOI_HOC_UPDATE_URL_TEMPLATE, _editBuoiHocId), {
                     method: 'POST',
                     headers: {
                         'Accept': 'application/json'
                     },
                     body: fd,
                 })
-                .then(r => r.json())
+                .then(async r => {
+                    const data = await r.json().catch(() => ({}));
+                    if (!r.ok) {
+                        throw new Error(data.message || 'Không thể cập nhật buổi học.');
+                    }
+                    return data;
+                })
                 .then(data => {
                     if (data.success) {
                         closeEditModal();
                         location.reload();
                     } else {
-                        alert('Có lỗi xảy ra: ' + (data.message || 'Thử lại sau.'));
-                        btn.disabled = false;
-                        btn.innerHTML = '<i class="fas fa-save me-1"></i> Lưu thay đổi';
+                        throw new Error(data.message || 'Thử lại sau.');
                     }
                 })
-                .catch(() => {
-                    location.reload();
+                .catch((error) => {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-save me-1"></i> Lưu thay đổi';
+                    Swal.fire('Lỗi', error.message || 'Không thể cập nhật buổi học.', 'error');
                 });
         }
     </script>
