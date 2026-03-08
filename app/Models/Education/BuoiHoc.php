@@ -21,7 +21,7 @@ class BuoiHoc extends Model
         'ghiChu',
         'daDiemDanh',
         'daHoanThanh',
-        'trangThai'
+        'trangThai' 
     ];
 
     protected $casts = [
