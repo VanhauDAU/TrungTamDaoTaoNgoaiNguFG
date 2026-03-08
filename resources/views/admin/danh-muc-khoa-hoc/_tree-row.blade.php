@@ -11,18 +11,26 @@
 
 {{-- data-parent = cha TRỰC TIẾP; data-tree-id = ID của chính nó --}}
 <tr class="dm-row-child {{ $hasKids ? 'has-children' : '' }}" data-parent="{{ $parentId }}"
-    data-tree-id="{{ $node->danhMucId }}">
+    data-tree-id="{{ $node->danhMucId }}"
+    data-depth="{{ $depth }}"
+    @if (empty($sortingLocked)) draggable="true" @endif>
 
     {{-- Toggle --}}
     <td style="text-align:center">
-        @if ($hasKids)
-            <button type="button" class="dm-toggle-tree" onclick="toggleChildren({{ $node->danhMucId }}, this)"
-                title="Thu gọn/Mở rộng">
-                <i class="fas fa-chevron-down"></i>
-            </button>
-        @else
-            <span style="color:#d1d5db;font-size:.8rem"><i class="fas fa-minus"></i></span>
-        @endif
+        <div class="dm-tree-tools">
+            <span class="dm-drag-handle {{ !empty($sortingLocked) ? 'is-disabled' : '' }}"
+                title="{{ !empty($sortingLocked) ? 'Bỏ bộ lọc để kéo thả' : 'Kéo để đổi thứ tự' }}">
+                <i class="fas fa-grip-vertical"></i>
+            </span>
+            @if ($hasKids)
+                <button type="button" class="dm-toggle-tree" onclick="toggleChildren({{ $node->danhMucId }}, this)"
+                    title="Thu gọn/Mở rộng">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+            @else
+                <span style="color:#d1d5db;font-size:.8rem"><i class="fas fa-minus"></i></span>
+            @endif
+        </div>
     </td>
 
     {{-- Tên --}}
@@ -85,5 +93,6 @@
         'node' => $child,
         'depth' => $depth + 1,
         'parentId' => $node->danhMucId,
+        'sortingLocked' => $sortingLocked ?? false,
     ])
 @endforeach

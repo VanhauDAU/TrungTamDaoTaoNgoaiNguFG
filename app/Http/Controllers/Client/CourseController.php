@@ -19,12 +19,12 @@ class CourseController extends Controller
     {
         // Cây danh mục: roots + children đệ quy vô hạn cấp
         $tree = DanhMucKhoaHoc::with(['childrenRecursive' => function ($q) {
-            $q->where('trangThai', 1)->orderBy('tenDanhMuc');
+            $q->where('trangThai', 1)->ordered();
         }])
         ->whereNull('parent_id')
         ->where('trangThai', 1)
         ->withCount('khoaHocs')
-        ->orderBy('tenDanhMuc')
+        ->ordered()
         ->get();
 
         // Filters

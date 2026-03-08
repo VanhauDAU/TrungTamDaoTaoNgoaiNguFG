@@ -218,6 +218,43 @@
     color: var(--dm-text);
     vertical-align: middle;
 }
+.dm-row-dragging {
+    opacity: .55;
+}
+.dm-drop-target td {
+    background: #ecfeff !important;
+}
+.dm-tree-tools {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.dm-drag-handle {
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    background: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    cursor: grab;
+}
+.dm-drag-handle.is-disabled {
+    cursor: not-allowed;
+    opacity: .45;
+}
+.dm-row-parent[draggable="true"],
+.dm-row-child[draggable="true"] {
+    cursor: grab;
+}
+.dm-row-parent[draggable="true"]:active,
+.dm-row-child[draggable="true"]:active,
+.dm-row-parent[draggable="true"] .dm-drag-handle:active,
+.dm-row-child[draggable="true"] .dm-drag-handle:active {
+    cursor: grabbing;
+}
 .dm-badge-active   { background: #dcfce7; color: #16a34a; padding: 2px 10px; border-radius: 20px; font-size: .72rem; font-weight: 600; white-space: nowrap; }
 .dm-badge-inactive { background: #fee2e2; color: #dc2626; padding: 2px 10px; border-radius: 20px; font-size: .72rem; font-weight: 600; white-space: nowrap; }
 .dm-count-badge {

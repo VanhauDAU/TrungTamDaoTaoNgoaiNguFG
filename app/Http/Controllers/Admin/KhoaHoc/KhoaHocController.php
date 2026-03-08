@@ -50,7 +50,7 @@ class KhoaHocController extends Controller
         $tongSo       = KhoaHoc::count();
         $dangHoatDong = KhoaHoc::where('trangThai', 1)->count();
         $tongLopHoc   = LopHoc::count();
-        $danhMucs     = DanhMucKhoaHoc::orderBy('tenDanhMuc')->get();
+        $danhMucs     = DanhMucKhoaHoc::ordered()->get();
 
         return view('admin.khoa-hoc.index', compact(
             'khoaHocs',

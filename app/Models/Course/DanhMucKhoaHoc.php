@@ -17,6 +17,7 @@ class DanhMucKhoaHoc extends Model
         'moTa',
         'trangThai',
         'parent_id',
+        'sort_order',
     ];
 
     // ── Relationships ──────────────────────────────────────────────
@@ -28,6 +29,7 @@ class DanhMucKhoaHoc extends Model
     public function children()
     {
         return $this->hasMany(DanhMucKhoaHoc::class, 'parent_id', 'danhMucId')
+                    ->orderBy('sort_order')
                     ->orderBy('tenDanhMuc');
     }
 
@@ -47,6 +49,11 @@ class DanhMucKhoaHoc extends Model
     public function scopeRoots($query)
     {
         return $query->whereNull('parent_id');
+    }
+
+    public function scopeOrdered($query)
+    {
+        return $query->orderBy('sort_order')->orderBy('tenDanhMuc');
     }
 
     // ── Generator ──────────────────────────────────────────────────
@@ -89,7 +96,7 @@ class DanhMucKhoaHoc extends Model
     {
         $all = static::with('childrenRecursive')
                     ->whereNull('parent_id')
-                    ->orderBy('tenDanhMuc')
+                    ->ordered()
                     ->get();
 
         $result = collect();
@@ -121,5 +128,10 @@ class DanhMucKhoaHoc extends Model
             }
         }
         return array_unique($ids);
+    }
+
+    public static function nextSortOrder(?int $parentId = null): int
+    {
+        return (int) static::where('parent_id', $parentId)->max('sort_order') + 1;
     }
 }
