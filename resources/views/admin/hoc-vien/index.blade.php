@@ -94,6 +94,10 @@
         <a href="{{ route('admin.hoc-vien.index') }}" class="btn-filter btn-filter-reset">
             <i class="fas fa-times"></i> Đặt lại
         </a>
+        <a href="{{ route('admin.hoc-vien.export', request()->query()) }}" class="btn-filter btn-filter-primary"
+            style="background:#15803d;border-color:#15803d">
+            <i class="fas fa-file-excel"></i> Xuất Excel
+        </a>
     </form>
 
     {{-- ── Table card ─────────────────────────────────────────────── --}}
@@ -198,7 +202,7 @@
 
                                 <td>
                                     <span class="badge-classes">
-                                        {{ $hv->dangKyLopHocs->count() }}
+                                        {{ $hv->dang_ky_lop_hocs_count }}
                                     </span>
                                 </td>
 

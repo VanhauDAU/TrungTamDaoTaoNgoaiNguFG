@@ -6,6 +6,7 @@ use App\Http\Controllers\Client\HomeController;
 use App\Http\Controllers\Client\AboutController;
 use App\Http\Controllers\Client\CourseController;
 use App\Http\Controllers\Client\StudentController;
+use App\Http\Controllers\Client\ClientChatController;
 use App\Http\Controllers\Admin\HomeController as AdminHomeController;
 use App\Http\Controllers\Admin\NhomQuyenController;
 use App\Http\Controllers\Admin\HocVien\HocVienController as AdminHocVienController;
@@ -75,6 +76,7 @@ Route::prefix('/')->name('home.')->group(function () {
         Route::get('/hoa-don/{id}', [StudentController::class, 'invoiceDetail'])->name('invoices.show');
         Route::get('/lop-hoc', [StudentController::class, 'myClasses'])->name('classes');
         Route::get('/lich-hoc', [StudentController::class, 'schedule'])->name('schedule');
+        Route::get('/chat', [ClientChatController::class, 'index'])->name('chat');
     });
 
     // ── Thông báo client (auth required) ────────────────────────────────────
@@ -90,6 +92,14 @@ Route::prefix('/')->name('home.')->group(function () {
         Route::patch('/{id}/da-doc', [ClientThongBaoController::class, 'markRead'])->name('mark-read');
         Route::patch('/{id}/chua-doc', [ClientThongBaoController::class, 'markUnread'])->name('mark-unread');
         Route::patch('/da-doc-tat-ca', [ClientThongBaoController::class, 'markAllRead'])->name('mark-all-read');
+    });
+
+    Route::prefix('api/chat')->name('api.chat.')->middleware('auth')->group(function () {
+        Route::get('/rooms', [ClientChatController::class, 'rooms'])->name('rooms');
+        Route::get('/rooms/{id}/messages', [ClientChatController::class, 'messages'])->name('messages');
+        Route::post('/rooms/{id}/join', [ClientChatController::class, 'join'])->name('join');
+        Route::post('/rooms/{id}/read', [ClientChatController::class, 'markRead'])->name('read');
+        Route::post('/messages', [ClientChatController::class, 'send'])->name('send');
     });
 
 });
@@ -119,6 +129,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
     // ── Học viên ─────────────────────────────────────────────────────────────
     Route::prefix('hoc-vien')->name('hoc-vien.')->group(function () {
         Route::get('/', [AdminHocVienController::class, 'index'])->name('index');
+        Route::get('/xuat-excel', [AdminHocVienController::class, 'export'])->name('export');
         Route::get('/tao-moi', [AdminHocVienController::class, 'create'])->name('create');
         Route::post('/', [AdminHocVienController::class, 'store'])->name('store');
         Route::get('/thung-rac', [AdminHocVienController::class, 'trash'])->name('trash');

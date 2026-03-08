@@ -124,6 +124,8 @@
                                 <li><a class="dropdown-item py-2" href="{{ route('home.student.index') }}"><i
                                             class="far fa-user-circle me-2 text-primary"></i>Tài khoản cá nhân</a></li>
                                 <li>
+                                    <a class="dropdown-item py-2" href="{{ route('home.student.chat') }}"><i
+                                            class="far fa-comments me-2 text-primary"></i>Chat lớp học</a>
                                     <hr class="dropdown-divider">
                                 </li>
                                 <li>

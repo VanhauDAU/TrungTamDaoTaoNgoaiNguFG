@@ -7,7 +7,11 @@
     @yield('stylesheet')
 </head>
 
-<body>
+@php
+    $isChatPage = Route::is('home.student.chat');
+@endphp
+
+<body class="@yield('body_class') {{ $isChatPage ? 'client-chat-mode' : '' }}">
     {{-- Loading Screen --}}
     <div id="page-loader" class="page-loader">
         <div class="loader-content">
@@ -20,13 +24,17 @@
     {{-- Nội dung --}}
     @yield('content')
     {{-- Footer --}}
-    @include('components.client.footer')
-    @unless (Route::is('login') || Route::is('register'))
+    @unless ($isChatPage)
+        @include('components.client.footer')
+    @endunless
+    @unless (Route::is('login') || Route::is('register') || $isChatPage)
         @include('components.client.sticky-contact')
     @endunless
     @include('partials.client.script')
     @yield('script')
-    @include('components.client.floating-contact')
+    @unless ($isChatPage)
+        @include('components.client.floating-contact')
+    @endunless
 </body>
 
 </html>
