@@ -33,9 +33,12 @@
                 poll: '{{ route('home.api.chat.poll') }}',
                 rooms: '{{ route('home.api.chat.rooms') }}',
                 messages: '{{ url('/api/chat/rooms/__ROOM__/messages') }}',
+                members: '{{ url('/api/chat/rooms/__ROOM__/members') }}',
                 join: '{{ url('/api/chat/rooms/__ROOM__/join') }}',
+                direct: '{{ route('home.api.chat.direct') }}',
                 read: '{{ url('/api/chat/rooms/__ROOM__/read') }}',
                 send: '{{ route('home.api.chat.send') }}',
+                recall: '{{ url('/api/chat/messages/__MESSAGE__/recall') }}',
             }
         };
     </script>

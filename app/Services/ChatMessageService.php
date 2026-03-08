@@ -3,14 +3,18 @@
 namespace App\Services;
 
 use App\Models\Auth\TaiKhoan;
+use App\Models\Interaction\Chat\ChatAuditLog;
 use App\Models\Interaction\Chat\ChatMessage;
 use App\Models\Interaction\Chat\ChatRoom;
 use App\Models\Interaction\Chat\ChatRoomMember;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class ChatMessageService
 {
+    private const RECALL_PLACEHOLDER = 'Tin nhắn đã được thu hồi';
+
     public function getMessagesForUser(ChatRoom $room, TaiKhoan $taiKhoan, ?int $beforeMessageId = null, int $limit = 50): Collection
     {
         $query = ChatMessage::query()
@@ -49,12 +53,25 @@ class ChatMessageService
             ->map(fn(ChatMessage $message) => $this->transformMessage($message, $taiKhoan));
     }
 
-    public function sendTextMessage(ChatRoom $room, TaiKhoan $taiKhoan, string $content): array
+    public function findVisibleMessageForUser(ChatRoom $room, TaiKhoan $taiKhoan, int $messageId): ?ChatMessage
     {
-        $message = DB::transaction(function () use ($room, $taiKhoan, $content) {
+        return ChatMessage::query()
+            ->with(['nguoiGui.hoSoNguoiDung', 'replyTo.nguoiGui.hoSoNguoiDung'])
+            ->where('chatRoomId', $room->chatRoomId)
+            ->where('chatMessageId', $messageId)
+            ->whereDoesntHave('deletes', function ($subQuery) use ($taiKhoan) {
+                $subQuery->where('taiKhoanId', $taiKhoan->taiKhoanId);
+            })
+            ->first();
+    }
+
+    public function sendTextMessage(ChatRoom $room, TaiKhoan $taiKhoan, string $content, ?ChatMessage $replyTo = null): array
+    {
+        $message = DB::transaction(function () use ($room, $taiKhoan, $content, $replyTo) {
             $message = ChatMessage::query()->create([
                 'chatRoomId' => $room->chatRoomId,
                 'nguoiGuiId' => $taiKhoan->taiKhoanId,
+                'replyToMessageId' => $replyTo?->chatMessageId,
                 'loai' => ChatMessage::TYPE_TEXT,
                 'noiDung' => trim($content),
                 'guiLuc' => now(),
@@ -81,6 +98,66 @@ class ChatMessageService
                     'roiAt' => null,
                 ]
             );
+
+            ChatAuditLog::query()->create([
+                'chatRoomId' => $room->chatRoomId,
+                'chatMessageId' => $message->chatMessageId,
+                'taiKhoanId' => $taiKhoan->taiKhoanId,
+                'hanhDong' => 'message.sent',
+                'duLieuMoi' => [
+                    'type' => $message->loai,
+                    'replyToMessageId' => $replyTo?->chatMessageId,
+                ],
+                'created_at' => now(),
+            ]);
+
+            return $message->fresh(['nguoiGui.hoSoNguoiDung', 'replyTo.nguoiGui.hoSoNguoiDung']);
+        });
+
+        return $this->transformMessage($message, $taiKhoan);
+    }
+
+    public function recallMessage(ChatRoom $room, TaiKhoan $taiKhoan, ChatMessage $message): array
+    {
+        if ((int) $message->chatRoomId !== (int) $room->chatRoomId) {
+            throw ValidationException::withMessages([
+                'messageId' => 'Tin nhắn không thuộc phòng chat đã chọn.',
+            ]);
+        }
+
+        if (!$this->canRecallMessage($message, $taiKhoan)) {
+            throw ValidationException::withMessages([
+                'messageId' => 'Tin nhắn này không còn có thể thu hồi.',
+            ]);
+        }
+
+        $message = DB::transaction(function () use ($room, $taiKhoan, $message) {
+            $oldData = [
+                'content' => $message->noiDung,
+                'thuHoiLuc' => optional($message->thuHoiLuc)?->toIso8601String(),
+            ];
+
+            $message->forceFill([
+                'thuHoiLuc' => now(),
+                'updated_at' => now(),
+            ])->save();
+
+            $room->forceFill([
+                'updated_at' => now(),
+            ])->save();
+
+            ChatAuditLog::query()->create([
+                'chatRoomId' => $room->chatRoomId,
+                'chatMessageId' => $message->chatMessageId,
+                'taiKhoanId' => $taiKhoan->taiKhoanId,
+                'hanhDong' => 'message.recalled',
+                'duLieuCu' => $oldData,
+                'duLieuMoi' => [
+                    'content' => self::RECALL_PLACEHOLDER,
+                    'thuHoiLuc' => now()->toIso8601String(),
+                ],
+                'created_at' => now(),
+            ]);
 
             return $message->fresh(['nguoiGui.hoSoNguoiDung', 'replyTo.nguoiGui.hoSoNguoiDung']);
         });
@@ -122,7 +199,7 @@ class ChatMessageService
             'id' => $message->chatMessageId,
             'roomId' => $message->chatRoomId,
             'type' => $message->loai,
-            'content' => $message->thuHoiLuc ? 'Tin nhắn đã được thu hồi' : (string) $message->noiDung,
+            'content' => $message->thuHoiLuc ? self::RECALL_PLACEHOLDER : (string) $message->noiDung,
             'isMine' => (int) $message->nguoiGuiId === (int) $taiKhoan->taiKhoanId,
             'senderId' => $message->nguoiGuiId,
             'senderName' => $senderName,
@@ -131,7 +208,11 @@ class ChatMessageService
                 'senderName' => optional(optional($message->replyTo->nguoiGui)->hoSoNguoiDung)->hoTen
                     ?? optional($message->replyTo->nguoiGui)->taiKhoan
                     ?? 'Người dùng',
-                'content' => \Illuminate\Support\Str::limit((string) $message->replyTo->noiDung, 60),
+                'content' => \Illuminate\Support\Str::limit(
+                    $message->replyTo->thuHoiLuc ? self::RECALL_PLACEHOLDER : (string) $message->replyTo->noiDung,
+                    60
+                ),
+                'isRecalled' => $message->replyTo->thuHoiLuc !== null,
             ] : null,
             'isRecalled' => $message->thuHoiLuc !== null,
             'sentAt' => optional($message->guiLuc ?? $message->created_at)?->toIso8601String(),
@@ -140,5 +221,12 @@ class ChatMessageService
                 && (int) $message->nguoiGuiId === (int) $taiKhoan->taiKhoanId
                 && optional($message->deadlineThuHoi)?->isFuture(),
         ];
+    }
+
+    public function canRecallMessage(ChatMessage $message, TaiKhoan $taiKhoan): bool
+    {
+        return $message->thuHoiLuc === null
+            && (int) $message->nguoiGuiId === (int) $taiKhoan->taiKhoanId
+            && optional($message->deadlineThuHoi)?->isFuture();
     }
 }

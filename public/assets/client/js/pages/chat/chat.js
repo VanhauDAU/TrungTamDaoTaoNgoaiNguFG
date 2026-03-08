@@ -22,6 +22,10 @@
         mobileInfoOpen: false,
         messageDraft: "",
         messagesLoaded: false,
+        replyingTo: null,
+        openMessageMenuId: null,
+        roomMembers: [],
+        roomMembersLoading: false,
     };
 
     let pollTimer = null;
@@ -189,8 +193,42 @@
         return "Chưa thể gửi";
     }
 
+    function roomSecondaryTitle(room) {
+        if (!room) return "Nhóm lớp học";
+
+        if (room.type === "direct") {
+            return (
+                room.directContextClassName ||
+                room.directContextLabel ||
+                room.className ||
+                "Đoạn chat riêng"
+            );
+        }
+
+        return room.courseName || room.className || "Nhóm lớp học";
+    }
+
+    function roomMetaCaption(room) {
+        if (!room) return "Chưa có thông tin";
+
+        if (room.type === "direct") {
+            return room.directContextLabel || "Đoạn chat riêng";
+        }
+
+        return room.teacherName || "Chưa có giáo viên";
+    }
+
     function selectedRoomSubtitle(room) {
         if (!room) return "Chọn một nhóm chat để bắt đầu trao đổi với lớp học.";
+
+        if (room.type === "direct") {
+            return [
+                room.directContextLabel || "Đoạn chat riêng",
+                room.teacherName || null,
+            ]
+                .filter(Boolean)
+                .join(" • ");
+        }
 
         return [
             room.className,
@@ -204,11 +242,142 @@
     function roomMetaChips(room) {
         if (!room) return [];
 
+        if (room.type === "direct") {
+            return [
+                room.directContextClassName || "Đoạn chat riêng",
+                room.directContextCourseName || room.directContextLabel || "Kết nối lớp học",
+                room.directPeerName || room.name,
+            ];
+        }
+
         return [
             room.className || "Nhóm lớp học",
             room.courseName || "Chưa gắn khóa học",
             room.teacherName || "Chưa phân công",
         ];
+    }
+
+    function findMessageById(messageId) {
+        return (
+            state.messages.find(
+                (message) => String(message.id) === String(messageId),
+            ) || null
+        );
+    }
+
+    function closeMessageMenu() {
+        if (state.openMessageMenuId === null) return;
+        state.openMessageMenuId = null;
+        root.querySelectorAll(
+            ".chat-message-menu-btn.is-open, .chat-message-menu.is-open",
+        ).forEach((el) => el.classList.remove("is-open"));
+    }
+
+    function toggleMessageMenu(messageId) {
+        const nextId =
+            state.openMessageMenuId === Number(messageId)
+                ? null
+                : Number(messageId);
+        state.openMessageMenuId = nextId;
+
+        root.querySelectorAll("[data-message-menu-id]").forEach((menu) => {
+            const isOpen = Number(menu.dataset.messageMenuId) === nextId;
+            menu.classList.toggle("is-open", isOpen);
+        });
+
+        root.querySelectorAll("[data-message-menu-btn]").forEach((button) => {
+            const isOpen = Number(button.dataset.messageMenuBtn) === nextId;
+            button.classList.toggle("is-open", isOpen);
+        });
+    }
+
+    function setReplyingTo(message) {
+        state.replyingTo = message
+            ? {
+                  id: message.id,
+                  senderName: message.senderName,
+                  content: message.content,
+                  isRecalled: Boolean(message.isRecalled),
+              }
+            : null;
+
+        closeMessageMenu();
+        renderComposer();
+        document.getElementById("chat-message-input")?.focus();
+    }
+
+    function syncMessagesState(messages) {
+        state.messages = [];
+        state.messageIds = new Set();
+        state.lastMessageId = 0;
+
+        messages.forEach((message) => {
+            state.messages.push(message);
+
+            const id = Number(message.id);
+            if (Number.isFinite(id)) {
+                state.messageIds.add(id);
+                if (id > state.lastMessageId) state.lastMessageId = id;
+            }
+        });
+    }
+
+    function replaceMessageInState(updatedMessage) {
+        const index = state.messages.findIndex(
+            (message) => Number(message.id) === Number(updatedMessage.id),
+        );
+
+        if (index < 0) return false;
+
+        state.messages[index] = {
+            ...state.messages[index],
+            ...updatedMessage,
+        };
+
+        if (
+            state.replyingTo &&
+            Number(state.replyingTo.id) === Number(updatedMessage.id)
+        ) {
+            state.replyingTo = {
+                id: updatedMessage.id,
+                senderName: updatedMessage.senderName,
+                content: updatedMessage.content,
+                isRecalled: Boolean(updatedMessage.isRecalled),
+            };
+        }
+
+        return true;
+    }
+
+    async function loadRoomMembers(roomId) {
+        if (!roomId) {
+            state.roomMembers = [];
+            state.roomMembersLoading = false;
+            renderInfoPanel();
+            return [];
+        }
+
+        state.roomMembersLoading = true;
+        renderInfoPanel();
+
+        try {
+            const data = await api(ep(BS.endpoints.members, roomId), {
+                headers: { "Cache-Control": "no-cache" },
+            });
+
+            if (
+                !state.selectedRoom ||
+                Number(state.selectedRoom.id) !== Number(roomId)
+            ) {
+                return [];
+            }
+
+            state.roomMembers = Array.isArray(data.members) ? data.members : [];
+            return state.roomMembers;
+        } finally {
+            state.roomMembersLoading = false;
+            renderInfoPanel();
+        }
     }
 
     function syncRoomInList(updated) {
@@ -356,10 +525,10 @@
                                                     : `<span class="chat-room-time">${esc(room.lastMessageAtLabel || "Mới")}</span>`
                                             }
                                         </div>
-                                        <div class="chat-room-course">${esc(room.courseName || room.className || "Nhóm lớp học")}</div>
+                                        <div class="chat-room-course">${esc(roomSecondaryTitle(room))}</div>
                                         <div class="chat-room-preview">${esc(room.lastMessagePreview || "Chưa có tin nhắn")}</div>
                                         <div class="chat-room-meta">
-                                            <span>${esc(room.teacherName || "Chưa có giáo viên")}</span>
+                                            <span>${esc(roomMetaCaption(room))}</span>
                                             <span class="chat-room-state ${roomStatusClass(room)}">
                                                 <i class="fas ${room.canAccess ? "fa-circle-check" : room.canJoin ? "fa-user-plus" : "fa-lock"}"></i>
                                                 ${esc(roomMembershipText(room))}
@@ -432,12 +601,45 @@
         const wrap = document.createElement("div");
         wrap.className = `chat-message-row${message.isMine ? " is-mine" : ""}`;
         if (message._pending) wrap.dataset.pending = message.id;
+        if (!message._pending) wrap.dataset.messageId = message.id;
 
         const replyHtml = message.replyTo
             ? `
-                <div class="chat-reply-box">
+                <div class="chat-reply-box${message.replyTo.isRecalled ? " is-recalled" : ""}">
                     <div><strong>${esc(message.replyTo.senderName)}</strong></div>
                     <div>${esc(message.replyTo.content)}</div>
+                </div>`
+            : "";
+
+        const canShowMenu = !message._pending;
+        const isMenuOpen =
+            canShowMenu &&
+            Number(state.openMessageMenuId) === Number(message.id);
+        const menuHtml = canShowMenu
+            ? `
+                <div class="chat-message-tools">
+                    <button
+                        type="button"
+                        class="chat-message-menu-btn ${isMenuOpen ? "is-open" : ""}"
+                        data-message-menu-btn="${message.id}"
+                        aria-label="Tùy chọn tin nhắn"
+                    >
+                        <i class="fas fa-ellipsis"></i>
+                    </button>
+                    <div class="chat-message-menu ${isMenuOpen ? "is-open" : ""}" data-message-menu-id="${message.id}">
+                        <button type="button" class="chat-message-menu-item" data-message-action="reply" data-message-id="${message.id}">
+                            <i class="fas fa-reply"></i>
+                            <span>Trả lời</span>
+                        </button>
+                        ${
+                            message.canRecall
+                                ? `<button type="button" class="chat-message-menu-item is-danger" data-message-action="recall" data-message-id="${message.id}">
+                                        <i class="fas fa-rotate-left"></i>
+                                        <span>Thu hồi</span>
+                                   </button>`
+                                : ""
+                        }
+                    </div>
                 </div>`
             : "";
 
@@ -449,10 +651,13 @@
             }
             <div class="chat-message-stack">
                 ${message.isMine ? "" : `<div class="chat-message-sender">${esc(message.senderName)}</div>`}
-                <div class="chat-message-bubble${message._pending ? " is-pending" : ""}">
-                    ${replyHtml}
-                    <div class="chat-message-text">${esc(message.content)}</div>
-                    <div class="chat-message-time">${message._pending ? "Đang gửi..." : esc(message.sentAtLabel || "")}</div>
+                <div class="chat-message-bubble-wrap">
+                    <div class="chat-message-bubble${message._pending ? " is-pending" : ""}${message.isRecalled ? " is-recalled" : ""}">
+                        ${replyHtml}
+                        <div class="chat-message-text">${esc(message.content)}</div>
+                        <div class="chat-message-time">${message._pending ? "Đang gửi..." : esc(message.sentAtLabel || "")}</div>
+                    </div>
+                    ${menuHtml}
                 </div>
             </div>`;
 
@@ -541,48 +746,44 @@
         }
 
         const snapshot = messageSnapshot();
-        const infoCards = [
-            {
-                icon: "fa-chalkboard",
-                label: "Lớp học",
-                value: room.className || "Nhóm lớp học",
-            },
-            {
-                icon: "fa-book-open",
-                label: "Khóa học",
-                value: room.courseName || "Chưa gắn khóa học",
-            },
-            {
-                icon: "fa-user-tie",
-                label: "Giáo viên",
-                value: room.teacherName || "Chưa phân công",
-            },
-            {
-                icon: "fa-user-check",
-                label: "Tham gia",
-                value: roomMembershipText(room),
-            },
-            {
-                icon: "fa-paper-plane",
-                label: "Quyền gửi",
-                value: roomSendText(room),
-            },
-            {
-                icon: "fa-bell",
-                label: "Tin chưa đọc",
-                value: String(room.unreadCount || 0),
-            },
-            {
-                icon: "fa-clock",
-                label: "Hoạt động cuối",
-                value: room.lastMessageAtLabel || "Chưa cập nhật",
-            },
-            {
-                icon: "fa-layer-group",
-                label: "Đang tải",
-                value: `${snapshot.totalLoaded} tin`,
-            },
-        ];
+        const membersHtml = state.roomMembersLoading
+            ? `<div class="chat-members-empty">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Đang tải thành viên đoạn chat...</p>
+               </div>`
+            : state.roomMembers.length
+              ? `<div class="chat-members-list">
+                    ${state.roomMembers
+                        .map(
+                            (member) => `
+                                <button
+                                    type="button"
+                                    class="chat-member-item${member.isMe ? " is-me" : ""}"
+                                    data-open-direct="${member.id}"
+                                    ${member.canDirect ? "" : "disabled"}
+                                >
+                                    <span class="chat-member-avatar">${esc(member.initials || "TV")}</span>
+                                    <span class="chat-member-body">
+                                        <strong>${esc(member.name)}</strong>
+                                        <span>${esc(member.isMe ? "Bạn" : member.roleLabel || "Thành viên")}</span>
+                                    </span>
+                                    <span class="chat-member-action">
+                                        ${
+                                            member.isMe
+                                                ? "Bạn"
+                                                : member.canDirect
+                                                  ? "Nhắn riêng"
+                                                  : "Không khả dụng"
+                                        }
+                                    </span>
+                                </button>`,
+                        )
+                        .join("")}
+                 </div>`
+              : `<div class="chat-members-empty">
+                    <i class="fas fa-users"></i>
+                    <p>Chưa có thành viên khả dụng trong đoạn chat này.</p>
+                 </div>`;
 
         panel.innerHTML = `
             <div class="chat-info-hero">
@@ -597,22 +798,9 @@
 
             <div class="chat-info-section">
                 <div class="chat-info-section-head">
-                    <h5>Thông tin đoạn chat</h5>
+                    <h5>Thành viên đoạn chat</h5>
                 </div>
-                <div class="chat-info-grid">
-                    ${infoCards
-                        .map(
-                            (item) => `
-                                <div class="chat-info-card">
-                                    <span class="chat-info-card-icon"><i class="fas ${item.icon}"></i></span>
-                                    <div>
-                                        <strong>${esc(item.value)}</strong>
-                                        <span>${esc(item.label)}</span>
-                                    </div>
-                                </div>`,
-                        )
-                        .join("")}
-                </div>
+                ${membersHtml}
             </div>
 
             <div class="chat-info-section">
@@ -689,12 +877,6 @@
             return;
         }
 
-        const existingBtn = composerWrap.querySelector(".chat-send-btn");
-        if (existingBtn) {
-            existingBtn.disabled = state.submitting;
-            return;
-        }
-
         composerWrap.innerHTML = `
             <div class="chat-composer">
                 <form id="chat-send-form" class="chat-composer-form">
@@ -707,8 +889,20 @@
                         </button>
                     </div>
                     <div class="chat-composer-field">
-                        <textarea id="chat-message-input" placeholder="Nhập tin nhắn cho lớp học của bạn...">${esc(state.messageDraft)}</textarea>
-                        <div class="chat-composer-note">Enter để gửi, Shift + Enter để xuống dòng</div>
+                        ${
+                            state.replyingTo
+                                ? `<div class="chat-composer-reply">
+                                        <div class="chat-composer-reply-body">
+                                            <span class="chat-composer-reply-label">Đang trả lời ${esc(state.replyingTo.senderName)}</span>
+                                            <p>${esc(state.replyingTo.content)}</p>
+                                        </div>
+                                        <button type="button" class="chat-composer-reply-close" data-cancel-reply aria-label="Hủy trả lời">
+                                            <i class="fas fa-xmark"></i>
+                                        </button>
+                                   </div>`
+                                : ""
+                        }
+                        <textarea id="chat-message-input" placeholder="Nhập tin nhắn cho lớp học của bạn...">${esc(state.messageDraft)}</textarea>  
                     </div>
                     <button type="submit" class="chat-send-btn" ${state.submitting ? "disabled" : ""}>
                         <i class="fas fa-paper-plane"></i>
@@ -827,6 +1021,55 @@
         renderComposer();
         renderInfoPanel();
         updateMobilePanels();
+    }
+
+    async function loadSelectedRoomMessages(roomId, opts = {}) {
+        const { preservePosition = false } = opts;
+        const board = document.getElementById("chat-message-board");
+        const distanceFromBottom = board
+            ? Math.max(
+                  0,
+                  board.scrollHeight - board.scrollTop - board.clientHeight,
+              )
+            : 0;
+
+        const data = await api(ep(BS.endpoints.messages, roomId));
+
+        if (
+            !state.selectedRoom ||
+            Number(state.selectedRoom.id) !== Number(roomId)
+        ) {
+            return null;
+        }
+
+        syncRoomInList(data.room);
+        state.selectedRoom = { ...state.selectedRoom, ...data.room };
+        state.messagesLoaded = true;
+
+        const messages = Array.isArray(data.messages) ? data.messages : [];
+        syncMessagesState(messages);
+
+        renderMainHeader();
+        renderMessageBoard();
+        renderComposer();
+        renderRoomList();
+        renderInfoPanel();
+
+        await loadRoomMembers(roomId);
+
+        const nextBoard = document.getElementById("chat-message-board");
+        if (preservePosition && nextBoard && distanceFromBottom > 80) {
+            nextBoard.scrollTop = Math.max(
+                0,
+                nextBoard.scrollHeight -
+                    nextBoard.clientHeight -
+                    distanceFromBottom,
+            );
+        } else {
+            scrollToBottom();
+        }
+
+        return data;
     }
 
     function appendNewMessages(messages, opts = {}) {
@@ -1028,6 +1271,7 @@
                         id: room.id,
                         unreadCount: room.unreadCount,
                         lastMessagePreview: room.lastMessagePreview,
+                        updatedAt: room.updatedAt,
                     })),
                 );
                 const nextSnapshot = JSON.stringify(
@@ -1035,10 +1279,14 @@
                         id: room.id,
                         unreadCount: room.unreadCount,
                         lastMessagePreview: room.lastMessagePreview,
+                        updatedAt: room.updatedAt,
                     })),
                 );
 
                 if (prevSnapshot !== nextSnapshot) {
+                    const previousSelectedRoom = state.selectedRoom
+                        ? { ...state.selectedRoom }
+                        : null;
                     state.rooms = nextRooms;
 
                     if (state.selectedRoom) {
@@ -1053,6 +1301,18 @@
                     renderRoomList();
                     renderMainHeader();
                     renderInfoPanel();
+
+                    if (
+                        previousSelectedRoom &&
+                        state.selectedRoom &&
+                        previousSelectedRoom.updatedAt !==
+                            state.selectedRoom.updatedAt &&
+                        state.selectedRoom.canAccess
+                    ) {
+                        await loadSelectedRoomMessages(state.selectedRoom.id, {
+                            preservePosition: true,
+                        });
+                    }
                 }
             } catch (_) {}
         }, ROOM_MS);
@@ -1073,40 +1333,17 @@
         state.lastMessageId = 0;
         state.messagesLoaded = false;
         state.messageDraft = "";
+        state.replyingTo = null;
+        state.openMessageMenuId = null;
+        state.roomMembers = [];
+        state.roomMembersLoading = false;
 
         renderApp();
         setUrl(roomId);
 
         if (room.canAccess) {
             try {
-                const data = await api(ep(BS.endpoints.messages, roomId));
-
-                if (
-                    !state.selectedRoom ||
-                    Number(state.selectedRoom.id) !== Number(roomId)
-                )
-                    return;
-
-                syncRoomInList(data.room);
-                state.selectedRoom = { ...state.selectedRoom, ...data.room };
-                state.messagesLoaded = true;
-
-                const messages = Array.isArray(data.messages)
-                    ? data.messages
-                    : [];
-                messages.forEach((message) => {
-                    const id = Number(message.id);
-                    state.messageIds.add(id);
-                    state.messages.push(message);
-                    if (id > state.lastMessageId) state.lastMessageId = id;
-                });
-
-                renderMainHeader();
-                renderMessageBoard();
-                renderComposer();
-                renderRoomList();
-                renderInfoPanel();
-                scrollToBottom();
+                await loadSelectedRoomMessages(roomId);
             } catch (error) {
                 notice("error", error.payload?.message || error.message);
             }
@@ -1144,20 +1381,82 @@
         }
     }
 
+    async function recallMessage(messageId) {
+        if (!state.selectedRoom || !messageId) return;
+
+        const targetMessage = findMessageById(messageId);
+        if (!targetMessage || !targetMessage.canRecall || state.submitting)
+            return;
+
+        try {
+            closeMessageMenu();
+
+            const data = await api(
+                BS.endpoints.recall.replace("__MESSAGE__", messageId),
+                {
+                    method: "POST",
+                    body: JSON.stringify({
+                        roomId: state.selectedRoom.id,
+                    }),
+                },
+            );
+
+            replaceMessageInState(data.chatMessage);
+            syncRoomInList({ ...data.room, unreadCount: 0 });
+            state.selectedRoom = {
+                ...state.selectedRoom,
+                ...data.room,
+                unreadCount: 0,
+            };
+
+            renderMessageBoard();
+            renderComposer();
+            renderRoomList();
+            renderMainHeader();
+            renderInfoPanel();
+            notice("success", data.message || "Đã thu hồi tin nhắn.");
+        } catch (error) {
+            notice("error", error.payload?.message || error.message);
+        }
+    }
+
+    async function openDirectConversation(targetUserId) {
+        if (!targetUserId || state.submitting) return;
+
+        const member = state.roomMembers.find(
+            (item) => Number(item.id) === Number(targetUserId),
+        );
+        if (!member || member.isMe || !member.canDirect) return;
+
+        try {
+            const data = await api(BS.endpoints.direct, {
+                method: "POST",
+                body: JSON.stringify({
+                    targetUserId,
+                }),
+            });
+
+            syncRoomInList(data.room);
+            renderRoomList();
+            await selectRoom(data.room.id);
+            notice("success", data.message || "Đã mở đoạn chat riêng.");
+        } catch (error) {
+            notice("error", error.payload?.message || error.message);
+        }
+    }
+
     async function sendMessage() {
         const input = document.getElementById("chat-message-input");
         if (!input || !state.selectedRoom) return;
 
         const text = input.value.trim();
         if (!text || state.submitting) return;
+        const replyTo = state.replyingTo ? { ...state.replyingTo } : null;
 
         state.submitting = true;
         state.messageDraft = "";
         input.value = "";
         resizeComposerTextarea(input);
-
-        const button = root.querySelector(".chat-send-btn");
-        if (button) button.disabled = true;
 
         const pendingId = `p_${Date.now()}`;
         const now = new Date();
@@ -1168,7 +1467,7 @@
             content: text,
             isMine: true,
             senderName: "Bạn",
-            replyTo: null,
+            replyTo,
             sentAtLabel: `${pad(now.getHours())}:${pad(now.getMinutes())} ${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()}`,
             _pending: true,
         };
@@ -1196,6 +1495,7 @@
                 body: JSON.stringify({
                     roomId: state.selectedRoom.id,
                     message: text,
+                    replyToMessageId: replyTo?.id || null,
                 }),
             });
 
@@ -1206,7 +1506,10 @@
                 ...data.room,
                 unreadCount: 0,
             };
+            state.replyingTo = null;
 
+            renderMessageBoard();
+            renderComposer();
             renderRoomList();
             renderMainHeader();
             renderInfoPanel();
@@ -1230,12 +1533,19 @@
             notice("error", error.payload?.message || error.message);
         } finally {
             state.submitting = false;
-            if (button) button.disabled = false;
-            input.focus();
+            renderComposer();
+            document.getElementById("chat-message-input")?.focus();
         }
     }
 
     root.addEventListener("click", (event) => {
+        if (
+            !event.target.closest(".chat-message-tools") &&
+            !event.target.closest(".chat-message-menu")
+        ) {
+            closeMessageMenu();
+        }
+
         if (event.target.closest("[data-toggle-rooms]")) {
             setMobilePanel("rooms", !state.mobileSidebarOpen);
             return;
@@ -1257,6 +1567,42 @@
             state.roomFilter = filterButton.dataset.roomFilter || "all";
             renderRoomList();
             return;
+        }
+
+        const directButton = event.target.closest("[data-open-direct]");
+        if (directButton) {
+            openDirectConversation(Number(directButton.dataset.openDirect));
+            return;
+        }
+
+        if (event.target.closest("[data-cancel-reply]")) {
+            setReplyingTo(null);
+            return;
+        }
+
+        const messageMenuButton = event.target.closest(
+            "[data-message-menu-btn]",
+        );
+        if (messageMenuButton) {
+            toggleMessageMenu(messageMenuButton.dataset.messageMenuBtn);
+            return;
+        }
+
+        const messageAction = event.target.closest("[data-message-action]");
+        if (messageAction) {
+            const action = messageAction.dataset.messageAction;
+            const messageId = Number(messageAction.dataset.messageId);
+            const message = findMessageById(messageId);
+
+            if (action === "reply" && message) {
+                setReplyingTo(message);
+                return;
+            }
+
+            if (action === "recall") {
+                recallMessage(messageId);
+                return;
+            }
         }
 
         const roomButton = event.target.closest("[data-room-id]");
@@ -1296,6 +1642,15 @@
             event.preventDefault();
             sendMessage();
         }
+
+        if (event.key === "Escape") {
+            if (state.openMessageMenuId !== null) closeMessageMenu();
+            else if (state.replyingTo) setReplyingTo(null);
+        }
+    });
+
+    document.addEventListener("click", (event) => {
+        if (!root.contains(event.target)) closeMessageMenu();
     });
 
     document.addEventListener("visibilitychange", () => {
@@ -1319,33 +1674,7 @@
         if (state.selectedRoom.canAccess) {
             (async () => {
                 try {
-                    const data = await api(
-                        ep(BS.endpoints.messages, state.selectedRoom.id),
-                    );
-
-                    syncRoomInList(data.room);
-                    state.selectedRoom = {
-                        ...state.selectedRoom,
-                        ...data.room,
-                    };
-                    state.messagesLoaded = true;
-
-                    const messages = Array.isArray(data.messages)
-                        ? data.messages
-                        : [];
-                    messages.forEach((message) => {
-                        const id = Number(message.id);
-                        state.messageIds.add(id);
-                        state.messages.push(message);
-                        if (id > state.lastMessageId) state.lastMessageId = id;
-                    });
-
-                    renderMainHeader();
-                    renderMessageBoard();
-                    renderComposer();
-                    renderRoomList();
-                    renderInfoPanel();
-                    scrollToBottom();
+                    await loadSelectedRoomMessages(state.selectedRoom.id);
                 } catch (_) {}
 
                 schedulePoll(200);

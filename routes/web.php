@@ -98,9 +98,12 @@ Route::prefix('/')->name('home.')->group(function () {
         Route::get('/poll', [ClientChatController::class, 'poll'])->name('poll');
         Route::get('/rooms', [ClientChatController::class, 'rooms'])->name('rooms');
         Route::get('/rooms/{id}/messages', [ClientChatController::class, 'messages'])->name('messages');
+        Route::get('/rooms/{id}/members', [ClientChatController::class, 'members'])->name('members');
         Route::post('/rooms/{id}/join', [ClientChatController::class, 'join'])->name('join');
+        Route::post('/rooms/direct', [ClientChatController::class, 'direct'])->name('direct');
         Route::post('/rooms/{id}/read', [ClientChatController::class, 'markRead'])->name('read');
         Route::post('/messages', [ClientChatController::class, 'send'])->name('send');
+        Route::post('/messages/{id}/recall', [ClientChatController::class, 'recall'])->name('recall');
     });
 
 });

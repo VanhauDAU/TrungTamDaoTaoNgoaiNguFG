@@ -118,6 +118,22 @@ class ClientChatController extends Controller
         return response()->json(['room' => $roomPayload, 'messages' => $messages]);
     }
 
+    public function members(Request $request, int $roomId, ChatRoomService $chatRoomService, ChatAccessService $chatAccessService)
+    {
+        $user = $request->user();
+        $room = $chatRoomService->getVisibleRoomForUser($roomId, $user, $chatAccessService);
+
+        abort_unless($room, 404);
+
+        if (!$chatAccessService->canAccessRoom($user, $room)) {
+            return response()->json(['message' => 'Bạn chưa tham gia nhóm chat này.'], 403);
+        }
+
+        return response()->json([
+            'members' => $chatRoomService->getRoomMembersPayload($room, $user, $chatAccessService),
+        ]);
+    }
+
     public function join(Request $request, int $roomId, ChatRoomService $chatRoomService, ChatAccessService $chatAccessService)
     {
         $user = $request->user();
@@ -138,11 +154,41 @@ class ClientChatController extends Controller
         ]);
     }
 
+    public function direct(Request $request, ChatRoomService $chatRoomService, ChatAccessService $chatAccessService)
+    {
+        $validated = $request->validate([
+            'targetUserId' => 'required|integer',
+        ]);
+
+        $user = $request->user();
+        $targetUserId = (int) $validated['targetUserId'];
+
+        if ((int) $user->taiKhoanId === $targetUserId) {
+            return response()->json(['message' => 'Bạn không thể tự tạo đoạn chat riêng với chính mình.'], 422);
+        }
+
+        if (!$chatAccessService->canCreateDirectConversation($user, $targetUserId)) {
+            return response()->json(['message' => 'Bạn không thể nhắn tin riêng với thành viên này.'], 403);
+        }
+
+        $targetUser = \App\Models\Auth\TaiKhoan::query()
+            ->with('hoSoNguoiDung')
+            ->findOrFail($targetUserId);
+
+        $room = $chatRoomService->findOrCreateDirectRoom($user, $targetUser);
+
+        return response()->json([
+            'message' => 'Đã mở đoạn chat riêng.',
+            'room' => $chatRoomService->buildRoomPayload($room, $user, $chatAccessService),
+        ]);
+    }
+
     public function send(Request $request, ChatRoomService $chatRoomService, ChatAccessService $chatAccessService, ChatMessageService $chatMessageService)
     {
         $validated = $request->validate([
-            'roomId'  => 'required|integer',
+            'roomId' => 'required|integer',
             'message' => 'required|string|max:2000',
+            'replyToMessageId' => 'nullable|integer',
         ]);
 
         $user = $request->user();
@@ -154,13 +200,53 @@ class ClientChatController extends Controller
             return response()->json(['message' => 'Bạn chưa thể gửi tin nhắn trong nhóm chat này.'], 403);
         }
 
-        $message = $chatMessageService->sendTextMessage($room, $user, $validated['message']);
+        $replyTo = null;
+        if (!empty($validated['replyToMessageId'])) {
+            $replyTo = $chatMessageService->findVisibleMessageForUser($room, $user, (int) $validated['replyToMessageId']);
+
+            if (!$replyTo) {
+                return response()->json(['message' => 'Không tìm thấy tin nhắn để trả lời.'], 422);
+            }
+        }
+
+        $message = $chatMessageService->sendTextMessage($room, $user, $validated['message'], $replyTo);
         $room->refresh();
 
         return response()->json([
             'message'     => 'Đã gửi tin nhắn.',
             'chatMessage' => $message,
             'room'        => $chatRoomService->buildRoomPayload($room, $user, $chatAccessService),
+        ]);
+    }
+
+    public function recall(Request $request, int $messageId, ChatRoomService $chatRoomService, ChatAccessService $chatAccessService, ChatMessageService $chatMessageService)
+    {
+        $user = $request->user();
+        $roomId = (int) $request->integer('roomId');
+
+        if ($roomId <= 0) {
+            return response()->json(['message' => 'Thiếu thông tin phòng chat.'], 422);
+        }
+
+        $room = $chatRoomService->getVisibleRoomForUser($roomId, $user, $chatAccessService);
+        abort_unless($room, 404);
+
+        if (!$chatAccessService->canAccessRoom($user, $room)) {
+            return response()->json(['message' => 'Bạn chưa tham gia nhóm chat này.'], 403);
+        }
+
+        $message = $chatMessageService->findVisibleMessageForUser($room, $user, $messageId);
+        if (!$message) {
+            return response()->json(['message' => 'Không tìm thấy tin nhắn cần thu hồi.'], 404);
+        }
+
+        $recalled = $chatMessageService->recallMessage($room, $user, $message);
+        $room->refresh();
+
+        return response()->json([
+            'message' => 'Đã thu hồi tin nhắn.',
+            'chatMessage' => $recalled,
+            'room' => $chatRoomService->buildRoomPayload($room, $user, $chatAccessService),
         ]);
     }
 
