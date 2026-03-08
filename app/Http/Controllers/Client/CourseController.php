@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Client;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Models\Auth\TaiKhoan;
 use App\Models\Course\DanhMucKhoaHoc;
 use App\Models\Course\KhoaHoc;
 use App\Models\Education\LopHoc;
@@ -86,7 +87,7 @@ class CourseController extends Controller
                 'lopHoc.taiKhoan',
                 'hocPhis'
             ])
-            ->first();
+            ->firstOrFail();
 
         // Lấy 3 khóa học liên quan cùng loại, khác khóa hiện tại
         $relatedCourses = KhoaHoc::where('danhMucId', $course->danhMucId)
@@ -129,7 +130,7 @@ class CourseController extends Controller
         $user = auth()->user();
 
         // 2. Chỉ học viên (role = 0) mới được đăng ký
-        if ($user->role !== \App\Models\Auth\TaiKhoan::ROLE_HOC_VIEN) {
+        if ($user->role !== TaiKhoan::ROLE_HOC_VIEN) {
             return redirect()->route('home.classes.show', ['slug' => $slug, 'slugLopHoc' => $slugLopHoc])
                 ->with('error', 'Chỉ học viên mới có thể đăng ký lớp học.');
         }
@@ -164,7 +165,7 @@ class CourseController extends Controller
         $user = auth()->user();
 
         // Chỉ học viên (role = 0) mới được đăng ký
-        if ($user->role !== \App\Models\Auth\TaiKhoan::ROLE_HOC_VIEN) {
+        if ($user->role !== TaiKhoan::ROLE_HOC_VIEN) {
             return redirect()->route('home.classes.show', ['slug' => $slug, 'slugLopHoc' => $slugLopHoc])
                 ->with('error', 'Chỉ học viên mới có thể đăng ký lớp học.');
         }
@@ -192,7 +193,7 @@ class CourseController extends Controller
                 'taiKhoanId' => $user->taiKhoanId,
                 'lopHocId' => $class->lopHocId,
                 'ngayDangKy' => now(),
-                'trangThai' => 1 // 1: Chờ thanh toán
+                'trangThai' => DangKyLopHoc::TRANG_THAI_CHO_THANH_TOAN,
             ]);
 
             // 2. Create Invoice — chuẩn hệ thống chuyên nghiệp
@@ -249,35 +250,30 @@ class CourseController extends Controller
      */
     private function validateClassRegistration($user, $class): bool|string
     {
-        // 1. Trạng thái lớp phải là "Đang mở đăng ký" (trangThai = 1)
-        if ((int) $class->trangThai !== 1) {
+        if (!$class->isOpenForRegistration()) {
             return 'Lớp học hiện không nhận đăng ký.';
         }
 
-        // 2. Sĩ số tối đa - chỉ đếm đăng ký còn hiệu lực: 1=chờ thanh toán, 2=đã xác nhận
         if ($class->soHocVienToiDa !== null) {
             $currentStudents = $class->dangKyLopHocs
-                ->whereIn('trangThai', [1, 2])
+                ->filter(fn (DangKyLopHoc $registration) => $registration->blocksSeat())
                 ->count();
             if ($currentStudents >= (int) $class->soHocVienToiDa) {
                 return 'Lớp học đã đủ sĩ số (' . $currentStudents . '/' . (int) $class->soHocVienToiDa . ' học viên).';
             }
         }
 
-        // 3. Kiểm tra đăng ký trùng
         $isRegistered = DangKyLopHoc::where('taiKhoanId', $user->taiKhoanId)
             ->where('lopHocId', $class->lopHocId)
-            ->whereIn('trangThai', [1, 2])
+            ->blockingSeat()
             ->exists();
 
         if ($isRegistered) {
             return 'Bạn đã đăng ký lớp học này rồi.';
         }
 
-        // 4. Kiểm tra trùng lịch học
-        // Lấy các lớp đang hoạt động của học viên (chờ thanh toán + đã xác nhận)
         $activeRegistrations = DangKyLopHoc::where('taiKhoanId', $user->taiKhoanId)
-            ->whereIn('trangThai', [1, 2])
+            ->blockingSeat()
             ->with('lopHoc.buoiHocs.caHoc')
             ->get();
 
@@ -287,8 +283,9 @@ class CourseController extends Controller
         if ($newSessions && $newSessions->count() > 0) {
             foreach ($activeRegistrations as $reg) {
                 $existingClass = $reg->lopHoc;
-                if ($existingClass->trangThai == 3 || $existingClass->trangThai == 0)
+                if (!$existingClass || $existingClass->isCancelled() || $existingClass->isSapMo()) {
                     continue;
+                }
 
                 $existingSessions = $existingClass->buoiHocs;
                 foreach ($existingSessions as $existingSession) {
@@ -313,8 +310,6 @@ class CourseController extends Controller
             return true;
         }
 
-        // TẦNG 2: fallback - kiểm tra lịch tổng quát
-        // Dùng khi lớp mới chưa có buổi học nào
         if (!$class->lichHoc || !$class->ngayBatDau || !$class->ngayKetThuc || !$class->caHocId) {
             return true;
         }

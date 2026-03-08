@@ -388,13 +388,26 @@
                 </span>
             @endif
             @php
-                $ttLabels = ['Sắp mở', 'Đang mở', 'Đã đóng', 'Đã hủy', 'Đang học'];
-                $ttColors = ['#fef3c7', '#dbeafe', '#f1f5f9', '#fee2e2', '#dcfce7'];
-                $ttText = ['#92400e', '#1e3a8a', '#475569', '#991b1b', '#166534'];
+                if ($lopHoc->isSapMo()) {
+                    $lopHocBadgeBg = '#fef3c7';
+                    $lopHocBadgeText = '#92400e';
+                } elseif ($lopHoc->isOpenForRegistration()) {
+                    $lopHocBadgeBg = '#dbeafe';
+                    $lopHocBadgeText = '#1e3a8a';
+                } elseif ($lopHoc->isInProgress()) {
+                    $lopHocBadgeBg = '#dcfce7';
+                    $lopHocBadgeText = '#166534';
+                } elseif ($lopHoc->isCancelled()) {
+                    $lopHocBadgeBg = '#fee2e2';
+                    $lopHocBadgeText = '#991b1b';
+                } else {
+                    $lopHocBadgeBg = '#f1f5f9';
+                    $lopHocBadgeText = '#475569';
+                }
             @endphp
             <span
-                style="background:{{ $ttColors[$lopHoc->trangThai] ?? '#f1f5f9' }};color:{{ $ttText[$lopHoc->trangThai] ?? '#64748b' }};padding:2px 10px;border-radius:20px;font-size:.72rem;font-weight:700">
-                {{ $ttLabels[$lopHoc->trangThai] ?? '?' }}
+                style="background:{{ $lopHocBadgeBg }};color:{{ $lopHocBadgeText }};padding:2px 10px;border-radius:20px;font-size:.72rem;font-weight:700">
+                {{ $lopHoc->trangThaiLabel }}
             </span>
         </div>
         <h1>[<span style="color:#fde68a;">{{ $lopHoc->maLopHoc }}</span>] {{ $lopHoc->tenLopHoc }}</h1>
@@ -851,17 +864,17 @@
 
                         <div class="bh-actions">
                             <button type="button" class="lh-btn-action lh-btn-edit" title="Chỉnh sửa buổi học"
-                                onclick="openEditModal(
+                                onclick='openEditModal(
                                     {{ $bh->buoiHocId }},
-                                    '{{ addslashes($bh->tenBuoiHoc ?? '') }}',
-                                    '{{ $bh->ngayHoc }}',
+                                    @js($bh->tenBuoiHoc ?? ""),
+                                    @js($bh->ngayHoc),
                                     {{ $bh->caHocId ?? 'null' }},
                                     {{ $bh->phongHocId ?? 'null' }},
                                     {{ $bh->taiKhoanId ?? 'null' }},
                                     {{ $bh->trangThai ?? 0 }},
-                                    '{{ addslashes($bh->ghiChu ?? '') }}',
+                                    @js($bh->ghiChu ?? ""),
                                     {{ $bh->daHoanThanh ? 1 : 0 }}
-                                )">
+                                )'>
                                 <i class="fas fa-pen"></i>
                             </button>
                             <button type="button" class="lh-btn-action lh-btn-edit" title="Đánh dấu hoàn thành"
@@ -870,7 +883,7 @@
                                 <i class="fas fa-{{ $bh->daHoanThanh ? 'check-circle' : 'circle' }}"></i>
                             </button>
                             <button type="button" class="lh-btn-action lh-btn-del" title="Xóa buổi học"
-                                onclick="deleteBuoiHoc({{ $bh->buoiHocId }}, '{{ addslashes($bh->tenBuoiHoc ?? 'Buổi ' . ($i + 1)) }}')">
+                                onclick='deleteBuoiHoc({{ $bh->buoiHocId }}, @js($bh->tenBuoiHoc ?? ("Buổi " . ($i + 1))))'>
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>

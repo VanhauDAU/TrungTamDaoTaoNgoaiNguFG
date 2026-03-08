@@ -202,11 +202,14 @@ class HoaDon extends Model
 
         $this->save();
 
-        // ── Phục hồi DangKyLopHoc khi thanh toán đủ ─────────────────
+        // ── Phục hồi đăng ký lớp khi thanh toán đủ ──────────────────
         if ($this->trangThai === self::TRANG_THAI_DA_TT && $this->dangKyLopHocId) {
             $dangKy = DangKyLopHoc::find($this->dangKyLopHocId);
-            if ($dangKy && $dangKy->trangThai === DangKyLopHoc::TRANG_THAI_TAM_DUNG) {
-                $dangKy->update(['trangThai' => DangKyLopHoc::TRANG_THAI_DANG_HOC]);
+            if ($dangKy && in_array((int) $dangKy->trangThai, [
+                DangKyLopHoc::TRANG_THAI_CHO_THANH_TOAN,
+                DangKyLopHoc::TRANG_THAI_TAM_DUNG_NO_HOC_PHI,
+            ], true)) {
+                $dangKy->update(['trangThai' => DangKyLopHoc::TRANG_THAI_DA_XAC_NHAN]);
 
                 // Xóa các bản ghi DiemDanh tương lai đã bị khóa (nợ HP)
                 DiemDanh::where('dangKyLopHocId', $dangKy->dangKyLopHocId)

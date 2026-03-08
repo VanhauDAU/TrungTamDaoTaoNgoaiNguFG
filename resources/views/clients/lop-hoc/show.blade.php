@@ -48,16 +48,16 @@
                                 {{ $class->khoaHoc->danhMuc->tenDanhMuc ?? 'Khóa học' }}
                             </span>
 
-                            @if ($class->trangThai == 0)
+                            @if ($class->isSapMo())
                                 <span class="status-badge" style="background:#e3f2fd;color:#1565c0"><i
                                         class="fas fa-hourglass-start me-1"></i> Sắp mở</span>
-                            @elseif ($class->trangThai == 1)
+                            @elseif ($class->isOpenForRegistration())
                                 <span class="status-badge status-open"><i class="fas fa-check-circle me-1"></i> Đang mở đăng
                                     ký</span>
-                            @elseif ($class->trangThai == 4)
+                            @elseif ($class->isInProgress())
                                 <span class="status-badge" style="background:#e8f5e9;color:#2e7d32"><i
                                         class="fas fa-chalkboard-teacher me-1"></i> Đang học</span>
-                            @elseif ($class->trangThai == 3)
+                            @elseif ($class->isCancelled())
                                 <span class="status-badge status-closed"><i class="fas fa-ban me-1"></i> Đã hủy</span>
                             @else
                                 <span class="status-badge status-closed"><i class="fas fa-lock me-1"></i> Đã đóng đăng
@@ -239,13 +239,13 @@
                                 <h2 class="text-muted fw-bold mb-3">Liên hệ</h2>
                             @endif
 
-                            @if ($class->trangThai == 1)
+                            @if ($class->isOpenForRegistration())
                                 @auth
                                     @if (auth()->user()->role === \App\Models\Auth\TaiKhoan::ROLE_HOC_VIEN)
                                         @php
                                             $existingReg = $class->dangKyLopHocs
                                                 ->where('taiKhoanId', auth()->user()->taiKhoanId)
-                                                ->whereIn('trangThai', [1, 2])
+                                                ->filter(fn ($registration) => $registration->blocksSeat())
                                                 ->first();
                                         @endphp
                                         @if ($existingReg)
@@ -255,8 +255,10 @@
                                             </button>
                                             <p class="small text-muted mb-0">
                                                 <i class="fas fa-info-circle me-1"></i>
-                                                @if ($existingReg->trangThai == 1)
+                                                @if ($existingReg->isPendingPayment())
                                                     Bạn đã đăng ký lớp này. Vui lòng hoàn tất thanh toán.
+                                                @elseif ($existingReg->isSuspendedForDebt())
+                                                    Đăng ký của bạn đang tạm dừng do nợ học phí.
                                                 @else
                                                     Đăng ký đã được xác nhận.
                                                 @endif
@@ -282,21 +284,21 @@
                                         <i class="fas fa-sign-in-alt me-2"></i> ĐĂNG NHẬP ĐỂ ĐĂNG KÝ
                                     </a>
                                 @endauth
-                            @elseif ($class->trangThai == 0)
+                            @elseif ($class->isSapMo())
                                 <button class="btn w-100 py-3 rounded-3 fw-bold disabled"
                                     style="background:#e3f2fd;color:#1565c0;border:none;">
                                     <i class="fas fa-hourglass-start me-2"></i> SẮP MỞ ĐĂNG KÝ
                                 </button>
                                 <p class="small text-muted mb-0 mt-2"><i class="fas fa-bell me-1"></i> Lớp học chưa mở
                                     đăng ký</p>
-                            @elseif ($class->trangThai == 4)
+                            @elseif ($class->isInProgress())
                                 <button class="btn w-100 py-3 rounded-3 fw-bold disabled"
                                     style="background:#e8f5e9;color:#2e7d32;border:none;">
                                     <i class="fas fa-chalkboard-teacher me-2"></i> ĐANG DIỄN RA
                                 </button>
                                 <p class="small text-muted mb-0 mt-2"><i class="fas fa-info-circle me-1"></i> Lớp học đang
                                     trong quá trình học</p>
-                            @elseif ($class->trangThai == 3)
+                            @elseif ($class->isCancelled())
                                 <button class="btn btn-danger w-100 py-3 rounded-3 fw-bold disabled opacity-75">
                                     <i class="fas fa-ban me-2"></i> LỚP ĐÃ HỦY
                                 </button>

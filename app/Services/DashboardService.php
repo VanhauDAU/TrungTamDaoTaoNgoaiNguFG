@@ -14,11 +14,11 @@ class DashboardService
 {
     /**
      * Lớp đang hoạt động.
-     * DB LopHoc.trangThai: 0=sắp mở, 1=đang học, 2=kết thúc, 3=hủy.
+     * Bao gồm lớp đang tuyển sinh và lớp đang học.
      */
     public function getActiveClassesCount(): int
     {
-        return LopHoc::where('trangThai', '1')->count();
+        return LopHoc::operational()->count();
     }
 
     /** Đăng ký mới trong ngày (theo ngày đăng ký) */
@@ -90,10 +90,10 @@ class DashboardService
         return $data;
     }
 
-    /** Phân bổ lớp đang học theo ca (sáng / trưa / tối) cho Donut. LopHoc.trangThai = 1 (đang học). */
+    /** Phân bổ lớp đang vận hành theo ca (tuyển sinh + đang học) cho Donut. */
     public function getClassesByShift(): array
     {
-        $classes = LopHoc::where('trangThai', '1')
+        $classes = LopHoc::operational()
             ->with('caHoc')
             ->get();
         $sang = 0;

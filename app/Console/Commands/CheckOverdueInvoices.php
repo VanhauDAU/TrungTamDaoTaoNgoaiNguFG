@@ -73,8 +73,8 @@ class CheckOverdueInvoices extends Command
             }
 
             // 1. Tạm dừng đăng ký lớp học
-            if ($dangKy->trangThai === DangKyLopHoc::TRANG_THAI_DANG_HOC) {
-                $dangKy->update(['trangThai' => DangKyLopHoc::TRANG_THAI_TAM_DUNG]);
+            if ($dangKy->trangThai === DangKyLopHoc::TRANG_THAI_DA_XAC_NHAN) {
+                $dangKy->update(['trangThai' => DangKyLopHoc::TRANG_THAI_TAM_DUNG_NO_HOC_PHI]);
                 $countSuspended++;
                 $this->line("  ⏸  Tạm dừng ĐK lớp ID {$dangKy->dangKyLopHocId} ({$dangKy->lopHoc?->tenLopHoc})");
             }

@@ -42,13 +42,17 @@
                                         $regStatusText = '';
                                         $regStatusIcon = '';
 
-                                        if ($registration->trangThai == 1) {
+                                        if ($registration->isPendingPayment()) {
                                             $regStatusClass = 'status-pending';
                                             $regStatusText = 'Chờ thanh toán';
                                             $regStatusIcon = 'fas fa-clock';
+                                        } elseif ($registration->isSuspendedForDebt()) {
+                                            $regStatusClass = 'status-pending';
+                                            $regStatusText = 'Tạm dừng do nợ học phí';
+                                            $regStatusIcon = 'fas fa-pause-circle';
                                         } else {
                                             $regStatusClass = 'status-confirmed';
-                                            $regStatusText = 'Đã xác nhận';
+                                            $regStatusText = $registration->trangThaiLabel;
                                             $regStatusIcon = 'fas fa-check-circle';
                                         }
 
@@ -56,18 +60,21 @@
                                         $classStatusClass = '';
                                         $classStatusText = '';
 
-                                        if ($class->trangThai == 0) {
+                                        if ($class->isSapMo()) {
                                             $classStatusClass = 'class-upcoming';
                                             $classStatusText = 'Sắp khai giảng';
-                                        } elseif ($class->trangThai == 1) {
+                                        } elseif ($class->isOpenForRegistration()) {
                                             $classStatusClass = 'class-open';
                                             $classStatusText = 'Đang tuyển sinh';
-                                        } elseif ($class->trangThai == 4) {
+                                        } elseif ($class->isInProgress()) {
                                             $classStatusClass = 'class-active';
                                             $classStatusText = 'Đang học';
+                                        } elseif ($class->isCancelled()) {
+                                            $classStatusClass = 'class-closed';
+                                            $classStatusText = 'Đã hủy';
                                         } else {
                                             $classStatusClass = 'class-closed';
-                                            $classStatusText = 'Đã kết thúc';
+                                            $classStatusText = $class->trangThaiLabel;
                                         }
 
                                         // Lịch học
@@ -147,7 +154,7 @@
                                                 <i class="fas fa-file-alt"></i> Tài liệu
                                             </a>
 
-                                            @if ($registration->trangThai == 1)
+                                            @if ($registration->isPendingPayment() || $registration->isSuspendedForDebt())
                                                 <a href="{{ route('home.student.invoices') }}" class="btn btn-pay">
                                                     <i class="fas fa-credit-card"></i> Thanh toán
                                                 </a>

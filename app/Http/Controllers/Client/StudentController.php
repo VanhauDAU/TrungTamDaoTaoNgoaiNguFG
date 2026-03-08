@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
+use App\Models\Education\DangKyLopHoc;
 use App\Models\Auth\HoSoNguoiDung;
 use App\Models\Finance\HoaDon;
 use Illuminate\Http\Request;
@@ -157,8 +158,8 @@ class StudentController extends Controller
 
     public function myClasses()
     {
-        $classes = \App\Models\Education\DangKyLopHoc::where('taiKhoanId', auth()->user()->taiKhoanId)
-            ->whereIn('trangThai', [1, 2])
+        $classes = DangKyLopHoc::where('taiKhoanId', auth()->user()->taiKhoanId)
+            ->visibleToStudent()
             ->with([
                 'lopHoc.khoaHoc',
                 'lopHoc.coSo',
@@ -184,9 +185,8 @@ class StudentController extends Controller
 
         $userId = auth()->user()->taiKhoanId;
 
-        // Lấy tất cả ID lớp học mà học viên đã đăng ký (trangThai 1=chờ, 2=xác nhận)
-        $lopHocIds = \App\Models\Education\DangKyLopHoc::where('taiKhoanId', $userId)
-            ->whereIn('trangThai', [1, 2])
+        $lopHocIds = DangKyLopHoc::where('taiKhoanId', $userId)
+            ->eligibleForSchedule()
             ->pluck('lopHocId');
 
         // Lấy buổi học trong tuần được chọn
@@ -248,4 +248,3 @@ class StudentController extends Controller
         ));
     }
 }
-
