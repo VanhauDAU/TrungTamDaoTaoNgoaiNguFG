@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Models\Finance\HoaDon;
+use App\Models\Education\BuoiHoc;
 use App\Models\Education\DangKyLopHoc;
 use App\Models\Education\DiemDanh;
 use Carbon\Carbon;
@@ -83,6 +84,7 @@ class CheckOverdueInvoices extends Command
             if ($dangKy->lopHoc) {
                 $buoiHocsTuongLai = $dangKy->lopHoc->buoiHocs()
                     ->whereDate('ngayHoc', '>=', $today)
+                    ->openForAttendance()
                     ->get();
 
                 foreach ($buoiHocsTuongLai as $buoi) {

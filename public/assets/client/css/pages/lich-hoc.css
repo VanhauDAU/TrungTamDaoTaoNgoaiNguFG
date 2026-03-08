@@ -226,51 +226,52 @@
     z-index: 1;
 }
 
-/* Màu loại lớp */
-.lesson-card.ly-thuyet {
+/* Màu trạng thái buổi học */
+.lesson-card.sap-dien-ra {
     background: #f0f4f8;
     border-left-color: #718096;
     color: #1a2b4a;
 }
-.lesson-card.ly-thuyet::before {
+.lesson-card.sap-dien-ra::before {
     background: #718096;
 }
 
-.lesson-card.thuc-hanh {
+.lesson-card.dang-dien-ra {
     background: linear-gradient(135deg, #d4edda, #c3e6cb);
     border-left-color: #28a745;
     color: #155724;
 }
-.lesson-card.thuc-hanh::before {
+.lesson-card.dang-dien-ra::before {
     background: #28a745;
 }
 
-.lesson-card.truc-tuyen {
-    background: linear-gradient(135deg, #d1ecf1, #bee5eb);
-    border-left-color: #17a2b8;
-    color: #0c5460;
+.lesson-card.da-hoan-thanh {
+    background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+    border-left-color: #16a34a;
+    color: #166534;
 }
-.lesson-card.truc-tuyen::before {
-    background: #17a2b8;
-}
-
-.lesson-card.lich-thi {
-    background: linear-gradient(135deg, #fff3cd, #ffeeba);
-    border-left-color: #ffc107;
-    color: #856404;
-}
-.lesson-card.lich-thi::before {
-    background: #ffc107;
+.lesson-card.da-hoan-thanh::before {
+    background: #16a34a;
 }
 
-.lesson-card.tam-ngung {
-    background: linear-gradient(135deg, #f8d7da, #f5c6cb);
-    border-left-color: #dc3545;
-    color: #721c24;
+.lesson-card.da-huy {
+    background: linear-gradient(135deg, #fee2e2, #fecaca);
+    border-left-color: #dc2626;
+    color: #991b1b;
+    opacity: 0.9;
+}
+.lesson-card.da-huy::before {
+    background: #dc2626;
+}
+
+.lesson-card.doi-lich {
+    background: linear-gradient(135deg, #fff3cd, #fde68a);
+    border-left-color: #d97706;
+    color: #92400e;
     opacity: 0.85;
 }
-.lesson-card.tam-ngung::before {
-    background: #dc3545;
+.lesson-card.doi-lich::before {
+    background: #d97706;
 }
 
 .lesson-title {
@@ -336,20 +337,20 @@
     border-radius: 4px;
     flex-shrink: 0;
 }
-.legend-dot.ly-thuyet {
+.legend-dot.sap-dien-ra {
     background: #b0bec5;
 }
-.legend-dot.thuc-hanh {
+.legend-dot.dang-dien-ra {
     background: #28a745;
 }
-.legend-dot.truc-tuyen {
-    background: #17a2b8;
+.legend-dot.da-hoan-thanh {
+    background: #16a34a;
 }
-.legend-dot.lich-thi {
-    background: #ffc107;
+.legend-dot.da-huy {
+    background: #dc2626;
 }
-.legend-dot.tam-ngung {
-    background: #dc3545;
+.legend-dot.doi-lich {
+    background: #d97706;
 }
 
 /* ── MODAL CHI TIẾT ─────────────────────────────────────── */
@@ -428,25 +429,25 @@
     font-weight: 700;
 }
 
-.modal-badge.ly-thuyet {
+.modal-badge.sap-dien-ra {
     background: #e2e8f0;
     color: #1a2b4a;
 }
-.modal-badge.thuc-hanh {
+.modal-badge.dang-dien-ra {
     background: #d4edda;
     color: #155724;
 }
-.modal-badge.truc-tuyen {
-    background: #d1ecf1;
-    color: #0c5460;
+.modal-badge.da-hoan-thanh {
+    background: #dcfce7;
+    color: #166534;
 }
-.modal-badge.lich-thi {
+.modal-badge.da-huy {
+    background: #fee2e2;
+    color: #991b1b;
+}
+.modal-badge.doi-lich {
     background: #fff3cd;
-    color: #856404;
-}
-.modal-badge.tam-ngung {
-    background: #f8d7da;
-    color: #721c24;
+    color: #92400e;
 }
 
 .modal-divider {

@@ -9,22 +9,6 @@
 
 @section('content')
     @php
-        /**
-         * Mapping trangThai BuoiHoc:
-         * 0 = Lý thuyết (mặc định)
-         * 1 = Thực hành
-         * 2 = Trực tuyến
-         * 3 = Lịch thi
-         * 4 = Tạm ngưng
-         */
-        $typeMap = [
-            0 => ['class' => 'ly-thuyet', 'label' => '<i class="fas fa-book-open"></i> Lý thuyết'],
-            1 => ['class' => 'thuc-hanh', 'label' => '<i class="fas fa-flask"></i> Thực hành'],
-            2 => ['class' => 'truc-tuyen', 'label' => '<i class="fas fa-wifi"></i> Trực tuyến'],
-            3 => ['class' => 'lich-thi', 'label' => '<i class="fas fa-pencil-alt"></i> Lịch thi'],
-            4 => ['class' => 'tam-ngung', 'label' => '<i class="fas fa-pause-circle"></i> Tạm ngưng'],
-        ];
-
         $today = \Carbon\Carbon::today()->toDateString();
 
         // Kiểm tra tuần có buổi học không
@@ -111,11 +95,6 @@
                                                     @if (!empty($schedule[$wd['thu']][$ca->caHocId]))
                                                         @foreach ($schedule[$wd['thu']][$ca->caHocId] as $buoi)
                                                             @php
-                                                                $ts = $buoi->trangThai ?? 0;
-                                                                $typeKey = array_key_exists($ts, $typeMap) ? $ts : 0;
-                                                                $typeCls = $typeMap[$typeKey]['class'];
-                                                                $typeLbl = $typeMap[$typeKey]['label'];
-
                                                                 $lop = $buoi->lopHoc;
                                                                 $khoaHoc = $lop->khoaHoc ?? null;
                                                                 // Ưu tiên GV của buổi học, fallback về GV của lớp
@@ -126,7 +105,7 @@
                                                                 $coSo = $lop->coSo ?? null;
                                                             @endphp
 
-                                                            <div class="lesson-card {{ $typeCls }}"
+                                                            <div class="lesson-card {{ $buoi->trangThaiKey }}"
                                                                 data-ten-lop="{{ $lop->tenLopHoc ?? '' }}"
                                                                 data-khoa-hoc="{{ $khoaHoc->tenKhoaHoc ?? '' }}"
                                                                 data-ngay-hoc="{{ \Carbon\Carbon::parse($buoi->ngayHoc)->format('d/m/Y') }} ({{ $wd['label'] }})"
@@ -135,9 +114,11 @@
                                                                 data-giao-vien="{{ $gv->hoTen ?? 'Chưa có GV' }}"
                                                                 data-co-so="{{ $coSo->tenCoSo ?? '' }}"
                                                                 data-ghi-chu="{{ $buoi->ghiChu ?? '' }}"
+                                                                data-status-key="{{ $buoi->trangThaiKey }}"
+                                                                data-status-class="{{ $buoi->trangThaiKey }}"
+                                                                data-status-label="{{ $buoi->trangThaiLabel }}"
                                                                 data-da-hoan-thanh="{{ $buoi->daHoanThanh ? '1' : '0' }}"
-                                                                data-type-class="{{ $typeCls }}"
-                                                                data-type-label="{{ strip_tags($typeLbl) }}"
+                                                                data-da-diem-danh="{{ $buoi->daDiemDanh ? '1' : '0' }}"
                                                                 title="Click để xem chi tiết">
 
                                                                 <div class="lesson-title">
@@ -197,19 +178,19 @@
                         {{-- LEGEND --}}
                         <div class="schedule-legend">
                             <span class="legend-item">
-                                <span class="legend-dot ly-thuyet"></span> Lịch học lý thuyết
+                                <span class="legend-dot sap-dien-ra"></span> Sắp diễn ra
                             </span>
                             <span class="legend-item">
-                                <span class="legend-dot thuc-hanh"></span> Lịch học thực hành
+                                <span class="legend-dot dang-dien-ra"></span> Đang diễn ra
                             </span>
                             <span class="legend-item">
-                                <span class="legend-dot truc-tuyen"></span> Lịch học trực tuyến
+                                <span class="legend-dot da-hoan-thanh"></span> Đã hoàn thành
                             </span>
                             <span class="legend-item">
-                                <span class="legend-dot lich-thi"></span> Lịch thi
+                                <span class="legend-dot da-huy"></span> Đã hủy
                             </span>
                             <span class="legend-item">
-                                <span class="legend-dot tam-ngung"></span> Lịch tạm ngưng
+                                <span class="legend-dot doi-lich"></span> Đổi lịch
                             </span>
                         </div>
 

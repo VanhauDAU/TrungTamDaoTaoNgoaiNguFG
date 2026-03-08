@@ -21,7 +21,7 @@ class LienHe extends Model
         'soDienThoai',
         'tieuDe',
         'noiDung',
-        'trangThai',
+        'trangThai', 
         'taiKhoanId',
         // CRM fields
         'loaiLienHe',

@@ -73,19 +73,27 @@
         modal.querySelector('#modal-co-so').textContent     = d.coSo     || '—';
         modal.querySelector('#modal-ghi-chu').textContent   = d.ghiChu   || '(Không có)';
 
-        // Badge loại lớp
-        const badge     = modal.querySelector('#modal-type-badge');
-        const typeClass = d.typeClass || 'ly-thuyet';
-        const typeLabel = d.typeLabel || 'Lý thuyết';
-        badge.className = `modal-badge ${typeClass}`;
-        badge.innerHTML = typeLabel;
+        // Badge trạng thái buổi học
+        const badge = modal.querySelector('#modal-type-badge');
+        const statusClass = d.statusClass || 'sap-dien-ra';
+        const statusLabel = d.statusLabel || 'Sắp diễn ra';
+        badge.className = `modal-badge ${statusClass}`;
+        badge.textContent = statusLabel;
 
-        // Trạng thái hoàn thành
+        // Trạng thái chi tiết
         const status = modal.querySelector('#modal-status');
-        if (d.daHoanThanh === '1') {
+        if (d.statusKey === 'da-huy') {
+            status.innerHTML = '<i class="fas fa-ban text-danger"></i> Buổi học đã hủy';
+        } else if (d.statusKey === 'doi-lich') {
+            status.innerHTML = '<i class="fas fa-calendar-xmark text-warning"></i> Buổi học đã được đổi lịch';
+        } else if (d.statusKey === 'dang-dien-ra') {
+            status.innerHTML = '<i class="fas fa-person-chalkboard text-primary"></i> Buổi học đang diễn ra';
+        } else if (d.daDiemDanh === '1') {
+            status.innerHTML = '<i class="fas fa-clipboard-check text-info"></i> Buổi học đã được điểm danh';
+        } else if (d.daHoanThanh === '1') {
             status.innerHTML = '<i class="fas fa-check-circle text-success"></i> Đã hoàn thành';
         } else {
-            status.innerHTML = '<i class="fas fa-clock text-warning"></i> Chưa hoàn thành';
+            status.innerHTML = '<i class="fas fa-clock text-warning"></i> Buổi học sắp diễn ra';
         }
 
         const bsModal = bootstrap.Modal.getOrCreate(modal);

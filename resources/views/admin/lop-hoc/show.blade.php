@@ -349,29 +349,29 @@
         }
 
         /* ── trangThai badges ─────────────────────────────── */
-        .bh-tt-ly-thuyet {
+        .bh-tt-sap-dien-ra {
             background: #eff6ff;
             color: #1d4ed8;
         }
 
-        .bh-tt-thuc-hanh {
+        .bh-tt-dang-dien-ra {
             background: #f0fdf4;
             color: #15803d;
         }
 
-        .bh-tt-truc-tuyen {
-            background: #f5f3ff;
-            color: #7c3aed;
+        .bh-tt-da-hoan-thanh {
+            background: #ecfdf5;
+            color: #047857;
         }
 
-        .bh-tt-lich-thi {
+        .bh-tt-da-huy {
+            background: #fef2f2;
+            color: #b91c1c;
+        }
+
+        .bh-tt-doi-lich {
             background: #fff7ed;
             color: #c2410c;
-        }
-
-        .bh-tt-tam-ngung {
-            background: #f8fafc;
-            color: #64748b;
         }
     </style>
 @endsection
@@ -753,6 +753,19 @@
                         </select>
                     </div>
                     <div>
+                        <label style="font-size:.78rem;font-weight:600;color:#64748b;display:block;margin-bottom:4px">
+                            Trạng thái buổi học
+                        </label>
+                        <select name="trangThai">
+                            @foreach (\App\Models\Education\BuoiHoc::trangThaiOptions() as $value => $label)
+                                <option value="{{ $value }}"
+                                    {{ $value === \App\Models\Education\BuoiHoc::TRANG_THAI_SAP_DIEN_RA ? 'selected' : '' }}>
+                                    {{ $label }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
                         <label style="font-size:.78rem;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Giáo
                             viên</label>
                         <select name="taiKhoanId">
@@ -835,35 +848,13 @@
                                 @if ($bh->daHoanThanh)
                                     <span class="bh-badge bh-done"><i class="fas fa-check"></i> Đã xong</span>
                                 @else
-                                    <span class="bh-badge bh-todo"><i class="fas fa-clock"></i> Chưa học</span>
+                                    <span class="bh-badge bh-todo"><i class="fas fa-clock"></i> Chưa hoàn thành</span>
                                 @endif
                                 @if ($bh->daDiemDanh)
                                     <span class="bh-badge bh-att"><i class="fas fa-clipboard-check"></i> Điểm danh</span>
                                 @endif
-                                @php
-                                    $ttBuoi = [
-                                        0 => [
-                                            'cls' => 'bh-tt-ly-thuyet',
-                                            'icon' => 'fa-book-open',
-                                            'lbl' => 'Lý thuyết',
-                                        ],
-                                        1 => ['cls' => 'bh-tt-thuc-hanh', 'icon' => 'fa-flask', 'lbl' => 'Thực hành'],
-                                        2 => ['cls' => 'bh-tt-truc-tuyen', 'icon' => 'fa-wifi', 'lbl' => 'Trực tuyến'],
-                                        3 => [
-                                            'cls' => 'bh-tt-lich-thi',
-                                            'icon' => 'fa-pencil-alt',
-                                            'lbl' => 'Lịch thi',
-                                        ],
-                                        4 => [
-                                            'cls' => 'bh-tt-tam-ngung',
-                                            'icon' => 'fa-pause-circle',
-                                            'lbl' => 'Tạm ngưng',
-                                        ],
-                                    ];
-                                    $bhTT = $ttBuoi[$bh->trangThai ?? 0] ?? $ttBuoi[0];
-                                @endphp
-                                <span class="bh-badge {{ $bhTT['cls'] }}">
-                                    <i class="fas {{ $bhTT['icon'] }}"></i> {{ $bhTT['lbl'] }}
+                                <span class="bh-badge bh-tt-{{ $bh->trangThaiKey }}">
+                                    <i class="fas {{ $bh->trangThaiIcon }}"></i> {{ $bh->trangThaiLabel }}
                                 </span>
                             </div>
                         </div>
@@ -878,7 +869,7 @@
                                 data-ca-id="{{ $bh->caHocId ?? '' }}"
                                 data-phong-id="{{ $bh->phongHocId ?? '' }}"
                                 data-gv-id="{{ $bh->taiKhoanId ?? '' }}"
-                                data-trang-thai="{{ $bh->trangThai ?? 0 }}"
+                                data-trang-thai="{{ $bh->trangThai ?? \App\Models\Education\BuoiHoc::TRANG_THAI_SAP_DIEN_RA }}"
                                 data-ghi-chu="{{ e($bh->ghiChu ?? '') }}"
                                 data-hoan-thanh="{{ $bh->daHoanThanh ? 1 : 0 }}">
 
@@ -1008,15 +999,13 @@
                     </div>
                     <div>
                         <label
-                            style="display:block;font-size:.75rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Loại
+                            style="display:block;font-size:.75rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Trạng
                             buổi học</label>
                         <select id="ebh-trangthai"
                             style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.9rem;color:#1e293b;background:#fff;outline:none;">
-                            <option value="0">📖 Lý thuyết</option>
-                            <option value="1">🔬 Thực hành</option>
-                            <option value="2">💻 Trực tuyến</option>
-                            <option value="3">✏️ Lịch thi</option>
-                            <option value="4">⏸️ Tạm ngưng</option>
+                            @foreach (\App\Models\Education\BuoiHoc::trangThaiOptions() as $value => $label)
+                                <option value="{{ $value }}">{{ $label }}</option>
+                            @endforeach
                         </select>
                     </div>
                     <div>
@@ -1025,8 +1014,8 @@
                             thái hoàn thành</label>
                         <select id="ebh-hoanhthanh"
                             style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.9rem;color:#1e293b;background:#fff;outline:none;">
-                            <option value="0">⏳ Chưa học</option>
-                            <option value="1">✅ Đã hoàn thành</option>
+                            <option value="0">Chưa hoàn thành</option>
+                            <option value="1">Đã hoàn thành</option>
                         </select>
                     </div>
                 </div>
