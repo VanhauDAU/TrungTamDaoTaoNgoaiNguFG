@@ -7,12 +7,13 @@ use App\Services\ChatAccessService;
 use App\Services\ChatMessageService;
 use App\Services\ChatRoomService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class ClientChatController extends Controller
 {
-    public function index(Request $request, ChatRoomService $chatRoomService, ChatAccessService $chatAccessService, ChatMessageService $chatMessageService)
+    public function index(Request $request, ChatRoomService $chatRoomService, ChatAccessService $chatAccessService)
     {
-        $user = $request->user();
+        $user  = $request->user();
         $rooms = $chatRoomService->getVisibleRoomsForUser($user, $chatAccessService);
 
         $selectedRoomId = (int) $request->integer('room');
@@ -21,36 +22,16 @@ class ClientChatController extends Controller
         }
 
         $selectedRoomPayload = null;
-        $initialMessages = collect();
-
         if ($selectedRoomId > 0) {
             $selectedRoom = $chatRoomService->getVisibleRoomForUser($selectedRoomId, $user, $chatAccessService);
-
             if ($selectedRoom) {
                 $selectedRoomPayload = $chatRoomService->buildRoomPayload($selectedRoom, $user, $chatAccessService);
-
-                if ($selectedRoomPayload['canAccess']) {
-                    $initialMessages = $chatMessageService->getMessagesForUser($selectedRoom, $user);
-                    $lastMessageId = $initialMessages->last()['id'] ?? null;
-
-                    if ($lastMessageId) {
-                        $chatMessageService->markRoomRead($selectedRoom, $user, $lastMessageId);
-                        $selectedRoomPayload['unreadCount'] = 0;
-                        $rooms = $rooms->map(function (array $room) use ($selectedRoomId) {
-                            if ((int) $room['id'] === (int) $selectedRoomId) {
-                                $room['unreadCount'] = 0;
-                            }
-                            return $room;
-                        });
-                    }
-                }
             }
         }
 
         return view('clients.hoc-vien.chat.index', [
-            'rooms' => $rooms->values(),
+            'rooms'        => $rooms->values(),
             'selectedRoom' => $selectedRoomPayload,
-            'initialMessages' => $initialMessages->values(),
         ]);
     }
 
@@ -58,6 +39,56 @@ class ClientChatController extends Controller
     {
         return response()->json([
             'rooms' => $chatRoomService->getVisibleRoomsForUser($request->user(), $chatAccessService),
+        ]);
+    }
+
+    /**
+     * Short-poll endpoint: Trả về NGAY LẬP TỨC – không có sleep().
+     * Session được đóng trước khi query để không block request khác.
+     * Client gọi endpoint này mỗi 1.5 giây.
+     */
+    public function poll(
+        Request $request,
+        ChatRoomService $chatRoomService,
+        ChatAccessService $chatAccessService,
+        ChatMessageService $chatMessageService
+    ) {
+        // Đóng session NGAY – giải phóng lock để request khác không bị block
+        if (session()->isStarted()) {
+            session()->save();
+        }
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_write_close();
+        }
+
+        $user               = $request->user();
+        $selectedRoomId     = (int) $request->integer('room');
+        $lastKnownMessageId = max(0, (int) $request->integer('after'));
+
+        if ($selectedRoomId <= 0) {
+            return response()->json(['status' => 'no_room'], 200);
+        }
+
+        $selectedRoom = $chatRoomService->getVisibleRoomForUser($selectedRoomId, $user, $chatAccessService, false);
+        if (!$selectedRoom) {
+            return response()->json(['status' => 'not_found'], 200);
+        }
+
+        $roomPayload = $chatRoomService->buildRoomPayload($selectedRoom, $user, $chatAccessService);
+        
+        if (!$roomPayload['canAccess']) {
+            return response()->json(['status' => 'no_access', 'room' => $roomPayload], 200);
+        }
+
+        $newMessages = $chatMessageService
+            ->getMessagesAfterForUser($selectedRoom, $user, $lastKnownMessageId)
+            ->values();
+
+        return response()->json([
+            'status'   => 'ok',
+            'roomId'   => $selectedRoomId,
+            'messages' => $newMessages->all(),
+            'room'     => $roomPayload,
         ]);
     }
 
@@ -70,10 +101,7 @@ class ClientChatController extends Controller
 
         $roomPayload = $chatRoomService->buildRoomPayload($room, $user, $chatAccessService);
         if (!$roomPayload['canAccess']) {
-            return response()->json([
-                'message' => 'Bạn chưa tham gia nhóm chat này.',
-                'room' => $roomPayload,
-            ], 403);
+            return response()->json(['message' => 'Bạn chưa tham gia nhóm chat này.', 'room' => $roomPayload], 403);
         }
 
         $messages = $chatMessageService->getMessagesForUser(
@@ -88,9 +116,22 @@ class ClientChatController extends Controller
             $roomPayload['unreadCount'] = 0;
         }
 
+        return response()->json(['room' => $roomPayload, 'messages' => $messages]);
+    }
+
+    public function members(Request $request, int $roomId, ChatRoomService $chatRoomService, ChatAccessService $chatAccessService)
+    {
+        $user = $request->user();
+        $room = $chatRoomService->getVisibleRoomForUser($roomId, $user, $chatAccessService);
+
+        abort_unless($room, 404);
+
+        if (!$chatAccessService->canAccessRoom($user, $room)) {
+            return response()->json(['message' => 'Bạn chưa tham gia nhóm chat này.'], 403);
+        }
+
         return response()->json([
-            'room' => $roomPayload,
-            'messages' => $messages,
+            'members' => $chatRoomService->getRoomMembersPayload($room, $user, $chatAccessService),
         ]);
     }
 
@@ -102,9 +143,7 @@ class ClientChatController extends Controller
         abort_unless($room, 404);
 
         if (!$chatAccessService->canJoinRoom($user, $room)) {
-            return response()->json([
-                'message' => 'Bạn không có quyền tham gia nhóm chat này.',
-            ], 403);
+            return response()->json(['message' => 'Bạn không có quyền tham gia nhóm chat này.'], 403);
         }
 
         $chatRoomService->joinClassRoom($room, $user);
@@ -112,6 +151,35 @@ class ClientChatController extends Controller
 
         return response()->json([
             'message' => 'Tham gia nhóm chat thành công.',
+            'room'    => $chatRoomService->buildRoomPayload($room, $user, $chatAccessService),
+        ]);
+    }
+
+    public function direct(Request $request, ChatRoomService $chatRoomService, ChatAccessService $chatAccessService)
+    {
+        $validated = $request->validate([
+            'targetUserId' => 'required|integer',
+        ]);
+
+        $user = $request->user();
+        $targetUserId = (int) $validated['targetUserId'];
+
+        if ((int) $user->taiKhoanId === $targetUserId) {
+            return response()->json(['message' => 'Bạn không thể tự tạo đoạn chat riêng với chính mình.'], 422);
+        }
+
+        if (!$chatAccessService->canCreateDirectConversation($user, $targetUserId)) {
+            return response()->json(['message' => 'Bạn không thể nhắn tin riêng với thành viên này.'], 403);
+        }
+
+        $targetUser = \App\Models\Auth\TaiKhoan::query()
+            ->with('hoSoNguoiDung')
+            ->findOrFail($targetUserId);
+
+        $room = $chatRoomService->findOrCreateDirectRoom($user, $targetUser);
+
+        return response()->json([
+            'message' => 'Đã mở đoạn chat riêng.',
             'room' => $chatRoomService->buildRoomPayload($room, $user, $chatAccessService),
         ]);
     }
@@ -121,6 +189,7 @@ class ClientChatController extends Controller
         $validated = $request->validate([
             'roomId' => 'required|integer',
             'message' => 'required|string|max:2000',
+            'replyToMessageId' => 'nullable|integer',
         ]);
 
         $user = $request->user();
@@ -129,26 +198,94 @@ class ClientChatController extends Controller
         abort_unless($room, 404);
 
         if (!$chatAccessService->canSendMessage($user, $room)) {
-            return response()->json([
-                'message' => 'Bạn chưa thể gửi tin nhắn trong nhóm chat này.',
-            ], 403);
+            return response()->json(['message' => 'Bạn chưa thể gửi tin nhắn trong nhóm chat này.'], 403);
         }
 
-        $message = $chatMessageService->sendTextMessage($room, $user, $validated['message']);
+        $replyTo = null;
+        if (!empty($validated['replyToMessageId'])) {
+            $replyTo = $chatMessageService->findVisibleMessageForUser($room, $user, (int) $validated['replyToMessageId']);
+
+            if (!$replyTo) {
+                return response()->json(['message' => 'Không tìm thấy tin nhắn để trả lời.'], 422);
+            }
+        }
+
+        $message = $chatMessageService->sendTextMessage($room, $user, $validated['message'], $replyTo);
         $room->refresh();
 
         return response()->json([
-            'message' => 'Đã gửi tin nhắn.',
+            'message'     => 'Đã gửi tin nhắn.',
             'chatMessage' => $message,
+            'room'        => $chatRoomService->buildRoomPayload($room, $user, $chatAccessService),
+        ]);
+    }
+
+    public function recall(Request $request, int $messageId, ChatRoomService $chatRoomService, ChatAccessService $chatAccessService, ChatMessageService $chatMessageService)
+    {
+        $user = $request->user();
+        $roomId = (int) $request->integer('roomId');
+
+        if ($roomId <= 0) {
+            return response()->json(['message' => 'Thiếu thông tin phòng chat.'], 422);
+        }
+
+        $room = $chatRoomService->getVisibleRoomForUser($roomId, $user, $chatAccessService);
+        abort_unless($room, 404);
+
+        if (!$chatAccessService->canAccessRoom($user, $room)) {
+            return response()->json(['message' => 'Bạn chưa tham gia nhóm chat này.'], 403);
+        }
+
+        $message = $chatMessageService->findVisibleMessageForUser($room, $user, $messageId);
+        if (!$message) {
+            return response()->json(['message' => 'Không tìm thấy tin nhắn cần thu hồi.'], 404);
+        }
+
+        $recalled = $chatMessageService->recallMessage($room, $user, $message);
+        $room->refresh();
+
+        return response()->json([
+            'message' => 'Đã thu hồi tin nhắn.',
+            'chatMessage' => $recalled,
+            'room' => $chatRoomService->buildRoomPayload($room, $user, $chatAccessService),
+        ]);
+    }
+
+    public function react(Request $request, int $messageId, ChatRoomService $chatRoomService, ChatAccessService $chatAccessService, ChatMessageService $chatMessageService)
+    {
+        $validated = $request->validate([
+            'roomId' => 'required|integer',
+            'emoji' => ['required', 'string', Rule::in(ChatMessageService::reactionEmojis())],
+        ]);
+
+        $user = $request->user();
+        $room = $chatRoomService->getVisibleRoomForUser((int) $validated['roomId'], $user, $chatAccessService);
+
+        abort_unless($room, 404);
+
+        if (!$chatAccessService->canAccessRoom($user, $room)) {
+            return response()->json(['message' => 'Bạn chưa tham gia nhóm chat này.'], 403);
+        }
+
+        $message = $chatMessageService->findVisibleMessageForUser($room, $user, $messageId);
+        if (!$message) {
+            return response()->json(['message' => 'Không tìm thấy tin nhắn cần thả cảm xúc.'], 404);
+        }
+
+        $reaction = $chatMessageService->toggleReaction($room, $user, $message, (string) $validated['emoji']);
+        $room->refresh();
+
+        return response()->json([
+            'message' => $reaction['reacted'] ? 'Đã thêm cảm xúc.' : 'Đã bỏ cảm xúc.',
+            'chatMessage' => $reaction['chatMessage'],
+            'reacted' => $reaction['reacted'],
             'room' => $chatRoomService->buildRoomPayload($room, $user, $chatAccessService),
         ]);
     }
 
     public function markRead(Request $request, int $roomId, ChatRoomService $chatRoomService, ChatAccessService $chatAccessService, ChatMessageService $chatMessageService)
     {
-        $validated = $request->validate([
-            'lastMessageId' => 'nullable|integer',
-        ]);
+        $validated = $request->validate(['lastMessageId' => 'nullable|integer']);
 
         $user = $request->user();
         $room = $chatRoomService->getVisibleRoomForUser($roomId, $user, $chatAccessService);
@@ -156,15 +293,11 @@ class ClientChatController extends Controller
         abort_unless($room, 404);
 
         if (!$chatAccessService->canAccessRoom($user, $room)) {
-            return response()->json([
-                'message' => 'Bạn chưa tham gia nhóm chat này.',
-            ], 403);
+            return response()->json(['message' => 'Bạn chưa tham gia nhóm chat này.'], 403);
         }
 
         $chatMessageService->markRoomRead($room, $user, $validated['lastMessageId'] ?? null);
 
-        return response()->json([
-            'success' => true,
-        ]);
+        return response()->json(['success' => true]);
     }
 }

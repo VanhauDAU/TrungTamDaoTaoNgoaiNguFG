@@ -25,6 +25,17 @@ class ChatRoomService
                 ]
             );
 
+            $room->fill([
+                'loai' => ChatRoom::TYPE_CLASS_GROUP,
+                'tenPhong' => $lopHoc->tenLopHoc,
+                'taoBoiId' => $room->taoBoiId ?: ($creatorId ?? $lopHoc->taiKhoanId),
+                'trangThai' => ChatRoom::STATUS_ACTIVE,
+            ]);
+
+            if ($room->isDirty()) {
+                $room->save();
+            }
+
             $this->ensureTeacherMember($room, $lopHoc->taiKhoanId);
 
             return $room->fresh();
@@ -110,19 +121,46 @@ class ChatRoomService
     {
         $classIds = $accessService->getAccessibleClassIds($taiKhoan);
 
-        if ($classIds->isEmpty()) {
-            return collect();
+        if ($classIds->isNotEmpty()) {
+            $this->ensureRoomsForClassIds($classIds);
         }
 
-        $rooms = ChatRoom::query()
+        $roomQuery = ChatRoom::query()
             ->with([
                 'lopHoc.khoaHoc',
                 'lopHoc.taiKhoan.hoSoNguoiDung',
                 'lastMessage.nguoiGui.hoSoNguoiDung',
+                'members.taiKhoan.hoSoNguoiDung',
             ])
-            ->active()
-            ->where('loai', ChatRoom::TYPE_CLASS_GROUP)
-            ->whereIn('lopHocId', $classIds)
+            ->active();
+
+        if ($classIds->isNotEmpty()) {
+            $roomQuery->where(function ($query) use ($classIds, $taiKhoan) {
+                $query->where(function ($subQuery) use ($classIds) {
+                    $subQuery
+                        ->where('loai', ChatRoom::TYPE_CLASS_GROUP)
+                        ->whereIn('lopHocId', $classIds);
+                })->orWhere(function ($subQuery) use ($taiKhoan) {
+                    $subQuery
+                        ->where('loai', ChatRoom::TYPE_DIRECT)
+                        ->whereHas('members', function ($memberQuery) use ($taiKhoan) {
+                            $memberQuery
+                                ->where('taiKhoanId', $taiKhoan->taiKhoanId)
+                                ->whereNull('roiAt');
+                        });
+                });
+            });
+        } else {
+            $roomQuery
+                ->where('loai', ChatRoom::TYPE_DIRECT)
+                ->whereHas('members', function ($memberQuery) use ($taiKhoan) {
+                    $memberQuery
+                        ->where('taiKhoanId', $taiKhoan->taiKhoanId)
+                        ->whereNull('roiAt');
+                });
+        }
+
+        $rooms = $roomQuery
             ->orderByDesc('updated_at')
             ->get();
 
@@ -132,7 +170,12 @@ class ChatRoomService
                     $this->ensureTeacherMember($room, $taiKhoan->taiKhoanId);
                 }
 
-                return $this->buildRoomPayload($room->fresh(['lopHoc.khoaHoc', 'lopHoc.taiKhoan.hoSoNguoiDung', 'lastMessage.nguoiGui.hoSoNguoiDung']), $taiKhoan, $accessService);
+                return $this->buildRoomPayload($room->fresh([
+                    'lopHoc.khoaHoc',
+                    'lopHoc.taiKhoan.hoSoNguoiDung',
+                    'lastMessage.nguoiGui.hoSoNguoiDung',
+                    'members.taiKhoan.hoSoNguoiDung',
+                ]), $taiKhoan, $accessService);
             })
             ->sortByDesc(function (array $room) {
                 return $room['lastMessageAt'] ?? $room['updatedAt'] ?? '';
@@ -140,12 +183,12 @@ class ChatRoomService
             ->values();
     }
 
-    public function getVisibleRoomForUser(int $roomId, TaiKhoan $taiKhoan, ChatAccessService $accessService): ?ChatRoom
+    public function getVisibleRoomForUser(int $roomId, TaiKhoan $taiKhoan, ChatAccessService $accessService, bool $ensureRooms = true): ?ChatRoom
     {
         $classIds = $accessService->getAccessibleClassIds($taiKhoan);
 
-        if ($classIds->isEmpty()) {
-            return null;
+        if ($ensureRooms && $classIds->isNotEmpty()) {
+            $this->ensureRoomsForClassIds($classIds);
         }
 
         $room = ChatRoom::query()
@@ -153,11 +196,37 @@ class ChatRoomService
                 'lopHoc.khoaHoc',
                 'lopHoc.taiKhoan.hoSoNguoiDung',
                 'lastMessage.nguoiGui.hoSoNguoiDung',
+                'members.taiKhoan.hoSoNguoiDung',
             ])
-            ->where('chatRoomId', $roomId)
-            ->where('loai', ChatRoom::TYPE_CLASS_GROUP)
-            ->whereIn('lopHocId', $classIds)
-            ->first();
+            ->where('chatRoomId', $roomId);
+
+        if ($classIds->isNotEmpty()) {
+            $room->where(function ($query) use ($classIds, $taiKhoan) {
+                $query->where(function ($subQuery) use ($classIds) {
+                    $subQuery
+                        ->where('loai', ChatRoom::TYPE_CLASS_GROUP)
+                        ->whereIn('lopHocId', $classIds);
+                })->orWhere(function ($subQuery) use ($taiKhoan) {
+                    $subQuery
+                        ->where('loai', ChatRoom::TYPE_DIRECT)
+                        ->whereHas('members', function ($memberQuery) use ($taiKhoan) {
+                            $memberQuery
+                                ->where('taiKhoanId', $taiKhoan->taiKhoanId)
+                                ->whereNull('roiAt');
+                        });
+                });
+            });
+        } else {
+            $room
+                ->where('loai', ChatRoom::TYPE_DIRECT)
+                ->whereHas('members', function ($memberQuery) use ($taiKhoan) {
+                    $memberQuery
+                        ->where('taiKhoanId', $taiKhoan->taiKhoanId)
+                        ->whereNull('roiAt');
+                });
+        }
+
+        $room = $room->first();
 
         if ($room && $room->isClassGroup() && (int) $taiKhoan->taiKhoanId === (int) optional($room->lopHoc)->taiKhoanId) {
             $this->ensureTeacherMember($room, $taiKhoan->taiKhoanId);
@@ -165,6 +234,7 @@ class ChatRoomService
                 'lopHoc.khoaHoc',
                 'lopHoc.taiKhoan.hoSoNguoiDung',
                 'lastMessage.nguoiGui.hoSoNguoiDung',
+                'members.taiKhoan.hoSoNguoiDung',
             ]);
         }
 
@@ -184,27 +254,128 @@ class ChatRoomService
         $teacherName = optional($teacher?->hoSoNguoiDung)->hoTen
             ?? $teacher?->taiKhoan
             ?? 'Chưa phân công';
+        $directPeer = $this->resolveDirectPeer($room, $taiKhoan);
+        $directPeerName = optional($directPeer?->hoSoNguoiDung)->hoTen
+            ?? $directPeer?->taiKhoan;
+        $directContext = $this->resolveDirectContext($taiKhoan, $directPeer, $accessService);
+        $roomName = $room->isDirect()
+            ? ($directPeerName ?: 'Tin nhắn riêng')
+            : ($room->tenPhong ?? optional($room->lopHoc)->tenLopHoc ?? 'Nhóm chat lớp');
 
         return [
             'id' => $room->chatRoomId,
-            'name' => $room->tenPhong ?? optional($room->lopHoc)->tenLopHoc ?? 'Nhóm chat lớp',
+            'name' => $roomName,
             'type' => $room->loai,
             'lopHocId' => $room->lopHocId,
-            'className' => optional($room->lopHoc)->tenLopHoc,
-            'courseName' => optional(optional($room->lopHoc)->khoaHoc)->tenKhoaHoc,
-            'teacherName' => $teacherName,
+            'className' => $room->isDirect() ? 'Đoạn chat riêng' : optional($room->lopHoc)->tenLopHoc,
+            'courseName' => $room->isDirect() ? null : optional(optional($room->lopHoc)->khoaHoc)->tenKhoaHoc,
+            'teacherName' => $room->isDirect() ? ($directPeer?->getRoleLabel() ?? 'Thành viên') : $teacherName,
+            'directContextClassName' => $directContext['className'] ?? null,
+            'directContextCourseName' => $directContext['courseName'] ?? null,
+            'directContextLabel' => $directContext['label'] ?? null,
             'canJoin' => $accessService->canJoinRoom($taiKhoan, $room),
             'canAccess' => $accessService->canAccessRoom($taiKhoan, $room),
             'canSend' => $accessService->canSendMessage($taiKhoan, $room),
             'isMember' => $member !== null || ((int) $taiKhoan->taiKhoanId === (int) optional($room->lopHoc)->taiKhoanId),
             'requiresPassword' => false,
             'memberRole' => $member?->vaiTro,
+            'directPeerId' => $directPeer?->taiKhoanId,
+            'directPeerName' => $directPeerName,
             'lastMessagePreview' => $this->makeLastMessagePreview($lastMessage),
             'lastMessageAt' => optional($lastMessage?->guiLuc ?? $lastMessage?->created_at)?->toIso8601String(),
             'lastMessageAtLabel' => optional($lastMessage?->guiLuc ?? $lastMessage?->created_at)?->diffForHumans(),
             'unreadCount' => $this->getUnreadCount($room, $taiKhoan, $member),
             'updatedAt' => optional($room->updated_at)?->toIso8601String(),
         ];
+    }
+
+    public function getRoomMembersPayload(ChatRoom $room, TaiKhoan $viewer, ChatAccessService $accessService): Collection
+    {
+        $room->loadMissing(['members.taiKhoan.hoSoNguoiDung']);
+
+        return $room->members
+            ->filter(fn(ChatRoomMember $member) => $member->taiKhoan !== null)
+            ->map(function (ChatRoomMember $member) use ($viewer, $accessService) {
+                $account = $member->taiKhoan;
+                $name = optional($account->hoSoNguoiDung)->hoTen
+                    ?? $account->taiKhoan
+                    ?? 'Người dùng';
+
+                return [
+                    'id' => $account->taiKhoanId,
+                    'name' => $name,
+                    'initials' => $this->makeInitials($name),
+                    'roleLabel' => $this->mapChatRoleLabel($member->vaiTro, $account),
+                    'isMe' => (int) $account->taiKhoanId === (int) $viewer->taiKhoanId,
+                    'canDirect' => (int) $account->taiKhoanId !== (int) $viewer->taiKhoanId
+                        && $accessService->canCreateDirectConversation($viewer, $account),
+                ];
+            })
+            ->sortBy([
+                ['isMe', 'asc'],
+                ['roleLabel', 'asc'],
+                ['name', 'asc'],
+            ])
+            ->values();
+    }
+
+    public function findOrCreateDirectRoom(TaiKhoan $firstUser, TaiKhoan $secondUser): ChatRoom
+    {
+        $orderedIds = collect([$firstUser->taiKhoanId, $secondUser->taiKhoanId])
+            ->sort()
+            ->values();
+
+        return DB::transaction(function () use ($orderedIds, $firstUser, $secondUser) {
+            $room = ChatRoom::query()
+                ->with(['members'])
+                ->where('loai', ChatRoom::TYPE_DIRECT)
+                ->whereHas('members', function ($query) use ($orderedIds) {
+                    $query->where('taiKhoanId', $orderedIds[0])->whereNull('roiAt');
+                })
+                ->whereHas('members', function ($query) use ($orderedIds) {
+                    $query->where('taiKhoanId', $orderedIds[1])->whereNull('roiAt');
+                })
+                ->get()
+                ->first(function (ChatRoom $candidate) use ($orderedIds) {
+                    $activeMemberIds = $candidate->members
+                        ->pluck('taiKhoanId')
+                        ->sort()
+                        ->values();
+
+                    return $activeMemberIds->count() === 2
+                        && $activeMemberIds->all() === $orderedIds->all();
+                });
+
+            if (!$room) {
+                $room = ChatRoom::query()->create([
+                    'loai' => ChatRoom::TYPE_DIRECT,
+                    'tenPhong' => null,
+                    'taoBoiId' => $firstUser->taiKhoanId,
+                    'trangThai' => ChatRoom::STATUS_ACTIVE,
+                ]);
+            }
+
+            foreach ([$firstUser, $secondUser] as $user) {
+                ChatRoomMember::query()->updateOrCreate(
+                    [
+                        'chatRoomId' => $room->chatRoomId,
+                        'taiKhoanId' => $user->taiKhoanId,
+                    ],
+                    [
+                        'vaiTro' => ChatRoomMember::ROLE_MEMBER,
+                        'joinedAt' => now(),
+                        'roiAt' => null,
+                    ]
+                );
+            }
+
+            return $room->fresh([
+                'lopHoc.khoaHoc',
+                'lopHoc.taiKhoan.hoSoNguoiDung',
+                'lastMessage.nguoiGui.hoSoNguoiDung',
+                'members.taiKhoan.hoSoNguoiDung',
+            ]);
+        });
     }
 
     public function joinClassRoom(ChatRoom $room, TaiKhoan $taiKhoan): ChatRoomMember
@@ -255,5 +426,86 @@ class ChatRoomService
             ChatMessage::TYPE_LOCATION => '[Vị trí]',
             default => \Illuminate\Support\Str::limit(trim(strip_tags((string) $message->noiDung)), 80),
         };
+    }
+
+    private function ensureRoomsForClassIds(Collection $classIds): void
+    {
+        LopHoc::query()
+            ->whereIn('lopHocId', $classIds->all())
+            ->get()
+            ->each(function (LopHoc $lopHoc) {
+                if ($lopHoc->canStudentJoinChat() || $lopHoc->isCompleted()) {
+                    $this->findOrCreateClassRoom($lopHoc);
+                }
+            });
+    }
+
+    private function resolveDirectPeer(ChatRoom $room, TaiKhoan $taiKhoan): ?TaiKhoan
+    {
+        if (!$room->isDirect()) {
+            return null;
+        }
+
+        $room->loadMissing(['members.taiKhoan.hoSoNguoiDung']);
+
+        return optional(
+            $room->members->first(function (ChatRoomMember $member) use ($taiKhoan) {
+                return (int) $member->taiKhoanId !== (int) $taiKhoan->taiKhoanId;
+            })
+        )->taiKhoan;
+    }
+
+    private function makeInitials(string $name): string
+    {
+        return collect(preg_split('/\s+/', trim($name)) ?: [])
+            ->filter()
+            ->take(2)
+            ->map(fn(string $part) => mb_strtoupper(mb_substr($part, 0, 1)))
+            ->implode('') ?: 'TV';
+    }
+
+    private function mapChatRoleLabel(?string $role, TaiKhoan $account): string
+    {
+        if ($role === ChatRoomMember::ROLE_TEACHER) {
+            return 'Giáo viên';
+        }
+
+        if ($role === ChatRoomMember::ROLE_OWNER) {
+            return 'Chủ phòng';
+        }
+
+        return $account->getRoleLabel();
+    }
+
+    private function resolveDirectContext(TaiKhoan $viewer, ?TaiKhoan $peer, ChatAccessService $accessService): ?array
+    {
+        if (!$peer) {
+            return null;
+        }
+
+        $sharedClassIds = $accessService
+            ->getAccessibleClassIds($viewer)
+            ->intersect($accessService->getAccessibleClassIds($peer))
+            ->values();
+
+        if ($sharedClassIds->isEmpty()) {
+            return null;
+        }
+
+        $class = LopHoc::query()
+            ->with('khoaHoc')
+            ->whereIn('lopHocId', $sharedClassIds->all())
+            ->orderByDesc('lopHocId')
+            ->first();
+
+        if (!$class) {
+            return null;
+        }
+
+        return [
+            'className' => $class->tenLopHoc,
+            'courseName' => optional($class->khoaHoc)->tenKhoaHoc,
+            'label' => 'Kết nối qua lớp ' . $class->tenLopHoc,
+        ];
     }
 }
