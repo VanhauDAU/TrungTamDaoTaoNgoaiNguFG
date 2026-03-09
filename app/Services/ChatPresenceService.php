@@ -43,6 +43,9 @@ class ChatPresenceService
                 return [
                     'id' => $account->taiKhoanId,
                     'name' => $name,
+                    'avatarUrl' => ($account->hoSoNguoiDung && $account->hoSoNguoiDung->anhDaiDien)
+                        ? asset('storage/' . ltrim($account->hoSoNguoiDung->anhDaiDien, '/'))
+                        : null,
                 ];
             })
             ->values()

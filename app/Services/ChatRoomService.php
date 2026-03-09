@@ -261,15 +261,20 @@ class ChatRoomService
         $roomName = $room->isDirect()
             ? ($directPeerName ?: 'Tin nhắn riêng')
             : ($room->tenPhong ?? optional($room->lopHoc)->tenLopHoc ?? 'Nhóm chat lớp');
+        $roomAvatarUrl = $room->isDirect()
+            ? $this->avatarUrlForAccount($directPeer)
+            : $this->avatarUrlForAccount($teacher);
 
         return [
             'id' => $room->chatRoomId,
             'name' => $roomName,
+            'avatarUrl' => $roomAvatarUrl,
             'type' => $room->loai,
             'lopHocId' => $room->lopHocId,
             'className' => $room->isDirect() ? 'Đoạn chat riêng' : optional($room->lopHoc)->tenLopHoc,
             'courseName' => $room->isDirect() ? null : optional(optional($room->lopHoc)->khoaHoc)->tenKhoaHoc,
             'teacherName' => $room->isDirect() ? ($directPeer?->getRoleLabel() ?? 'Thành viên') : $teacherName,
+            'teacherAvatarUrl' => $this->avatarUrlForAccount($teacher),
             'directContextClassName' => $directContext['className'] ?? null,
             'directContextCourseName' => $directContext['courseName'] ?? null,
             'directContextLabel' => $directContext['label'] ?? null,
@@ -281,6 +286,7 @@ class ChatRoomService
             'memberRole' => $member?->vaiTro,
             'directPeerId' => $directPeer?->taiKhoanId,
             'directPeerName' => $directPeerName,
+            'directPeerAvatarUrl' => $this->avatarUrlForAccount($directPeer),
             'lastMessagePreview' => $this->makeLastMessagePreview($lastMessage),
             'lastMessageAt' => optional($lastMessage?->guiLuc ?? $lastMessage?->created_at)?->toIso8601String(),
             'lastMessageAtLabel' => optional($lastMessage?->guiLuc ?? $lastMessage?->created_at)?->diffForHumans(),
@@ -307,6 +313,7 @@ class ChatRoomService
                     'id' => $account->taiKhoanId,
                     'name' => $name,
                     'initials' => $this->makeInitials($name),
+                    'avatarUrl' => $this->avatarUrlForAccount($account),
                     'roleLabel' => $this->mapChatRoleLabel($member->vaiTro, $account),
                     'isMe' => (int) $account->taiKhoanId === (int) $viewer->taiKhoanId,
                     'canDirect' => (int) $account->taiKhoanId !== (int) $viewer->taiKhoanId
@@ -432,6 +439,17 @@ class ChatRoomService
         }
 
         return 'Chưa hoạt động gần đây';
+    }
+
+    private function avatarUrlForAccount(?TaiKhoan $account): ?string
+    {
+        $path = optional($account?->hoSoNguoiDung)->anhDaiDien;
+
+        if (!$path) {
+            return null;
+        }
+
+        return asset('storage/' . ltrim($path, '/'));
     }
 
     private function makeLastMessagePreview(?ChatMessage $message): ?string

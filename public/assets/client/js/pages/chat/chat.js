@@ -71,6 +71,7 @@
         replyingTo: null,
         openMessageMenuId: null,
         openReactionPickerId: null,
+        openReceiptDetailsMessageId: null,
         composerEmojiOpen: false,
         typingUsers: [],
         roomMembers: [],
@@ -131,6 +132,89 @@
             room?.name || room?.className || room?.courseName,
             "CH",
         );
+    }
+
+    function avatarInnerHtml(name, avatarUrl, fallback = "CH") {
+        if (avatarUrl) {
+            return `<img src="${esc(avatarUrl)}" alt="${esc(name || fallback)}" class="chat-avatar-image">`;
+        }
+
+        return esc(initialsFromText(name, fallback));
+    }
+
+    function latestMineReceiptMessageId() {
+        for (let index = state.messages.length - 1; index >= 0; index -= 1) {
+            const message = state.messages[index];
+
+            if (!message || message._pending || message.isSystem) continue;
+
+            return message.isMine ? Number(message.id) : null;
+        }
+
+        return null;
+    }
+
+    function receiptSummaryHtml(receipt, messageId) {
+        if (!receipt || !receipt.statusLabel) return "";
+
+        const isOpen =
+            Number(state.openReceiptDetailsMessageId) === Number(messageId);
+
+        return `
+            <div class="chat-receipt-wrap">
+                <button
+                    type="button"
+                    class="chat-receipt-summary${isOpen ? " is-open" : ""}"
+                    data-toggle-receipt-details="${messageId}"
+                    aria-label="Xem chi tiết trạng thái tin nhắn"
+                >
+                    <span class="chat-receipt-label">${esc(receipt.statusLabel)}</span>
+                </button>
+                ${receiptDetailsHtml(receipt, messageId)}
+            </div>`;
+    }
+
+    function receiptDetailsSectionHtml(title, users) {
+        const items = Array.isArray(users) ? users : [];
+
+        return `
+            <div class="chat-receipt-section">
+                <div class="chat-receipt-section-title">${esc(title)}</div>
+                ${
+                    items.length
+                        ? items
+                              .map(
+                                  (user) => `
+                                    <div class="chat-receipt-user">
+                                        <span class="chat-receipt-user-avatar">
+                                            ${avatarInnerHtml(user.name, user.avatarUrl, "TV")}
+                                        </span>
+                                        <span class="chat-receipt-user-body">
+                                            <strong>${esc(user.name || "Người dùng")}</strong>
+                                            <span>${esc(user.atLabel || "Vừa xong")}</span>
+                                        </span>
+                                    </div>`,
+                              )
+                              .join("")
+                        : `<div class="chat-receipt-empty">Chưa có</div>`
+                }
+            </div>`;
+    }
+
+    function receiptDetailsHtml(receipt, messageId) {
+        if (
+            !receipt ||
+            Number(state.openReceiptDetailsMessageId) !== Number(messageId)
+        ) {
+            return "";
+        }
+
+        return `
+            <div class="chat-receipt-popover" data-receipt-details="${messageId}">
+                ${receiptDetailsSectionHtml("Đã gửi", receipt.sentBy)}
+                ${receiptDetailsSectionHtml("Đã nhận", receipt.deliveredUsers)}
+                ${receiptDetailsSectionHtml("Đã xem", receipt.seenUsers)}
+            </div>`;
     }
 
     function messageOrderValue(message) {
@@ -610,6 +694,7 @@
 
         state.openReactionPickerId = nextId;
         closeMessageMenu();
+        closeReceiptDetails();
         closeComposerEmojiPicker();
 
         root.querySelectorAll("[data-message-reaction-picker]").forEach(
@@ -629,6 +714,42 @@
         );
     }
 
+    function closeReceiptDetails() {
+        if (state.openReceiptDetailsMessageId === null) return;
+        state.openReceiptDetailsMessageId = null;
+        root.querySelectorAll(
+            ".chat-receipt-summary.is-open, .chat-receipt-popover.is-open",
+        ).forEach((el) => el.classList.remove("is-open"));
+    }
+
+    function toggleReceiptDetails(messageId) {
+        const nextId =
+            state.openReceiptDetailsMessageId === Number(messageId)
+                ? null
+                : Number(messageId);
+
+        state.openReceiptDetailsMessageId = nextId;
+        closeMessageMenu();
+        closeReactionPicker();
+        closeComposerEmojiPicker();
+
+        root.querySelectorAll("[data-toggle-receipt-details]").forEach(
+            (button) => {
+                button.classList.toggle(
+                    "is-open",
+                    Number(button.dataset.toggleReceiptDetails) === nextId,
+                );
+            },
+        );
+
+        root.querySelectorAll("[data-receipt-details]").forEach((popover) => {
+            popover.classList.toggle(
+                "is-open",
+                Number(popover.dataset.receiptDetails) === nextId,
+            );
+        });
+    }
+
     function closeComposerEmojiPicker() {
         if (!state.composerEmojiOpen) return;
         state.composerEmojiOpen = false;
@@ -642,6 +763,7 @@
         state.composerEmojiOpen = !state.composerEmojiOpen;
         closeMessageMenu();
         closeReactionPicker();
+        closeReceiptDetails();
 
         root.querySelectorAll("[data-toggle-composer-emoji]").forEach(
             (button) => {
@@ -663,6 +785,7 @@
                 : Number(messageId);
         state.openMessageMenuId = nextId;
         closeReactionPicker();
+        closeReceiptDetails();
         closeComposerEmojiPicker();
 
         root.querySelectorAll("[data-message-menu-id]").forEach((menu) => {
@@ -1117,7 +1240,7 @@
                             <button type="button" class="chat-room-item ${isActive ? "is-active" : ""}" data-room-id="${room.id}">
                                 <div class="chat-room-row">
                                     <div class="chat-room-avatar-wrap">
-                                        <div class="chat-room-avatar">${esc(roomInitials(room))}</div>
+                                        <div class="chat-room-avatar">${avatarInnerHtml(room.name, room.avatarUrl, "CH")}</div>
                                         <span class="chat-room-dot ${room.canAccess ? "is-live" : ""}"></span>
                                     </div>
                                     <div class="chat-room-content">
@@ -1169,7 +1292,7 @@
                         <i class="fas fa-bars"></i>
                     </button>
                     <div class="chat-main-avatar-wrap">
-                        <div class="chat-main-avatar">${esc(room ? roomInitials(room) : "CH")}</div>
+                        <div class="chat-main-avatar">${room ? avatarInnerHtml(room.name, room.avatarUrl, "CH") : "CH"}</div>
                         <span class="chat-main-avatar-dot ${room && room.canAccess ? "is-live" : ""}"></span>
                     </div>
                     <div class="chat-main-summary">
@@ -1288,6 +1411,11 @@
         const isReactionPickerOpen =
             canReact &&
             Number(state.openReactionPickerId) === Number(message.id);
+        const latestReceiptId = latestMineReceiptMessageId();
+        const shouldShowReceipt =
+            message.isMine &&
+            !message._pending &&
+            Number(message.id) === Number(latestReceiptId);
         const reactionsHtml =
             Array.isArray(message.reactions) && message.reactions.length
                 ? `<div class="chat-message-reactions">
@@ -1380,7 +1508,7 @@
             ${
                 message.isMine
                     ? ""
-                    : `<div class="chat-message-avatar-small">${esc(initialsFromText(message.senderName, "HV"))}</div>`
+                    : `<div class="chat-message-avatar-small">${avatarInnerHtml(message.senderName, message.senderAvatarUrl, "HV")}</div>`
             }
             <div class="chat-message-stack">
                 ${message.isMine ? "" : `<div class="chat-message-sender">${esc(message.senderName)}</div>`}
@@ -1393,10 +1521,17 @@
                                 ? `<div class="chat-message-text">${esc(message.content)}</div>`
                                 : ""
                         }
-                        <div class="chat-message-time">${message._pending ? "Đang gửi..." : esc(message.sentAtLabel || "")}</div>
+                        <div class="chat-message-meta-row">
+                            <div class="chat-message-time">${message._pending ? "Đang gửi..." : esc(message.sentAtLabel || "")}</div>
+                        </div>
                     </div>
                     ${menuHtml}
                 </div>
+                ${
+                    shouldShowReceipt
+                        ? `<div class="chat-message-receipt-line">${receiptSummaryHtml(message.receipt, message.id)}</div>`
+                        : ""
+                }
                 ${reactionsHtml}
             </div>`;
 
@@ -1532,7 +1667,7 @@
                                     data-open-direct="${member.id}"
                                     ${member.canDirect ? "" : "disabled"}
                                 >
-                                    <span class="chat-member-avatar">${esc(member.initials || "TV")}</span>
+                                    <span class="chat-member-avatar">${avatarInnerHtml(member.name, member.avatarUrl, member.initials || "TV")}</span>
                                     <span class="chat-member-body">
                                         <strong>${esc(member.name)}</strong>
                                         <span class="chat-member-meta">
@@ -1564,7 +1699,7 @@
         panel.innerHTML = `
             <div class="chat-info-hero">
                 <div class="chat-info-avatar-wrap">
-                    <div class="chat-info-avatar">${esc(roomInitials(room))}</div>
+                    <div class="chat-info-avatar">${avatarInnerHtml(room.name, room.avatarUrl, "CH")}</div>
                     <span class="chat-info-avatar-dot ${room.canAccess ? "is-live" : ""}"></span>
                 </div>
                 <h4 class="chat-info-title">${esc(room.name)}</h4>
@@ -2287,6 +2422,7 @@
         state.replyingTo = null;
         state.openMessageMenuId = null;
         state.openReactionPickerId = null;
+        state.openReceiptDetailsMessageId = null;
         state.composerEmojiOpen = false;
         state.typingUsers = [];
         state.roomMembers = [];
@@ -2652,6 +2788,13 @@
         }
 
         if (
+            !event.target.closest(".chat-receipt-wrap") &&
+            !event.target.closest(".chat-receipt-popover")
+        ) {
+            closeReceiptDetails();
+        }
+
+        if (
             !event.target.closest(".chat-composer-emoji") &&
             !event.target.closest("[data-toggle-composer-emoji]")
         ) {
@@ -2769,6 +2912,12 @@
             return;
         }
 
+        const receiptButton = event.target.closest("[data-toggle-receipt-details]");
+        if (receiptButton) {
+            toggleReceiptDetails(receiptButton.dataset.toggleReceiptDetails);
+            return;
+        }
+
         const messageMenuButton = event.target.closest(
             "[data-message-menu-btn]",
         );
@@ -2863,6 +3012,8 @@
         if (event.key === "Escape") {
             if (state.openMessageMenuId !== null) closeMessageMenu();
             else if (state.openReactionPickerId !== null) closeReactionPicker();
+            else if (state.openReceiptDetailsMessageId !== null)
+                closeReceiptDetails();
             else if (state.composerEmojiOpen) closeComposerEmojiPicker();
             else if (state.replyingTo) setReplyingTo(null);
         }
@@ -2882,6 +3033,7 @@
         if (!root.contains(event.target)) {
             closeMessageMenu();
             closeReactionPicker();
+            closeReceiptDetails();
             closeComposerEmojiPicker();
         }
     });

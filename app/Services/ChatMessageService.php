@@ -27,6 +27,8 @@ class ChatMessageService
         '🎉', '🌟', '💯', '🤝', '👌', '🙌', '🥳', '😴', '🤯', '🤗',
     ];
 
+    private array $roomReceiptMembers = [];
+
     public static function reactionEmojis(): array
     {
         return self::SUPPORTED_REACTIONS;
@@ -462,6 +464,7 @@ class ChatMessageService
             'isMine' => (int) $message->nguoiGuiId === (int) $taiKhoan->taiKhoanId,
             'senderId' => $message->nguoiGuiId,
             'senderName' => $senderName,
+            'senderAvatarUrl' => $this->avatarUrlForAccount($sender),
             'replyTo' => $replyTo,
             'isRecalled' => $message->thuHoiLuc !== null,
             'isSystem' => $message->loai === ChatMessage::TYPE_SYSTEM,
@@ -474,6 +477,7 @@ class ChatMessageService
             'canDeleteForMe' => $message->loai !== ChatMessage::TYPE_SYSTEM,
             'attachments' => $this->transformAttachments($message),
             'reactions' => $this->transformReactions($message, $taiKhoan),
+            'receipt' => $this->buildReceiptPayload($message, $taiKhoan),
         ];
     }
 
@@ -609,6 +613,83 @@ class ChatMessageService
         return $allImages ? '[Ảnh đính kèm]' : '[Tệp đính kèm]';
     }
 
+    private function buildReceiptPayload(ChatMessage $message, TaiKhoan $viewer): ?array
+    {
+        if (
+            $message->loai === ChatMessage::TYPE_SYSTEM ||
+            (int) $message->nguoiGuiId !== (int) $viewer->taiKhoanId
+        ) {
+            return null;
+        }
+
+        $sentAt = $message->guiLuc ?? $message->created_at ?? now();
+        $members = $this->roomMembersForReceipts($message->chatRoomId)
+            ->filter(function (ChatRoomMember $member) use ($message) {
+                return (int) $member->taiKhoanId !== (int) $message->nguoiGuiId
+                    && $member->roiAt === null;
+            })
+            ->values();
+
+        $deliveredUsers = [];
+        $seenUsers = [];
+
+        foreach ($members as $member) {
+            $participant = $this->receiptParticipantPayload($member);
+            if (!$participant) {
+                continue;
+            }
+
+            $lastSeenAt = $member->lastSeenAt;
+            $hasDelivered = $lastSeenAt !== null && $lastSeenAt->gte($sentAt);
+            $hasSeen = (int) ($member->lastReadMessageId ?? 0) >= (int) $message->chatMessageId;
+
+            if ($hasDelivered) {
+                $deliveredUsers[] = [
+                    ...$participant,
+                    'at' => $lastSeenAt?->toIso8601String(),
+                    'atLabel' => $lastSeenAt?->diffForHumans(),
+                ];
+            }
+
+            if ($hasSeen) {
+                $seenUsers[] = [
+                    ...$participant,
+                    'at' => $lastSeenAt?->toIso8601String(),
+                    'atLabel' => $lastSeenAt?->diffForHumans(),
+                ];
+            }
+        }
+
+        $primaryUsers = !empty($seenUsers) ? $seenUsers : $deliveredUsers;
+        $status = !empty($seenUsers)
+            ? 'seen'
+            : (!empty($deliveredUsers) ? 'delivered' : 'sent');
+
+        return [
+            'status' => $status,
+            'statusLabel' => match ($status) {
+                'seen' => 'Đã xem',
+                'delivered' => 'Đã nhận',
+                default => 'Đã gửi',
+            },
+            'sentBy' => [
+                [
+                    'id' => $viewer->taiKhoanId,
+                    'name' => optional($viewer->hoSoNguoiDung)->hoTen ?? $viewer->taiKhoan ?? 'Bạn',
+                    'avatarUrl' => $this->avatarUrlForAccount($viewer),
+                    'at' => $sentAt?->toIso8601String(),
+                    'atLabel' => $sentAt?->diffForHumans(),
+                ],
+            ],
+            'deliveredUsers' => $deliveredUsers,
+            'seenUsers' => $seenUsers,
+            'deliveredCount' => count($deliveredUsers),
+            'seenCount' => count($seenUsers),
+            'previewUsers' => array_slice($primaryUsers, 0, 3),
+            'remainingCount' => max(0, count($primaryUsers) - 3),
+        ];
+    }
+
     private function isMessageDeletedForUser(ChatMessage $message, TaiKhoan $taiKhoan): bool
     {
         $deletes = $message->relationLoaded('deletes')
@@ -664,5 +745,45 @@ class ChatMessageService
             ->sortBy(fn (array $item) => $reactionOrder[$item['emoji']] ?? (count($reactionOrder) + 100))
             ->values()
             ->all();
+    }
+
+    private function roomMembersForReceipts(int $roomId): Collection
+    {
+        if (!array_key_exists($roomId, $this->roomReceiptMembers)) {
+            $this->roomReceiptMembers[$roomId] = ChatRoomMember::query()
+                ->with('taiKhoan.hoSoNguoiDung')
+                ->where('chatRoomId', $roomId)
+                ->whereNull('roiAt')
+                ->get();
+        }
+
+        return $this->roomReceiptMembers[$roomId];
+    }
+
+    private function receiptParticipantPayload(ChatRoomMember $member): ?array
+    {
+        $account = $member->taiKhoan;
+        if (!$account) {
+            return null;
+        }
+
+        return [
+            'id' => $account->taiKhoanId,
+            'name' => optional($account->hoSoNguoiDung)->hoTen
+                ?? $account->taiKhoan
+                ?? 'Người dùng',
+            'avatarUrl' => $this->avatarUrlForAccount($account),
+        ];
+    }
+
+    private function avatarUrlForAccount(?TaiKhoan $account): ?string
+    {
+        $path = optional($account?->hoSoNguoiDung)->anhDaiDien;
+
+        if (!$path) {
+            return null;
+        }
+
+        return asset('storage/' . ltrim($path, '/'));
     }
 }

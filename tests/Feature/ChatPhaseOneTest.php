@@ -189,6 +189,54 @@ class ChatPhaseOneTest extends TestCase
             ->assertJsonPath('typingUsers.0.name', 'Học viên B');
     }
 
+    public function test_message_payload_contains_receipt_summary_and_real_avatar_urls(): void
+    {
+        $student = $this->createAccount('hocvien_a', 'Học viên A', 'anh-dai-dien/hocvien-a.jpg');
+        $peer = $this->createAccount('hocvien_b', 'Học viên B', 'anh-dai-dien/hocvien-b.jpg');
+        $room = $this->createDirectRoom($student, $peer);
+
+        $message = ChatMessage::query()->create([
+            'chatRoomId' => $room->chatRoomId,
+            'nguoiGuiId' => $student->taiKhoanId,
+            'loai' => ChatMessage::TYPE_TEXT,
+            'noiDung' => 'Tin nhan co receipt',
+            'guiLuc' => now()->subMinute(),
+            'deadlineThuHoi' => now()->addDay(),
+        ]);
+
+        ChatRoomMember::query()
+            ->where('chatRoomId', $room->chatRoomId)
+            ->where('taiKhoanId', $peer->taiKhoanId)
+            ->update([
+                'lastSeenAt' => now(),
+                'lastReadMessageId' => $message->chatMessageId,
+            ]);
+
+        $room->forceFill([
+            'lastMessageId' => $message->chatMessageId,
+            'updated_at' => now(),
+        ])->save();
+
+        $response = $this->actingAs($student)->getJson(
+            route('home.api.chat.messages', ['id' => $room->chatRoomId])
+        );
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('messages.0.receipt.status', 'seen')
+            ->assertJsonPath('messages.0.receipt.seenCount', 1)
+            ->assertJsonPath('messages.0.receipt.deliveredCount', 1);
+
+        $this->assertStringContainsString(
+            '/storage/anh-dai-dien/hocvien-a.jpg',
+            (string) $response->json('messages.0.senderAvatarUrl')
+        );
+        $this->assertStringContainsString(
+            '/storage/anh-dai-dien/hocvien-b.jpg',
+            (string) $response->json('messages.0.receipt.previewUsers.0.avatarUrl')
+        );
+    }
+
     private function createMinimalChatDependencies(): void
     {
         foreach ([
@@ -224,6 +272,7 @@ class ChatPhaseOneTest extends TestCase
         Schema::create('hosonguoidung', function (Blueprint $table) {
             $table->unsignedInteger('taiKhoanId')->primary();
             $table->string('hoTen')->nullable();
+            $table->string('anhDaiDien')->nullable();
             $table->timestamps();
         });
 
@@ -329,7 +378,7 @@ class ChatPhaseOneTest extends TestCase
         });
     }
 
-    private function createAccount(string $username, string $fullName): TaiKhoan
+    private function createAccount(string $username, string $fullName, ?string $avatarPath = null): TaiKhoan
     {
         $account = TaiKhoan::query()->create([
             'taiKhoan' => $username,
@@ -342,6 +391,7 @@ class ChatPhaseOneTest extends TestCase
         HoSoNguoiDung::query()->create([
             'taiKhoanId' => $account->taiKhoanId,
             'hoTen' => $fullName,
+            'anhDaiDien' => $avatarPath,
         ]);
 
         return $account;
