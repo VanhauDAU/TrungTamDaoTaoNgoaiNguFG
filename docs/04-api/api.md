@@ -93,6 +93,7 @@ Base prefix: `/api/chat`
 | POST | `/api/chat/messages` | Gửi tin nhắn text |
 | POST | `/api/chat/messages/{id}/recall` | Thu hồi tin nhắn |
 | POST | `/api/chat/messages/{id}/react` | Thêm hoặc bỏ reaction |
+| POST | `/api/chat/messages/{id}/delete-for-me` | Xóa tin nhắn phía mình |
 
 Ghi chú:
 

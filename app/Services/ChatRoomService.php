@@ -261,15 +261,20 @@ class ChatRoomService
         $roomName = $room->isDirect()
             ? ($directPeerName ?: 'Tin nhắn riêng')
             : ($room->tenPhong ?? optional($room->lopHoc)->tenLopHoc ?? 'Nhóm chat lớp');
+        $roomAvatarUrl = $room->isDirect()
+            ? $this->avatarUrlForAccount($directPeer)
+            : $this->avatarUrlForAccount($teacher);
 
         return [
             'id' => $room->chatRoomId,
             'name' => $roomName,
+            'avatarUrl' => $roomAvatarUrl,
             'type' => $room->loai,
             'lopHocId' => $room->lopHocId,
             'className' => $room->isDirect() ? 'Đoạn chat riêng' : optional($room->lopHoc)->tenLopHoc,
             'courseName' => $room->isDirect() ? null : optional(optional($room->lopHoc)->khoaHoc)->tenKhoaHoc,
             'teacherName' => $room->isDirect() ? ($directPeer?->getRoleLabel() ?? 'Thành viên') : $teacherName,
+            'teacherAvatarUrl' => $this->avatarUrlForAccount($teacher),
             'directContextClassName' => $directContext['className'] ?? null,
             'directContextCourseName' => $directContext['courseName'] ?? null,
             'directContextLabel' => $directContext['label'] ?? null,
@@ -281,10 +286,13 @@ class ChatRoomService
             'memberRole' => $member?->vaiTro,
             'directPeerId' => $directPeer?->taiKhoanId,
             'directPeerName' => $directPeerName,
+            'directPeerAvatarUrl' => $this->avatarUrlForAccount($directPeer),
             'lastMessagePreview' => $this->makeLastMessagePreview($lastMessage),
             'lastMessageAt' => optional($lastMessage?->guiLuc ?? $lastMessage?->created_at)?->toIso8601String(),
             'lastMessageAtLabel' => optional($lastMessage?->guiLuc ?? $lastMessage?->created_at)?->diffForHumans(),
             'unreadCount' => $this->getUnreadCount($room, $taiKhoan, $member),
+            'memberLastReadMessageId' => $member?->lastReadMessageId,
+            'memberLastSeenAt' => optional($member?->lastSeenAt)?->toIso8601String(),
             'updatedAt' => optional($room->updated_at)?->toIso8601String(),
         ];
     }
@@ -305,10 +313,14 @@ class ChatRoomService
                     'id' => $account->taiKhoanId,
                     'name' => $name,
                     'initials' => $this->makeInitials($name),
+                    'avatarUrl' => $this->avatarUrlForAccount($account),
                     'roleLabel' => $this->mapChatRoleLabel($member->vaiTro, $account),
                     'isMe' => (int) $account->taiKhoanId === (int) $viewer->taiKhoanId,
                     'canDirect' => (int) $account->taiKhoanId !== (int) $viewer->taiKhoanId
                         && $accessService->canCreateDirectConversation($viewer, $account),
+                    'isOnline' => $this->memberIsOnlineRecently($member),
+                    'presenceLabel' => $this->presenceLabelForMember($member),
+                    'lastSeenAt' => optional($member->lastSeenAt)?->toIso8601String(),
                 ];
             })
             ->sortBy([
@@ -408,6 +420,36 @@ class ChatRoomService
             ->where('chatMessageId', '>', $lastReadMessageId)
             ->where('nguoiGuiId', '!=', $taiKhoan->taiKhoanId)
             ->count();
+    }
+
+    private function memberIsOnlineRecently(ChatRoomMember $member): bool
+    {
+        return $member->lastSeenAt !== null
+            && $member->lastSeenAt->gte(now()->subMinutes(2));
+    }
+
+    private function presenceLabelForMember(ChatRoomMember $member): string
+    {
+        if ($this->memberIsOnlineRecently($member)) {
+            return 'Đang hoạt động';
+        }
+
+        if ($member->lastSeenAt) {
+            return 'Hoạt động ' . $member->lastSeenAt->diffForHumans();
+        }
+
+        return 'Chưa hoạt động gần đây';
+    }
+
+    private function avatarUrlForAccount(?TaiKhoan $account): ?string
+    {
+        $path = optional($account?->hoSoNguoiDung)->anhDaiDien;
+
+        if (!$path) {
+            return null;
+        }
+
+        return asset('storage/' . ltrim($path, '/'));
     }
 
     private function makeLastMessagePreview(?ChatMessage $message): ?string

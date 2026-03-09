@@ -36,12 +36,15 @@
                 rooms: '{{ route('home.api.chat.rooms') }}',
                 messages: '{{ url('/api/chat/rooms/__ROOM__/messages') }}',
                 members: '{{ url('/api/chat/rooms/__ROOM__/members') }}',
+                search: '{{ url('/api/chat/rooms/__ROOM__/search') }}',
                 join: '{{ url('/api/chat/rooms/__ROOM__/join') }}',
+                typing: '{{ url('/api/chat/rooms/__ROOM__/typing') }}',
                 direct: '{{ route('home.api.chat.direct') }}',
                 read: '{{ url('/api/chat/rooms/__ROOM__/read') }}',
                 send: '{{ route('home.api.chat.send') }}',
                 recall: '{{ url('/api/chat/messages/__MESSAGE__/recall') }}',
                 react: '{{ url('/api/chat/messages/__MESSAGE__/react') }}',
+                deleteForMe: '{{ url('/api/chat/messages/__MESSAGE__/delete-for-me') }}',
             }
         };
     </script>

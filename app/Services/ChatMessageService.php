@@ -5,11 +5,16 @@ namespace App\Services;
 use App\Models\Auth\TaiKhoan;
 use App\Models\Interaction\Chat\ChatAuditLog;
 use App\Models\Interaction\Chat\ChatMessage;
+use App\Models\Interaction\Chat\ChatMessageAttachment;
+use App\Models\Interaction\Chat\ChatMessageDelete;
 use App\Models\Interaction\Chat\ChatMessageReaction;
 use App\Models\Interaction\Chat\ChatRoom;
 use App\Models\Interaction\Chat\ChatRoomMember;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class ChatMessageService
@@ -21,6 +26,8 @@ class ChatMessageService
         '😢', '😭', '😡', '👍', '👎', '👏', '🙏', '❤️', '💔', '🔥',
         '🎉', '🌟', '💯', '🤝', '👌', '🙌', '🥳', '😴', '🤯', '🤗',
     ];
+
+    private array $roomReceiptMembers = [];
 
     public static function reactionEmojis(): array
     {
@@ -37,72 +44,145 @@ class ChatMessageService
         return [
             'nguoiGui.hoSoNguoiDung',
             'replyTo.nguoiGui.hoSoNguoiDung',
+            'replyTo.attachments',
+            'replyTo.deletes',
+            'attachments',
             'reactions.taiKhoan.hoSoNguoiDung',
         ];
     }
 
     public function getMessagesForUser(ChatRoom $room, TaiKhoan $taiKhoan, ?int $beforeMessageId = null, int $limit = 50): Collection
     {
-        $query = ChatMessage::query()
-            ->with($this->messageRelations())
-            ->where('chatRoomId', $room->chatRoomId)
-            ->whereDoesntHave('deletes', function ($subQuery) use ($taiKhoan) {
-                $subQuery->where('taiKhoanId', $taiKhoan->taiKhoanId);
-            });
+        return $this->getMessagesPageForUser($room, $taiKhoan, $beforeMessageId, $limit)['messages'];
+    }
 
-        if ($beforeMessageId) {
-            $query->where('chatMessageId', '<', $beforeMessageId);
+    public function getMessagesPageForUser(ChatRoom $room, TaiKhoan $taiKhoan, ?int $beforeMessageId = null, int $limit = 50): array
+    {
+        $messages = $this->buildVisibleMessageQuery($room, $taiKhoan, $beforeMessageId)
+            ->orderByDesc('chatMessageId')
+            ->limit($limit + 1)
+            ->get();
+
+        $hasMore = $messages->count() > $limit;
+        if ($hasMore) {
+            $messages = $messages->take($limit);
         }
 
-        return $query
-            ->orderByDesc('chatMessageId')
-            ->limit($limit)
-            ->get()
-            ->reverse()
-            ->values()
-            ->map(fn(ChatMessage $message) => $this->transformMessage($message, $taiKhoan));
+        return [
+            'messages' => $messages
+                ->reverse()
+                ->values()
+                ->map(fn (ChatMessage $message) => $this->transformMessage($message, $taiKhoan)),
+            'hasMore' => $hasMore,
+        ];
     }
 
     public function getMessagesAfterForUser(ChatRoom $room, TaiKhoan $taiKhoan, int $afterMessageId = 0, int $limit = 50): Collection
     {
-        return ChatMessage::query()
-            ->with($this->messageRelations())
-            ->where('chatRoomId', $room->chatRoomId)
+        return $this->buildVisibleMessageQuery($room, $taiKhoan)
             ->where('chatMessageId', '>', $afterMessageId)
-            ->whereDoesntHave('deletes', function ($subQuery) use ($taiKhoan) {
-                $subQuery->where('taiKhoanId', $taiKhoan->taiKhoanId);
-            })
             ->orderBy('chatMessageId')
             ->limit($limit)
             ->get()
             ->values()
-            ->map(fn(ChatMessage $message) => $this->transformMessage($message, $taiKhoan));
+            ->map(fn (ChatMessage $message) => $this->transformMessage($message, $taiKhoan));
     }
 
     public function findVisibleMessageForUser(ChatRoom $room, TaiKhoan $taiKhoan, int $messageId): ?ChatMessage
     {
-        return ChatMessage::query()
-            ->with($this->messageRelations())
-            ->where('chatRoomId', $room->chatRoomId)
+        return $this->buildVisibleMessageQuery($room, $taiKhoan)
             ->where('chatMessageId', $messageId)
-            ->whereDoesntHave('deletes', function ($subQuery) use ($taiKhoan) {
-                $subQuery->where('taiKhoanId', $taiKhoan->taiKhoanId);
-            })
             ->first();
     }
 
-    public function sendTextMessage(ChatRoom $room, TaiKhoan $taiKhoan, string $content, ?ChatMessage $replyTo = null): array
+    public function findVisibleAttachmentForUser(TaiKhoan $taiKhoan, int $attachmentId): ?ChatMessageAttachment
     {
-        $message = DB::transaction(function () use ($room, $taiKhoan, $content, $replyTo) {
+        $attachment = ChatMessageAttachment::query()
+            ->with([
+                'message.room.lopHoc',
+                'message.deletes',
+            ])
+            ->find($attachmentId);
+
+        if (!$attachment || !$attachment->message || !$attachment->message->room) {
+            return null;
+        }
+
+        if ($attachment->message->thuHoiLuc !== null) {
+            return null;
+        }
+
+        if ($this->isMessageDeletedForUser($attachment->message, $taiKhoan)) {
+            return null;
+        }
+
+        $accessService = app(ChatAccessService::class);
+
+        return $accessService->canAccessRoom($taiKhoan, $attachment->message->room)
+            ? $attachment
+            : null;
+    }
+
+    public function searchMessagesForUser(ChatRoom $room, TaiKhoan $taiKhoan, string $query, int $limit = 20): Collection
+    {
+        $keyword = trim($query);
+        if ($keyword === '') {
+            return collect();
+        }
+
+        $like = '%' . $keyword . '%';
+
+        return $this->buildVisibleMessageQuery($room, $taiKhoan)
+            ->where(function ($messageQuery) use ($like) {
+                $messageQuery
+                    ->where('noiDung', 'like', $like)
+                    ->orWhereHas('nguoiGui.hoSoNguoiDung', function ($senderQuery) use ($like) {
+                        $senderQuery->where('hoTen', 'like', $like);
+                    })
+                    ->orWhereHas('nguoiGui', function ($senderQuery) use ($like) {
+                        $senderQuery->where('taiKhoan', 'like', $like);
+                    })
+                    ->orWhereHas('attachments', function ($attachmentQuery) use ($like) {
+                        $attachmentQuery->where('tenGoc', 'like', $like);
+                    });
+            })
+            ->orderByDesc('chatMessageId')
+            ->limit($limit)
+            ->get()
+            ->map(fn (ChatMessage $message) => $this->transformMessage($message, $taiKhoan))
+            ->values();
+    }
+
+    public function sendTextMessage(
+        ChatRoom $room,
+        TaiKhoan $taiKhoan,
+        ?string $content,
+        ?ChatMessage $replyTo = null,
+        array $attachments = []
+    ): array {
+        $content = trim((string) $content);
+        $attachments = array_values(array_filter($attachments, fn ($file) => $file instanceof UploadedFile));
+
+        if ($content === '' && empty($attachments)) {
+            throw ValidationException::withMessages([
+                'message' => 'Vui lòng nhập nội dung hoặc chọn tệp đính kèm.',
+            ]);
+        }
+
+        $messageType = $this->resolveMessageType($content, $attachments);
+
+        $message = DB::transaction(function () use ($room, $taiKhoan, $content, $replyTo, $attachments, $messageType) {
             $message = ChatMessage::query()->create([
                 'chatRoomId' => $room->chatRoomId,
                 'nguoiGuiId' => $taiKhoan->taiKhoanId,
                 'replyToMessageId' => $replyTo?->chatMessageId,
-                'loai' => ChatMessage::TYPE_TEXT,
-                'noiDung' => trim($content),
+                'loai' => $messageType,
+                'noiDung' => $content !== '' ? $content : null,
                 'guiLuc' => now(),
                 'deadlineThuHoi' => now()->addDay(),
             ]);
+
+            $storedAttachments = $this->storeAttachments($message, $attachments);
 
             $room->update([
                 'lastMessageId' => $message->chatMessageId,
@@ -133,6 +213,7 @@ class ChatMessageService
                 'duLieuMoi' => [
                     'type' => $message->loai,
                     'replyToMessageId' => $replyTo?->chatMessageId,
+                    'attachmentCount' => $storedAttachments->count(),
                 ],
                 'created_at' => now(),
             ]);
@@ -141,6 +222,37 @@ class ChatMessageService
         });
 
         return $this->transformMessage($message, $taiKhoan);
+    }
+
+    public function sendSystemMessage(ChatRoom $room, TaiKhoan $actor, string $content): ChatMessage
+    {
+        return DB::transaction(function () use ($room, $actor, $content) {
+            $message = ChatMessage::query()->create([
+                'chatRoomId' => $room->chatRoomId,
+                'nguoiGuiId' => $actor->taiKhoanId,
+                'loai' => ChatMessage::TYPE_SYSTEM,
+                'noiDung' => trim($content),
+                'guiLuc' => now(),
+            ]);
+
+            $room->forceFill([
+                'lastMessageId' => $message->chatMessageId,
+                'updated_at' => now(),
+            ])->save();
+
+            ChatAuditLog::query()->create([
+                'chatRoomId' => $room->chatRoomId,
+                'chatMessageId' => $message->chatMessageId,
+                'taiKhoanId' => $actor->taiKhoanId,
+                'hanhDong' => 'message.system',
+                'duLieuMoi' => [
+                    'content' => trim($content),
+                ],
+                'created_at' => now(),
+            ]);
+
+            return $message->fresh($this->messageRelations());
+        });
     }
 
     public function recallMessage(ChatRoom $room, TaiKhoan $taiKhoan, ChatMessage $message): array
@@ -207,6 +319,12 @@ class ChatMessageService
             ]);
         }
 
+        if ($message->loai === ChatMessage::TYPE_SYSTEM) {
+            throw ValidationException::withMessages([
+                'messageId' => 'Không thể thả cảm xúc cho tin nhắn hệ thống.',
+            ]);
+        }
+
         if (!in_array($emoji, self::reactionEmojis(), true)) {
             throw ValidationException::withMessages([
                 'emoji' => 'Cảm xúc không hợp lệ.',
@@ -260,6 +378,42 @@ class ChatMessageService
         ];
     }
 
+    public function deleteMessageForUser(ChatRoom $room, TaiKhoan $taiKhoan, ChatMessage $message): void
+    {
+        if ((int) $message->chatRoomId !== (int) $room->chatRoomId) {
+            throw ValidationException::withMessages([
+                'messageId' => 'Tin nhắn không thuộc phòng chat đã chọn.',
+            ]);
+        }
+
+        if ($message->loai === ChatMessage::TYPE_SYSTEM) {
+            throw ValidationException::withMessages([
+                'messageId' => 'Không thể xóa tin nhắn hệ thống khỏi chế độ xem cá nhân.',
+            ]);
+        }
+
+        DB::transaction(function () use ($room, $taiKhoan, $message) {
+            ChatMessageDelete::query()->updateOrCreate(
+                [
+                    'chatMessageId' => $message->chatMessageId,
+                    'taiKhoanId' => $taiKhoan->taiKhoanId,
+                ],
+                [
+                    'deletedAt' => now(),
+                    'created_at' => now(),
+                ]
+            );
+
+            ChatAuditLog::query()->create([
+                'chatRoomId' => $room->chatRoomId,
+                'chatMessageId' => $message->chatMessageId,
+                'taiKhoanId' => $taiKhoan->taiKhoanId,
+                'hanhDong' => 'message.deleted_for_me',
+                'created_at' => now(),
+            ]);
+        });
+    }
+
     public function markRoomRead(ChatRoom $room, TaiKhoan $taiKhoan, ?int $lastMessageId = null): void
     {
         $lastMessageId ??= ChatMessage::query()
@@ -290,6 +444,18 @@ class ChatMessageService
             ?? $sender?->taiKhoan
             ?? 'Người dùng';
 
+        $replyTo = null;
+        if ($message->replyTo && !$this->isMessageDeletedForUser($message->replyTo, $taiKhoan)) {
+            $replyTo = [
+                'id' => $message->replyTo->chatMessageId,
+                'senderName' => optional(optional($message->replyTo->nguoiGui)->hoSoNguoiDung)->hoTen
+                    ?? optional($message->replyTo->nguoiGui)->taiKhoan
+                    ?? 'Người dùng',
+                'content' => Str::limit($this->previewTextForMessage($message->replyTo), 60),
+                'isRecalled' => $message->replyTo->thuHoiLuc !== null,
+            ];
+        }
+
         return [
             'id' => $message->chatMessageId,
             'roomId' => $message->chatRoomId,
@@ -298,37 +464,246 @@ class ChatMessageService
             'isMine' => (int) $message->nguoiGuiId === (int) $taiKhoan->taiKhoanId,
             'senderId' => $message->nguoiGuiId,
             'senderName' => $senderName,
-            'replyTo' => $message->replyTo ? [
-                'id' => $message->replyTo->chatMessageId,
-                'senderName' => optional(optional($message->replyTo->nguoiGui)->hoSoNguoiDung)->hoTen
-                    ?? optional($message->replyTo->nguoiGui)->taiKhoan
-                    ?? 'Người dùng',
-                'content' => \Illuminate\Support\Str::limit(
-                    $message->replyTo->thuHoiLuc ? self::RECALL_PLACEHOLDER : (string) $message->replyTo->noiDung,
-                    60
-                ),
-                'isRecalled' => $message->replyTo->thuHoiLuc !== null,
-            ] : null,
+            'senderAvatarUrl' => $this->avatarUrlForAccount($sender),
+            'replyTo' => $replyTo,
             'isRecalled' => $message->thuHoiLuc !== null,
+            'isSystem' => $message->loai === ChatMessage::TYPE_SYSTEM,
             'sentAt' => optional($message->guiLuc ?? $message->created_at)?->toIso8601String(),
             'sentAtLabel' => optional($message->guiLuc ?? $message->created_at)?->format('H:i d/m/Y'),
-            'canRecall' => $message->thuHoiLuc === null
+            'canRecall' => $message->loai !== ChatMessage::TYPE_SYSTEM
+                && $message->thuHoiLuc === null
                 && (int) $message->nguoiGuiId === (int) $taiKhoan->taiKhoanId
                 && optional($message->deadlineThuHoi)?->isFuture(),
+            'canDeleteForMe' => $message->loai !== ChatMessage::TYPE_SYSTEM,
+            'attachments' => $this->transformAttachments($message),
             'reactions' => $this->transformReactions($message, $taiKhoan),
+            'receipt' => $this->buildReceiptPayload($message, $taiKhoan),
         ];
     }
 
     public function canRecallMessage(ChatMessage $message, TaiKhoan $taiKhoan): bool
     {
-        return $message->thuHoiLuc === null
+        return $message->loai !== ChatMessage::TYPE_SYSTEM
+            && $message->thuHoiLuc === null
             && (int) $message->nguoiGuiId === (int) $taiKhoan->taiKhoanId
             && optional($message->deadlineThuHoi)?->isFuture();
     }
 
-    private function transformReactions(ChatMessage $message, TaiKhoan $taiKhoan): array
+    private function buildVisibleMessageQuery(ChatRoom $room, TaiKhoan $taiKhoan, ?int $beforeMessageId = null)
+    {
+        $query = ChatMessage::query()
+            ->with($this->messageRelations())
+            ->where('chatRoomId', $room->chatRoomId)
+            ->whereDoesntHave('deletes', function ($subQuery) use ($taiKhoan) {
+                $subQuery->where('taiKhoanId', $taiKhoan->taiKhoanId);
+            });
+
+        if ($beforeMessageId) {
+            $query->where('chatMessageId', '<', $beforeMessageId);
+        }
+
+        return $query;
+    }
+
+    private function resolveMessageType(string $content, array $attachments): string
+    {
+        if ($content !== '') {
+            return ChatMessage::TYPE_TEXT;
+        }
+
+        if (empty($attachments)) {
+            return ChatMessage::TYPE_TEXT;
+        }
+
+        $allImages = collect($attachments)->every(function (UploadedFile $file) {
+            return str_starts_with((string) $file->getMimeType(), 'image/');
+        });
+
+        return $allImages ? ChatMessage::TYPE_IMAGE : ChatMessage::TYPE_FILE;
+    }
+
+    private function storeAttachments(ChatMessage $message, array $attachments): Collection
+    {
+        return collect($attachments)->map(function (UploadedFile $file) use ($message) {
+            $extension = strtolower((string) $file->getClientOriginalExtension());
+            $fileName = now()->format('YmdHis') . '_' . Str::random(20) . ($extension ? '.' . $extension : '');
+            $path = $file->storeAs('chat/messages/' . now()->format('Y/m'), $fileName, 'public');
+
+            $width = null;
+            $height = null;
+
+            if (str_starts_with((string) $file->getMimeType(), 'image/')) {
+                $dimensions = @getimagesize($file->getRealPath() ?: '');
+                if (is_array($dimensions)) {
+                    $width = $dimensions[0] ?? null;
+                    $height = $dimensions[1] ?? null;
+                }
+            }
+
+            return ChatMessageAttachment::query()->create([
+                'chatMessageId' => $message->chatMessageId,
+                'disk' => 'public',
+                'path' => $path,
+                'thumbnailPath' => null,
+                'tenGoc' => $file->getClientOriginalName(),
+                'mime' => $file->getMimeType(),
+                'size' => $file->getSize(),
+                'width' => $width,
+                'height' => $height,
+            ]);
+        });
+    }
+
+    private function transformAttachments(ChatMessage $message): array
     {
         if ($message->thuHoiLuc !== null) {
+            return [];
+        }
+
+        $attachments = $message->relationLoaded('attachments')
+            ? $message->attachments
+            : $message->attachments()->get();
+
+        return $attachments
+            ->map(function (ChatMessageAttachment $attachment) {
+                return [
+                    'id' => $attachment->chatAttachmentId,
+                    'name' => $attachment->tenGoc,
+                    'mime' => $attachment->mime,
+                    'size' => (int) $attachment->size,
+                    'isImage' => str_starts_with((string) $attachment->mime, 'image/'),
+                    'width' => $attachment->width,
+                    'height' => $attachment->height,
+                    'url' => route('home.api.chat.attachments.view', ['id' => $attachment->chatAttachmentId]),
+                    'downloadUrl' => route('home.api.chat.attachments.download', ['id' => $attachment->chatAttachmentId]),
+                    'thumbnailUrl' => $attachment->thumbnailPath
+                        ? route('home.api.chat.attachments.view', [
+                            'id' => $attachment->chatAttachmentId,
+                            'variant' => 'thumbnail',
+                        ])
+                        : null,
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    private function previewTextForMessage(ChatMessage $message): string
+    {
+        if ($message->thuHoiLuc !== null) {
+            return self::RECALL_PLACEHOLDER;
+        }
+
+        if (trim((string) $message->noiDung) !== '') {
+            return (string) $message->noiDung;
+        }
+
+        $attachments = $message->relationLoaded('attachments')
+            ? $message->attachments
+            : $message->attachments()->get();
+
+        if ($attachments->isEmpty()) {
+            return '';
+        }
+
+        $allImages = $attachments->every(function (ChatMessageAttachment $attachment) {
+            return str_starts_with((string) $attachment->mime, 'image/');
+        });
+
+        return $allImages ? '[Ảnh đính kèm]' : '[Tệp đính kèm]';
+    }
+
+    private function buildReceiptPayload(ChatMessage $message, TaiKhoan $viewer): ?array
+    {
+        if (
+            $message->loai === ChatMessage::TYPE_SYSTEM ||
+            (int) $message->nguoiGuiId !== (int) $viewer->taiKhoanId
+        ) {
+            return null;
+        }
+
+        $sentAt = $message->guiLuc ?? $message->created_at ?? now();
+        $members = $this->roomMembersForReceipts($message->chatRoomId)
+            ->filter(function (ChatRoomMember $member) use ($message) {
+                return (int) $member->taiKhoanId !== (int) $message->nguoiGuiId
+                    && $member->roiAt === null;
+            })
+            ->values();
+
+        $deliveredUsers = [];
+        $seenUsers = [];
+
+        foreach ($members as $member) {
+            $participant = $this->receiptParticipantPayload($member);
+            if (!$participant) {
+                continue;
+            }
+
+            $lastSeenAt = $member->lastSeenAt;
+            $hasDelivered = $lastSeenAt !== null && $lastSeenAt->gte($sentAt);
+            $hasSeen = (int) ($member->lastReadMessageId ?? 0) >= (int) $message->chatMessageId;
+
+            if ($hasDelivered) {
+                $deliveredUsers[] = [
+                    ...$participant,
+                    'at' => $lastSeenAt?->toIso8601String(),
+                    'atLabel' => $lastSeenAt?->diffForHumans(),
+                ];
+            }
+
+            if ($hasSeen) {
+                $seenUsers[] = [
+                    ...$participant,
+                    'at' => $lastSeenAt?->toIso8601String(),
+                    'atLabel' => $lastSeenAt?->diffForHumans(),
+                ];
+            }
+        }
+
+        $primaryUsers = !empty($seenUsers) ? $seenUsers : $deliveredUsers;
+        $status = !empty($seenUsers)
+            ? 'seen'
+            : (!empty($deliveredUsers) ? 'delivered' : 'sent');
+
+        return [
+            'status' => $status,
+            'statusLabel' => match ($status) {
+                'seen' => 'Đã xem',
+                'delivered' => 'Đã nhận',
+                default => 'Đã gửi',
+            },
+            'sentBy' => [
+                [
+                    'id' => $viewer->taiKhoanId,
+                    'name' => optional($viewer->hoSoNguoiDung)->hoTen ?? $viewer->taiKhoan ?? 'Bạn',
+                    'avatarUrl' => $this->avatarUrlForAccount($viewer),
+                    'at' => $sentAt?->toIso8601String(),
+                    'atLabel' => $sentAt?->diffForHumans(),
+                ],
+            ],
+            'deliveredUsers' => $deliveredUsers,
+            'seenUsers' => $seenUsers,
+            'deliveredCount' => count($deliveredUsers),
+            'seenCount' => count($seenUsers),
+            'previewUsers' => array_slice($primaryUsers, 0, 3),
+            'remainingCount' => max(0, count($primaryUsers) - 3),
+        ];
+    }
+
+    private function isMessageDeletedForUser(ChatMessage $message, TaiKhoan $taiKhoan): bool
+    {
+        $deletes = $message->relationLoaded('deletes')
+            ? $message->deletes
+            : $message->deletes()->get();
+
+        return $deletes->contains(
+            fn (ChatMessageDelete $delete) => (int) $delete->taiKhoanId === (int) $taiKhoan->taiKhoanId
+        );
+    }
+
+    private function transformReactions(ChatMessage $message, TaiKhoan $taiKhoan): array
+    {
+        if ($message->thuHoiLuc !== null || $message->loai === ChatMessage::TYPE_SYSTEM) {
             return [];
         }
 
@@ -358,7 +733,7 @@ class ChatMessageService
                     'emoji' => $emoji,
                     'count' => $items->count(),
                     'reactedByMe' => $items->contains(
-                        fn(ChatMessageReaction $reaction) => (int) $reaction->taiKhoanId === (int) $taiKhoan->taiKhoanId
+                        fn (ChatMessageReaction $reaction) => (int) $reaction->taiKhoanId === (int) $taiKhoan->taiKhoanId
                     ),
                     'userNames' => $userNames,
                 ];
@@ -367,8 +742,48 @@ class ChatMessageService
         $reactionOrder = array_flip(self::reactionEmojis());
 
         return $grouped
-            ->sortBy(fn(array $item) => $reactionOrder[$item['emoji']] ?? (count($reactionOrder) + 100))
+            ->sortBy(fn (array $item) => $reactionOrder[$item['emoji']] ?? (count($reactionOrder) + 100))
             ->values()
             ->all();
+    }
+
+    private function roomMembersForReceipts(int $roomId): Collection
+    {
+        if (!array_key_exists($roomId, $this->roomReceiptMembers)) {
+            $this->roomReceiptMembers[$roomId] = ChatRoomMember::query()
+                ->with('taiKhoan.hoSoNguoiDung')
+                ->where('chatRoomId', $roomId)
+                ->whereNull('roiAt')
+                ->get();
+        }
+
+        return $this->roomReceiptMembers[$roomId];
+    }
+
+    private function receiptParticipantPayload(ChatRoomMember $member): ?array
+    {
+        $account = $member->taiKhoan;
+        if (!$account) {
+            return null;
+        }
+
+        return [
+            'id' => $account->taiKhoanId,
+            'name' => optional($account->hoSoNguoiDung)->hoTen
+                ?? $account->taiKhoan
+                ?? 'Người dùng',
+            'avatarUrl' => $this->avatarUrlForAccount($account),
+        ];
+    }
+
+    private function avatarUrlForAccount(?TaiKhoan $account): ?string
+    {
+        $path = optional($account?->hoSoNguoiDung)->anhDaiDien;
+
+        if (!$path) {
+            return null;
+        }
+
+        return asset('storage/' . ltrim($path, '/'));
     }
 }

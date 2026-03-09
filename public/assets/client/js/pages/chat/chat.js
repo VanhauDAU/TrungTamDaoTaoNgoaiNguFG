@@ -52,17 +52,28 @@
         messages: [],
         messageIds: new Set(),
         lastMessageId: 0,
+        hasOlderMessages: false,
+        loadingOlderMessages: false,
         submitting: false,
         roomQuery: "",
         roomFilter: "all",
         mobileSidebarOpen: false,
         mobileInfoOpen: false,
         messageDraft: "",
+        messageSearchOpen: false,
+        messageSearchQuery: "",
+        messageSearchResults: [],
+        messageSearchLoading: false,
+        draftAttachments: [],
         messagesLoaded: false,
+        unreadMarkerMessageId: null,
+        highlightedMessageId: null,
         replyingTo: null,
         openMessageMenuId: null,
         openReactionPickerId: null,
+        openReceiptDetailsMessageId: null,
         composerEmojiOpen: false,
+        typingUsers: [],
         roomMembers: [],
         roomMembersLoading: false,
     };
@@ -70,6 +81,11 @@
     let pollTimer = null;
     let roomTimer = null;
     let polling = false;
+    let messageSearchTimer = null;
+    let typingStartTimer = null;
+    let typingStopTimer = null;
+    let typingActive = false;
+    let highlightTimer = null;
 
     function esc(v) {
         return String(v ?? "")
@@ -118,6 +134,89 @@
         );
     }
 
+    function avatarInnerHtml(name, avatarUrl, fallback = "CH") {
+        if (avatarUrl) {
+            return `<img src="${esc(avatarUrl)}" alt="${esc(name || fallback)}" class="chat-avatar-image">`;
+        }
+
+        return esc(initialsFromText(name, fallback));
+    }
+
+    function latestMineReceiptMessageId() {
+        for (let index = state.messages.length - 1; index >= 0; index -= 1) {
+            const message = state.messages[index];
+
+            if (!message || message._pending || message.isSystem) continue;
+
+            return message.isMine ? Number(message.id) : null;
+        }
+
+        return null;
+    }
+
+    function receiptSummaryHtml(receipt, messageId) {
+        if (!receipt || !receipt.statusLabel) return "";
+
+        const isOpen =
+            Number(state.openReceiptDetailsMessageId) === Number(messageId);
+
+        return `
+            <div class="chat-receipt-wrap">
+                <button
+                    type="button"
+                    class="chat-receipt-summary${isOpen ? " is-open" : ""}"
+                    data-toggle-receipt-details="${messageId}"
+                    aria-label="Xem chi tiết trạng thái tin nhắn"
+                >
+                    <span class="chat-receipt-label">${esc(receipt.statusLabel)}</span>
+                </button>
+                ${receiptDetailsHtml(receipt, messageId)}
+            </div>`;
+    }
+
+    function receiptDetailsSectionHtml(title, users) {
+        const items = Array.isArray(users) ? users : [];
+
+        return `
+            <div class="chat-receipt-section">
+                <div class="chat-receipt-section-title">${esc(title)}</div>
+                ${
+                    items.length
+                        ? items
+                              .map(
+                                  (user) => `
+                                    <div class="chat-receipt-user">
+                                        <span class="chat-receipt-user-avatar">
+                                            ${avatarInnerHtml(user.name, user.avatarUrl, "TV")}
+                                        </span>
+                                        <span class="chat-receipt-user-body">
+                                            <strong>${esc(user.name || "Người dùng")}</strong>
+                                            <span>${esc(user.atLabel || "Vừa xong")}</span>
+                                        </span>
+                                    </div>`,
+                              )
+                              .join("")
+                        : `<div class="chat-receipt-empty">Chưa có</div>`
+                }
+            </div>`;
+    }
+
+    function receiptDetailsHtml(receipt, messageId) {
+        if (
+            !receipt ||
+            Number(state.openReceiptDetailsMessageId) !== Number(messageId)
+        ) {
+            return "";
+        }
+
+        return `
+            <div class="chat-receipt-popover" data-receipt-details="${messageId}">
+                ${receiptDetailsSectionHtml("Đã gửi", receipt.sentBy)}
+                ${receiptDetailsSectionHtml("Đã nhận", receipt.deliveredUsers)}
+                ${receiptDetailsSectionHtml("Đã xem", receipt.seenUsers)}
+            </div>`;
+    }
+
     function messageOrderValue(message) {
         const numeric = Number(message?.id);
         return Number.isFinite(numeric) ? numeric : Number.MAX_SAFE_INTEGER;
@@ -127,6 +226,68 @@
         const text = String(value || "").trim();
         if (text.length <= limit) return text;
         return `${text.slice(0, limit - 1)}...`;
+    }
+
+    function typingSummaryText() {
+        const users = Array.isArray(state.typingUsers) ? state.typingUsers : [];
+
+        if (!users.length) return "";
+        if (users.length === 1) return `${users[0].name} đang nhập...`;
+        if (users.length === 2)
+            return `${users[0].name} và ${users[1].name} đang nhập...`;
+
+        return `${users[0].name} và ${users.length - 1} người khác đang nhập...`;
+    }
+
+    function messageSearchResultsHtml() {
+        if (!state.messageSearchOpen) return "";
+
+        const query = String(state.messageSearchQuery || "").trim();
+        if (!query) return "";
+
+        const results = Array.isArray(state.messageSearchResults)
+            ? state.messageSearchResults
+            : [];
+
+        return `
+            <div class="chat-search-results">
+                <div class="chat-search-results-head">
+                    <strong>Kết quả trong đoạn chat</strong>
+                    <button type="button" class="chat-search-results-close" data-clear-message-search aria-label="Đóng tìm kiếm">
+                        <i class="fas fa-xmark"></i>
+                    </button>
+                </div>
+                ${
+                    state.messageSearchLoading
+                        ? `<div class="chat-search-results-empty">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <span>Đang tìm tin nhắn...</span>
+                           </div>`
+                        : results.length
+                          ? `<div class="chat-search-results-list">
+                                    ${results
+                                        .map(
+                                            (message) => `
+                                                <button
+                                                    type="button"
+                                                    class="chat-search-result-item"
+                                                    data-jump-message="${message.id}"
+                                                >
+                                                    <span class="chat-search-result-top">
+                                                        <strong>${esc(message.senderName || "Người dùng")}</strong>
+                                                        <span>${esc(message.sentAtLabel || "")}</span>
+                                                    </span>
+                                                    <span class="chat-search-result-text">${esc(truncateText(message.content || (message.attachments?.length ? (message.attachments[0].isImage ? "[Ảnh đính kèm]" : "[Tệp đính kèm]") : ""), 110) || "Tin nhắn đính kèm")}</span>
+                                                </button>`,
+                                        )
+                                        .join("")}
+                             </div>`
+                          : `<div class="chat-search-results-empty">
+                                <i class="fas fa-magnifying-glass"></i>
+                                <span>Không tìm thấy tin phù hợp với "${esc(query)}".</span>
+                             </div>`
+                }
+            </div>`;
     }
 
     function nearBottom() {
@@ -142,21 +303,126 @@
         if (board) board.scrollTop = board.scrollHeight;
     }
 
+    function scrollToUnreadMarker() {
+        const board = document.getElementById("chat-message-board");
+        if (!board) return false;
+
+        const divider = board.querySelector(".chat-unread-divider");
+        if (divider) {
+            divider.scrollIntoView({ behavior: "smooth", block: "start" });
+            return true;
+        }
+
+        const unreadMessageId = firstUnreadIncomingMessageId();
+        if (!unreadMessageId) return false;
+
+        const targetMessage = board.querySelector(
+            `[data-message-id="${CSS.escape(String(unreadMessageId))}"]`,
+        );
+
+        if (!targetMessage) return false;
+
+        targetMessage.scrollIntoView({ behavior: "smooth", block: "start" });
+        return true;
+    }
+
     function resizeComposerTextarea(textarea) {
         if (!textarea) return;
         textarea.style.height = "0px";
         textarea.style.height = `${Math.min(textarea.scrollHeight, 140)}px`;
     }
 
+    function formatFileSize(bytes) {
+        const size = Number(bytes) || 0;
+        if (size < 1024) return `${size} B`;
+        if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+        return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+    }
+
+    function isImageMime(mime) {
+        return String(mime || "").startsWith("image/");
+    }
+
+    function releaseDraftAttachment(attachment) {
+        if (attachment?.previewUrl?.startsWith("blob:")) {
+            URL.revokeObjectURL(attachment.previewUrl);
+        }
+    }
+
+    function clearDraftAttachments() {
+        state.draftAttachments.forEach(releaseDraftAttachment);
+        state.draftAttachments = [];
+    }
+
+    function normalizeDraftFiles(fileList) {
+        return Array.from(fileList || [])
+            .filter(Boolean)
+            .map((file) => ({
+                id: `${file.name}_${file.size}_${file.lastModified}_${Math.random().toString(36).slice(2, 8)}`,
+                file,
+                name: file.name,
+                size: file.size,
+                mime: file.type || "application/octet-stream",
+                isImage: isImageMime(file.type),
+                previewUrl: isImageMime(file.type)
+                    ? URL.createObjectURL(file)
+                    : null,
+            }));
+    }
+
+    function addDraftFiles(fileList) {
+        const incoming = normalizeDraftFiles(fileList);
+        if (!incoming.length) return;
+
+        const existingKeys = new Set(
+            state.draftAttachments.map(
+                (item) =>
+                    `${item.name}_${item.size}_${item.file?.lastModified || 0}`,
+            ),
+        );
+
+        incoming.forEach((item) => {
+            const key = `${item.name}_${item.size}_${item.file?.lastModified || 0}`;
+            if (existingKeys.has(key)) {
+                releaseDraftAttachment(item);
+                return;
+            }
+
+            state.draftAttachments.push(item);
+            existingKeys.add(key);
+        });
+
+        renderComposer();
+    }
+
+    function removeDraftAttachment(attachmentId) {
+        const index = state.draftAttachments.findIndex(
+            (item) => item.id === attachmentId,
+        );
+
+        if (index < 0) return;
+
+        releaseDraftAttachment(state.draftAttachments[index]);
+        state.draftAttachments.splice(index, 1);
+        renderComposer();
+    }
+
     async function api(url, opts = {}) {
+        const isFormData = opts.body instanceof FormData;
+
         const response = await fetch(url, {
-            headers: {
-                Accept: "application/json",
-                "Content-Type": "application/json",
-                "X-CSRF-TOKEN": BS.csrf,
-                "X-Requested-With": "XMLHttpRequest",
-                ...(opts.headers || {}),
-            },
+            headers: (() => {
+                const headers = {
+                    Accept: "application/json",
+                    "X-CSRF-TOKEN": BS.csrf,
+                    "X-Requested-With": "XMLHttpRequest",
+                    ...(opts.headers || {}),
+                };
+
+                if (!isFormData) headers["Content-Type"] = "application/json";
+
+                return headers;
+            })(),
             ...opts,
         });
 
@@ -317,6 +583,93 @@
         return `${reactionLabel(reaction)}\n${names.join(", ")}`;
     }
 
+    function attachmentListHtml(attachments, { compact = false } = {}) {
+        if (!Array.isArray(attachments) || !attachments.length) return "";
+
+        const listClass = compact
+            ? "chat-message-attachments is-compact"
+            : "chat-message-attachments";
+
+        return `
+            <div class="${listClass}">
+                ${attachments
+                    .map((attachment) => {
+                        if (attachment.isImage) {
+                            return `
+                                <a
+                                    href="${esc(attachment.url || attachment.previewUrl || "#")}"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="chat-message-attachment-image"
+                                >
+                                    <img src="${esc(attachment.thumbnailUrl || attachment.url || attachment.previewUrl || "")}" alt="${esc(attachment.name || "Ảnh đính kèm")}">
+                                </a>`;
+                        }
+
+                        return `
+                            <a
+                                href="${esc(attachment.downloadUrl || attachment.url || "#")}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                download="${esc(attachment.name || "tep-dinh-kem")}"
+                                class="chat-message-attachment-file"
+                            >
+                                <span class="chat-message-attachment-file-icon"><i class="fas fa-file-arrow-down"></i></span>
+                                <span class="chat-message-attachment-file-body">
+                                    <strong>${esc(attachment.name || "Tệp đính kèm")}</strong>
+                                    <span>${esc(formatFileSize(attachment.size))}</span>
+                                </span>
+                            </a>`;
+                    })
+                    .join("")}
+            </div>`;
+    }
+
+    function draftAttachmentHtml() {
+        if (!state.draftAttachments.length) return "";
+
+        return `
+            <div class="chat-composer-attachments">
+                ${state.draftAttachments
+                    .map((attachment) => {
+                        if (attachment.isImage) {
+                            return `
+                                <div class="chat-composer-attachment chat-composer-attachment-image">
+                                    <img src="${esc(attachment.previewUrl || "")}" alt="${esc(attachment.name)}">
+                                    <button
+                                        type="button"
+                                        class="chat-composer-attachment-remove"
+                                        data-remove-draft-attachment="${esc(attachment.id)}"
+                                        aria-label="Bỏ tệp ${esc(attachment.name)}"
+                                    >
+                                        <i class="fas fa-xmark"></i>
+                                    </button>
+                                </div>`;
+                        }
+
+                        return `
+                            <div class="chat-composer-attachment">
+                                <div class="chat-composer-attachment-file">
+                                    <span class="chat-composer-attachment-icon"><i class="fas fa-paperclip"></i></span>
+                                    <span class="chat-composer-attachment-body">
+                                        <strong>${esc(attachment.name)}</strong>
+                                        <span>${esc(formatFileSize(attachment.size))}</span>
+                                    </span>
+                                </div>
+                                <button
+                                    type="button"
+                                    class="chat-composer-attachment-remove"
+                                    data-remove-draft-attachment="${esc(attachment.id)}"
+                                    aria-label="Bỏ tệp ${esc(attachment.name)}"
+                                >
+                                    <i class="fas fa-xmark"></i>
+                                </button>
+                            </div>`;
+                    })
+                    .join("")}
+            </div>`;
+    }
+
     function closeMessageMenu() {
         if (state.openMessageMenuId === null) return;
         state.openMessageMenuId = null;
@@ -341,6 +694,7 @@
 
         state.openReactionPickerId = nextId;
         closeMessageMenu();
+        closeReceiptDetails();
         closeComposerEmojiPicker();
 
         root.querySelectorAll("[data-message-reaction-picker]").forEach(
@@ -360,6 +714,42 @@
         );
     }
 
+    function closeReceiptDetails() {
+        if (state.openReceiptDetailsMessageId === null) return;
+        state.openReceiptDetailsMessageId = null;
+        root.querySelectorAll(
+            ".chat-receipt-summary.is-open, .chat-receipt-popover.is-open",
+        ).forEach((el) => el.classList.remove("is-open"));
+    }
+
+    function toggleReceiptDetails(messageId) {
+        const nextId =
+            state.openReceiptDetailsMessageId === Number(messageId)
+                ? null
+                : Number(messageId);
+
+        state.openReceiptDetailsMessageId = nextId;
+        closeMessageMenu();
+        closeReactionPicker();
+        closeComposerEmojiPicker();
+
+        root.querySelectorAll("[data-toggle-receipt-details]").forEach(
+            (button) => {
+                button.classList.toggle(
+                    "is-open",
+                    Number(button.dataset.toggleReceiptDetails) === nextId,
+                );
+            },
+        );
+
+        root.querySelectorAll("[data-receipt-details]").forEach((popover) => {
+            popover.classList.toggle(
+                "is-open",
+                Number(popover.dataset.receiptDetails) === nextId,
+            );
+        });
+    }
+
     function closeComposerEmojiPicker() {
         if (!state.composerEmojiOpen) return;
         state.composerEmojiOpen = false;
@@ -373,6 +763,7 @@
         state.composerEmojiOpen = !state.composerEmojiOpen;
         closeMessageMenu();
         closeReactionPicker();
+        closeReceiptDetails();
 
         root.querySelectorAll("[data-toggle-composer-emoji]").forEach(
             (button) => {
@@ -394,6 +785,7 @@
                 : Number(messageId);
         state.openMessageMenuId = nextId;
         closeReactionPicker();
+        closeReceiptDetails();
         closeComposerEmojiPicker();
 
         root.querySelectorAll("[data-message-menu-id]").forEach((menu) => {
@@ -467,6 +859,216 @@
         return true;
     }
 
+    function firstUnreadIncomingMessageId() {
+        const markerId = Number(state.unreadMarkerMessageId);
+        if (!Number.isFinite(markerId) || markerId <= 0) return null;
+
+        const target = state.messages.find(
+            (message) =>
+                !message._pending &&
+                !message.isMine &&
+                !message.isSystem &&
+                Number(message.id) > markerId,
+        );
+
+        return target ? Number(target.id) : null;
+    }
+
+    function syncTypingUsers(users) {
+        const typingUsers = Array.isArray(users) ? users : [];
+        state.typingUsers = typingUsers;
+
+        if (!state.roomMembers.length) return;
+
+        const typingIds = new Set(
+            typingUsers.map((user) => Number(user.id)).filter(Number.isFinite),
+        );
+
+        state.roomMembers = state.roomMembers.map((member) => ({
+            ...member,
+            isTyping: typingIds.has(Number(member.id)),
+        }));
+    }
+
+    async function sendTypingState(roomId, typing) {
+        if (!roomId) return;
+
+        try {
+            const data = await api(ep(BS.endpoints.typing, roomId), {
+                method: "POST",
+                body: JSON.stringify({ typing }),
+            });
+
+            if (
+                state.selectedRoom &&
+                Number(state.selectedRoom.id) === Number(roomId)
+            ) {
+                syncTypingUsers(data.typingUsers);
+                renderMainHeader();
+                updateComposerTypingNote();
+                renderInfoPanel();
+            }
+        } catch (_) {}
+    }
+
+    function stopTyping(roomId = state.selectedRoom?.id) {
+        clearTimeout(typingStartTimer);
+        clearTimeout(typingStopTimer);
+
+        if (!typingActive || !roomId) {
+            typingActive = false;
+            return;
+        }
+
+        typingActive = false;
+        sendTypingState(roomId, false);
+    }
+
+    function scheduleTypingHeartbeat() {
+        if (
+            !state.selectedRoom ||
+            !state.selectedRoom.canAccess ||
+            !state.selectedRoom.canSend
+        ) {
+            return;
+        }
+
+        const roomId = Number(state.selectedRoom.id);
+        clearTimeout(typingStartTimer);
+        clearTimeout(typingStopTimer);
+
+        typingStartTimer = setTimeout(() => {
+            if (!typingActive) {
+                typingActive = true;
+                sendTypingState(roomId, true);
+            }
+        }, 180);
+
+        typingStopTimer = setTimeout(() => {
+            stopTyping(roomId);
+        }, 2400);
+    }
+
+    function clearMessageSearch() {
+        state.messageSearchOpen = false;
+        state.messageSearchQuery = "";
+        state.messageSearchResults = [];
+        state.messageSearchLoading = false;
+        clearTimeout(messageSearchTimer);
+        renderMainHeader();
+    }
+
+    function toggleMessageSearch(forceOpen = null) {
+        const nextOpen =
+            typeof forceOpen === "boolean"
+                ? forceOpen
+                : !state.messageSearchOpen;
+
+        if (!nextOpen) {
+            clearMessageSearch();
+            return;
+        }
+
+        state.messageSearchOpen = true;
+        renderMainHeader();
+        document.getElementById("chat-message-search")?.focus();
+    }
+
+    async function performMessageSearch(query) {
+        const keyword = String(query || "").trim();
+        state.messageSearchQuery = keyword;
+
+        clearTimeout(messageSearchTimer);
+
+        if (!state.selectedRoom || !state.selectedRoom.canAccess || keyword.length < 2) {
+            state.messageSearchResults = [];
+            state.messageSearchLoading = false;
+            renderMainHeader();
+            return;
+        }
+
+        state.messageSearchLoading = true;
+        renderMainHeader();
+
+        const roomId = Number(state.selectedRoom.id);
+        messageSearchTimer = setTimeout(async () => {
+            try {
+                const url = new URL(
+                    ep(BS.endpoints.search, roomId),
+                    window.location.origin,
+                );
+                url.searchParams.set("q", keyword);
+
+                const data = await api(url.toString(), {
+                    headers: { "Cache-Control": "no-cache" },
+                });
+
+                if (
+                    !state.selectedRoom ||
+                    Number(state.selectedRoom.id) !== roomId ||
+                    state.messageSearchQuery !== keyword
+                ) {
+                    return;
+                }
+
+                state.messageSearchResults = Array.isArray(data.matches)
+                    ? data.matches
+                    : [];
+            } catch (_) {
+                if (state.messageSearchQuery === keyword) {
+                    state.messageSearchResults = [];
+                }
+            } finally {
+                if (state.messageSearchQuery === keyword) {
+                    state.messageSearchLoading = false;
+                    renderMainHeader();
+                }
+            }
+        }, 220);
+    }
+
+    function highlightMessage(messageId) {
+        const row = root.querySelector(
+            `[data-message-id="${CSS.escape(String(messageId))}"]`,
+        );
+        if (!row) return false;
+
+        clearTimeout(highlightTimer);
+        root.querySelectorAll(".chat-message-row.is-highlighted").forEach((el) => {
+            el.classList.remove("is-highlighted");
+        });
+
+        row.classList.add("is-highlighted");
+        row.scrollIntoView({ behavior: "smooth", block: "center" });
+        highlightTimer = setTimeout(() => {
+            row.classList.remove("is-highlighted");
+        }, 2200);
+
+        return true;
+    }
+
+    async function jumpToMessage(messageId) {
+        if (!messageId || !state.selectedRoom || !state.selectedRoom.canAccess) {
+            return;
+        }
+
+        let found = highlightMessage(messageId);
+
+        while (!found && state.hasOlderMessages) {
+            const previousCount = state.messages.length;
+            await loadOlderMessages();
+            found = highlightMessage(messageId);
+
+            if (state.messages.length === previousCount && !state.hasOlderMessages) {
+                break;
+            }
+        }
+
+        if (!found) {
+            notice("error", "Không tìm thấy tin nhắn gốc trong lịch sử hiện có.");
+        }
+    }
+
     async function loadRoomMembers(roomId) {
         if (!roomId) {
             state.roomMembers = [];
@@ -491,6 +1093,7 @@
             }
 
             state.roomMembers = Array.isArray(data.members) ? data.members : [];
+            syncTypingUsers(state.typingUsers);
             return state.roomMembers;
         } finally {
             state.roomMembersLoading = false;
@@ -559,6 +1162,12 @@
             preview:
                 truncateText(
                     lastMessage?.content ||
+                        (Array.isArray(lastMessage?.attachments) &&
+                        lastMessage.attachments.length
+                            ? lastMessage.attachments[0]?.isImage
+                                ? "[Ảnh đính kèm]"
+                                : "[Tệp đính kèm]"
+                            : "") ||
                         state.selectedRoom?.lastMessagePreview ||
                         "Chưa có tin nhắn",
                     130,
@@ -631,7 +1240,7 @@
                             <button type="button" class="chat-room-item ${isActive ? "is-active" : ""}" data-room-id="${room.id}">
                                 <div class="chat-room-row">
                                     <div class="chat-room-avatar-wrap">
-                                        <div class="chat-room-avatar">${esc(roomInitials(room))}</div>
+                                        <div class="chat-room-avatar">${avatarInnerHtml(room.name, room.avatarUrl, "CH")}</div>
                                         <span class="chat-room-dot ${room.canAccess ? "is-live" : ""}"></span>
                                     </div>
                                     <div class="chat-room-content">
@@ -666,6 +1275,15 @@
 
         const room = state.selectedRoom;
         const chips = roomMetaChips(room);
+        const typingText = typingSummaryText();
+        const activeElement = document.activeElement;
+        const searchWasFocused = activeElement?.id === "chat-message-search";
+        const searchSelectionStart = searchWasFocused
+            ? activeElement.selectionStart
+            : null;
+        const searchSelectionEnd = searchWasFocused
+            ? activeElement.selectionEnd
+            : null;
 
         header.innerHTML = `
             <div class="chat-main-header-row">
@@ -674,7 +1292,7 @@
                         <i class="fas fa-bars"></i>
                     </button>
                     <div class="chat-main-avatar-wrap">
-                        <div class="chat-main-avatar">${esc(room ? roomInitials(room) : "CH")}</div>
+                        <div class="chat-main-avatar">${room ? avatarInnerHtml(room.name, room.avatarUrl, "CH") : "CH"}</div>
                         <span class="chat-main-avatar-dot ${room && room.canAccess ? "is-live" : ""}"></span>
                     </div>
                     <div class="chat-main-summary">
@@ -702,32 +1320,88 @@
                     </div>
                 </div>
                 <div class="chat-main-actions">
-                    <button type="button" class="chat-header-icon" disabled title="Đang cập nhật">
-                        <i class="fas fa-phone"></i>
-                    </button>
-                    <button type="button" class="chat-header-icon" disabled title="Đang cập nhật">
-                        <i class="fas fa-video"></i>
+                    <button type="button" class="chat-header-icon ${state.messageSearchOpen ? "is-active" : ""}" data-toggle-message-search title="Tìm kiếm trong đoạn chat">
+                        <i class="fas fa-magnifying-glass"></i>
                     </button>
                     <button type="button" class="chat-header-icon ${state.mobileInfoOpen ? "is-active" : ""}" data-toggle-info title="Thông tin đoạn chat">
                         <i class="fas fa-circle-info"></i>
                     </button>
                 </div>
-            </div>`;
+            </div>
+            ${
+                room && room.canAccess
+                    ? `
+                       ${
+                           state.messageSearchOpen
+                               ? `<div class="chat-search-panel">
+                                        <label class="chat-main-search" aria-label="Tìm kiếm trong đoạn chat">
+                                            <i class="fas fa-magnifying-glass"></i>
+                                            <input
+                                                id="chat-message-search"
+                                                type="search"
+                                                placeholder="Tìm theo nội dung, người gửi hoặc tên tệp"
+                                                value="${esc(state.messageSearchQuery)}"
+                                            >
+                                            ${
+                                                state.messageSearchQuery
+                                                    ? `<button type="button" class="chat-main-search-clear" data-clear-message-search aria-label="Xóa tìm kiếm">
+                                                            <i class="fas fa-xmark"></i>
+                                                       </button>`
+                                                    : ""
+                                            }
+                                        </label>
+                                  </div>`
+                               : ""
+                       }
+                       ${messageSearchResultsHtml()}`
+                    : ""
+            }`;
+
+        if (searchWasFocused && state.messageSearchOpen) {
+            const nextSearch = document.getElementById("chat-message-search");
+            if (nextSearch) {
+                nextSearch.focus();
+                if (
+                    Number.isInteger(searchSelectionStart) &&
+                    Number.isInteger(searchSelectionEnd)
+                ) {
+                    nextSearch.setSelectionRange(
+                        searchSelectionStart,
+                        searchSelectionEnd,
+                    );
+                }
+            }
+        }
     }
 
     function buildMessageEl(message) {
         const wrap = document.createElement("div");
-        wrap.className = `chat-message-row${message.isMine ? " is-mine" : ""}`;
+        wrap.className = `chat-message-row${message.isMine ? " is-mine" : ""}${message.isSystem ? " is-system" : ""}${Number(state.highlightedMessageId) === Number(message.id) ? " is-highlighted" : ""}`;
         if (message._pending) wrap.dataset.pending = message.id;
         if (!message._pending) wrap.dataset.messageId = message.id;
 
+        if (message.isSystem) {
+            wrap.innerHTML = `
+                <div class="chat-system-message">
+                    <i class="fas fa-circle-info"></i>
+                    <span>${esc(message.content || "Tin nhắn hệ thống")}</span>
+                </div>`;
+
+            return wrap;
+        }
+
         const replyHtml = message.replyTo
             ? `
-                <div class="chat-reply-box${message.replyTo.isRecalled ? " is-recalled" : ""}">
+                <button
+                    type="button"
+                    class="chat-reply-box${message.replyTo.isRecalled ? " is-recalled" : ""}"
+                    data-jump-message="${message.replyTo.id}"
+                >
                     <div><strong>${esc(message.replyTo.senderName)}</strong></div>
                     <div>${esc(message.replyTo.content)}</div>
-                </div>`
+                </button>`
             : "";
+        const attachmentsHtml = attachmentListHtml(message.attachments);
 
         const canShowMenu = !message._pending;
         const isMenuOpen =
@@ -737,6 +1411,11 @@
         const isReactionPickerOpen =
             canReact &&
             Number(state.openReactionPickerId) === Number(message.id);
+        const latestReceiptId = latestMineReceiptMessageId();
+        const shouldShowReceipt =
+            message.isMine &&
+            !message._pending &&
+            Number(message.id) === Number(latestReceiptId);
         const reactionsHtml =
             Array.isArray(message.reactions) && message.reactions.length
                 ? `<div class="chat-message-reactions">
@@ -806,6 +1485,14 @@
                             <span>Trả lời</span>
                         </button>
                         ${
+                            message.canDeleteForMe
+                                ? `<button type="button" class="chat-message-menu-item" data-message-action="delete-for-me" data-message-id="${message.id}">
+                                        <i class="fas fa-eye-slash"></i>
+                                        <span>Xóa phía tôi</span>
+                                   </button>`
+                                : ""
+                        }
+                        ${
                             message.canRecall
                                 ? `<button type="button" class="chat-message-menu-item is-danger" data-message-action="recall" data-message-id="${message.id}">
                                         <i class="fas fa-rotate-left"></i>
@@ -821,18 +1508,30 @@
             ${
                 message.isMine
                     ? ""
-                    : `<div class="chat-message-avatar-small">${esc(initialsFromText(message.senderName, "HV"))}</div>`
+                    : `<div class="chat-message-avatar-small">${avatarInnerHtml(message.senderName, message.senderAvatarUrl, "HV")}</div>`
             }
             <div class="chat-message-stack">
                 ${message.isMine ? "" : `<div class="chat-message-sender">${esc(message.senderName)}</div>`}
                 <div class="chat-message-bubble-wrap">
                     <div class="chat-message-bubble${message._pending ? " is-pending" : ""}${message.isRecalled ? " is-recalled" : ""}">
                         ${replyHtml}
-                        <div class="chat-message-text">${esc(message.content)}</div>
-                        <div class="chat-message-time">${message._pending ? "Đang gửi..." : esc(message.sentAtLabel || "")}</div>
+                        ${attachmentsHtml}
+                        ${
+                            String(message.content || "").trim()
+                                ? `<div class="chat-message-text">${esc(message.content)}</div>`
+                                : ""
+                        }
+                        <div class="chat-message-meta-row">
+                            <div class="chat-message-time">${message._pending ? "Đang gửi..." : esc(message.sentAtLabel || "")}</div>
+                        </div>
                     </div>
                     ${menuHtml}
                 </div>
+                ${
+                    shouldShowReceipt
+                        ? `<div class="chat-message-receipt-line">${receiptSummaryHtml(message.receipt, message.id)}</div>`
+                        : ""
+                }
                 ${reactionsHtml}
             </div>`;
 
@@ -896,12 +1595,43 @@
         }
 
         board.classList.add("has-messages");
+        const unreadMessageId = firstUnreadIncomingMessageId();
         board.innerHTML = `
+            ${
+                state.hasOlderMessages
+                    ? `<div class="chat-history-status${state.loadingOlderMessages ? " is-loading" : ""}">
+                            <i class="fas ${state.loadingOlderMessages ? "fa-spinner fa-spin" : "fa-clock-rotate-left"}"></i>
+                            <span>${state.loadingOlderMessages ? "Đang tải thêm tin nhắn..." : "Cuộn lên để xem lịch sử cũ hơn"}</span>
+                       </div>`
+                    : ""
+            }
             <div class="chat-message-list">
                 ${state.messages
-                    .map((message) => buildMessageEl(message).outerHTML)
+                    .map((message) => {
+                        const divider =
+                            unreadMessageId &&
+                            Number(message.id) === Number(unreadMessageId)
+                                ? `<div class="chat-unread-divider">
+                                        <span>Tin chưa đọc</span>
+                                   </div>`
+                                : "";
+
+                        return `${divider}${buildMessageEl(message).outerHTML}`;
+                    })
                     .join("")}
             </div>`;
+
+        syncHistoryStatus();
+    }
+
+    function syncHistoryStatus() {
+        const status = root.querySelector(".chat-history-status");
+        if (!status) return;
+
+        status.classList.toggle("is-loading", state.loadingOlderMessages);
+        status.innerHTML = `
+            <i class="fas ${state.loadingOlderMessages ? "fa-spinner fa-spin" : "fa-clock-rotate-left"}"></i>
+            <span>${state.loadingOlderMessages ? "Đang tải thêm tin nhắn..." : "Cuộn lên để xem lịch sử cũ hơn"}</span>`;
     }
 
     function renderInfoPanel() {
@@ -937,10 +1667,16 @@
                                     data-open-direct="${member.id}"
                                     ${member.canDirect ? "" : "disabled"}
                                 >
-                                    <span class="chat-member-avatar">${esc(member.initials || "TV")}</span>
+                                    <span class="chat-member-avatar">${avatarInnerHtml(member.name, member.avatarUrl, member.initials || "TV")}</span>
                                     <span class="chat-member-body">
                                         <strong>${esc(member.name)}</strong>
-                                        <span>${esc(member.isMe ? "Bạn" : member.roleLabel || "Thành viên")}</span>
+                                        <span class="chat-member-meta">
+                                            <span>${esc(member.isMe ? "Bạn" : member.roleLabel || "Thành viên")}</span>
+                                            <span class="chat-member-status ${member.isOnline ? "is-online" : ""}${member.isTyping ? " is-typing" : ""}">
+                                                <i class="fas fa-circle"></i>
+                                                ${esc(member.isTyping ? "Đang nhập..." : member.presenceLabel || "Chưa hoạt động gần đây")}
+                                            </span>
+                                        </span>
                                     </span>
                                     <span class="chat-member-action">
                                         ${
@@ -963,7 +1699,7 @@
         panel.innerHTML = `
             <div class="chat-info-hero">
                 <div class="chat-info-avatar-wrap">
-                    <div class="chat-info-avatar">${esc(roomInitials(room))}</div>
+                    <div class="chat-info-avatar">${avatarInnerHtml(room.name, room.avatarUrl, "CH")}</div>
                     <span class="chat-info-avatar-dot ${room.canAccess ? "is-live" : ""}"></span>
                 </div>
                 <h4 class="chat-info-title">${esc(room.name)}</h4>
@@ -991,7 +1727,7 @@
                         <i class="fas fa-bell-slash"></i>
                         <span>Thông báo</span>
                     </button>
-                    <button type="button" class="chat-info-action-btn" disabled>
+                    <button type="button" class="chat-info-action-btn" data-focus-message-search>
                         <i class="fas fa-magnifying-glass"></i>
                         <span>Tìm kiếm</span>
                     </button>
@@ -1028,7 +1764,6 @@
                 </div>
                 <ul class="chat-info-tips">
                     <li>Danh sách phòng và đoạn chat đều cuộn trong khung riêng, trang sẽ không cuộn bên ngoài.</li>
-                    <li>Nhập Enter để gửi nhanh, Shift + Enter để xuống dòng.</li>
                     <li>Bộ lọc bên trái giúp tách nhanh các đoạn chat chưa đọc và đã tham gia.</li>
                 </ul>
             </div>`;
@@ -1037,6 +1772,14 @@
     function renderComposer() {
         const composerWrap = root.querySelector(".chat-composer-wrap");
         if (!composerWrap) return;
+        const activeElement = document.activeElement;
+        const inputWasFocused = activeElement?.id === "chat-message-input";
+        const inputSelectionStart = inputWasFocused
+            ? activeElement.selectionStart
+            : null;
+        const inputSelectionEnd = inputWasFocused
+            ? activeElement.selectionEnd
+            : null;
 
         if (!state.selectedRoom || !state.selectedRoom.canAccess) {
             composerWrap.innerHTML = "";
@@ -1055,11 +1798,19 @@
         composerWrap.innerHTML = `
             <div class="chat-composer">
                 <form id="chat-send-form" class="chat-composer-form">
+                    <input
+                        id="chat-attachment-input"
+                        type="file"
+                        class="chat-composer-file-input"
+                        data-chat-attachment-input
+                        multiple
+                        accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.rar,image/*"
+                    >
                     <div class="chat-composer-tools">
-                        <button type="button" class="chat-tool-btn" title="Sắp có" disabled>
+                        <button type="button" class="chat-tool-btn" data-open-file-picker title="Đính kèm tệp">
                             <i class="fas fa-paperclip"></i>
                         </button>
-                        <button type="button" class="chat-tool-btn" title="Sắp có" disabled>
+                        <button type="button" class="chat-tool-btn" data-open-file-picker title="Chọn ảnh hoặc tệp">
                             <i class="fas fa-image"></i>
                         </button>
                     </div>
@@ -1077,6 +1828,7 @@
                                    </div>`
                                 : ""
                         }
+                        ${draftAttachmentHtml()}
                         <div class="chat-composer-input-shell">
                             <textarea id="chat-message-input" placeholder="Nhập tin nhắn cho lớp học của bạn...">${esc(state.messageDraft)}</textarea>
                             <div class="chat-composer-emoji">
@@ -1106,12 +1858,34 @@
                     </div>
                     <button type="submit" class="chat-send-btn" ${state.submitting ? "disabled" : ""}>
                         <i class="fas fa-paper-plane"></i>
-                        <span>Gửi</span>
+                        <span>${state.submitting ? "Đang gửi" : "Gửi"}</span>
                     </button>
                 </form>
             </div>`;
 
-        resizeComposerTextarea(document.getElementById("chat-message-input"));
+        const nextInput = document.getElementById("chat-message-input");
+        resizeComposerTextarea(nextInput);
+
+        if (inputWasFocused && nextInput) {
+            nextInput.focus();
+            if (
+                Number.isInteger(inputSelectionStart) &&
+                Number.isInteger(inputSelectionEnd)
+            ) {
+                nextInput.setSelectionRange(
+                    inputSelectionStart,
+                    inputSelectionEnd,
+                );
+            }
+        }
+    }
+
+    function updateComposerTypingNote() {
+        const note = root.querySelector(".chat-composer-note");
+        if (!note) return;
+        note.textContent =
+            typingSummaryText() ||
+            "Enter để gửi nhanh, Shift + Enter để xuống dòng.";
     }
 
     function updateMobilePanels() {
@@ -1224,16 +1998,21 @@
     }
 
     async function loadSelectedRoomMessages(roomId, opts = {}) {
-        const { preservePosition = false } = opts;
+        const { preservePosition = false, before = null } = opts;
         const board = document.getElementById("chat-message-board");
+        const previousHeight =
+            before && board ? board.scrollHeight : 0;
+        const previousTop = before && board ? board.scrollTop : 0;
         const distanceFromBottom = board
             ? Math.max(
                   0,
                   board.scrollHeight - board.scrollTop - board.clientHeight,
               )
             : 0;
+        const url = new URL(ep(BS.endpoints.messages, roomId), window.location.origin);
+        if (before) url.searchParams.set("before", before);
 
-        const data = await api(ep(BS.endpoints.messages, roomId));
+        const data = await api(url.toString());
 
         if (
             !state.selectedRoom ||
@@ -1245,9 +2024,20 @@
         syncRoomInList(data.room);
         state.selectedRoom = { ...state.selectedRoom, ...data.room };
         state.messagesLoaded = true;
+        if (!before) {
+            state.unreadMarkerMessageId = data.readMarkerId
+                ? Number(data.readMarkerId)
+                : null;
+        }
 
         const messages = Array.isArray(data.messages) ? data.messages : [];
-        syncMessagesState(messages);
+        state.hasOlderMessages = Boolean(data.hasMore);
+
+        if (before) {
+            mergeOlderMessagesIntoState(messages);
+        } else {
+            syncMessagesState(messages);
+        }
 
         renderMainHeader();
         renderMessageBoard();
@@ -1255,9 +2045,19 @@
         renderRoomList();
         renderInfoPanel();
 
-        await loadRoomMembers(roomId);
+        if (!before) {
+            await loadRoomMembers(roomId);
+        }
 
         const nextBoard = document.getElementById("chat-message-board");
+        if (before) {
+            if (nextBoard) {
+                nextBoard.scrollTop =
+                    nextBoard.scrollHeight - previousHeight + previousTop;
+            }
+            return data;
+        }
+
         if (preservePosition && nextBoard && distanceFromBottom > 80) {
             nextBoard.scrollTop = Math.max(
                 0,
@@ -1265,11 +2065,39 @@
                     nextBoard.clientHeight -
                     distanceFromBottom,
             );
+        } else if (!preservePosition && state.unreadMarkerMessageId) {
+            if (!scrollToUnreadMarker()) {
+                scrollToBottom();
+            }
         } else {
             scrollToBottom();
         }
 
         return data;
+    }
+
+    function mergeOlderMessagesIntoState(messages) {
+        if (!Array.isArray(messages) || !messages.length) return false;
+        let prepended = false;
+
+        messages
+            .slice()
+            .forEach((message) => {
+                const messageId = Number(message.id);
+                if (state.messageIds.has(messageId)) return;
+
+                state.messageIds.add(messageId);
+                state.messages.unshift(message);
+                prepended = true;
+            });
+
+        if (!prepended) return false;
+
+        state.messages.sort(
+            (a, b) => messageOrderValue(a) - messageOrderValue(b),
+        );
+
+        return true;
     }
 
     function appendNewMessages(messages, opts = {}) {
@@ -1350,6 +2178,32 @@
         renderInfoPanel();
     }
 
+    async function loadOlderMessages() {
+        if (
+            state.loadingOlderMessages ||
+            !state.selectedRoom ||
+            !state.selectedRoom.canAccess ||
+            !state.messages.length ||
+            !state.hasOlderMessages
+        ) {
+            return;
+        }
+
+        state.loadingOlderMessages = true;
+        renderMessageBoard();
+
+        try {
+            const oldestMessage = state.messages[0];
+            await loadSelectedRoomMessages(state.selectedRoom.id, {
+                before: oldestMessage?.id || null,
+            });
+        } catch (_) {
+        } finally {
+            state.loadingOlderMessages = false;
+            syncHistoryStatus();
+        }
+    }
+
     function stopPoll() {
         if (pollTimer) {
             clearTimeout(pollTimer);
@@ -1414,6 +2268,13 @@
                         previousUpdatedAt !== data.room.updatedAt;
                     syncRoomInList(data.room);
                     renderMainHeader();
+                    renderInfoPanel();
+                }
+
+                if (Array.isArray(data.typingUsers)) {
+                    syncTypingUsers(data.typingUsers);
+                    renderMainHeader();
+                    updateComposerTypingNote();
                     renderInfoPanel();
                 }
 
@@ -1525,6 +2386,10 @@
                         });
                     }
                 }
+
+                if (state.selectedRoom && state.selectedRoom.canAccess) {
+                    await loadRoomMembers(state.selectedRoom.id);
+                }
             } catch (_) {}
         }, ROOM_MS);
     }
@@ -1533,6 +2398,7 @@
         const room = roomById(roomId);
         if (!room) return;
 
+        stopTyping();
         stopPoll();
         notice("", "");
 
@@ -1542,12 +2408,23 @@
         state.messages = [];
         state.messageIds = new Set();
         state.lastMessageId = 0;
+        state.hasOlderMessages = false;
+        state.loadingOlderMessages = false;
         state.messagesLoaded = false;
+        state.messageSearchOpen = false;
+        state.messageSearchQuery = "";
+        state.messageSearchResults = [];
+        state.messageSearchLoading = false;
         state.messageDraft = "";
+        clearDraftAttachments();
+        state.unreadMarkerMessageId = null;
+        state.highlightedMessageId = null;
         state.replyingTo = null;
         state.openMessageMenuId = null;
         state.openReactionPickerId = null;
+        state.openReceiptDetailsMessageId = null;
         state.composerEmojiOpen = false;
+        state.typingUsers = [];
         state.roomMembers = [];
         state.roomMembersLoading = false;
 
@@ -1628,6 +2505,58 @@
             renderMainHeader();
             renderInfoPanel();
             notice("success", data.message || "Đã thu hồi tin nhắn.");
+        } catch (error) {
+            notice("error", error.payload?.message || error.message);
+        }
+    }
+
+    async function deleteMessageForMe(messageId) {
+        if (!state.selectedRoom || !messageId || state.submitting) return;
+
+        const targetMessage = findMessageById(messageId);
+        if (!targetMessage || targetMessage._pending || !targetMessage.canDeleteForMe)
+            return;
+
+        try {
+            closeMessageMenu();
+
+            const data = await api(
+                BS.endpoints.deleteForMe.replace("__MESSAGE__", messageId),
+                {
+                    method: "POST",
+                    body: JSON.stringify({
+                        roomId: state.selectedRoom.id,
+                    }),
+                },
+            );
+
+            state.messages = state.messages.filter(
+                (message) => Number(message.id) !== Number(messageId),
+            );
+            state.messageIds.delete(Number(messageId));
+
+            if (
+                state.replyingTo &&
+                Number(state.replyingTo.id) === Number(messageId)
+            ) {
+                state.replyingTo = null;
+            }
+
+            syncRoomInList(data.room);
+            state.selectedRoom = {
+                ...state.selectedRoom,
+                ...data.room,
+            };
+
+            renderMessageBoard();
+            renderComposer();
+            renderRoomList();
+            renderMainHeader();
+            renderInfoPanel();
+            notice(
+                "success",
+                data.message || "Đã xóa tin nhắn khỏi chế độ xem của bạn.",
+            );
         } catch (error) {
             notice("error", error.payload?.message || error.message);
         }
@@ -1733,12 +2662,15 @@
         if (!input || !state.selectedRoom) return;
 
         const text = input.value.trim();
-        if (!text || state.submitting) return;
+        const attachments = state.draftAttachments.map((item) => ({ ...item }));
+        if ((!text && !attachments.length) || state.submitting) return;
         const replyTo = state.replyingTo ? { ...state.replyingTo } : null;
 
+        stopTyping(state.selectedRoom.id);
         state.submitting = true;
         state.composerEmojiOpen = false;
         state.messageDraft = "";
+        state.draftAttachments = [];
         input.value = "";
         resizeComposerTextarea(input);
 
@@ -1752,6 +2684,17 @@
             isMine: true,
             senderName: "Bạn",
             replyTo,
+            attachments: attachments.map((attachment) => ({
+                id: attachment.id,
+                name: attachment.name,
+                size: attachment.size,
+                mime: attachment.mime,
+                isImage: attachment.isImage,
+                previewUrl: attachment.previewUrl,
+                url: attachment.previewUrl,
+                thumbnailUrl: attachment.previewUrl,
+                downloadUrl: attachment.previewUrl,
+            })),
             sentAtLabel: `${pad(now.getHours())}:${pad(now.getMinutes())} ${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()}`,
             _pending: true,
         };
@@ -1774,13 +2717,17 @@
         input.focus();
 
         try {
+            const formData = new FormData();
+            formData.append("roomId", state.selectedRoom.id);
+            formData.append("message", text);
+            if (replyTo?.id) formData.append("replyToMessageId", replyTo.id);
+            attachments.forEach((attachment) => {
+                formData.append("attachments[]", attachment.file);
+            });
+
             const data = await api(BS.endpoints.send, {
                 method: "POST",
-                body: JSON.stringify({
-                    roomId: state.selectedRoom.id,
-                    message: text,
-                    replyToMessageId: replyTo?.id || null,
-                }),
+                body: formData,
             });
 
             replacePendingMessage(pendingId, data.chatMessage);
@@ -1791,6 +2738,7 @@
                 unreadCount: 0,
             };
             state.replyingTo = null;
+            attachments.forEach(releaseDraftAttachment);
 
             renderMessageBoard();
             renderComposer();
@@ -1812,7 +2760,9 @@
 
             input.value = text;
             state.messageDraft = text;
+            state.draftAttachments = attachments;
             resizeComposerTextarea(input);
+            renderComposer();
             renderInfoPanel();
             notice("error", error.payload?.message || error.message);
         } finally {
@@ -1838,6 +2788,13 @@
         }
 
         if (
+            !event.target.closest(".chat-receipt-wrap") &&
+            !event.target.closest(".chat-receipt-popover")
+        ) {
+            closeReceiptDetails();
+        }
+
+        if (
             !event.target.closest(".chat-composer-emoji") &&
             !event.target.closest("[data-toggle-composer-emoji]")
         ) {
@@ -1852,6 +2809,11 @@
         if (event.target.closest("[data-toggle-info]")) {
             if (isMobileViewport())
                 setMobilePanel("info", !state.mobileInfoOpen);
+            return;
+        }
+
+        if (event.target.closest("[data-toggle-message-search]")) {
+            toggleMessageSearch();
             return;
         }
 
@@ -1875,6 +2837,41 @@
 
         if (event.target.closest("[data-cancel-reply]")) {
             setReplyingTo(null);
+            return;
+        }
+
+        if (event.target.closest("[data-focus-message-search]")) {
+            toggleMessageSearch(true);
+            return;
+        }
+
+        if (event.target.closest("[data-clear-message-search]")) {
+            clearMessageSearch();
+            return;
+        }
+
+        const jumpMessageButton = event.target.closest("[data-jump-message]");
+        if (jumpMessageButton) {
+            const messageId = Number(jumpMessageButton.dataset.jumpMessage);
+            if (messageId) {
+                clearMessageSearch();
+                jumpToMessage(messageId);
+            }
+            return;
+        }
+
+        if (event.target.closest("[data-open-file-picker]")) {
+            document.getElementById("chat-attachment-input")?.click();
+            return;
+        }
+
+        const removeDraftButton = event.target.closest(
+            "[data-remove-draft-attachment]",
+        );
+        if (removeDraftButton) {
+            removeDraftAttachment(
+                removeDraftButton.dataset.removeDraftAttachment || "",
+            );
             return;
         }
 
@@ -1915,6 +2912,12 @@
             return;
         }
 
+        const receiptButton = event.target.closest("[data-toggle-receipt-details]");
+        if (receiptButton) {
+            toggleReceiptDetails(receiptButton.dataset.toggleReceiptDetails);
+            return;
+        }
+
         const messageMenuButton = event.target.closest(
             "[data-message-menu-btn]",
         );
@@ -1936,6 +2939,11 @@
 
             if (action === "recall") {
                 recallMessage(messageId);
+                return;
+            }
+
+            if (action === "delete-for-me") {
+                deleteMessageForMe(messageId);
                 return;
             }
         }
@@ -1960,13 +2968,36 @@
         if (event.target.id === "chat-message-input") {
             state.messageDraft = event.target.value || "";
             resizeComposerTextarea(event.target);
+            scheduleTypingHeartbeat();
         }
 
         if (event.target.id === "chat-room-search") {
             state.roomQuery = event.target.value || "";
             renderRoomList();
         }
+
+        if (event.target.id === "chat-message-search") {
+            performMessageSearch(event.target.value || "");
+        }
+
+        if (event.target.id === "chat-attachment-input") {
+            addDraftFiles(event.target.files);
+            event.target.value = "";
+        }
     });
+
+    root.addEventListener(
+        "scroll",
+        (event) => {
+            if (
+                event.target.id === "chat-message-board" &&
+                event.target.scrollTop <= 80
+            ) {
+                loadOlderMessages();
+            }
+        },
+        true,
+    );
 
     root.addEventListener("keydown", (event) => {
         if (
@@ -1981,17 +3012,34 @@
         if (event.key === "Escape") {
             if (state.openMessageMenuId !== null) closeMessageMenu();
             else if (state.openReactionPickerId !== null) closeReactionPicker();
+            else if (state.openReceiptDetailsMessageId !== null)
+                closeReceiptDetails();
             else if (state.composerEmojiOpen) closeComposerEmojiPicker();
             else if (state.replyingTo) setReplyingTo(null);
         }
     });
 
+    root.addEventListener(
+        "focusout",
+        (event) => {
+            if (event.target.id === "chat-message-input") {
+                stopTyping();
+            }
+        },
+        true,
+    );
+
     document.addEventListener("click", (event) => {
         if (!root.contains(event.target)) {
             closeMessageMenu();
             closeReactionPicker();
+            closeReceiptDetails();
             closeComposerEmojiPicker();
         }
+    });
+
+    document.addEventListener("visibilitychange", () => {
+        if (document.hidden) stopTyping();
     });
 
     document.addEventListener("visibilitychange", () => {
@@ -2006,6 +3054,7 @@
     window.addEventListener("beforeunload", () => {
         stopPoll();
         stopRoomPoll();
+        clearDraftAttachments();
     });
 
     renderApp();
