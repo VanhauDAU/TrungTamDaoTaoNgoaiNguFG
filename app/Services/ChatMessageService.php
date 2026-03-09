@@ -121,6 +121,36 @@ class ChatMessageService
             : null;
     }
 
+    public function searchMessagesForUser(ChatRoom $room, TaiKhoan $taiKhoan, string $query, int $limit = 20): Collection
+    {
+        $keyword = trim($query);
+        if ($keyword === '') {
+            return collect();
+        }
+
+        $like = '%' . $keyword . '%';
+
+        return $this->buildVisibleMessageQuery($room, $taiKhoan)
+            ->where(function ($messageQuery) use ($like) {
+                $messageQuery
+                    ->where('noiDung', 'like', $like)
+                    ->orWhereHas('nguoiGui.hoSoNguoiDung', function ($senderQuery) use ($like) {
+                        $senderQuery->where('hoTen', 'like', $like);
+                    })
+                    ->orWhereHas('nguoiGui', function ($senderQuery) use ($like) {
+                        $senderQuery->where('taiKhoan', 'like', $like);
+                    })
+                    ->orWhereHas('attachments', function ($attachmentQuery) use ($like) {
+                        $attachmentQuery->where('tenGoc', 'like', $like);
+                    });
+            })
+            ->orderByDesc('chatMessageId')
+            ->limit($limit)
+            ->get()
+            ->map(fn (ChatMessage $message) => $this->transformMessage($message, $taiKhoan))
+            ->values();
+    }
+
     public function sendTextMessage(
         ChatRoom $room,
         TaiKhoan $taiKhoan,

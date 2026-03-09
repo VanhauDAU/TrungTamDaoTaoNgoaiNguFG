@@ -134,6 +134,61 @@ class ChatPhaseOneTest extends TestCase
         );
     }
 
+    public function test_user_can_search_messages_by_content_and_sender(): void
+    {
+        $student = $this->createAccount('hocvien_a', 'Học viên A');
+        $peer = $this->createAccount('hocvien_b', 'Nguyen Van B');
+        $room = $this->createDirectRoom($student, $peer);
+
+        ChatMessage::query()->create([
+            'chatRoomId' => $room->chatRoomId,
+            'nguoiGuiId' => $peer->taiKhoanId,
+            'loai' => ChatMessage::TYPE_TEXT,
+            'noiDung' => 'Bai tap speaking tuan nay',
+            'guiLuc' => now(),
+            'deadlineThuHoi' => now()->addDay(),
+        ]);
+
+        ChatMessage::query()->create([
+            'chatRoomId' => $room->chatRoomId,
+            'nguoiGuiId' => $student->taiKhoanId,
+            'loai' => ChatMessage::TYPE_TEXT,
+            'noiDung' => 'Tin nhan khac',
+            'guiLuc' => now(),
+            'deadlineThuHoi' => now()->addDay(),
+        ]);
+
+        $this->actingAs($student)
+            ->getJson(route('home.api.chat.search', ['id' => $room->chatRoomId, 'q' => 'speaking']))
+            ->assertOk()
+            ->assertJsonCount(1, 'matches')
+            ->assertJsonPath('matches.0.content', 'Bai tap speaking tuan nay');
+
+        $this->actingAs($student)
+            ->getJson(route('home.api.chat.search', ['id' => $room->chatRoomId, 'q' => 'Nguyen Van B']))
+            ->assertOk()
+            ->assertJsonCount(1, 'matches')
+            ->assertJsonPath('matches.0.senderName', 'Nguyen Van B');
+    }
+
+    public function test_poll_returns_typing_users_for_active_room(): void
+    {
+        $student = $this->createAccount('hocvien_a', 'Học viên A');
+        $peer = $this->createAccount('hocvien_b', 'Học viên B');
+        $room = $this->createDirectRoom($student, $peer);
+
+        $this->actingAs($peer)->postJson(
+            route('home.api.chat.typing', ['id' => $room->chatRoomId]),
+            ['typing' => true]
+        )->assertOk();
+
+        $this->actingAs($student)
+            ->getJson(route('home.api.chat.poll', ['room' => $room->chatRoomId, 'after' => 0]))
+            ->assertOk()
+            ->assertJsonPath('status', 'ok')
+            ->assertJsonPath('typingUsers.0.name', 'Học viên B');
+    }
+
     private function createMinimalChatDependencies(): void
     {
         foreach ([

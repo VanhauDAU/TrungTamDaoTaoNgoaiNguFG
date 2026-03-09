@@ -285,6 +285,8 @@ class ChatRoomService
             'lastMessageAt' => optional($lastMessage?->guiLuc ?? $lastMessage?->created_at)?->toIso8601String(),
             'lastMessageAtLabel' => optional($lastMessage?->guiLuc ?? $lastMessage?->created_at)?->diffForHumans(),
             'unreadCount' => $this->getUnreadCount($room, $taiKhoan, $member),
+            'memberLastReadMessageId' => $member?->lastReadMessageId,
+            'memberLastSeenAt' => optional($member?->lastSeenAt)?->toIso8601String(),
             'updatedAt' => optional($room->updated_at)?->toIso8601String(),
         ];
     }
@@ -309,6 +311,9 @@ class ChatRoomService
                     'isMe' => (int) $account->taiKhoanId === (int) $viewer->taiKhoanId,
                     'canDirect' => (int) $account->taiKhoanId !== (int) $viewer->taiKhoanId
                         && $accessService->canCreateDirectConversation($viewer, $account),
+                    'isOnline' => $this->memberIsOnlineRecently($member),
+                    'presenceLabel' => $this->presenceLabelForMember($member),
+                    'lastSeenAt' => optional($member->lastSeenAt)?->toIso8601String(),
                 ];
             })
             ->sortBy([
@@ -408,6 +413,25 @@ class ChatRoomService
             ->where('chatMessageId', '>', $lastReadMessageId)
             ->where('nguoiGuiId', '!=', $taiKhoan->taiKhoanId)
             ->count();
+    }
+
+    private function memberIsOnlineRecently(ChatRoomMember $member): bool
+    {
+        return $member->lastSeenAt !== null
+            && $member->lastSeenAt->gte(now()->subMinutes(2));
+    }
+
+    private function presenceLabelForMember(ChatRoomMember $member): string
+    {
+        if ($this->memberIsOnlineRecently($member)) {
+            return 'Đang hoạt động';
+        }
+
+        if ($member->lastSeenAt) {
+            return 'Hoạt động ' . $member->lastSeenAt->diffForHumans();
+        }
+
+        return 'Chưa hoạt động gần đây';
     }
 
     private function makeLastMessagePreview(?ChatMessage $message): ?string

@@ -60,12 +60,19 @@
         mobileSidebarOpen: false,
         mobileInfoOpen: false,
         messageDraft: "",
+        messageSearchOpen: false,
+        messageSearchQuery: "",
+        messageSearchResults: [],
+        messageSearchLoading: false,
         draftAttachments: [],
         messagesLoaded: false,
+        unreadMarkerMessageId: null,
+        highlightedMessageId: null,
         replyingTo: null,
         openMessageMenuId: null,
         openReactionPickerId: null,
         composerEmojiOpen: false,
+        typingUsers: [],
         roomMembers: [],
         roomMembersLoading: false,
     };
@@ -73,6 +80,11 @@
     let pollTimer = null;
     let roomTimer = null;
     let polling = false;
+    let messageSearchTimer = null;
+    let typingStartTimer = null;
+    let typingStopTimer = null;
+    let typingActive = false;
+    let highlightTimer = null;
 
     function esc(v) {
         return String(v ?? "")
@@ -132,6 +144,68 @@
         return `${text.slice(0, limit - 1)}...`;
     }
 
+    function typingSummaryText() {
+        const users = Array.isArray(state.typingUsers) ? state.typingUsers : [];
+
+        if (!users.length) return "";
+        if (users.length === 1) return `${users[0].name} đang nhập...`;
+        if (users.length === 2)
+            return `${users[0].name} và ${users[1].name} đang nhập...`;
+
+        return `${users[0].name} và ${users.length - 1} người khác đang nhập...`;
+    }
+
+    function messageSearchResultsHtml() {
+        if (!state.messageSearchOpen) return "";
+
+        const query = String(state.messageSearchQuery || "").trim();
+        if (!query) return "";
+
+        const results = Array.isArray(state.messageSearchResults)
+            ? state.messageSearchResults
+            : [];
+
+        return `
+            <div class="chat-search-results">
+                <div class="chat-search-results-head">
+                    <strong>Kết quả trong đoạn chat</strong>
+                    <button type="button" class="chat-search-results-close" data-clear-message-search aria-label="Đóng tìm kiếm">
+                        <i class="fas fa-xmark"></i>
+                    </button>
+                </div>
+                ${
+                    state.messageSearchLoading
+                        ? `<div class="chat-search-results-empty">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <span>Đang tìm tin nhắn...</span>
+                           </div>`
+                        : results.length
+                          ? `<div class="chat-search-results-list">
+                                    ${results
+                                        .map(
+                                            (message) => `
+                                                <button
+                                                    type="button"
+                                                    class="chat-search-result-item"
+                                                    data-jump-message="${message.id}"
+                                                >
+                                                    <span class="chat-search-result-top">
+                                                        <strong>${esc(message.senderName || "Người dùng")}</strong>
+                                                        <span>${esc(message.sentAtLabel || "")}</span>
+                                                    </span>
+                                                    <span class="chat-search-result-text">${esc(truncateText(message.content || (message.attachments?.length ? (message.attachments[0].isImage ? "[Ảnh đính kèm]" : "[Tệp đính kèm]") : ""), 110) || "Tin nhắn đính kèm")}</span>
+                                                </button>`,
+                                        )
+                                        .join("")}
+                             </div>`
+                          : `<div class="chat-search-results-empty">
+                                <i class="fas fa-magnifying-glass"></i>
+                                <span>Không tìm thấy tin phù hợp với "${esc(query)}".</span>
+                             </div>`
+                }
+            </div>`;
+    }
+
     function nearBottom() {
         const board = document.getElementById("chat-message-board");
         return (
@@ -143,6 +217,29 @@
     function scrollToBottom() {
         const board = document.getElementById("chat-message-board");
         if (board) board.scrollTop = board.scrollHeight;
+    }
+
+    function scrollToUnreadMarker() {
+        const board = document.getElementById("chat-message-board");
+        if (!board) return false;
+
+        const divider = board.querySelector(".chat-unread-divider");
+        if (divider) {
+            divider.scrollIntoView({ behavior: "smooth", block: "start" });
+            return true;
+        }
+
+        const unreadMessageId = firstUnreadIncomingMessageId();
+        if (!unreadMessageId) return false;
+
+        const targetMessage = board.querySelector(
+            `[data-message-id="${CSS.escape(String(unreadMessageId))}"]`,
+        );
+
+        if (!targetMessage) return false;
+
+        targetMessage.scrollIntoView({ behavior: "smooth", block: "start" });
+        return true;
     }
 
     function resizeComposerTextarea(textarea) {
@@ -639,6 +736,216 @@
         return true;
     }
 
+    function firstUnreadIncomingMessageId() {
+        const markerId = Number(state.unreadMarkerMessageId);
+        if (!Number.isFinite(markerId) || markerId <= 0) return null;
+
+        const target = state.messages.find(
+            (message) =>
+                !message._pending &&
+                !message.isMine &&
+                !message.isSystem &&
+                Number(message.id) > markerId,
+        );
+
+        return target ? Number(target.id) : null;
+    }
+
+    function syncTypingUsers(users) {
+        const typingUsers = Array.isArray(users) ? users : [];
+        state.typingUsers = typingUsers;
+
+        if (!state.roomMembers.length) return;
+
+        const typingIds = new Set(
+            typingUsers.map((user) => Number(user.id)).filter(Number.isFinite),
+        );
+
+        state.roomMembers = state.roomMembers.map((member) => ({
+            ...member,
+            isTyping: typingIds.has(Number(member.id)),
+        }));
+    }
+
+    async function sendTypingState(roomId, typing) {
+        if (!roomId) return;
+
+        try {
+            const data = await api(ep(BS.endpoints.typing, roomId), {
+                method: "POST",
+                body: JSON.stringify({ typing }),
+            });
+
+            if (
+                state.selectedRoom &&
+                Number(state.selectedRoom.id) === Number(roomId)
+            ) {
+                syncTypingUsers(data.typingUsers);
+                renderMainHeader();
+                updateComposerTypingNote();
+                renderInfoPanel();
+            }
+        } catch (_) {}
+    }
+
+    function stopTyping(roomId = state.selectedRoom?.id) {
+        clearTimeout(typingStartTimer);
+        clearTimeout(typingStopTimer);
+
+        if (!typingActive || !roomId) {
+            typingActive = false;
+            return;
+        }
+
+        typingActive = false;
+        sendTypingState(roomId, false);
+    }
+
+    function scheduleTypingHeartbeat() {
+        if (
+            !state.selectedRoom ||
+            !state.selectedRoom.canAccess ||
+            !state.selectedRoom.canSend
+        ) {
+            return;
+        }
+
+        const roomId = Number(state.selectedRoom.id);
+        clearTimeout(typingStartTimer);
+        clearTimeout(typingStopTimer);
+
+        typingStartTimer = setTimeout(() => {
+            if (!typingActive) {
+                typingActive = true;
+                sendTypingState(roomId, true);
+            }
+        }, 180);
+
+        typingStopTimer = setTimeout(() => {
+            stopTyping(roomId);
+        }, 2400);
+    }
+
+    function clearMessageSearch() {
+        state.messageSearchOpen = false;
+        state.messageSearchQuery = "";
+        state.messageSearchResults = [];
+        state.messageSearchLoading = false;
+        clearTimeout(messageSearchTimer);
+        renderMainHeader();
+    }
+
+    function toggleMessageSearch(forceOpen = null) {
+        const nextOpen =
+            typeof forceOpen === "boolean"
+                ? forceOpen
+                : !state.messageSearchOpen;
+
+        if (!nextOpen) {
+            clearMessageSearch();
+            return;
+        }
+
+        state.messageSearchOpen = true;
+        renderMainHeader();
+        document.getElementById("chat-message-search")?.focus();
+    }
+
+    async function performMessageSearch(query) {
+        const keyword = String(query || "").trim();
+        state.messageSearchQuery = keyword;
+
+        clearTimeout(messageSearchTimer);
+
+        if (!state.selectedRoom || !state.selectedRoom.canAccess || keyword.length < 2) {
+            state.messageSearchResults = [];
+            state.messageSearchLoading = false;
+            renderMainHeader();
+            return;
+        }
+
+        state.messageSearchLoading = true;
+        renderMainHeader();
+
+        const roomId = Number(state.selectedRoom.id);
+        messageSearchTimer = setTimeout(async () => {
+            try {
+                const url = new URL(
+                    ep(BS.endpoints.search, roomId),
+                    window.location.origin,
+                );
+                url.searchParams.set("q", keyword);
+
+                const data = await api(url.toString(), {
+                    headers: { "Cache-Control": "no-cache" },
+                });
+
+                if (
+                    !state.selectedRoom ||
+                    Number(state.selectedRoom.id) !== roomId ||
+                    state.messageSearchQuery !== keyword
+                ) {
+                    return;
+                }
+
+                state.messageSearchResults = Array.isArray(data.matches)
+                    ? data.matches
+                    : [];
+            } catch (_) {
+                if (state.messageSearchQuery === keyword) {
+                    state.messageSearchResults = [];
+                }
+            } finally {
+                if (state.messageSearchQuery === keyword) {
+                    state.messageSearchLoading = false;
+                    renderMainHeader();
+                }
+            }
+        }, 220);
+    }
+
+    function highlightMessage(messageId) {
+        const row = root.querySelector(
+            `[data-message-id="${CSS.escape(String(messageId))}"]`,
+        );
+        if (!row) return false;
+
+        clearTimeout(highlightTimer);
+        root.querySelectorAll(".chat-message-row.is-highlighted").forEach((el) => {
+            el.classList.remove("is-highlighted");
+        });
+
+        row.classList.add("is-highlighted");
+        row.scrollIntoView({ behavior: "smooth", block: "center" });
+        highlightTimer = setTimeout(() => {
+            row.classList.remove("is-highlighted");
+        }, 2200);
+
+        return true;
+    }
+
+    async function jumpToMessage(messageId) {
+        if (!messageId || !state.selectedRoom || !state.selectedRoom.canAccess) {
+            return;
+        }
+
+        let found = highlightMessage(messageId);
+
+        while (!found && state.hasOlderMessages) {
+            const previousCount = state.messages.length;
+            await loadOlderMessages();
+            found = highlightMessage(messageId);
+
+            if (state.messages.length === previousCount && !state.hasOlderMessages) {
+                break;
+            }
+        }
+
+        if (!found) {
+            notice("error", "Không tìm thấy tin nhắn gốc trong lịch sử hiện có.");
+        }
+    }
+
     async function loadRoomMembers(roomId) {
         if (!roomId) {
             state.roomMembers = [];
@@ -663,6 +970,7 @@
             }
 
             state.roomMembers = Array.isArray(data.members) ? data.members : [];
+            syncTypingUsers(state.typingUsers);
             return state.roomMembers;
         } finally {
             state.roomMembersLoading = false;
@@ -844,6 +1152,15 @@
 
         const room = state.selectedRoom;
         const chips = roomMetaChips(room);
+        const typingText = typingSummaryText();
+        const activeElement = document.activeElement;
+        const searchWasFocused = activeElement?.id === "chat-message-search";
+        const searchSelectionStart = searchWasFocused
+            ? activeElement.selectionStart
+            : null;
+        const searchSelectionEnd = searchWasFocused
+            ? activeElement.selectionEnd
+            : null;
 
         header.innerHTML = `
             <div class="chat-main-header-row">
@@ -880,22 +1197,63 @@
                     </div>
                 </div>
                 <div class="chat-main-actions">
-                    <button type="button" class="chat-header-icon" disabled title="Đang cập nhật">
-                        <i class="fas fa-phone"></i>
-                    </button>
-                    <button type="button" class="chat-header-icon" disabled title="Đang cập nhật">
-                        <i class="fas fa-video"></i>
+                    <button type="button" class="chat-header-icon ${state.messageSearchOpen ? "is-active" : ""}" data-toggle-message-search title="Tìm kiếm trong đoạn chat">
+                        <i class="fas fa-magnifying-glass"></i>
                     </button>
                     <button type="button" class="chat-header-icon ${state.mobileInfoOpen ? "is-active" : ""}" data-toggle-info title="Thông tin đoạn chat">
                         <i class="fas fa-circle-info"></i>
                     </button>
                 </div>
-            </div>`;
+            </div>
+            ${
+                room && room.canAccess
+                    ? `
+                       ${
+                           state.messageSearchOpen
+                               ? `<div class="chat-search-panel">
+                                        <label class="chat-main-search" aria-label="Tìm kiếm trong đoạn chat">
+                                            <i class="fas fa-magnifying-glass"></i>
+                                            <input
+                                                id="chat-message-search"
+                                                type="search"
+                                                placeholder="Tìm theo nội dung, người gửi hoặc tên tệp"
+                                                value="${esc(state.messageSearchQuery)}"
+                                            >
+                                            ${
+                                                state.messageSearchQuery
+                                                    ? `<button type="button" class="chat-main-search-clear" data-clear-message-search aria-label="Xóa tìm kiếm">
+                                                            <i class="fas fa-xmark"></i>
+                                                       </button>`
+                                                    : ""
+                                            }
+                                        </label>
+                                  </div>`
+                               : ""
+                       }
+                       ${messageSearchResultsHtml()}`
+                    : ""
+            }`;
+
+        if (searchWasFocused && state.messageSearchOpen) {
+            const nextSearch = document.getElementById("chat-message-search");
+            if (nextSearch) {
+                nextSearch.focus();
+                if (
+                    Number.isInteger(searchSelectionStart) &&
+                    Number.isInteger(searchSelectionEnd)
+                ) {
+                    nextSearch.setSelectionRange(
+                        searchSelectionStart,
+                        searchSelectionEnd,
+                    );
+                }
+            }
+        }
     }
 
     function buildMessageEl(message) {
         const wrap = document.createElement("div");
-        wrap.className = `chat-message-row${message.isMine ? " is-mine" : ""}${message.isSystem ? " is-system" : ""}`;
+        wrap.className = `chat-message-row${message.isMine ? " is-mine" : ""}${message.isSystem ? " is-system" : ""}${Number(state.highlightedMessageId) === Number(message.id) ? " is-highlighted" : ""}`;
         if (message._pending) wrap.dataset.pending = message.id;
         if (!message._pending) wrap.dataset.messageId = message.id;
 
@@ -911,10 +1269,14 @@
 
         const replyHtml = message.replyTo
             ? `
-                <div class="chat-reply-box${message.replyTo.isRecalled ? " is-recalled" : ""}">
+                <button
+                    type="button"
+                    class="chat-reply-box${message.replyTo.isRecalled ? " is-recalled" : ""}"
+                    data-jump-message="${message.replyTo.id}"
+                >
                     <div><strong>${esc(message.replyTo.senderName)}</strong></div>
                     <div>${esc(message.replyTo.content)}</div>
-                </div>`
+                </button>`
             : "";
         const attachmentsHtml = attachmentListHtml(message.attachments);
 
@@ -1098,6 +1460,7 @@
         }
 
         board.classList.add("has-messages");
+        const unreadMessageId = firstUnreadIncomingMessageId();
         board.innerHTML = `
             ${
                 state.hasOlderMessages
@@ -1109,7 +1472,17 @@
             }
             <div class="chat-message-list">
                 ${state.messages
-                    .map((message) => buildMessageEl(message).outerHTML)
+                    .map((message) => {
+                        const divider =
+                            unreadMessageId &&
+                            Number(message.id) === Number(unreadMessageId)
+                                ? `<div class="chat-unread-divider">
+                                        <span>Tin chưa đọc</span>
+                                   </div>`
+                                : "";
+
+                        return `${divider}${buildMessageEl(message).outerHTML}`;
+                    })
                     .join("")}
             </div>`;
 
@@ -1162,7 +1535,13 @@
                                     <span class="chat-member-avatar">${esc(member.initials || "TV")}</span>
                                     <span class="chat-member-body">
                                         <strong>${esc(member.name)}</strong>
-                                        <span>${esc(member.isMe ? "Bạn" : member.roleLabel || "Thành viên")}</span>
+                                        <span class="chat-member-meta">
+                                            <span>${esc(member.isMe ? "Bạn" : member.roleLabel || "Thành viên")}</span>
+                                            <span class="chat-member-status ${member.isOnline ? "is-online" : ""}${member.isTyping ? " is-typing" : ""}">
+                                                <i class="fas fa-circle"></i>
+                                                ${esc(member.isTyping ? "Đang nhập..." : member.presenceLabel || "Chưa hoạt động gần đây")}
+                                            </span>
+                                        </span>
                                     </span>
                                     <span class="chat-member-action">
                                         ${
@@ -1213,7 +1592,7 @@
                         <i class="fas fa-bell-slash"></i>
                         <span>Thông báo</span>
                     </button>
-                    <button type="button" class="chat-info-action-btn" disabled>
+                    <button type="button" class="chat-info-action-btn" data-focus-message-search>
                         <i class="fas fa-magnifying-glass"></i>
                         <span>Tìm kiếm</span>
                     </button>
@@ -1250,7 +1629,6 @@
                 </div>
                 <ul class="chat-info-tips">
                     <li>Danh sách phòng và đoạn chat đều cuộn trong khung riêng, trang sẽ không cuộn bên ngoài.</li>
-                    <li>Nhập Enter để gửi nhanh, Shift + Enter để xuống dòng.</li>
                     <li>Bộ lọc bên trái giúp tách nhanh các đoạn chat chưa đọc và đã tham gia.</li>
                 </ul>
             </div>`;
@@ -1259,6 +1637,14 @@
     function renderComposer() {
         const composerWrap = root.querySelector(".chat-composer-wrap");
         if (!composerWrap) return;
+        const activeElement = document.activeElement;
+        const inputWasFocused = activeElement?.id === "chat-message-input";
+        const inputSelectionStart = inputWasFocused
+            ? activeElement.selectionStart
+            : null;
+        const inputSelectionEnd = inputWasFocused
+            ? activeElement.selectionEnd
+            : null;
 
         if (!state.selectedRoom || !state.selectedRoom.canAccess) {
             composerWrap.innerHTML = "";
@@ -1342,7 +1728,29 @@
                 </form>
             </div>`;
 
-        resizeComposerTextarea(document.getElementById("chat-message-input"));
+        const nextInput = document.getElementById("chat-message-input");
+        resizeComposerTextarea(nextInput);
+
+        if (inputWasFocused && nextInput) {
+            nextInput.focus();
+            if (
+                Number.isInteger(inputSelectionStart) &&
+                Number.isInteger(inputSelectionEnd)
+            ) {
+                nextInput.setSelectionRange(
+                    inputSelectionStart,
+                    inputSelectionEnd,
+                );
+            }
+        }
+    }
+
+    function updateComposerTypingNote() {
+        const note = root.querySelector(".chat-composer-note");
+        if (!note) return;
+        note.textContent =
+            typingSummaryText() ||
+            "Enter để gửi nhanh, Shift + Enter để xuống dòng.";
     }
 
     function updateMobilePanels() {
@@ -1481,6 +1889,11 @@
         syncRoomInList(data.room);
         state.selectedRoom = { ...state.selectedRoom, ...data.room };
         state.messagesLoaded = true;
+        if (!before) {
+            state.unreadMarkerMessageId = data.readMarkerId
+                ? Number(data.readMarkerId)
+                : null;
+        }
 
         const messages = Array.isArray(data.messages) ? data.messages : [];
         state.hasOlderMessages = Boolean(data.hasMore);
@@ -1517,6 +1930,10 @@
                     nextBoard.clientHeight -
                     distanceFromBottom,
             );
+        } else if (!preservePosition && state.unreadMarkerMessageId) {
+            if (!scrollToUnreadMarker()) {
+                scrollToBottom();
+            }
         } else {
             scrollToBottom();
         }
@@ -1719,6 +2136,13 @@
                     renderInfoPanel();
                 }
 
+                if (Array.isArray(data.typingUsers)) {
+                    syncTypingUsers(data.typingUsers);
+                    renderMainHeader();
+                    updateComposerTypingNote();
+                    renderInfoPanel();
+                }
+
                 if (Array.isArray(data.messages) && data.messages.length) {
                     const stick = nearBottom();
                     const appended = appendNewMessages(data.messages, {
@@ -1827,6 +2251,10 @@
                         });
                     }
                 }
+
+                if (state.selectedRoom && state.selectedRoom.canAccess) {
+                    await loadRoomMembers(state.selectedRoom.id);
+                }
             } catch (_) {}
         }, ROOM_MS);
     }
@@ -1835,6 +2263,7 @@
         const room = roomById(roomId);
         if (!room) return;
 
+        stopTyping();
         stopPoll();
         notice("", "");
 
@@ -1847,12 +2276,19 @@
         state.hasOlderMessages = false;
         state.loadingOlderMessages = false;
         state.messagesLoaded = false;
+        state.messageSearchOpen = false;
+        state.messageSearchQuery = "";
+        state.messageSearchResults = [];
+        state.messageSearchLoading = false;
         state.messageDraft = "";
         clearDraftAttachments();
+        state.unreadMarkerMessageId = null;
+        state.highlightedMessageId = null;
         state.replyingTo = null;
         state.openMessageMenuId = null;
         state.openReactionPickerId = null;
         state.composerEmojiOpen = false;
+        state.typingUsers = [];
         state.roomMembers = [];
         state.roomMembersLoading = false;
 
@@ -2094,6 +2530,7 @@
         if ((!text && !attachments.length) || state.submitting) return;
         const replyTo = state.replyingTo ? { ...state.replyingTo } : null;
 
+        stopTyping(state.selectedRoom.id);
         state.submitting = true;
         state.composerEmojiOpen = false;
         state.messageDraft = "";
@@ -2232,6 +2669,11 @@
             return;
         }
 
+        if (event.target.closest("[data-toggle-message-search]")) {
+            toggleMessageSearch();
+            return;
+        }
+
         if (event.target.closest("[data-close-panels]")) {
             closeMobilePanels();
             return;
@@ -2252,6 +2694,26 @@
 
         if (event.target.closest("[data-cancel-reply]")) {
             setReplyingTo(null);
+            return;
+        }
+
+        if (event.target.closest("[data-focus-message-search]")) {
+            toggleMessageSearch(true);
+            return;
+        }
+
+        if (event.target.closest("[data-clear-message-search]")) {
+            clearMessageSearch();
+            return;
+        }
+
+        const jumpMessageButton = event.target.closest("[data-jump-message]");
+        if (jumpMessageButton) {
+            const messageId = Number(jumpMessageButton.dataset.jumpMessage);
+            if (messageId) {
+                clearMessageSearch();
+                jumpToMessage(messageId);
+            }
             return;
         }
 
@@ -2357,11 +2819,16 @@
         if (event.target.id === "chat-message-input") {
             state.messageDraft = event.target.value || "";
             resizeComposerTextarea(event.target);
+            scheduleTypingHeartbeat();
         }
 
         if (event.target.id === "chat-room-search") {
             state.roomQuery = event.target.value || "";
             renderRoomList();
+        }
+
+        if (event.target.id === "chat-message-search") {
+            performMessageSearch(event.target.value || "");
         }
 
         if (event.target.id === "chat-attachment-input") {
@@ -2401,12 +2868,26 @@
         }
     });
 
+    root.addEventListener(
+        "focusout",
+        (event) => {
+            if (event.target.id === "chat-message-input") {
+                stopTyping();
+            }
+        },
+        true,
+    );
+
     document.addEventListener("click", (event) => {
         if (!root.contains(event.target)) {
             closeMessageMenu();
             closeReactionPicker();
             closeComposerEmojiPicker();
         }
+    });
+
+    document.addEventListener("visibilitychange", () => {
+        if (document.hidden) stopTyping();
     });
 
     document.addEventListener("visibilitychange", () => {
