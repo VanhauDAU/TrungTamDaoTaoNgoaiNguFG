@@ -84,12 +84,29 @@ class CourseController extends Controller
                 'danhMuc',
                 'lopHoc.coSo.tinhThanh',  // Load cơ sở và tỉnh thành
                 'lopHoc.phongHoc',
-                'lopHoc.taiKhoan',
+                'lopHoc.taiKhoan.hoSoNguoiDung',
+                'lopHoc.dangKyLopHocs',
                 'hocPhis'
             ])
             ->firstOrFail();
 
-        // Lấy 3 khóa học liên quan cùng loại, khác khóa hiện tại
+        // Lấy danh sách cơ sở duy nhất có lớp học trong khóa này
+        $coSos = $course->lopHoc
+            ->filter(fn($lop) => $lop->coSo !== null)
+            ->map(fn($lop) => $lop->coSo)
+            ->unique('coSoId')
+            ->values();
+
+        // Lớp sắp khai giảng gần nhất (sắp mở hoặc đang tuyển sinh, có ngày bắt đầu)
+        $upcomingClass = $course->lopHoc
+            ->filter(fn($lop) => in_array((int) $lop->trangThai, [
+                LopHoc::TRANG_THAI_SAP_MO,
+                LopHoc::TRANG_THAI_DANG_TUYEN_SINH,
+            ]) && $lop->ngayBatDau !== null)
+            ->sortBy('ngayBatDau')
+            ->first();
+
+        // Lấy khóa học liên quan cùng loại, khác khóa hiện tại
         $relatedCourses = KhoaHoc::where('danhMucId', $course->danhMucId)
             ->where('khoaHocId', '!=', $course->khoaHocId)
             ->where('trangThai', 1)
@@ -97,7 +114,7 @@ class CourseController extends Controller
             ->take(4)
             ->get();
 
-        return view('clients.khoa-hoc.show', compact('course', 'relatedCourses'));
+        return view('clients.khoa-hoc.show', compact('course', 'relatedCourses', 'coSos', 'upcomingClass'));
     }
     public function showClass($slug, $slugLopHoc)
     {
