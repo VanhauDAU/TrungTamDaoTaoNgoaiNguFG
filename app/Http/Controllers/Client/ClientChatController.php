@@ -7,6 +7,7 @@ use App\Services\ChatAccessService;
 use App\Services\ChatMessageService;
 use App\Services\ChatRoomService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class ClientChatController extends Controller
@@ -104,11 +105,12 @@ class ClientChatController extends Controller
             return response()->json(['message' => 'Bạn chưa tham gia nhóm chat này.', 'room' => $roomPayload], 403);
         }
 
-        $messages = $chatMessageService->getMessagesForUser(
+        $page = $chatMessageService->getMessagesPageForUser(
             $room,
             $user,
             $request->integer('before') ?: null
         );
+        $messages = $page['messages'];
 
         $lastMessageId = $messages->last()['id'] ?? null;
         if ($lastMessageId) {
@@ -116,7 +118,11 @@ class ClientChatController extends Controller
             $roomPayload['unreadCount'] = 0;
         }
 
-        return response()->json(['room' => $roomPayload, 'messages' => $messages]);
+        return response()->json([
+            'room' => $roomPayload,
+            'messages' => $messages,
+            'hasMore' => (bool) ($page['hasMore'] ?? false),
+        ]);
     }
 
     public function members(Request $request, int $roomId, ChatRoomService $chatRoomService, ChatAccessService $chatAccessService)
@@ -135,7 +141,7 @@ class ClientChatController extends Controller
         ]);
     }
 
-    public function join(Request $request, int $roomId, ChatRoomService $chatRoomService, ChatAccessService $chatAccessService)
+    public function join(Request $request, int $roomId, ChatRoomService $chatRoomService, ChatAccessService $chatAccessService, ChatMessageService $chatMessageService)
     {
         $user = $request->user();
         $room = $chatRoomService->getVisibleRoomForUser($roomId, $user, $chatAccessService);
@@ -146,7 +152,22 @@ class ClientChatController extends Controller
             return response()->json(['message' => 'Bạn không có quyền tham gia nhóm chat này.'], 403);
         }
 
+        $wasMember = \App\Models\Interaction\Chat\ChatRoomMember::query()
+            ->where('chatRoomId', $room->chatRoomId)
+            ->where('taiKhoanId', $user->taiKhoanId)
+            ->whereNull('roiAt')
+            ->exists();
+
         $chatRoomService->joinClassRoom($room, $user);
+
+        if (!$wasMember && $room->isClassGroup()) {
+            $displayName = optional($user->hoSoNguoiDung)->hoTen
+                ?? $user->taiKhoan
+                ?? 'Một thành viên';
+
+            $chatMessageService->sendSystemMessage($room, $user, $displayName . ' đã tham gia đoạn chat.');
+        }
+
         $room->refresh();
 
         return response()->json([
@@ -184,12 +205,53 @@ class ClientChatController extends Controller
         ]);
     }
 
+    public function viewAttachment(Request $request, int $id, ChatMessageService $chatMessageService)
+    {
+        $attachment = $chatMessageService->findVisibleAttachmentForUser($request->user(), $id);
+
+        abort_unless($attachment, 404);
+
+        $disk = Storage::disk($attachment->disk ?: 'public');
+        $path = $request->query('variant') === 'thumbnail' && $attachment->thumbnailPath
+            ? $attachment->thumbnailPath
+            : $attachment->path;
+
+        abort_unless($path && $disk->exists($path), 404);
+
+        return response()->file($disk->path($path), [
+            'Content-Type' => $disk->mimeType($path) ?: ($attachment->mime ?: 'application/octet-stream'),
+            'Content-Disposition' => 'inline; filename="' . addslashes((string) $attachment->tenGoc) . '"',
+        ]);
+    }
+
+    public function downloadAttachment(Request $request, int $id, ChatMessageService $chatMessageService)
+    {
+        $attachment = $chatMessageService->findVisibleAttachmentForUser($request->user(), $id);
+
+        abort_unless($attachment, 404);
+
+        $disk = Storage::disk($attachment->disk ?: 'public');
+        $path = $attachment->path;
+
+        abort_unless($path && $disk->exists($path), 404);
+
+        return response()->download(
+            $disk->path($path),
+            (string) $attachment->tenGoc,
+            [
+                'Content-Type' => $attachment->mime ?: ($disk->mimeType($path) ?: 'application/octet-stream'),
+            ]
+        );
+    }
+
     public function send(Request $request, ChatRoomService $chatRoomService, ChatAccessService $chatAccessService, ChatMessageService $chatMessageService)
     {
         $validated = $request->validate([
             'roomId' => 'required|integer',
-            'message' => 'required|string|max:2000',
+            'message' => 'nullable|string|max:2000',
             'replyToMessageId' => 'nullable|integer',
+            'attachments' => 'nullable|array|max:5',
+            'attachments.*' => 'file|max:10240|mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx,ppt,pptx,txt,zip,rar',
         ]);
 
         $user = $request->user();
@@ -201,6 +263,13 @@ class ClientChatController extends Controller
             return response()->json(['message' => 'Bạn chưa thể gửi tin nhắn trong nhóm chat này.'], 403);
         }
 
+        $attachments = $request->file('attachments', []);
+        $messageContent = trim((string) ($validated['message'] ?? ''));
+
+        if ($messageContent === '' && empty($attachments)) {
+            return response()->json(['message' => 'Vui lòng nhập nội dung hoặc chọn tệp đính kèm.'], 422);
+        }
+
         $replyTo = null;
         if (!empty($validated['replyToMessageId'])) {
             $replyTo = $chatMessageService->findVisibleMessageForUser($room, $user, (int) $validated['replyToMessageId']);
@@ -210,7 +279,7 @@ class ClientChatController extends Controller
             }
         }
 
-        $message = $chatMessageService->sendTextMessage($room, $user, $validated['message'], $replyTo);
+        $message = $chatMessageService->sendTextMessage($room, $user, $messageContent, $replyTo, $attachments);
         $room->refresh();
 
         return response()->json([
@@ -279,6 +348,35 @@ class ClientChatController extends Controller
             'message' => $reaction['reacted'] ? 'Đã thêm cảm xúc.' : 'Đã bỏ cảm xúc.',
             'chatMessage' => $reaction['chatMessage'],
             'reacted' => $reaction['reacted'],
+            'room' => $chatRoomService->buildRoomPayload($room, $user, $chatAccessService),
+        ]);
+    }
+
+    public function deleteForMe(Request $request, int $messageId, ChatRoomService $chatRoomService, ChatAccessService $chatAccessService, ChatMessageService $chatMessageService)
+    {
+        $validated = $request->validate([
+            'roomId' => 'required|integer',
+        ]);
+
+        $user = $request->user();
+        $room = $chatRoomService->getVisibleRoomForUser((int) $validated['roomId'], $user, $chatAccessService);
+
+        abort_unless($room, 404);
+
+        if (!$chatAccessService->canAccessRoom($user, $room)) {
+            return response()->json(['message' => 'Bạn chưa tham gia nhóm chat này.'], 403);
+        }
+
+        $message = $chatMessageService->findVisibleMessageForUser($room, $user, $messageId);
+        if (!$message) {
+            return response()->json(['message' => 'Không tìm thấy tin nhắn cần xóa.'], 404);
+        }
+
+        $chatMessageService->deleteMessageForUser($room, $user, $message);
+
+        return response()->json([
+            'message' => 'Đã xóa tin nhắn khỏi chế độ xem của bạn.',
+            'deletedMessageId' => $messageId,
             'room' => $chatRoomService->buildRoomPayload($room, $user, $chatAccessService),
         ]);
     }

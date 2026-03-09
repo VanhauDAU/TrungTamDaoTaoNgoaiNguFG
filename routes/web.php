@@ -96,6 +96,8 @@ Route::prefix('/')->name('home.')->group(function () {
 
     Route::prefix('api/chat')->name('api.chat.')->middleware('auth')->group(function () {
         Route::get('/poll', [ClientChatController::class, 'poll'])->name('poll');
+        Route::get('/attachments/{id}/view', [ClientChatController::class, 'viewAttachment'])->name('attachments.view');
+        Route::get('/attachments/{id}/download', [ClientChatController::class, 'downloadAttachment'])->name('attachments.download');
         Route::get('/rooms', [ClientChatController::class, 'rooms'])->name('rooms');
         Route::get('/rooms/{id}/messages', [ClientChatController::class, 'messages'])->name('messages');
         Route::get('/rooms/{id}/members', [ClientChatController::class, 'members'])->name('members');
@@ -105,6 +107,7 @@ Route::prefix('/')->name('home.')->group(function () {
         Route::post('/messages', [ClientChatController::class, 'send'])->name('send');
         Route::post('/messages/{id}/recall', [ClientChatController::class, 'recall'])->name('recall');
         Route::post('/messages/{id}/react', [ClientChatController::class, 'react'])->name('react');
+        Route::post('/messages/{id}/delete-for-me', [ClientChatController::class, 'deleteForMe'])->name('delete-for-me');
     });
 
 });

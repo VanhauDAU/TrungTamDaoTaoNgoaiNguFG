@@ -52,12 +52,15 @@
         messages: [],
         messageIds: new Set(),
         lastMessageId: 0,
+        hasOlderMessages: false,
+        loadingOlderMessages: false,
         submitting: false,
         roomQuery: "",
         roomFilter: "all",
         mobileSidebarOpen: false,
         mobileInfoOpen: false,
         messageDraft: "",
+        draftAttachments: [],
         messagesLoaded: false,
         replyingTo: null,
         openMessageMenuId: null,
@@ -148,15 +151,97 @@
         textarea.style.height = `${Math.min(textarea.scrollHeight, 140)}px`;
     }
 
+    function formatFileSize(bytes) {
+        const size = Number(bytes) || 0;
+        if (size < 1024) return `${size} B`;
+        if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+        return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+    }
+
+    function isImageMime(mime) {
+        return String(mime || "").startsWith("image/");
+    }
+
+    function releaseDraftAttachment(attachment) {
+        if (attachment?.previewUrl?.startsWith("blob:")) {
+            URL.revokeObjectURL(attachment.previewUrl);
+        }
+    }
+
+    function clearDraftAttachments() {
+        state.draftAttachments.forEach(releaseDraftAttachment);
+        state.draftAttachments = [];
+    }
+
+    function normalizeDraftFiles(fileList) {
+        return Array.from(fileList || [])
+            .filter(Boolean)
+            .map((file) => ({
+                id: `${file.name}_${file.size}_${file.lastModified}_${Math.random().toString(36).slice(2, 8)}`,
+                file,
+                name: file.name,
+                size: file.size,
+                mime: file.type || "application/octet-stream",
+                isImage: isImageMime(file.type),
+                previewUrl: isImageMime(file.type)
+                    ? URL.createObjectURL(file)
+                    : null,
+            }));
+    }
+
+    function addDraftFiles(fileList) {
+        const incoming = normalizeDraftFiles(fileList);
+        if (!incoming.length) return;
+
+        const existingKeys = new Set(
+            state.draftAttachments.map(
+                (item) =>
+                    `${item.name}_${item.size}_${item.file?.lastModified || 0}`,
+            ),
+        );
+
+        incoming.forEach((item) => {
+            const key = `${item.name}_${item.size}_${item.file?.lastModified || 0}`;
+            if (existingKeys.has(key)) {
+                releaseDraftAttachment(item);
+                return;
+            }
+
+            state.draftAttachments.push(item);
+            existingKeys.add(key);
+        });
+
+        renderComposer();
+    }
+
+    function removeDraftAttachment(attachmentId) {
+        const index = state.draftAttachments.findIndex(
+            (item) => item.id === attachmentId,
+        );
+
+        if (index < 0) return;
+
+        releaseDraftAttachment(state.draftAttachments[index]);
+        state.draftAttachments.splice(index, 1);
+        renderComposer();
+    }
+
     async function api(url, opts = {}) {
+        const isFormData = opts.body instanceof FormData;
+
         const response = await fetch(url, {
-            headers: {
-                Accept: "application/json",
-                "Content-Type": "application/json",
-                "X-CSRF-TOKEN": BS.csrf,
-                "X-Requested-With": "XMLHttpRequest",
-                ...(opts.headers || {}),
-            },
+            headers: (() => {
+                const headers = {
+                    Accept: "application/json",
+                    "X-CSRF-TOKEN": BS.csrf,
+                    "X-Requested-With": "XMLHttpRequest",
+                    ...(opts.headers || {}),
+                };
+
+                if (!isFormData) headers["Content-Type"] = "application/json";
+
+                return headers;
+            })(),
             ...opts,
         });
 
@@ -315,6 +400,93 @@
         const names = Array.isArray(reaction?.userNames) ? reaction.userNames : [];
         if (!names.length) return reactionLabel(reaction);
         return `${reactionLabel(reaction)}\n${names.join(", ")}`;
+    }
+
+    function attachmentListHtml(attachments, { compact = false } = {}) {
+        if (!Array.isArray(attachments) || !attachments.length) return "";
+
+        const listClass = compact
+            ? "chat-message-attachments is-compact"
+            : "chat-message-attachments";
+
+        return `
+            <div class="${listClass}">
+                ${attachments
+                    .map((attachment) => {
+                        if (attachment.isImage) {
+                            return `
+                                <a
+                                    href="${esc(attachment.url || attachment.previewUrl || "#")}"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="chat-message-attachment-image"
+                                >
+                                    <img src="${esc(attachment.thumbnailUrl || attachment.url || attachment.previewUrl || "")}" alt="${esc(attachment.name || "Ảnh đính kèm")}">
+                                </a>`;
+                        }
+
+                        return `
+                            <a
+                                href="${esc(attachment.downloadUrl || attachment.url || "#")}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                download="${esc(attachment.name || "tep-dinh-kem")}"
+                                class="chat-message-attachment-file"
+                            >
+                                <span class="chat-message-attachment-file-icon"><i class="fas fa-file-arrow-down"></i></span>
+                                <span class="chat-message-attachment-file-body">
+                                    <strong>${esc(attachment.name || "Tệp đính kèm")}</strong>
+                                    <span>${esc(formatFileSize(attachment.size))}</span>
+                                </span>
+                            </a>`;
+                    })
+                    .join("")}
+            </div>`;
+    }
+
+    function draftAttachmentHtml() {
+        if (!state.draftAttachments.length) return "";
+
+        return `
+            <div class="chat-composer-attachments">
+                ${state.draftAttachments
+                    .map((attachment) => {
+                        if (attachment.isImage) {
+                            return `
+                                <div class="chat-composer-attachment chat-composer-attachment-image">
+                                    <img src="${esc(attachment.previewUrl || "")}" alt="${esc(attachment.name)}">
+                                    <button
+                                        type="button"
+                                        class="chat-composer-attachment-remove"
+                                        data-remove-draft-attachment="${esc(attachment.id)}"
+                                        aria-label="Bỏ tệp ${esc(attachment.name)}"
+                                    >
+                                        <i class="fas fa-xmark"></i>
+                                    </button>
+                                </div>`;
+                        }
+
+                        return `
+                            <div class="chat-composer-attachment">
+                                <div class="chat-composer-attachment-file">
+                                    <span class="chat-composer-attachment-icon"><i class="fas fa-paperclip"></i></span>
+                                    <span class="chat-composer-attachment-body">
+                                        <strong>${esc(attachment.name)}</strong>
+                                        <span>${esc(formatFileSize(attachment.size))}</span>
+                                    </span>
+                                </div>
+                                <button
+                                    type="button"
+                                    class="chat-composer-attachment-remove"
+                                    data-remove-draft-attachment="${esc(attachment.id)}"
+                                    aria-label="Bỏ tệp ${esc(attachment.name)}"
+                                >
+                                    <i class="fas fa-xmark"></i>
+                                </button>
+                            </div>`;
+                    })
+                    .join("")}
+            </div>`;
     }
 
     function closeMessageMenu() {
@@ -559,6 +731,12 @@
             preview:
                 truncateText(
                     lastMessage?.content ||
+                        (Array.isArray(lastMessage?.attachments) &&
+                        lastMessage.attachments.length
+                            ? lastMessage.attachments[0]?.isImage
+                                ? "[Ảnh đính kèm]"
+                                : "[Tệp đính kèm]"
+                            : "") ||
                         state.selectedRoom?.lastMessagePreview ||
                         "Chưa có tin nhắn",
                     130,
@@ -717,9 +895,19 @@
 
     function buildMessageEl(message) {
         const wrap = document.createElement("div");
-        wrap.className = `chat-message-row${message.isMine ? " is-mine" : ""}`;
+        wrap.className = `chat-message-row${message.isMine ? " is-mine" : ""}${message.isSystem ? " is-system" : ""}`;
         if (message._pending) wrap.dataset.pending = message.id;
         if (!message._pending) wrap.dataset.messageId = message.id;
+
+        if (message.isSystem) {
+            wrap.innerHTML = `
+                <div class="chat-system-message">
+                    <i class="fas fa-circle-info"></i>
+                    <span>${esc(message.content || "Tin nhắn hệ thống")}</span>
+                </div>`;
+
+            return wrap;
+        }
 
         const replyHtml = message.replyTo
             ? `
@@ -728,6 +916,7 @@
                     <div>${esc(message.replyTo.content)}</div>
                 </div>`
             : "";
+        const attachmentsHtml = attachmentListHtml(message.attachments);
 
         const canShowMenu = !message._pending;
         const isMenuOpen =
@@ -806,6 +995,14 @@
                             <span>Trả lời</span>
                         </button>
                         ${
+                            message.canDeleteForMe
+                                ? `<button type="button" class="chat-message-menu-item" data-message-action="delete-for-me" data-message-id="${message.id}">
+                                        <i class="fas fa-eye-slash"></i>
+                                        <span>Xóa phía tôi</span>
+                                   </button>`
+                                : ""
+                        }
+                        ${
                             message.canRecall
                                 ? `<button type="button" class="chat-message-menu-item is-danger" data-message-action="recall" data-message-id="${message.id}">
                                         <i class="fas fa-rotate-left"></i>
@@ -828,7 +1025,12 @@
                 <div class="chat-message-bubble-wrap">
                     <div class="chat-message-bubble${message._pending ? " is-pending" : ""}${message.isRecalled ? " is-recalled" : ""}">
                         ${replyHtml}
-                        <div class="chat-message-text">${esc(message.content)}</div>
+                        ${attachmentsHtml}
+                        ${
+                            String(message.content || "").trim()
+                                ? `<div class="chat-message-text">${esc(message.content)}</div>`
+                                : ""
+                        }
                         <div class="chat-message-time">${message._pending ? "Đang gửi..." : esc(message.sentAtLabel || "")}</div>
                     </div>
                     ${menuHtml}
@@ -897,11 +1099,31 @@
 
         board.classList.add("has-messages");
         board.innerHTML = `
+            ${
+                state.hasOlderMessages
+                    ? `<div class="chat-history-status${state.loadingOlderMessages ? " is-loading" : ""}">
+                            <i class="fas ${state.loadingOlderMessages ? "fa-spinner fa-spin" : "fa-clock-rotate-left"}"></i>
+                            <span>${state.loadingOlderMessages ? "Đang tải thêm tin nhắn..." : "Cuộn lên để xem lịch sử cũ hơn"}</span>
+                       </div>`
+                    : ""
+            }
             <div class="chat-message-list">
                 ${state.messages
                     .map((message) => buildMessageEl(message).outerHTML)
                     .join("")}
             </div>`;
+
+        syncHistoryStatus();
+    }
+
+    function syncHistoryStatus() {
+        const status = root.querySelector(".chat-history-status");
+        if (!status) return;
+
+        status.classList.toggle("is-loading", state.loadingOlderMessages);
+        status.innerHTML = `
+            <i class="fas ${state.loadingOlderMessages ? "fa-spinner fa-spin" : "fa-clock-rotate-left"}"></i>
+            <span>${state.loadingOlderMessages ? "Đang tải thêm tin nhắn..." : "Cuộn lên để xem lịch sử cũ hơn"}</span>`;
     }
 
     function renderInfoPanel() {
@@ -1055,11 +1277,19 @@
         composerWrap.innerHTML = `
             <div class="chat-composer">
                 <form id="chat-send-form" class="chat-composer-form">
+                    <input
+                        id="chat-attachment-input"
+                        type="file"
+                        class="chat-composer-file-input"
+                        data-chat-attachment-input
+                        multiple
+                        accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.rar,image/*"
+                    >
                     <div class="chat-composer-tools">
-                        <button type="button" class="chat-tool-btn" title="Sắp có" disabled>
+                        <button type="button" class="chat-tool-btn" data-open-file-picker title="Đính kèm tệp">
                             <i class="fas fa-paperclip"></i>
                         </button>
-                        <button type="button" class="chat-tool-btn" title="Sắp có" disabled>
+                        <button type="button" class="chat-tool-btn" data-open-file-picker title="Chọn ảnh hoặc tệp">
                             <i class="fas fa-image"></i>
                         </button>
                     </div>
@@ -1077,6 +1307,7 @@
                                    </div>`
                                 : ""
                         }
+                        ${draftAttachmentHtml()}
                         <div class="chat-composer-input-shell">
                             <textarea id="chat-message-input" placeholder="Nhập tin nhắn cho lớp học của bạn...">${esc(state.messageDraft)}</textarea>
                             <div class="chat-composer-emoji">
@@ -1106,7 +1337,7 @@
                     </div>
                     <button type="submit" class="chat-send-btn" ${state.submitting ? "disabled" : ""}>
                         <i class="fas fa-paper-plane"></i>
-                        <span>Gửi</span>
+                        <span>${state.submitting ? "Đang gửi" : "Gửi"}</span>
                     </button>
                 </form>
             </div>`;
@@ -1224,16 +1455,21 @@
     }
 
     async function loadSelectedRoomMessages(roomId, opts = {}) {
-        const { preservePosition = false } = opts;
+        const { preservePosition = false, before = null } = opts;
         const board = document.getElementById("chat-message-board");
+        const previousHeight =
+            before && board ? board.scrollHeight : 0;
+        const previousTop = before && board ? board.scrollTop : 0;
         const distanceFromBottom = board
             ? Math.max(
                   0,
                   board.scrollHeight - board.scrollTop - board.clientHeight,
               )
             : 0;
+        const url = new URL(ep(BS.endpoints.messages, roomId), window.location.origin);
+        if (before) url.searchParams.set("before", before);
 
-        const data = await api(ep(BS.endpoints.messages, roomId));
+        const data = await api(url.toString());
 
         if (
             !state.selectedRoom ||
@@ -1247,7 +1483,13 @@
         state.messagesLoaded = true;
 
         const messages = Array.isArray(data.messages) ? data.messages : [];
-        syncMessagesState(messages);
+        state.hasOlderMessages = Boolean(data.hasMore);
+
+        if (before) {
+            mergeOlderMessagesIntoState(messages);
+        } else {
+            syncMessagesState(messages);
+        }
 
         renderMainHeader();
         renderMessageBoard();
@@ -1255,9 +1497,19 @@
         renderRoomList();
         renderInfoPanel();
 
-        await loadRoomMembers(roomId);
+        if (!before) {
+            await loadRoomMembers(roomId);
+        }
 
         const nextBoard = document.getElementById("chat-message-board");
+        if (before) {
+            if (nextBoard) {
+                nextBoard.scrollTop =
+                    nextBoard.scrollHeight - previousHeight + previousTop;
+            }
+            return data;
+        }
+
         if (preservePosition && nextBoard && distanceFromBottom > 80) {
             nextBoard.scrollTop = Math.max(
                 0,
@@ -1270,6 +1522,30 @@
         }
 
         return data;
+    }
+
+    function mergeOlderMessagesIntoState(messages) {
+        if (!Array.isArray(messages) || !messages.length) return false;
+        let prepended = false;
+
+        messages
+            .slice()
+            .forEach((message) => {
+                const messageId = Number(message.id);
+                if (state.messageIds.has(messageId)) return;
+
+                state.messageIds.add(messageId);
+                state.messages.unshift(message);
+                prepended = true;
+            });
+
+        if (!prepended) return false;
+
+        state.messages.sort(
+            (a, b) => messageOrderValue(a) - messageOrderValue(b),
+        );
+
+        return true;
     }
 
     function appendNewMessages(messages, opts = {}) {
@@ -1348,6 +1624,32 @@
         }
 
         renderInfoPanel();
+    }
+
+    async function loadOlderMessages() {
+        if (
+            state.loadingOlderMessages ||
+            !state.selectedRoom ||
+            !state.selectedRoom.canAccess ||
+            !state.messages.length ||
+            !state.hasOlderMessages
+        ) {
+            return;
+        }
+
+        state.loadingOlderMessages = true;
+        renderMessageBoard();
+
+        try {
+            const oldestMessage = state.messages[0];
+            await loadSelectedRoomMessages(state.selectedRoom.id, {
+                before: oldestMessage?.id || null,
+            });
+        } catch (_) {
+        } finally {
+            state.loadingOlderMessages = false;
+            syncHistoryStatus();
+        }
     }
 
     function stopPoll() {
@@ -1542,8 +1844,11 @@
         state.messages = [];
         state.messageIds = new Set();
         state.lastMessageId = 0;
+        state.hasOlderMessages = false;
+        state.loadingOlderMessages = false;
         state.messagesLoaded = false;
         state.messageDraft = "";
+        clearDraftAttachments();
         state.replyingTo = null;
         state.openMessageMenuId = null;
         state.openReactionPickerId = null;
@@ -1628,6 +1933,58 @@
             renderMainHeader();
             renderInfoPanel();
             notice("success", data.message || "Đã thu hồi tin nhắn.");
+        } catch (error) {
+            notice("error", error.payload?.message || error.message);
+        }
+    }
+
+    async function deleteMessageForMe(messageId) {
+        if (!state.selectedRoom || !messageId || state.submitting) return;
+
+        const targetMessage = findMessageById(messageId);
+        if (!targetMessage || targetMessage._pending || !targetMessage.canDeleteForMe)
+            return;
+
+        try {
+            closeMessageMenu();
+
+            const data = await api(
+                BS.endpoints.deleteForMe.replace("__MESSAGE__", messageId),
+                {
+                    method: "POST",
+                    body: JSON.stringify({
+                        roomId: state.selectedRoom.id,
+                    }),
+                },
+            );
+
+            state.messages = state.messages.filter(
+                (message) => Number(message.id) !== Number(messageId),
+            );
+            state.messageIds.delete(Number(messageId));
+
+            if (
+                state.replyingTo &&
+                Number(state.replyingTo.id) === Number(messageId)
+            ) {
+                state.replyingTo = null;
+            }
+
+            syncRoomInList(data.room);
+            state.selectedRoom = {
+                ...state.selectedRoom,
+                ...data.room,
+            };
+
+            renderMessageBoard();
+            renderComposer();
+            renderRoomList();
+            renderMainHeader();
+            renderInfoPanel();
+            notice(
+                "success",
+                data.message || "Đã xóa tin nhắn khỏi chế độ xem của bạn.",
+            );
         } catch (error) {
             notice("error", error.payload?.message || error.message);
         }
@@ -1733,12 +2090,14 @@
         if (!input || !state.selectedRoom) return;
 
         const text = input.value.trim();
-        if (!text || state.submitting) return;
+        const attachments = state.draftAttachments.map((item) => ({ ...item }));
+        if ((!text && !attachments.length) || state.submitting) return;
         const replyTo = state.replyingTo ? { ...state.replyingTo } : null;
 
         state.submitting = true;
         state.composerEmojiOpen = false;
         state.messageDraft = "";
+        state.draftAttachments = [];
         input.value = "";
         resizeComposerTextarea(input);
 
@@ -1752,6 +2111,17 @@
             isMine: true,
             senderName: "Bạn",
             replyTo,
+            attachments: attachments.map((attachment) => ({
+                id: attachment.id,
+                name: attachment.name,
+                size: attachment.size,
+                mime: attachment.mime,
+                isImage: attachment.isImage,
+                previewUrl: attachment.previewUrl,
+                url: attachment.previewUrl,
+                thumbnailUrl: attachment.previewUrl,
+                downloadUrl: attachment.previewUrl,
+            })),
             sentAtLabel: `${pad(now.getHours())}:${pad(now.getMinutes())} ${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()}`,
             _pending: true,
         };
@@ -1774,13 +2144,17 @@
         input.focus();
 
         try {
+            const formData = new FormData();
+            formData.append("roomId", state.selectedRoom.id);
+            formData.append("message", text);
+            if (replyTo?.id) formData.append("replyToMessageId", replyTo.id);
+            attachments.forEach((attachment) => {
+                formData.append("attachments[]", attachment.file);
+            });
+
             const data = await api(BS.endpoints.send, {
                 method: "POST",
-                body: JSON.stringify({
-                    roomId: state.selectedRoom.id,
-                    message: text,
-                    replyToMessageId: replyTo?.id || null,
-                }),
+                body: formData,
             });
 
             replacePendingMessage(pendingId, data.chatMessage);
@@ -1791,6 +2165,7 @@
                 unreadCount: 0,
             };
             state.replyingTo = null;
+            attachments.forEach(releaseDraftAttachment);
 
             renderMessageBoard();
             renderComposer();
@@ -1812,7 +2187,9 @@
 
             input.value = text;
             state.messageDraft = text;
+            state.draftAttachments = attachments;
             resizeComposerTextarea(input);
+            renderComposer();
             renderInfoPanel();
             notice("error", error.payload?.message || error.message);
         } finally {
@@ -1878,6 +2255,21 @@
             return;
         }
 
+        if (event.target.closest("[data-open-file-picker]")) {
+            document.getElementById("chat-attachment-input")?.click();
+            return;
+        }
+
+        const removeDraftButton = event.target.closest(
+            "[data-remove-draft-attachment]",
+        );
+        if (removeDraftButton) {
+            removeDraftAttachment(
+                removeDraftButton.dataset.removeDraftAttachment || "",
+            );
+            return;
+        }
+
         if (event.target.closest("[data-toggle-composer-emoji]")) {
             toggleComposerEmojiPicker();
             return;
@@ -1938,6 +2330,11 @@
                 recallMessage(messageId);
                 return;
             }
+
+            if (action === "delete-for-me") {
+                deleteMessageForMe(messageId);
+                return;
+            }
         }
 
         const roomButton = event.target.closest("[data-room-id]");
@@ -1966,7 +2363,25 @@
             state.roomQuery = event.target.value || "";
             renderRoomList();
         }
+
+        if (event.target.id === "chat-attachment-input") {
+            addDraftFiles(event.target.files);
+            event.target.value = "";
+        }
     });
+
+    root.addEventListener(
+        "scroll",
+        (event) => {
+            if (
+                event.target.id === "chat-message-board" &&
+                event.target.scrollTop <= 80
+            ) {
+                loadOlderMessages();
+            }
+        },
+        true,
+    );
 
     root.addEventListener("keydown", (event) => {
         if (
@@ -2006,6 +2421,7 @@
     window.addEventListener("beforeunload", () => {
         stopPoll();
         stopRoomPoll();
+        clearDraftAttachments();
     });
 
     renderApp();

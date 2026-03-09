@@ -42,6 +42,7 @@
                 send: '{{ route('home.api.chat.send') }}',
                 recall: '{{ url('/api/chat/messages/__MESSAGE__/recall') }}',
                 react: '{{ url('/api/chat/messages/__MESSAGE__/react') }}',
+                deleteForMe: '{{ url('/api/chat/messages/__MESSAGE__/delete-for-me') }}',
             }
         };
     </script>

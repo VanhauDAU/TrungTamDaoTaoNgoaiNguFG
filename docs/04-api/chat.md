@@ -53,17 +53,18 @@ Lý do:
 - Tạo hoặc mở direct chat.
 - Load lịch sử tin nhắn theo phân trang ngược.
 - Poll tin mới theo `after`.
-- Gửi tin nhắn text.
+- Gửi tin nhắn text, ảnh và file.
 - Reply tin nhắn.
 - Reaction emoji.
 - Thu hồi tin nhắn trong 24 giờ.
+- Xóa tin nhắn phía mình.
 - Đánh dấu đã đọc và tính unread count.
+- Infinite scroll lịch sử qua `before`.
+- System message cơ bản khi thành viên tham gia room lớp.
 - Panel thành viên trong đoạn chat.
 
 ### Tính năng đã có schema nhưng chưa bật đầy đủ trên API/UI
 
-- File đính kèm.
-- Xóa tin nhắn phía mình.
 - Mật khẩu phòng chat.
 - Typing indicator.
 - WebSocket/SSE cho chat.
@@ -146,9 +147,9 @@ Ghi chú:
 
 | Bảng | Vai trò | Trạng thái triển khai |
 | --- | --- | --- |
-| `chat_message_attachments` | File/ảnh đính kèm | Có schema, chưa bật API |
+| `chat_message_attachments` | File/ảnh đính kèm | Đang dùng |
 | `chat_message_reactions` | Reaction emoji | Đang dùng |
-| `chat_message_deletes` | Xóa phía mình | Có schema, chưa bật API |
+| `chat_message_deletes` | Xóa phía mình | Đang dùng |
 | `chat_audit_logs` | Audit các hành động chat | Đang dùng cho send/recall/react |
 
 ---
@@ -331,6 +332,7 @@ Hành vi:
 
 - Nếu user có quyền truy cập, API trả `room` và `messages`.
 - Nếu có tin nhắn, hệ thống tự đánh dấu đã đọc tới tin cuối của batch vừa load.
+- Response có thêm `hasMore` để client biết còn lịch sử cũ hơn hay không.
 
 ### 5.4 GET `/api/chat/rooms/{id}/members`
 
@@ -405,7 +407,7 @@ Response:
 
 ### 5.8 POST `/api/chat/messages`
 
-Gửi tin nhắn text.
+Gửi tin nhắn text, ảnh hoặc file.
 
 Request body:
 
@@ -413,15 +415,18 @@ Request body:
 {
   "roomId": 12,
   "message": "Noi dung tin nhan",
-  "replyToMessageId": 96
+  "replyToMessageId": 96,
+  "attachments": []
 }
 ```
 
 Validation:
 
 - `roomId`: required integer
-- `message`: required string, max `2000`
+- `message`: nullable string, max `2000`
 - `replyToMessageId`: nullable integer
+- `attachments`: nullable array, tối đa 5 file
+- `attachments.*`: file, tối đa 10MB, cho phép `jpg`, `jpeg`, `png`, `gif`, `webp`, `pdf`, `doc`, `docx`, `xls`, `xlsx`, `ppt`, `pptx`, `txt`, `zip`, `rar`
 
 Response:
 
@@ -482,6 +487,28 @@ Response:
   "message": "Đã thêm cảm xúc.",
   "chatMessage": { "id": 101, "reactions": [] },
   "reacted": true,
+  "room": { "id": 12 }
+}
+```
+
+### 5.11 POST `/api/chat/messages/{id}/delete-for-me`
+
+Ẩn tin nhắn khỏi chế độ xem của user hiện tại.
+
+Request body:
+
+```json
+{
+  "roomId": 12
+}
+```
+
+Response:
+
+```json
+{
+  "message": "Đã xóa tin nhắn khỏi chế độ xem của bạn.",
+  "deletedMessageId": 101,
   "room": { "id": 12 }
 }
 ```
@@ -556,8 +583,10 @@ File chính:
 ### 7.2 Hành vi client đáng chú ý
 
 - Gửi tin dùng optimistic UI.
+- Composer hỗ trợ chọn nhiều ảnh/tệp trước khi gửi.
 - Poll mặc định mỗi 1.5 giây.
 - Poll tạm dừng khi tab ẩn, resume khi quay lại.
+- Khi cuộn lên đầu khung chat, client tự tải thêm lịch sử cũ hơn.
 - Chuyển room sẽ re-render khối chính nhưng không reload toàn trang.
 - Mobile có panel toggle riêng cho room list và info panel.
 
@@ -595,8 +624,8 @@ Triển khai thực tế hiện tại khác với bản kế hoạch ban đầu 
 
 - dùng short-poll thay vì WebSocket
 - chưa bật mật khẩu room lớp
-- chưa bật upload attachment
-- chưa bật delete-for-me
-- đã có direct chat, reaction, recall và member panel
+- đã bật upload attachment
+- đã bật delete-for-me
+- đã có direct chat, reaction, recall, infinite scroll và member panel
 
 Khi cập nhật tài liệu khác, ưu tiên lấy implementation hiện tại từ code thay vì tài liệu kế hoạch cũ.
