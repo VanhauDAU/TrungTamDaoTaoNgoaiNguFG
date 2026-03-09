@@ -22,7 +22,7 @@
                 <span class="nb-hero-chip"><i class="fas fa-users"></i> Preview người nhận</span>
                 <span class="nb-hero-chip"><i class="fas fa-paperclip"></i> Tối đa 5 tệp</span>
             </div>
-        @endif
+        </div>
 
         <div class="nb-compose-layout">
             <div class="nb-compose-main">
@@ -50,8 +50,9 @@
                     </div>
                 </div>
 
-        <form method="POST" action="{{ route('admin.thong-bao.store') }}" id="wizardForm" enctype="multipart/form-data">
-            @csrf
+                <form method="POST" action="{{ route('admin.thong-bao.store') }}" id="wizardForm"
+                    enctype="multipart/form-data">
+                    @csrf
 
                     {{-- ════════════ STEP 1: Soạn nội dung ════════════ --}}
                     <div class="wizard-panel active" id="panel-1">
@@ -222,7 +223,8 @@
                                     <select id="sel-coso" class="nb-select">
                                         <option value="">-- Chọn cơ sở --</option>
                                         @foreach ($coSos as $coSo)
-                                            <option value="{{ $coSo->coSoId }}" {{ old('doiTuongId') == $coSo->coSoId ? 'selected' : '' }}>
+                                            <option value="{{ $coSo->coSoId }}"
+                                                {{ old('doiTuongId') == $coSo->coSoId ? 'selected' : '' }}>
                                                 {{ $coSo->tenCoSo }}
                                             </option>
                                         @endforeach
@@ -280,7 +282,8 @@
                                     Sẽ gửi đến <strong id="cf-count">?</strong> người nhận
                                 </div>
                                 <div class="cp-meta" style="margin-top:.75rem;">
-                                    <div class="cp-badge"><i class="fas fa-clock"></i> <span id="cf-send-time">Gửi ngay</span>
+                                    <div class="cp-badge"><i class="fas fa-clock"></i> <span id="cf-send-time">Gửi
+                                            ngay</span>
                                     </div>
                                 </div>
                                 <div id="cf-file-info"
@@ -304,7 +307,9 @@
                         </div>
                     </div>
 
-        </form>
+                </form>
+            </div>
+        </div>
     </div>
 @endsection
 

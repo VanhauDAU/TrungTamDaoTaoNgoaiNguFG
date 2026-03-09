@@ -209,6 +209,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
         Route::post('/', [PhongHocController::class, 'store'])->name('store');
         Route::put('/{id}', [PhongHocController::class, 'update'])->name('update');
         Route::delete('/{id}', [PhongHocController::class, 'destroy'])->name('destroy');
+        Route::patch('/{id}/toggle-status', [PhongHocController::class, 'toggleStatus'])->name('toggle-status');
+        Route::get('/{id}/lich-su', [PhongHocController::class, 'lichSu'])->name('lich-su');
     });
 
     // ── Danh Mục Khóa Học ────────────────────────────────────────────────────
