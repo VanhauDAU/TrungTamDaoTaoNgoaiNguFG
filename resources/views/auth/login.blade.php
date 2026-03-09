@@ -130,6 +130,14 @@
             color: #fff;
             box-shadow: 0 5px 15px rgba(227, 30, 36, 0.3);
         }
+        .btn-red:disabled {
+            background-color: #e2e8f0; /* Màu nền xám nhạt chuyên nghiệp */
+            color: #94a3b8; /* Chữ xám đậm hơn nền một chút */
+            cursor: not-allowed;
+            box-shadow: none; /* Bỏ bóng đổ */
+            transform: none; /* Không nhảy nút khi hover */
+            pointer-events: auto; /* Bắt buộc để hiện con trỏ not-allowed */
+        }
 
         /* Password Box */
         .password_box {
@@ -227,7 +235,40 @@
                                         Chưa có tài khoản? <a href="{{ route('register') }}" class="ff-title cl-green">Đăng
                                             ký ngay!</a>
                                     </div>
-                                    @if ($errors->any() && !$errors->has('taiKhoan') && !$errors->has('password'))
+                                    @php
+                                        $lockoutUntil = session('lockout_until', 0);
+                                        $currentTime = time();
+                                        $isLockedOut = $lockoutUntil > $currentTime;
+                                        // Tính sẵn số giây còn lại từ server
+                                        $remainingSeconds = $isLockedOut ? ($lockoutUntil - $currentTime) : 0;
+                                    @endphp
+
+                                    @if ($isLockedOut)
+                                        {{-- Lockout countdown alert --}}
+                                        <div class="alert mb-3 py-3" id="lockoutAlert" data-remaining="{{ $remainingSeconds }}" style="
+                                            background: linear-gradient(135deg, #fff0f0 0%, #ffe0e0 100%);
+                                            border: none;
+                                            border-left: 4px solid var(--primary-red);
+                                            border-radius: 12px;
+                                            font-size: 0.9rem;
+                                            color: #c0392b;
+                                        ">
+                                            <div class="d-flex align-items-center mb-2">
+                                                <i class="fas fa-lock me-2" style="font-size:1.1rem"></i>
+                                                <strong>Đăng nhập bị tạm khóa</strong>
+                                            </div>
+                                            <div>Phát hiện đăng nhập sai quá 5 lần liên tiếp. Vui lòng thử lại sau:</div>
+                                            <div class="text-center mt-2">
+                                                <span id="lockoutCountdown" style="
+                                                    font-size: 1.6rem;
+                                                    font-weight: 700;
+                                                    font-family: 'Montserrat', monospace;
+                                                    color: var(--primary-red);
+                                                    letter-spacing: 2px;
+                                                ">--:--</span>
+                                            </div>
+                                        </div>
+                                    @elseif ($errors->any() && !$errors->has('taiKhoan') && !$errors->has('password'))
                                         <div class="alert alert-danger py-2 mb-3" style="font-size:0.88rem">
                                             <i class="fas fa-exclamation-circle me-1"></i> {{ $errors->first() }}
                                         </div>
@@ -237,14 +278,16 @@
                                     <input type="hidden" name="login_attempt" value="1">
                                     <div class="mb-3">
                                         <input type="text" id="taiKhoan" name="taiKhoan"
-                                            class="form-control @error('taiKhoan') is-invalid @enderror"
+                                            class="form-control @if(!$isLockedOut) @error('taiKhoan') is-invalid @enderror @endif"
                                             value="{{ old('taiKhoan') }}" required autocomplete="username" autofocus
                                             placeholder="Tài khoản hoặc email">
-                                        @error('taiKhoan')
-                                            <div class="invalid-feedback d-block text-danger mt-1">
-                                                <i class="fas fa-exclamation-triangle me-1"></i> {{ $message }}
-                                            </div>
-                                        @enderror
+                                        @if (!$isLockedOut)
+                                            @error('taiKhoan')
+                                                <div class="invalid-feedback d-block text-danger mt-1">
+                                                    <i class="fas fa-exclamation-triangle me-1"></i> {{ $message }}
+                                                </div>
+                                            @enderror
+                                        @endif
                                     </div>
 
                                     {{-- Password --}}
@@ -332,5 +375,58 @@
                     }, false)
                 })
         })()
+
+        // ── Lockout Countdown Timer (Realtime & Safe) ──
+        document.addEventListener("DOMContentLoaded", function() {
+            var alertBox = document.getElementById('lockoutAlert');
+            if (!alertBox) return; // Nếu không có alert thì bỏ qua
+
+            // Lấy số giây còn lại do Server tính toán
+            var remaining = parseInt(alertBox.getAttribute('data-remaining'), 10);
+            if (isNaN(remaining) || remaining <= 0) return;
+
+            var el = document.getElementById('lockoutCountdown');
+            var submitBtn = document.querySelector('#loginform button[type="submit"]');
+
+            // Disable nút đăng nhập ban đầu
+            if (submitBtn) {
+                submitBtn.disabled = true;
+            }
+
+            function pad(n) { return n < 10 ? '0' + n : n; }
+
+            // Hàm cập nhật giao diện
+            function updateDisplay(sec) {
+                var m = Math.floor(sec / 60);
+                var s = sec % 60;
+                el.textContent = pad(m) + ':' + pad(s);
+            }
+
+            // Gọi ngay lần đầu tiên để không bị giật lag chữ --:-- trong 1 giây đầu
+            updateDisplay(remaining);
+
+            // Bắt đầu đếm ngược realtime mỗi giây
+            var timer = setInterval(function() {
+                remaining--;
+                
+                if (remaining <= 0) {
+                    clearInterval(timer); // Dừng bộ đếm
+                    el.textContent = '00:00';
+                    
+                    // Mở khóa nút submit
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                    }
+                    
+                    // Hiệu ứng mờ dần và ẩn thông báo
+                    alertBox.style.transition = 'opacity 0.5s ease';
+                    alertBox.style.opacity = '0';
+                    setTimeout(function() { alertBox.style.display = 'none'; }, 500);
+                    return;
+                }
+                
+                updateDisplay(remaining);
+            }, 1000);
+        });
     </script>
 @endsection
