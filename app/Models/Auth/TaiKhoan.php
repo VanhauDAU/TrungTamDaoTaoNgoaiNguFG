@@ -14,17 +14,17 @@ use App\Models\Interaction\ThongBaoNguoiDung;
 class TaiKhoan extends Authenticatable
 {
     // Constants cho role
-    const ROLE_HOC_VIEN  = 0;
+    const ROLE_HOC_VIEN = 0;
     const ROLE_GIAO_VIEN = 1;
     const ROLE_NHAN_VIEN = 2;
-    const ROLE_ADMIN     = 3;
+    const ROLE_ADMIN = 3;
 
     //
     use Notifiable, SoftDeletes;
     protected $table = 'taikhoan';
     protected $primaryKey = 'taiKhoanId';
-    protected $keyType    = 'int';
-    public    $incrementing = true;
+    protected $keyType = 'int';
+    public $incrementing = true;
     protected $fillable = [
         'taiKhoan',
         'email',
@@ -32,6 +32,7 @@ class TaiKhoan extends Authenticatable
         'role',
         'nhomQuyenId',
         'trangThai',
+        'phaiDoiMatKhau',
         'remember_token',
         'lastLogin'
     ];
@@ -40,8 +41,9 @@ class TaiKhoan extends Authenticatable
         'remember_token',
     ];
     protected $casts = [
-        'role'        => 'integer',
-        'trangThai'   => 'integer',
+        'role' => 'integer',
+        'trangThai' => 'integer',
+        'phaiDoiMatKhau' => 'integer',
         'nhomQuyenId' => 'integer',
     ];
     public function username()
@@ -69,11 +71,11 @@ class TaiKhoan extends Authenticatable
     public function getRoleLabel(): string
     {
         return match ($this->role) {
-            self::ROLE_HOC_VIEN  => 'Học viên',
+            self::ROLE_HOC_VIEN => 'Học viên',
             self::ROLE_GIAO_VIEN => 'Giáo viên',
             self::ROLE_NHAN_VIEN => 'Nhân viên',
-            self::ROLE_ADMIN     => 'Admin',
-            default              => 'Không xác định',
+            self::ROLE_ADMIN => 'Admin',
+            default => 'Không xác định',
         };
     }
     public function getAuthPassword()
@@ -129,17 +131,17 @@ class TaiKhoan extends Authenticatable
         }
 
         $colMap = [
-            'xem'  => 'coXem',
+            'xem' => 'coXem',
             'them' => 'coThem',
-            'sua'  => 'coSua',
-            'xoa'  => 'coXoa',
+            'sua' => 'coSua',
+            'xoa' => 'coXoa',
         ];
 
         $col = $colMap[$action] ?? 'coXem';
 
         $pq = $this->nhomQuyen->phanQuyens()
-                ->where('tinhNang', $feature)
-                ->first();
+            ->where('tinhNang', $feature)
+            ->first();
 
         return $pq ? (bool) $pq->{$col} : false;
     }

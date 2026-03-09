@@ -354,4 +354,12 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
 // ─── AUTH ROUTES ─────────────────────────────────────────────────────────────
 Auth::routes();
 
+// ─── ĐỔI MẬT KHẨU BẮT BUỘC (lần đầu đăng nhập) ─────────────────────────────
+Route::middleware('auth')->group(function () {
+    Route::get('/doi-mat-khau-bat-buoc', [App\Http\Controllers\Auth\LoginController::class, 'showForceChangePassword'])
+        ->name('force-change-password');
+    Route::post('/doi-mat-khau-bat-buoc', [App\Http\Controllers\Auth\LoginController::class, 'processForceChangePassword'])
+        ->name('force-change-password.process');
+});
+
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');

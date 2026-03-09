@@ -70,21 +70,22 @@ class RegisterController extends Controller
     {
         return DB::transaction(function () use ($data) {
 
-        $taiKhoan = TaiKhoan::create([
-            'taiKhoan' => $data['email'],
-            'email' => $data['email'],
-            'matKhau' => Hash::make($data['password']),
-            'role' => 0, // học viên
-            'trangThai' => 1,
-            'lastLogin' => null
-        ]);
+            $taiKhoan = TaiKhoan::create([
+                'taiKhoan' => $data['email'],
+                'email' => $data['email'],
+                'matKhau' => Hash::make($data['password']),
+                'role' => 0, // học viên
+                'trangThai' => 1,
+                'phaiDoiMatKhau' => 0,
+                'lastLogin' => null
+            ]);
 
-        HoSoNguoiDung::create([
-            'taiKhoanId' => $taiKhoan->taiKhoanId,
-            'hoTen' => $data['name'],
-        ]);
+            HoSoNguoiDung::create([
+                'taiKhoanId' => $taiKhoan->taiKhoanId,
+                'hoTen' => $data['name'],
+            ]);
 
-        return $taiKhoan;
-    });
+            return $taiKhoan;
+        });
     }
 }

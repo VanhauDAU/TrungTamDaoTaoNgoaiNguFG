@@ -28,11 +28,11 @@ class TaiKhoanController extends Controller
         if ($search = $request->q) {
             $query->where(function ($q) use ($search) {
                 $q->where('taiKhoan', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhereHas('hoSoNguoiDung', function ($q2) use ($search) {
-                      $q2->where('hoTen', 'like', "%{$search}%")
-                         ->orWhere('soDienThoai', 'like', "%{$search}%");
-                  });
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhereHas('hoSoNguoiDung', function ($q2) use ($search) {
+                        $q2->where('hoTen', 'like', "%{$search}%")
+                            ->orWhere('soDienThoai', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -47,16 +47,16 @@ class TaiKhoanController extends Controller
         }
 
         $orderBy = $request->get('orderBy', 'taiKhoanId');
-        $dir     = $request->get('dir', 'desc');
+        $dir = $request->get('dir', 'desc');
         if (in_array($orderBy, ['taiKhoanId', 'email', 'lastLogin'])) {
             $query->orderBy($orderBy, $dir);
         }
 
         $taiKhoans = $query->paginate(15)->withQueryString();
 
-        $tongSo       = TaiKhoan::count();
+        $tongSo = TaiKhoan::count();
         $dangHoatDong = TaiKhoan::where('trangThai', 1)->count();
-        $nhomQuyens   = NhomQuyen::orderBy('tenNhom')->get();
+        $nhomQuyens = NhomQuyen::orderBy('tenNhom')->get();
 
         return view('admin.tai-khoan.index', compact(
             'taiKhoans',
@@ -97,7 +97,7 @@ class TaiKhoanController extends Controller
     public function toggleStatus(int $id)
     {
         $taiKhoan = TaiKhoan::findOrFail($id);
-        
+
         // Không cho phép tự khóa Admin chính mình
         if ($taiKhoan->taiKhoanId === auth()->user()->taiKhoanId) {
             return response()->json([
@@ -130,7 +130,8 @@ class TaiKhoanController extends Controller
         ]);
 
         $taiKhoan->update([
-            'matKhau' => Hash::make($request->matKhau)
+            'matKhau' => Hash::make($request->matKhau),
+            'phaiDoiMatKhau' => 1,
         ]);
 
         return response()->json([

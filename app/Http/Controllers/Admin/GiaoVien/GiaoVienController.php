@@ -25,15 +25,15 @@ class GiaoVienController extends Controller
         if ($search = $request->q) {
             $query->where(function ($q) use ($search) {
                 $q->where('taiKhoan', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhereHas('hoSoNguoiDung', function ($q2) use ($search) {
-                      $q2->where('hoTen', 'like', "%{$search}%")
-                         ->orWhere('soDienThoai', 'like', "%{$search}%");
-                  })
-                  ->orWhereHas('nhanSu', function ($q2) use ($search) {
-                      $q2->where('chuyenMon', 'like', "%{$search}%")
-                         ->orWhere('chucVu', 'like', "%{$search}%");
-                  });
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhereHas('hoSoNguoiDung', function ($q2) use ($search) {
+                        $q2->where('hoTen', 'like', "%{$search}%")
+                            ->orWhere('soDienThoai', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('nhanSu', function ($q2) use ($search) {
+                        $q2->where('chuyenMon', 'like', "%{$search}%")
+                            ->orWhere('chucVu', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -44,7 +44,7 @@ class GiaoVienController extends Controller
 
         // ── Sắp xếp ─────────────────────────────────────────
         $orderBy = $request->get('orderBy', 'taiKhoanId');
-        $dir     = $request->get('dir', 'desc');
+        $dir = $request->get('dir', 'desc');
         if (in_array($orderBy, ['taiKhoanId', 'email', 'lastLogin'])) {
             $query->orderBy($orderBy, $dir === 'asc' ? 'asc' : 'desc');
         }
@@ -52,9 +52,9 @@ class GiaoVienController extends Controller
         $giaoViens = $query->paginate(15)->withQueryString();
 
         // ── Thống kê nhanh ──────────────────────────────────
-        $tongSo       = TaiKhoan::where('role', TaiKhoan::ROLE_GIAO_VIEN)->count();
+        $tongSo = TaiKhoan::where('role', TaiKhoan::ROLE_GIAO_VIEN)->count();
         $dangHoatDong = TaiKhoan::where('role', TaiKhoan::ROLE_GIAO_VIEN)->where('trangThai', 1)->count();
-        $thangNay     = TaiKhoan::where('role', TaiKhoan::ROLE_GIAO_VIEN)
+        $thangNay = TaiKhoan::where('role', TaiKhoan::ROLE_GIAO_VIEN)
             ->whereMonth('created_at', now()->month)
             ->whereYear('created_at', now()->year)
             ->count();
@@ -82,12 +82,12 @@ class GiaoVienController extends Controller
         // Pre-map to plain array so Blade @json() doesn't choke on complex closures
         $coSosData = $coSos->map(function ($c) {
             return [
-                'coSoId'      => $c->coSoId,
-                'tenCoSo'     => $c->tenCoSo,
-                'diaChi'      => $c->diaChi,
+                'coSoId' => $c->coSoId,
+                'tenCoSo' => $c->tenCoSo,
+                'diaChi' => $c->diaChi,
                 'tenPhuongXa' => $c->tenPhuongXa,
                 'tinhThanhId' => $c->tinhThanhId,
-                'maPhuongXa'  => $c->maPhuongXa,
+                'maPhuongXa' => $c->maPhuongXa,
             ];
         })->values()->toArray();
 
@@ -98,35 +98,35 @@ class GiaoVienController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'taiKhoan'      => 'required|string|max:50',
-            'email'         => 'required|email|max:100|unique:taikhoan,email',
-            'matKhau'       => 'required|string|min:8|confirmed',
-            'hoTen'         => 'required|string|max:100',
-            'soDienThoai'   => 'nullable|string|max:20',
-            'zalo'          => 'nullable|string|max:20',
-            'ngaySinh'      => 'nullable|date',
-            'gioiTinh'      => 'nullable|in:0,1,2',
-            'diaChi'        => 'nullable|string|max:255',
-            'cccd'          => 'nullable|string|max:20|unique:hosonguoidung,cccd',
-            'chucVu'        => 'nullable|string|max:50',
-            'chuyenMon'     => 'nullable|string|max:50',
-            'bangCap'       => 'nullable|string|max:50',
-            'hocVi'         => 'nullable|string|max:50',
-            'loaiHopDong'   => 'nullable|string|max:50',
-            'ngayVaoLam'    => 'nullable|date',
-            'coSoId'        => 'required|exists:cosodaotao,coSoId',
-            'ghiChu'        => 'nullable|string',
+            'taiKhoan' => 'required|string|max:50',
+            'email' => 'required|email|max:100|unique:taikhoan,email',
+            'matKhau' => 'required|string|min:8|confirmed',
+            'hoTen' => 'required|string|max:100',
+            'soDienThoai' => 'nullable|string|max:20',
+            'zalo' => 'nullable|string|max:20',
+            'ngaySinh' => 'nullable|date',
+            'gioiTinh' => 'nullable|in:0,1,2',
+            'diaChi' => 'nullable|string|max:255',
+            'cccd' => 'nullable|string|max:20|unique:hosonguoidung,cccd',
+            'chucVu' => 'nullable|string|max:50',
+            'chuyenMon' => 'nullable|string|max:50',
+            'bangCap' => 'nullable|string|max:50',
+            'hocVi' => 'nullable|string|max:50',
+            'loaiHopDong' => 'nullable|string|max:50',
+            'ngayVaoLam' => 'nullable|date',
+            'coSoId' => 'required|exists:cosodaotao,coSoId',
+            'ghiChu' => 'nullable|string',
         ], [
-            'taiKhoan.required'  => 'Vui lòng nhập tên đăng nhập.',
-            'email.required'     => 'Vui lòng nhập email.',
-            'email.unique'       => 'Email đã được sử dụng.',
-            'matKhau.required'   => 'Vui lòng nhập mật khẩu.',
-            'matKhau.min'        => 'Mật khẩu phải ít nhất 8 ký tự.',
-            'matKhau.confirmed'  => 'Xác nhận mật khẩu không khớp.',
-            'hoTen.required'     => 'Vui lòng nhập họ và tên.',
-            'cccd.unique'        => 'CCCD/CMND này đã được đăng ký.',
-            'coSoId.required'    => 'Vui lòng chọn cơ sở làm việc.',
-            'coSoId.exists'      => 'Cơ sở làm việc không hợp lệ.',
+            'taiKhoan.required' => 'Vui lòng nhập tên đăng nhập.',
+            'email.required' => 'Vui lòng nhập email.',
+            'email.unique' => 'Email đã được sử dụng.',
+            'matKhau.required' => 'Vui lòng nhập mật khẩu.',
+            'matKhau.min' => 'Mật khẩu phải ít nhất 8 ký tự.',
+            'matKhau.confirmed' => 'Xác nhận mật khẩu không khớp.',
+            'hoTen.required' => 'Vui lòng nhập họ và tên.',
+            'cccd.unique' => 'CCCD/CMND này đã được đăng ký.',
+            'coSoId.required' => 'Vui lòng chọn cơ sở làm việc.',
+            'coSoId.exists' => 'Cơ sở làm việc không hợp lệ.',
         ]);
 
         DB::transaction(function () use ($request) {
@@ -139,38 +139,39 @@ class GiaoVienController extends Controller
 
             // ── Tạo tài khoản ────────────────────────────────────
             $taiKhoan = TaiKhoan::create([
-                'taiKhoan'    => $tenDangNhap,
-                'email'       => $request->email,
-                'matKhau'     => Hash::make($request->matKhau),
-                'role'        => TaiKhoan::ROLE_GIAO_VIEN,
-                'trangThai'   => 1,
+                'taiKhoan' => $tenDangNhap,
+                'email' => $request->email,
+                'matKhau' => Hash::make($request->matKhau),
+                'role' => TaiKhoan::ROLE_GIAO_VIEN,
+                'trangThai' => 1,
+                'phaiDoiMatKhau' => 1,
                 'nhomQuyenId' => $nhomGV?->nhomQuyenId,
             ]);
 
             // ── Tạo hồ sơ người dùng ────────────────────────────
             HoSoNguoiDung::create([
-                'taiKhoanId'    => $taiKhoan->taiKhoanId,
-                'hoTen'         => $request->hoTen,
-                'soDienThoai'   => $request->soDienThoai,
-                'zalo'          => $request->zalo,
-                'ngaySinh'      => $request->ngaySinh ?: null,
-                'gioiTinh'      => $request->gioiTinh,
-                'diaChi'        => $request->diaChi,
-                'cccd'          => $request->cccd,
-                'ghiChu'        => $request->ghiChu,
+                'taiKhoanId' => $taiKhoan->taiKhoanId,
+                'hoTen' => $request->hoTen,
+                'soDienThoai' => $request->soDienThoai,
+                'zalo' => $request->zalo,
+                'ngaySinh' => $request->ngaySinh ?: null,
+                'gioiTinh' => $request->gioiTinh,
+                'diaChi' => $request->diaChi,
+                'cccd' => $request->cccd,
+                'ghiChu' => $request->ghiChu,
             ]);
 
             // ── Tạo bản ghi nhân sự ─────────────────────────────
             NhanSu::create([
-                'taiKhoanId'  => $taiKhoan->taiKhoanId,
-                'chucVu'      => $request->chucVu,
-                'chuyenMon'   => $request->chuyenMon,
-                'bangCap'     => $request->bangCap,
-                'hocVi'       => $request->hocVi,
+                'taiKhoanId' => $taiKhoan->taiKhoanId,
+                'chucVu' => $request->chucVu,
+                'chuyenMon' => $request->chuyenMon,
+                'bangCap' => $request->bangCap,
+                'hocVi' => $request->hocVi,
                 'loaiHopDong' => $request->loaiHopDong,
-                'ngayVaoLam'  => $request->ngayVaoLam ?: now()->toDateString(),
-                'coSoId'      => $request->coSoId,
-                'trangThai'   => 1,
+                'ngayVaoLam' => $request->ngayVaoLam ?: now()->toDateString(),
+                'coSoId' => $request->coSoId,
+                'trangThai' => 1,
             ]);
         });
 
@@ -185,7 +186,7 @@ class GiaoVienController extends Controller
     private function generateUniqueUsername(string $base): string
     {
         $candidate = $base;
-        $counter   = 1;
+        $counter = 1;
 
         while (TaiKhoan::where('taiKhoan', $candidate)->exists()) {
             $candidate = $base . '_' . $counter;
@@ -237,13 +238,13 @@ class GiaoVienController extends Controller
         if ($search = $request->q) {
             $query->where(function ($q) use ($search) {
                 $q->where('taiKhoan', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhereHas('hoSoNguoiDung', fn($q2) => $q2->where('hoTen', 'like', "%{$search}%"));
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhereHas('hoSoNguoiDung', fn($q2) => $q2->where('hoTen', 'like', "%{$search}%"));
             });
         }
 
         $giaoViens = $query->orderByDesc('deleted_at')->paginate(15)->withQueryString();
-        $tongXoa   = TaiKhoan::onlyTrashed()->where('role', TaiKhoan::ROLE_GIAO_VIEN)->count();
+        $tongXoa = TaiKhoan::onlyTrashed()->where('role', TaiKhoan::ROLE_GIAO_VIEN)->count();
 
         return view('admin.giao-vien.trash', compact('giaoViens', 'tongXoa'));
     }
