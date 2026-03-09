@@ -1,309 +1,602 @@
-# Module Chat Lớp Học – Tài liệu kỹ thuật
+# Module Chat Client - Tài liệu kỹ thuật
 
-> **Cập nhật lần cuối:** 2026-03-08  
-> **Phiên bản:** v2.0 (Short-Poll Realtime)
+> Cập nhật lần cuối: 2026-03-09
+> Phiên bản: v2.1
+> Phạm vi: implementation hiện tại trong codebase
 
 ---
 
 ## 1. Tổng quan
 
-Module Chat Lớp Học cho phép học viên và giáo viên nhắn tin theo nhóm lớp học trong thời gian thực. Mỗi lớp học có một **phòng chat (ChatRoom)** riêng.
+Module chat client phục vụ trao đổi nội bộ giữa học viên và giáo viên trong phạm vi lớp học.
 
-### Kiến trúc
+Triển khai hiện tại hỗ trợ hai loại hội thoại:
 
+- `class_group`: nhóm chat theo lớp học.
+- `direct`: đoạn chat riêng giữa hai thành viên có ít nhất một lớp hợp lệ chung.
+
+Route giao diện:
+
+- `GET /hoc-vien/chat`
+
+Route API nội bộ:
+
+- Base prefix: `/api/chat`
+- Middleware: `auth`
+
+### Kiến trúc realtime hiện tại
+
+Module chat đang dùng short-poll thay cho WebSocket/SSE:
+
+```text
+Browser
+  -> GET /hoc-vien/chat
+  -> GET /api/chat/rooms
+  -> GET /api/chat/rooms/{id}/messages
+  -> GET /api/chat/poll?room={id}&after={messageId} (mỗi 1.5s)
+  -> POST /api/chat/messages
+  -> POST /api/chat/messages/{id}/react
+  -> POST /api/chat/messages/{id}/recall
 ```
-Browser (JS)                    PHP/Laravel (XAMPP)
-     │                                  │
-     │── GET /hoc-vien/chat ──────────> │ Render blade (gọn nhẹ, không load messages)
-     │<─────────────────────────────────│
-     │
-     │── GET /api/chat/rooms/{id}/messages ──> Load lịch sử tin nhắn (AJAX)
-     │<──────────────────────────────────────
-     │
-     │   [ Vòng lặp Short-Poll mỗi 1.5 giây ]
-     │── GET /api/chat/poll?room=X&after=Y ──> Kiểm tra tin mới (trả ngay, ~20ms)
-     │<──────────────────────────────────────
-     │
-     │   [ Gửi tin nhắn ]
-     │── Optimistic append (hiện ngay trên UI)
-     │── POST /api/chat/messages ─────────> Server lưu tin nhắn
-     │<──────────────────────────── Confirm (replace optimistic với real data)
-```
 
-**Tại sao dùng Short-Poll thay vì WebSocket/SSE?**
+Lý do:
 
-XAMPP dùng Apache MPM Prefork – mỗi kết nối WebSocket/SSE giữ trọn 1 PHP thread. Với nhiều user, toàn bộ thread pool bị chiếm → các trang khác bị lag/treo. Short-Poll (mỗi request hoàn thành trong ~20ms, không giữ thread) phù hợp nhất với môi trường này.
+- Project chạy trên XAMPP/Apache prefork, giữ kết nối dài bằng PHP không phù hợp.
+- Short-poll trả về ngay, nhẹ hơn và không giữ worker lâu.
+- `ClientChatController::poll()` đóng session sớm để tránh block request khác.
+
+### Tính năng đã có
+
+- Danh sách phòng chat khả dụng theo user.
+- Tự động tạo room lớp khi user có lớp hợp lệ hoặc chạy command bootstrap.
+- Join room lớp.
+- Tạo hoặc mở direct chat.
+- Load lịch sử tin nhắn theo phân trang ngược.
+- Poll tin mới theo `after`.
+- Gửi tin nhắn text.
+- Reply tin nhắn.
+- Reaction emoji.
+- Thu hồi tin nhắn trong 24 giờ.
+- Đánh dấu đã đọc và tính unread count.
+- Panel thành viên trong đoạn chat.
+
+### Tính năng đã có schema nhưng chưa bật đầy đủ trên API/UI
+
+- File đính kèm.
+- Xóa tin nhắn phía mình.
+- Mật khẩu phòng chat.
+- Typing indicator.
+- WebSocket/SSE cho chat.
 
 ---
 
-## 2. Database Schema
+## 2. Database schema
 
-### Bảng chính
+Migration nguồn:
 
-| Bảng                       | Mô tả                                        |
-| -------------------------- | -------------------------------------------- |
-| `chat_rooms`               | Phòng chat, 1-1 với `lop_hocs`               |
-| `chat_room_members`        | Thành viên phòng chat (học viên + giáo viên) |
-| `chat_messages`            | Tin nhắn văn bản                             |
-| `chat_message_attachments` | File đính kèm (dự kiến)                      |
-| `chat_message_reactions`   | React cảm xúc (dự kiến)                      |
-| `chat_message_deletes`     | Xoá tin nhắn phía mình                       |
-| `chat_audit_logs`          | Log hoạt động                                |
+- `database/migrations/2026_03_07_120000_create_chat_tables.php`
 
-### Các trường quan trọng – `chat_rooms`
+### 2.1 `chat_rooms`
 
-| Cột             | Kiểu      | Mô tả                       |
-| --------------- | --------- | --------------------------- |
-| `chatRoomId`    | bigint PK |                             |
-| `lopHocId`      | bigint FK | Liên kết với lớp học        |
-| `lastMessageId` | bigint FK | ID tin nhắn gần nhất        |
-| `updated_at`    | timestamp | Thời gian cập nhật gần nhất |
+| Cột | Kiểu | Mô tả |
+| --- | --- | --- |
+| `chatRoomId` | bigint PK | ID phòng chat |
+| `loai` | varchar(20) | `class_group` hoặc `direct` |
+| `tenPhong` | varchar(150) nullable | Tên phòng, room direct thường để `null` |
+| `lopHocId` | int nullable | Liên kết `lophoc.lopHocId`, chỉ dùng cho room lớp |
+| `matKhauHash` | varchar(255) nullable | Chưa dùng trong implementation hiện tại |
+| `taoBoiId` | int nullable | Tài khoản tạo room |
+| `lastMessageId` | bigint nullable | Tin nhắn gần nhất |
+| `trangThai` | tinyint | `0: inactive`, `1: active`, `2: archived` |
+| `created_at` | timestamp | Laravel timestamps |
+| `updated_at` | timestamp | Laravel timestamps |
 
-### Các trường quan trọng – `chat_messages`
+Ràng buộc chính:
 
-| Cột              | Kiểu      | Mô tả                                   |
-| ---------------- | --------- | --------------------------------------- |
-| `chatMessageId`  | bigint PK |                                         |
-| `chatRoomId`     | bigint FK |                                         |
-| `nguoiGuiId`     | bigint FK | `taiKhoanId` người gửi                  |
-| `loai`           | enum      | `text`, `image`, `file`, `system`       |
-| `noiDung`        | text      | Nội dung tin nhắn                       |
-| `guiLuc`         | timestamp | Thời điểm gửi                           |
-| `thuHoiLuc`      | timestamp | Thời điểm thu hồi (null = chưa thu hồi) |
-| `deadlineThuHoi` | timestamp | Hết hạn được phép thu hồi               |
-| `replyToId`      | bigint FK | Trả lời tin nhắn khác                   |
+- unique `lopHocId`: mỗi lớp tối đa 1 room nhóm.
+- index `loai, trangThai`.
+- index `taoBoiId`, `lastMessageId`.
 
-### Các trường quan trọng – `chat_room_members`
+### 2.2 `chat_room_members`
 
-| Cột                 | Kiểu      | Mô tả                                 |
-| ------------------- | --------- | ------------------------------------- |
-| `chatRoomId`        | bigint PK |                                       |
-| `taiKhoanId`        | bigint PK |                                       |
-| `vaiTro`            | enum      | `member`, `teacher`, `moderator`      |
-| `lastReadMessageId` | bigint    | Tin nhắn cuối đã đọc (để tính unread) |
-| `lastSeenAt`        | timestamp |                                       |
-| `joinedAt`          | timestamp |                                       |
-| `roiAt`             | timestamp | null = đang trong phòng               |
+| Cột | Kiểu | Mô tả |
+| --- | --- | --- |
+| `chatRoomMemberId` | bigint PK | ID thành viên room |
+| `chatRoomId` | bigint | FK tới room |
+| `taiKhoanId` | int | FK tới tài khoản |
+| `vaiTro` | varchar(20) | `member`, `teacher`, `owner` |
+| `joinedAt` | timestamp nullable | Thời điểm tham gia |
+| `joinedByPasswordAt` | timestamp nullable | Chưa dùng |
+| `lastReadMessageId` | bigint nullable | Tin cuối đã đọc |
+| `lastSeenAt` | timestamp nullable | Lần hoạt động cuối |
+| `isMuted` | boolean | Cờ tắt tiếng, chưa có UI |
+| `roiAt` | timestamp nullable | `null` nghĩa là còn trong room |
+| `created_at` | timestamp | Laravel timestamps |
+| `updated_at` | timestamp | Laravel timestamps |
+
+Ràng buộc chính:
+
+- unique `chatRoomId + taiKhoanId`
+- index `taiKhoanId`, `lastReadMessageId`, `chatRoomId + roiAt`
+
+### 2.3 `chat_messages`
+
+| Cột | Kiểu | Mô tả |
+| --- | --- | --- |
+| `chatMessageId` | bigint PK | ID tin nhắn |
+| `chatRoomId` | bigint | FK room |
+| `nguoiGuiId` | int | Người gửi |
+| `replyToMessageId` | bigint nullable | Tin nhắn được trả lời |
+| `loai` | varchar(20) | `text`, `image`, `file`, `location`, `system` |
+| `noiDung` | longText nullable | Nội dung tin nhắn |
+| `metaJson` | json nullable | Metadata bổ sung |
+| `guiLuc` | timestamp | Thời điểm gửi |
+| `deadlineThuHoi` | timestamp nullable | Hạn thu hồi |
+| `thuHoiLuc` | timestamp nullable | Nếu khác `null` thì tin đã thu hồi |
+| `xoaLuc` | timestamp nullable | Chưa dùng trong flow hiện tại |
+| `created_at` | timestamp | Laravel timestamps |
+| `updated_at` | timestamp | Laravel timestamps |
+
+Ghi chú:
+
+- Gửi text hiện đặt `deadlineThuHoi = now() + 1 day`.
+- Tin thu hồi vẫn giữ record, UI hiển thị placeholder `Tin nhắn đã được thu hồi`.
+
+### 2.4 Các bảng bổ trợ
+
+| Bảng | Vai trò | Trạng thái triển khai |
+| --- | --- | --- |
+| `chat_message_attachments` | File/ảnh đính kèm | Có schema, chưa bật API |
+| `chat_message_reactions` | Reaction emoji | Đang dùng |
+| `chat_message_deletes` | Xóa phía mình | Có schema, chưa bật API |
+| `chat_audit_logs` | Audit các hành động chat | Đang dùng cho send/recall/react |
 
 ---
 
-## 3. API Endpoints
+## 3. Quy tắc truy cập
 
-Base path: `/api/chat/` – tất cả yêu cầu đăng nhập (`middleware: auth`).
+Nguồn luật chính:
 
-### GET `/api/chat/poll`
+- `app/Services/ChatAccessService.php`
+- `app/Models/Education/LopHoc.php`
+- `app/Models/Education/DangKyLopHoc.php`
 
-Short-poll endpoint – **trả về ngay lập tức** (không có sleep/blocking).
+### 3.1 Nhóm chat lớp học
 
-**Query params:**
+- Giáo viên phụ trách lớp luôn có thể truy cập và gửi tin.
+- Học viên chỉ thấy room lớp nếu có đăng ký hợp lệ và lớp ở trạng thái phù hợp.
+- Học viên có thể join chat khi:
+  - `DangKyLopHoc.trangThai` là `DA_XAC_NHAN` hoặc `DANG_HOC`
+  - và `LopHoc.trangThai` là `CHOT_DANH_SACH` hoặc `DANG_HOC`
+- Học viên chỉ được gửi tin khi:
+  - `DangKyLopHoc.trangThai` là `DANG_HOC`
+  - và `LopHoc.trangThai` là `DANG_HOC`
 
-| Param   | Kiểu | Mô tả                                |
-| ------- | ---- | ------------------------------------ |
-| `room`  | int  | ID phòng chat                        |
-| `after` | int  | Chỉ lấy tin nhắn có ID > giá trị này |
+### 3.2 Direct chat
 
-**Response (có tin mới):**
+- Không cho phép tự tạo chat với chính mình.
+- Chỉ tạo direct chat nếu hai user có ít nhất một `lopHocId` chung trong tập lớp chat hợp lệ.
+- Direct chat không gắn `lopHocId` trực tiếp, nhưng payload có thể trả `directContextLabel` để giải thích kết nối chung.
+
+### 3.3 Ma trận quyền tóm tắt
+
+| Trường hợp | `canJoin` | `canAccess` | `canSend` |
+| --- | --- | --- | --- |
+| Học viên không có đăng ký hợp lệ | `false` | `false` | `false` |
+| Học viên `DA_XAC_NHAN`, lớp `CHOT_DANH_SACH` | `true` | `true` | `false` |
+| Học viên `DANG_HOC`, lớp `DANG_HOC` | `true` hoặc đã join | `true` | `true` |
+| Giáo viên phụ trách lớp | `true` | `true` | `true` |
+| Thành viên direct chat hợp lệ | `false` | `true` | `true` |
+
+Ghi chú:
+
+- `canAccessRoom()` hiện cho phép truy cập room lớp nếu user đủ điều kiện join, kể cả chưa có record trong `chat_room_members`.
+- Khi gửi tin hoặc đánh dấu đã đọc, hệ thống sẽ `updateOrCreate` membership nếu cần.
+
+---
+
+## 4. Payload chính
+
+### 4.1 Room payload
+
+`ChatRoomService::buildRoomPayload()` trả các field chính:
+
+```json
+{
+  "id": 12,
+  "name": "Anh Van Giao Tiep 01",
+  "type": "class_group",
+  "lopHocId": 5,
+  "className": "Anh Van Giao Tiep 01",
+  "courseName": "Giao tiếp cơ bản",
+  "teacherName": "Nguyen Van A",
+  "canJoin": true,
+  "canAccess": true,
+  "canSend": false,
+  "isMember": false,
+  "memberRole": null,
+  "directPeerId": null,
+  "lastMessagePreview": "Chao ca lop",
+  "lastMessageAt": "2026-03-09T08:00:00+07:00",
+  "lastMessageAtLabel": "1 minute ago",
+  "unreadCount": 2,
+  "updatedAt": "2026-03-09T08:00:00+07:00"
+}
+```
+
+Field riêng cho room direct:
+
+- `directPeerId`
+- `directPeerName`
+- `directContextClassName`
+- `directContextCourseName`
+- `directContextLabel`
+
+### 4.2 Message payload
+
+`ChatMessageService::transformMessage()` trả các field chính:
+
+```json
+{
+  "id": 101,
+  "roomId": 12,
+  "type": "text",
+  "content": "Nop bai tap truoc 20h nhe",
+  "isMine": false,
+  "senderId": 33,
+  "senderName": "Tran Thi B",
+  "replyTo": {
+    "id": 96,
+    "senderName": "Nguyen Van A",
+    "content": "Ca lop luu y lich hoc moi",
+    "isRecalled": false
+  },
+  "isRecalled": false,
+  "sentAt": "2026-03-09T08:01:00+07:00",
+  "sentAtLabel": "08:01 09/03/2026",
+  "canRecall": false,
+  "reactions": [
+    {
+      "emoji": "👍",
+      "count": 2,
+      "reactedByMe": true,
+      "userNames": ["Tran Thi B", "Le Van C"]
+    }
+  ]
+}
+```
+
+---
+
+## 5. API endpoints
+
+Tất cả endpoint dưới đây nằm trong `routes/web.php`, prefix `/api/chat`, middleware `auth`.
+
+### 5.1 GET `/api/chat/rooms`
+
+Lấy toàn bộ room user nhìn thấy.
+
+Response:
+
+```json
+{
+  "rooms": [
+    { "id": 12, "type": "class_group", "name": "Anh Van Giao Tiep 01" }
+  ]
+}
+```
+
+### 5.2 GET `/api/chat/poll`
+
+Short-poll lấy tin nhắn mới cho room đang mở.
+
+Query params:
+
+| Param | Bắt buộc | Mô tả |
+| --- | --- | --- |
+| `room` | Có | ID room |
+| `after` | Không | Chỉ lấy tin có `chatMessageId > after` |
+
+Các status có thể trả về:
+
+| `status` | Ý nghĩa |
+| --- | --- |
+| `ok` | Thành công |
+| `no_room` | Thiếu `room` |
+| `not_found` | Room không nhìn thấy được hoặc không tồn tại |
+| `no_access` | Có room nhưng user chưa thể truy cập |
+
+Response mẫu:
 
 ```json
 {
   "status": "ok",
-  "roomId": 5,
-  "messages": [
-    {
-      "id": 42,
-      "content": "Xin chào lớp!",
-      "isMine": false,
-      "senderName": "Nguyễn Văn A",
-      "sentAtLabel": "18:30 08/03/2026",
-      "replyTo": null
-    }
-  ],
-  "room": { "id": 5, "unreadCount": 1, "lastMessagePreview": "Xin chào lớp!", ... }
+  "roomId": 12,
+  "messages": [],
+  "room": { "id": 12, "unreadCount": 0 }
 }
 ```
 
-**Response (không có tin mới):**
+### 5.3 GET `/api/chat/rooms/{id}/messages`
 
-```json
-{ "status": "ok", "roomId": 5, "messages": [], "room": { ... } }
-```
+Load lịch sử tin nhắn, mặc định 50 tin gần nhất.
 
-**Các status khác:**
+Query params:
 
-| Status      | Ý nghĩa                                               |
-| ----------- | ----------------------------------------------------- |
-| `no_room`   | Không truyền `room` param                             |
-| `not_found` | Phòng chat không tồn tại hoặc user không có quyền xem |
-| `no_access` | User chưa tham gia phòng chat                         |
+| Param | Bắt buộc | Mô tả |
+| --- | --- | --- |
+| `before` | Không | Phân trang ngược theo `chatMessageId` |
 
----
+Hành vi:
 
-### GET `/api/chat/rooms/{id}/messages`
+- Nếu user có quyền truy cập, API trả `room` và `messages`.
+- Nếu có tin nhắn, hệ thống tự đánh dấu đã đọc tới tin cuối của batch vừa load.
 
-Load lịch sử tin nhắn (50 tin gần nhất).
+### 5.4 GET `/api/chat/rooms/{id}/members`
 
-**Query params:** `before` (int, optional) – phân trang ngược.
+Lấy danh sách thành viên room đang truy cập.
 
-**Response:**
+Response:
 
 ```json
 {
-  "room": { ... },
-  "messages": [ { "id": 1, "content": "...", "isMine": true, ... } ]
+  "members": [
+    {
+      "id": 33,
+      "name": "Tran Thi B",
+      "initials": "TB",
+      "roleLabel": "Hoc vien",
+      "isMe": false,
+      "canDirect": true
+    }
+  ]
 }
 ```
 
----
+### 5.5 POST `/api/chat/rooms/{id}/join`
 
-### POST `/api/chat/messages`
+Join room lớp.
 
-Gửi tin nhắn.
-
-**Body:**
+Response:
 
 ```json
-{ "roomId": 5, "message": "Nội dung tin nhắn" }
+{
+  "message": "Tham gia nhóm chat thành công.",
+  "room": { "id": 12, "canAccess": true }
+}
 ```
 
-**Response:**
+### 5.6 POST `/api/chat/rooms/direct`
+
+Tạo hoặc mở direct chat với user khác.
+
+Request body:
+
+```json
+{
+  "targetUserId": 45
+}
+```
+
+Các lỗi chính:
+
+- `422`: target là chính mình.
+- `403`: không có lớp hợp lệ chung để direct chat.
+
+### 5.7 POST `/api/chat/rooms/{id}/read`
+
+Đánh dấu đã đọc.
+
+Request body:
+
+```json
+{
+  "lastMessageId": 101
+}
+```
+
+Response:
+
+```json
+{
+  "success": true
+}
+```
+
+### 5.8 POST `/api/chat/messages`
+
+Gửi tin nhắn text.
+
+Request body:
+
+```json
+{
+  "roomId": 12,
+  "message": "Noi dung tin nhan",
+  "replyToMessageId": 96
+}
+```
+
+Validation:
+
+- `roomId`: required integer
+- `message`: required string, max `2000`
+- `replyToMessageId`: nullable integer
+
+Response:
 
 ```json
 {
   "message": "Đã gửi tin nhắn.",
-  "chatMessage": { "id": 43, "content": "Nội dung tin nhắn", ... },
-  "room": { ... }
+  "chatMessage": { "id": 101, "content": "Noi dung tin nhan" },
+  "room": { "id": 12, "lastMessagePreview": "Noi dung tin nhan" }
+}
+```
+
+### 5.9 POST `/api/chat/messages/{id}/recall`
+
+Thu hồi tin nhắn.
+
+Request body:
+
+```json
+{
+  "roomId": 12
+}
+```
+
+Điều kiện:
+
+- Tin nhắn thuộc room đang chọn.
+- User là người gửi.
+- `deadlineThuHoi` vẫn còn hiệu lực.
+- Tin chưa bị thu hồi trước đó.
+
+### 5.10 POST `/api/chat/messages/{id}/react`
+
+Thêm hoặc bỏ reaction.
+
+Request body:
+
+```json
+{
+  "roomId": 12,
+  "emoji": "👍"
+}
+```
+
+Emoji hợp lệ hiện tại:
+
+- `👍`
+- `❤️`
+- `😂`
+- `😮`
+- `😢`
+- `🔥`
+- `😡`
+
+Response:
+
+```json
+{
+  "message": "Đã thêm cảm xúc.",
+  "chatMessage": { "id": 101, "reactions": [] },
+  "reacted": true,
+  "room": { "id": 12 }
 }
 ```
 
 ---
 
-### POST `/api/chat/rooms/{id}/join`
-
-Tham gia phòng chat.
-
-**Response:**
-
-```json
-{ "message": "Tham gia nhóm chat thành công.", "room": { ... } }
-```
-
----
-
-### POST `/api/chat/rooms/{id}/read`
-
-Đánh dấu đã đọc.
-
-**Body:** `{ "lastMessageId": 42 }`
-
----
-
-### GET `/api/chat/rooms`
-
-Lấy danh sách phòng chat của user (dùng để refresh sidebar mỗi 15s).
-
----
-
-## 4. Services
+## 6. Services chính
 
 ### `ChatRoomService`
 
-| Method                                                  | Mô tả                                  |
-| ------------------------------------------------------- | -------------------------------------- |
-| `getVisibleRoomsForUser($user, $accessService)`         | Lấy tất cả phòng chat user có thể thấy |
-| `getVisibleRoomForUser($roomId, $user, $accessService)` | Lấy 1 phòng cụ thể                     |
-| `buildRoomPayload($room, $user, $accessService)`        | Chuyển model → array JSON-ready        |
-| `joinClassRoom($room, $user)`                           | Thêm user vào phòng                    |
+| Method | Vai trò |
+| --- | --- |
+| `getVisibleRoomsForUser()` | Trả danh sách room user nhìn thấy |
+| `getVisibleRoomForUser()` | Lấy 1 room hợp lệ theo user |
+| `buildRoomPayload()` | Build JSON-ready payload cho room |
+| `getRoomMembersPayload()` | Build payload thành viên room |
+| `findOrCreateClassRoom()` | Tạo room lớp nếu chưa có |
+| `findOrCreateDirectRoom()` | Tạo hoặc tái sử dụng room direct |
+| `joinClassRoom()` | Ghi nhận thành viên tham gia room lớp |
+| `bootstrapClassRooms()` | Đồng bộ room lớp hàng loạt |
 
 ### `ChatMessageService`
 
-| Method                                              | Mô tả                        |
-| --------------------------------------------------- | ---------------------------- |
-| `getMessagesForUser($room, $user, $before, $limit)` | Load lịch sử (50 tin)        |
-| `getMessagesAfterForUser($room, $user, $afterId)`   | Lấy tin nhắn mới hơn ID      |
-| `sendTextMessage($room, $user, $content)`           | Gửi tin nhắn + cập nhật room |
-| `markRoomRead($room, $user, $lastId)`               | Cập nhật lastReadMessageId   |
+| Method | Vai trò |
+| --- | --- |
+| `getMessagesForUser()` | Lấy lịch sử 50 tin gần nhất |
+| `getMessagesAfterForUser()` | Lấy tin mới sau một ID |
+| `findVisibleMessageForUser()` | Tìm tin nhắn còn nhìn thấy được |
+| `sendTextMessage()` | Gửi tin text và cập nhật room/audit |
+| `toggleReaction()` | Toggle reaction |
+| `recallMessage()` | Thu hồi tin nhắn |
+| `markRoomRead()` | Cập nhật `lastReadMessageId` |
+| `transformMessage()` | Chuẩn hóa payload tin nhắn |
 
 ### `ChatAccessService`
 
-| Method                         | Mô tả                                   |
-| ------------------------------ | --------------------------------------- |
-| `canAccessRoom($user, $room)`  | Đã tham gia (isMember && roiAt is null) |
-| `canJoinRoom($user, $room)`    | Có thể tham gia (là học viên của lớp)   |
-| `canSendMessage($user, $room)` | canAccess && phòng chưa bị khoá         |
+| Method | Vai trò |
+| --- | --- |
+| `getAccessibleClassIds()` | Tập lớp chat hợp lệ theo user |
+| `canJoinRoom()` | Có thể tham gia room lớp hay không |
+| `canAccessRoom()` | Có thể truy cập room hay không |
+| `canSendMessage()` | Có thể gửi tin hay không |
+| `canCreateDirectConversation()` | Có thể mở direct chat hay không |
 
 ---
 
-## 5. Frontend (chat.js)
+## 7. Frontend
 
-File: `public/assets/client/js/pages/chat/chat.js`
+File chính:
 
-### Luồng chính
+- `resources/views/clients/hoc-vien/chat/index.blade.php`
+- `public/assets/client/js/pages/chat/chat.js`
+- `public/assets/client/css/pages/chat/chat.css`
 
-```
-1. renderApp()            → Dựng khung HTML đầy đủ
-2. loadMessages(roomId)   → AJAX lấy lịch sử tin nhắn
-3. schedulePoll(200ms)    → Bắt đầu vòng poll ngay sau khi load xong
-4. doPoll() mỗi 1.5s      → GET /api/chat/poll → appendNewMessages()
-```
+### 7.1 Luồng trang
 
-### Chiến lược render
+1. Render blade `hoc-vien/chat`.
+2. Blade inject sẵn:
+   - `window.chatConfig.routes`
+   - `window.chatConfig.rooms`
+   - `window.chatConfig.selectedRoom`
+   - `window.chatConfig.emojis`
+3. `chat.js` dựng layout 3 cột:
+   - sidebar room
+   - message board
+   - info panel
+4. Khi chọn room:
+   - load messages
+   - load members khi mở info panel
+   - bắt đầu poll định kỳ
 
-| Tình huống               | Hành động                                                      |
-| ------------------------ | -------------------------------------------------------------- |
-| Khởi tạo / chuyển phòng  | `renderApp()` – full re-render                                 |
-| Nhận tin nhắn mới (poll) | `appendNewMessages()` – chỉ append node mới vào DOM            |
-| Gửi tin nhắn             | Append optimistic bubble ngay → replace sau khi server confirm |
-| Đổi trạng thái submit    | Chỉ toggle `disabled` trên nút Gửi                             |
-| Làm mới sidebar          | `renderRoomList()` – chỉ re-render phần sidebar                |
+### 7.2 Hành vi client đáng chú ý
 
-### Optimistic Send
+- Gửi tin dùng optimistic UI.
+- Poll mặc định mỗi 1.5 giây.
+- Poll tạm dừng khi tab ẩn, resume khi quay lại.
+- Chuyển room sẽ re-render khối chính nhưng không reload toàn trang.
+- Mobile có panel toggle riêng cho room list và info panel.
 
-```
-User nhấn Gửi
-  ├── input.value = "" (clear ngay)
-  ├── Tạo bubble giả {_pending: true, id: "p_..."}
-  ├── Append vào DOM ngay lập tức
-  ├── POST /api/chat/messages
-  │     ├── OK  → replacePendingMessage(pendingId, realMsg)
-  │     └── ERR → xoá bubble giả, restore text vào input
-  └── input.focus()
-```
+### 7.3 Composer emoji
 
-### Vòng poll
-
-```javascript
-schedulePoll(delay)         // setTimeout → doPoll sau `delay` ms
-doPoll()
-  ├── fetch /api/chat/poll?room=X&after=Y
-  ├── Nhận response ngay (~20-50ms)
-  ├── Nếu có messages → appendNewMessages() + renderRoomList()
-  └── schedulePoll(1500)    // Lên lịch poll tiếp
-```
-
-> **Lưu ý:** Poll bị pause khi `document.hidden` (tab ẩn), resume ngay khi tab active lại.
+Danh sách emoji nhập nhanh lấy từ `ChatMessageService::composerEmojis()`.
 
 ---
 
-## 6. Phân quyền truy cập phòng chat
+## 8. Command đồng bộ room lớp
 
-| Điều kiện                           | canJoin | canAccess | canSend |
-| ----------------------------------- | ------- | --------- | ------- |
-| Học viên chưa đăng ký lớp           | ✗       | ✗         | ✗       |
-| Học viên đã đăng ký, chưa join chat | ✓       | ✗         | ✗       |
-| Học viên đã join chat               | ✗       | ✓         | ✓       |
-| Giáo viên của lớp                   | ✗       | ✓         | ✓       |
-| Phòng chat bị khoá                  | ✗       | ✓         | ✗       |
-
----
-
-## 7. Khởi tạo phòng chat
-
-Khi tạo lớp học, chạy command:
+Command:
 
 ```bash
 php artisan chat:init-class-rooms
 ```
 
-Command này tạo `ChatRoom` cho tất cả lớp học chưa có phòng chat.
+Tùy chọn xem trước:
 
-Migration: `database/migrations/2026_03_07_120000_create_chat_tables.php`
+```bash
+php artisan chat:init-class-rooms --dry-run
+```
+
+Command sẽ:
+
+- duyệt toàn bộ `lophoc`
+- tạo room nhóm cho lớp đủ điều kiện nếu chưa có
+- đồng bộ thành viên giáo viên cho room hiện có
+
+---
+
+## 9. Khác biệt so với tài liệu kế hoạch cũ
+
+Triển khai thực tế hiện tại khác với bản kế hoạch ban đầu ở các điểm sau:
+
+- dùng short-poll thay vì WebSocket
+- chưa bật mật khẩu room lớp
+- chưa bật upload attachment
+- chưa bật delete-for-me
+- đã có direct chat, reaction, recall và member panel
+
+Khi cập nhật tài liệu khác, ưu tiên lấy implementation hiện tại từ code thay vì tài liệu kế hoạch cũ.

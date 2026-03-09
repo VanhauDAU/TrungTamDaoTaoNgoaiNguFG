@@ -32,6 +32,12 @@ LienHe ──< LienHeLichSu
 
 BaiViet >──< Tag (through BaiVietTag)
         > DanhMucBaiViet
+
+ChatRoom >──< ChatRoomMember >── TaiKhoan
+         └──< ChatMessage >── ChatMessageReaction
+                        └──< ChatMessageAttachment
+                        └──< ChatMessageDelete
+         └──< ChatAuditLog
 ```
 
 ---
@@ -106,6 +112,18 @@ BaiViet >──< Tag (through BaiVietTag)
 | `lienhe_phanhoi`     | Phản hồi liên hệ        | id, lienHeId, nguoiGuiId, noiDung                                     |
 | `phanhoi`            | Đánh giá giáo viên      | phanHoiId, taiKhoanId, nhanSuId, noiDung, diemSo                      |
 
+### Chat
+
+| Bảng | Mô tả | Cột chính |
+| --- | --- | --- |
+| `chat_rooms` | Phòng chat lớp hoặc direct chat | chatRoomId, loai, tenPhong, lopHocId, taoBoiId, lastMessageId, trangThai |
+| `chat_room_members` | Thành viên room chat | chatRoomMemberId, chatRoomId, taiKhoanId, vaiTro, joinedAt, lastReadMessageId, lastSeenAt, roiAt |
+| `chat_messages` | Tin nhắn chat | chatMessageId, chatRoomId, nguoiGuiId, replyToMessageId, loai, noiDung, guiLuc, deadlineThuHoi, thuHoiLuc |
+| `chat_message_attachments` | File/ảnh đính kèm của tin nhắn | chatAttachmentId, chatMessageId, disk, path, tenGoc, mime, size |
+| `chat_message_reactions` | Reaction theo emoji | chatReactionId, chatMessageId, taiKhoanId, emoji |
+| `chat_message_deletes` | Bản ghi xóa phía mình | chatMessageDeleteId, chatMessageId, taiKhoanId, deletedAt |
+| `chat_audit_logs` | Audit thao tác chat | chatAuditLogId, chatRoomId, chatMessageId, taiKhoanId, hanhDong |
+
 ---
 
 ## 3. Migration Timeline
@@ -129,6 +147,7 @@ BaiViet >──< Tag (through BaiVietTag)
 | `2026_03_05_013402`                    | Tạo bảng `lienhe_phanhoi`             |
 | `2026_03_05_130245`                    | Tạo bảng `thongbao_tepdinh`           |
 | `2026_03_05_134900`                    | Thêm `parent_id` vào `danhmuckhoahoc` |
+| `2026_03_07_120000`                    | Tạo toàn bộ bảng chat client          |
 
 ---
 
@@ -148,4 +167,16 @@ CREATE INDEX idx_notify_unread ON thongbao_nguoidung(nguoiNhanId, daDoc);
 
 -- Điểm danh theo buổi
 CREATE INDEX idx_diemdanh_buoi ON diemdanh(buoiHocId);
+
+-- Chat rooms theo loại và trạng thái
+CREATE INDEX idx_chat_rooms_loai_trang_thai ON chat_rooms(loai, trangThai);
+
+-- Thành viên đang hoạt động trong room chat
+CREATE INDEX idx_chat_room_members_room_roi ON chat_room_members(chatRoomId, roiAt);
+
+-- Tin nhắn mới nhất trong room chat
+CREATE INDEX idx_chat_messages_room_message ON chat_messages(chatRoomId, chatMessageId);
+
+-- Reaction theo người dùng
+CREATE INDEX idx_chat_message_reactions_user ON chat_message_reactions(taiKhoanId);
 ```

@@ -77,6 +77,29 @@ Base prefix: `/api/thong-bao`
 }
 ```
 
+### Chat client
+
+Base prefix: `/api/chat`
+
+| Method | Endpoint | Mô tả |
+| ------ | -------- | ----- |
+| GET | `/api/chat/rooms` | Danh sách room chat user nhìn thấy |
+| GET | `/api/chat/poll` | Short-poll lấy tin mới theo room đang mở |
+| GET | `/api/chat/rooms/{id}/messages` | Lịch sử tin nhắn, hỗ trợ `before` |
+| GET | `/api/chat/rooms/{id}/members` | Danh sách thành viên room |
+| POST | `/api/chat/rooms/{id}/join` | Tham gia room lớp |
+| POST | `/api/chat/rooms/direct` | Tạo hoặc mở direct chat |
+| POST | `/api/chat/rooms/{id}/read` | Đánh dấu đã đọc |
+| POST | `/api/chat/messages` | Gửi tin nhắn text |
+| POST | `/api/chat/messages/{id}/recall` | Thu hồi tin nhắn |
+| POST | `/api/chat/messages/{id}/react` | Thêm hoặc bỏ reaction |
+
+Ghi chú:
+
+- Đây là API nội bộ cho trang `GET /hoc-vien/chat`.
+- Chat dùng short-poll mỗi khoảng 1.5 giây, không dùng WebSocket trong implementation hiện tại.
+- Chi tiết payload và quyền truy cập xem thêm `docs/04-api/chat.md`.
+
 ---
 
 ## 3. Admin API (auth + isAdmin middleware)
@@ -151,4 +174,5 @@ Base prefix: `/api/thong-bao`
 | GET `/hoc-vien/lop-hoc`                           | Lớp học của tôi (auth)         |
 | GET `/hoc-vien/lich-hoc`                          | Lịch học cá nhân (auth)        |
 | GET `/hoc-vien/hoa-don`                           | Hóa đơn của tôi (auth)         |
+| GET `/hoc-vien/chat`                              | Chat lớp học và direct chat    |
 | GET `/thong-bao`                                  | Trang thông báo (auth)         |

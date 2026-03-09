@@ -1,5 +1,13 @@
 # Kế hoạch Module Chat Client kiểu Messenger
 
+> Ghi chú 2026-03-09: đây là tài liệu phân tích ban đầu.
+> Triển khai thực tế đã hoàn thành bản đầu tiên và có khác biệt quan trọng:
+> - dùng short-poll thay vì WebSocket
+> - không dùng mật khẩu room trong flow hiện tại
+> - đã có direct chat, reply, reaction, recall, unread và member panel
+> - attachment, delete-for-me, typing indicator vẫn chưa bật trên API/UI
+> Tài liệu implementation chuẩn xem tại `docs/04-api/chat.md`.
+
 > Ngày tạo: 2026-03-07  
 > Phạm vi: Website client học viên, tích hợp với lớp học, giáo viên và tài khoản nội bộ hiện có trong hệ thống Laravel.
 

@@ -35,6 +35,10 @@ php artisan key:generate
 # 6. Chạy migration
 php artisan migrate
 
+# 6.1. Nếu đã có dữ liệu lớp học và muốn đồng bộ trước room chat
+php artisan chat:init-class-rooms --dry-run
+php artisan chat:init-class-rooms
+
 # 7. Tạo symbolic link storage
 php artisan storage:link
 
@@ -140,3 +144,19 @@ Tài khoản mặc định (sau seeder):
 ### 4.4 Xem hóa đơn
 
 - `/hoc-vien/hoa-don` → danh sách hóa đơn → click xem chi tiết
+
+### 4.5 Sử dụng chat lớp học
+
+- Vào `/hoc-vien/chat`
+- Sidebar trái hiển thị:
+  - nhóm chat lớp học đủ điều kiện truy cập
+  - các đoạn chat riêng đã tạo
+- Nếu là học viên đã được xác nhận vào lớp nhưng lớp chưa vào học, bạn có thể vào room nhưng chưa chắc gửi được tin.
+- Nếu lớp đang học và đăng ký ở trạng thái `Đang học`, bạn có thể gửi tin nhắn, trả lời, thả cảm xúc và thu hồi tin của chính mình trong 24 giờ.
+- Tại panel thông tin bên phải, có thể xem thành viên room và mở direct chat với thành viên có quan hệ lớp hợp lệ.
+
+### 4.6 Ghi chú vận hành chat
+
+- Chat client dùng short-poll, không dùng WebSocket trong bản hiện tại.
+- Nếu thêm dữ liệu lớp học trực tiếp vào database hoặc import từ nguồn khác, nên chạy lại `php artisan chat:init-class-rooms` để đồng bộ room nhóm.
+- Tài liệu kỹ thuật chi tiết xem `docs/04-api/chat.md`.

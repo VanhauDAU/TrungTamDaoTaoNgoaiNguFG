@@ -1,6 +1,6 @@
 # TIẾN ĐỘ DỰ ÁN — Trung Tâm Đào Tạo Ngoại Ngữ Five Genius
 
-> Cập nhật lần cuối: 2026-03-07
+> Cập nhật lần cuối: 2026-03-09
 
 ## ✅ Đã hoàn thành
 
@@ -65,6 +65,8 @@
 - [x] Chi tiết khóa học + lớp học + đăng ký học
 - [x] Trang học viên (hồ sơ, lịch học, hóa đơn)
 - [x] Thông báo client (danh sách, đánh dấu đã đọc)
+- [x] Module chat client cho học viên và giáo viên
+- [x] Short-poll realtime, direct chat, reaction, reply, recall
 
 ---
 
@@ -79,7 +81,6 @@
 
 ## 📋 Kế hoạch
 
-- [ ] Module chat client kiểu Messenger cho học viên và giáo viên
 - [ ] Gửi email tự động (đăng ký lớp, nhắc học phí)
 - [ ] Export báo cáo Excel/PDF
 - [ ] App mobile (React Native hoặc Flutter)

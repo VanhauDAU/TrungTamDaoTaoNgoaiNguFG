@@ -61,7 +61,7 @@ DACNCNPM_TrungTamNN/
 │   │   ├── Facility/           ← CoSoDaoTao, PhongHoc, TinhThanh
 │   │   ├── Finance/            ← HoaDon, PhieuThu, Luong...
 │   │   ├── Content/            ← BaiViet, DanhMucBaiViet, Tag...
-│   │   └── Interaction/        ← ThongBao, LienHe, PhanHoi...
+│   │   └── Interaction/        ← ThongBao, LienHe, PhanHoi, Chat...
 │   └── Services/
 ├── database/
 │   ├── migrations/             ← Schema migrations
@@ -98,7 +98,7 @@ DACNCNPM_TrungTamNN/
 
 ┌─────────────────────────────────────────────────────────────────┐
 │                      WEBSITE CLIENT                             │
-│  Trang chủ │ Khóa học │ Lớp học │ Blog │ Liên hệ │ Học viên   │
+│  Trang chủ │ Khóa học │ Lớp học │ Blog │ Liên hệ │ Học viên │ Chat │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -124,4 +124,16 @@ Admin soạn thông báo + chọn nhóm nhận + upload file
  → ThongBao::create()
  → ThongBaoNguoiDung::create() cho từng người nhận
  → ThongBaoTepDinh::create() cho từng file đính kèm
+```
+
+### Học viên sử dụng chat lớp học
+
+```text
+Học viên vào /hoc-vien/chat
+ → ClientChatController::index()
+ → ChatRoomService::getVisibleRoomsForUser()
+ → Chọn room và load /api/chat/rooms/{id}/messages
+ → chat.js short-poll /api/chat/poll mỗi 1.5 giây
+ → POST /api/chat/messages khi gửi tin
+ → ChatMessageService cập nhật room, unread, audit log
 ```
