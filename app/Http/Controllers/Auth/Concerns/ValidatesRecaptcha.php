@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth\Concerns;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 trait ValidatesRecaptcha
@@ -38,6 +39,9 @@ trait ValidatesRecaptcha
         $payload = $response->json();
         $score = (float) ($payload['score'] ?? 0);
         $expectedAction = $payload['action'] ?? null;
+        $errorCodes = isset($payload['error-codes']) && is_array($payload['error-codes'])
+            ? $payload['error-codes']
+            : [];
 
         $isValid = $response->successful()
             && ($payload['success'] ?? false)
@@ -45,8 +49,30 @@ trait ValidatesRecaptcha
             && $score >= (float) config('services.recaptcha.min_score', 0.5);
 
         if (!$isValid) {
+            Log::warning('reCAPTCHA verification failed', [
+                'action_expected' => $action,
+                'action_received' => $expectedAction,
+                'score' => $score,
+                'error_codes' => $errorCodes,
+                'response_success' => $response->successful(),
+                'host' => $request->getHost(),
+                'ip' => $request->ip(),
+            ]);
+
+            $message = 'Xác minh reCAPTCHA không hợp lệ. Vui lòng thử lại.';
+
+            if (app()->isLocal() || config('app.debug')) {
+                if ($errorCodes !== []) {
+                    $message .= ' Lý do: ' . implode(', ', $errorCodes) . '.';
+                } elseif ($expectedAction !== null && $expectedAction !== $action) {
+                    $message .= " Action trả về là '{$expectedAction}', mong đợi '{$action}'.";
+                } else {
+                    $message .= " Score hiện tại là {$score}.";
+                }
+            }
+
             throw ValidationException::withMessages([
-                'recaptcha' => ['Xác minh reCAPTCHA không hợp lệ. Vui lòng thử lại.'],
+                'recaptcha' => [$message],
             ]);
         }
     }

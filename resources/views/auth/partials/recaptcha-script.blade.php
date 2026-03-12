@@ -1,14 +1,22 @@
 @if (!empty($recaptchaEnabled) && !empty($recaptchaAction))
-    <input type="hidden" name="recaptcha_token" id="{{ $formId ?? 'auth-form' }}-recaptcha-token">
     <script src="https://www.google.com/recaptcha/api.js?render={{ config('services.recaptcha.site_key') }}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById(@json($formId ?? 'auth-form'));
-            const tokenInput = document.getElementById(@json(($formId ?? 'auth-form') . '-recaptcha-token'));
             let submitting = false;
 
-            if (!form || !tokenInput || typeof grecaptcha === 'undefined') {
+            if (!form || typeof grecaptcha === 'undefined') {
                 return;
+            }
+
+            let tokenInput = document.getElementById(@json(($formId ?? 'auth-form') . '-recaptcha-token'));
+
+            if (!tokenInput) {
+                tokenInput = document.createElement('input');
+                tokenInput.type = 'hidden';
+                tokenInput.name = 'recaptcha_token';
+                tokenInput.id = @json(($formId ?? 'auth-form') . '-recaptcha-token');
+                form.appendChild(tokenInput);
             }
 
             const refreshToken = function(callback) {
