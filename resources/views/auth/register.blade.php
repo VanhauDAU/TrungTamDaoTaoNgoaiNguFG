@@ -307,6 +307,9 @@
                                     <div class="text-center mb-4">
                                         Đã có tài khoản? <a href="{{ route('login') }}" class="ff-title cl-green">Đăng nhập
                                             ngay!</a>
+                                        <div class="mt-2 text-muted small">
+                                            Tài khoản học viên mới sẽ cần xác thực email trước khi sử dụng đầy đủ hệ thống.
+                                        </div>
                                     </div>
 
                                     {{-- Error Display --}}
@@ -368,19 +371,15 @@
                                         </div>
                                     </div>
 
+                                    @if (!empty($googleRoute))
+                                        <a href="{{ $googleRoute }}" class="btn btn-social btn-google mb-3">
+                                            <i class="fab fa-google"></i> Đăng ký / đăng nhập bằng Google
+                                        </a>
+                                    @endif
+
                                     {{-- Submit --}}
                                     <button type="submit" class="btn btn-red d-block text-center w-100 mt-3 mb-3 ls-1">Đăng
                                         ký</button>
-
-                                    {{-- Social Login Buttons --}}
-                                    <div class="social-login-buttons mb-3">
-                                        <button type="button" class="btn btn-social btn-google">
-                                            <i class="fab fa-google"></i> Google
-                                        </button>
-                                        <button type="button" class="btn btn-social btn-facebook">
-                                            <i class="fab fa-facebook-f"></i> Facebook
-                                        </button>
-                                    </div>
 
                                     {{-- Terms of Service --}}
                                     <div class="text-center mb-2">
@@ -391,6 +390,11 @@
                                     </div>
 
                                 </form>
+                                @include('auth.partials.recaptcha-script', [
+                                    'formId' => 'registerform',
+                                    'recaptchaEnabled' => $recaptchaEnabled ?? false,
+                                    'recaptchaAction' => $recaptchaAction ?? null,
+                                ])
                             </div>
                         </div>
                     </div>

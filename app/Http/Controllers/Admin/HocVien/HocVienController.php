@@ -66,7 +66,6 @@ class HocVienController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'taiKhoan' => 'required|string|max:50',
             'email' => 'required|email|max:100|unique:taikhoan,email',
             'matKhau' => 'required|string|min:8|confirmed',
             'hoTen' => 'required|string|max:100',
@@ -84,7 +83,6 @@ class HocVienController extends Controller
             'nguonBietDen' => 'nullable|string|max:50',
             'ghiChu' => 'nullable|string',
         ], [
-            'taiKhoan.required' => 'Vui lòng nhập tên đăng nhập.',
             'email.required' => 'Vui lòng nhập email.',
             'email.unique' => 'Email đã được sử dụng.',
             'matKhau.required' => 'Vui lòng nhập mật khẩu.',
@@ -95,16 +93,18 @@ class HocVienController extends Controller
         ]);
 
         DB::transaction(function () use ($request) {
-            $tenDangNhap = $this->generateUniqueUsername($request->taiKhoan);
-
             $taiKhoan = TaiKhoan::create([
-                'taiKhoan' => $tenDangNhap,
+                'taiKhoan' => TaiKhoan::generateTemporaryUsername(TaiKhoan::ROLE_HOC_VIEN),
                 'email' => $request->email,
                 'matKhau' => Hash::make($request->matKhau),
                 'role' => TaiKhoan::ROLE_HOC_VIEN,
                 'trangThai' => 1,
                 'phaiDoiMatKhau' => 1,
+                'auth_provider' => 'local',
+                'email_verified_at' => now(),
             ]);
+
+            $taiKhoan->assignSystemUsername();
 
             HoSoNguoiDung::create([
                 'taiKhoanId' => $taiKhoan->taiKhoanId,
@@ -277,23 +277,6 @@ class HocVienController extends Controller
 
         return redirect()->route('admin.hoc-vien.index')
             ->with('success', "Đã xóa học viên «{$hoTen}».");
-    }
-
-    /**
-     * Tạo tên đăng nhập duy nhất:
-     * User_123456 → nếu trùng → User_123456_1 → User_123456_2 ...
-     */
-    private function generateUniqueUsername(string $base): string
-    {
-        $candidate = $base;
-        $counter = 1;
-
-        while (TaiKhoan::where('taiKhoan', $candidate)->exists()) {
-            $candidate = $base . '_' . $counter;
-            $counter++;
-        }
-
-        return $candidate;
     }
 
     /** Tạo query chung cho danh sách và export */

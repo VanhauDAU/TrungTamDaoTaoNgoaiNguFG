@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'isAdmin' => \App\Http\Middleware\IsAdmin::class,
             'permission' => \App\Http\Middleware\CheckPermission::class,
+            'verified.student' => \App\Http\Middleware\EnsureStudentEmailIsVerified::class,
         ]);
 
         // Middleware bắt buộc đổi mật khẩu lần đầu (áp dụng toàn bộ web)

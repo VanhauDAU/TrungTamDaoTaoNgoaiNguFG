@@ -1,15 +1,20 @@
 # TIẾN ĐỘ DỰ ÁN — Trung Tâm Đào Tạo Ngoại Ngữ Five Genius
 
-> Cập nhật lần cuối: 2026-03-09
+> Cập nhật lần cuối: 2026-03-12
 
 ## ✅ Đã hoàn thành
 
 ### Auth & User Management
 
 - [x] Đăng nhập / Đăng xuất (Laravel Auth)
+- [x] Tách cổng đăng nhập học viên `/login` và nhân sự `/admin/login`
 - [x] Phân quyền: Admin, Giáo viên, Nhân viên, Học viên
 - [x] Quản lý tài khoản hệ thống (bật/tắt, đặt lại mật khẩu)
 - [x] Hồ sơ người dùng (ảnh đại diện, thông tin cá nhân)
+- [x] Xác thực email cho học viên tự đăng ký
+- [x] Google login cho học viên
+- [x] Google reCAPTCHA cho form auth public
+- [x] Chuẩn hóa username hệ thống theo role (`HV/GV/NV/AD`)
 
 ### Cơ sở vật chất
 

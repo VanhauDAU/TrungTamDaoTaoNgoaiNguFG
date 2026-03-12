@@ -19,8 +19,9 @@ Monolith Laravel phục vụ quản lý vận hành trung tâm ngoại ngữ: kh
 - [9. Lệnh hữu ích](#9-lệnh-hữu-ích)
 - [10. Test và chất lượng mã nguồn](#10-test-và-chất-lượng-mã-nguồn)
 - [11. Lưu ý dữ liệu và migration](#11-lưu-ý-dữ-liệu-và-migration)
-- [12. Quy trình phát triển](#12-quy-trình-phát-triển)
-- [13. Hỗ trợ](#13-hỗ-trợ)
+- [12. Tài liệu Auth](#12-tài-liệu-auth)
+- [13. Quy trình phát triển](#13-quy-trình-phát-triển)
+- [14. Hỗ trợ](#14-hỗ-trợ)
 
 ## 1. Tổng quan
 - Ngành: Hệ thống thông tin quản lý trung tâm ngoại ngữ.
@@ -196,7 +197,14 @@ Lệnh migrate cơ bản:
 php artisan migrate
 ```
 
-## 12. Quy trình phát triển
+## 12. Tài liệu Auth
+- Tổng quan module Auth: `docs/05-huong-dan/auth.md`
+- Kiến trúc và quyết định: `docs/01-phan-tich/auth-kien-truc-va-quyet-dinh.md`
+- Cấu hình và triển khai: `docs/05-huong-dan/auth-cau-hinh-va-trien-khai.md`
+- Vận hành và kiểm thử: `docs/05-huong-dan/auth-van-hanh-va-kiem-thu.md`
+- Thay đổi theo mốc: `CHANGELOG.md`
+
+## 13. Quy trình phát triển
 - Không push trực tiếp vào `main`.
 - Tạo branch theo chức năng, mở Pull Request để review.
 - Viết commit message rõ ràng theo mục đích:
@@ -206,7 +214,7 @@ php artisan migrate
   - `docs:` cập nhật tài liệu
   - `chore:` việc hệ thống/cấu hình
 
-## 13. Hỗ trợ
+## 14. Hỗ trợ
 - Nếu gặp lỗi khi setup, tạo issue trong repository và kèm:
   - log lỗi
   - bước tái hiện
