@@ -24,17 +24,31 @@ class NhatKyDangNhap extends Model
     ];
 
     /**
-     * Đếm số lần đăng nhập thất bại gần đây theo tài khoản + IP.
+     * Đếm số lần đăng nhập thất bại liên tiếp gần đây theo tài khoản + IP.
+     * Chuỗi thất bại sẽ dừng ngay khi gặp một lần đăng nhập thành công.
      */
-    public static function soLanThatBaiGanDay(string $taiKhoan, string $ip, int $phut = 15): int
+    public static function soLanThatBaiLienTiep(string $taiKhoan, string $ip, int $gioReset = 24, int $limit = 50): int
     {
-        return static::where(function ($q) use ($taiKhoan, $ip) {
+        $records = static::where(function ($q) use ($taiKhoan, $ip) {
             $q->where('taiKhoan', $taiKhoan)
                 ->orWhere('ip', $ip);
         })
-            ->where('thanhCong', false)
-            ->where('thoiGian', '>=', now()->subMinutes($phut))
-            ->count();
+            ->where('thoiGian', '>=', now()->subHours($gioReset))
+            ->orderByDesc('thoiGian')
+            ->limit($limit)
+            ->get(['thanhCong']);
+
+        $failures = 0;
+
+        foreach ($records as $record) {
+            if ((bool) $record->thanhCong) {
+                break;
+            }
+
+            $failures++;
+        }
+
+        return $failures;
     }
 
     /**

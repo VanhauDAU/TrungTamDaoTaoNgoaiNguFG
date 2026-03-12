@@ -154,6 +154,12 @@ class GoogleLoginController extends Controller
         });
 
         Auth::login($taiKhoan, true);
+        $request->session()->regenerate();
+        $request->session()->put([
+            'auth_portal' => 'student',
+            'auth_login_method' => 'google',
+            'auth_remembered' => true,
+        ]);
         $taiKhoan->forceFill(['lastLogin' => now()])->save();
         NhatKyDangNhap::ghiLog($taiKhoan->email, $request->ip(), true, $request->userAgent());
 

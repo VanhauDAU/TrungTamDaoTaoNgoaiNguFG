@@ -45,7 +45,6 @@
         .page_login {
             position: relative;
             min-height: 100vh;
-            overflow: hidden;
         }
 
         .logo_abs {
@@ -91,6 +90,11 @@
 
         .page_login .container-fluid {
             padding: 0;
+        }
+
+        .auth-form-shell {
+            position: relative;
+            z-index: 2;
         }
 
         /* Form Elements */
@@ -175,6 +179,45 @@
             font-size: 0.9rem;
         }
 
+                .portal-selector {
+            display: flex;
+            background: #f1f5f9;
+            border-radius: 99px;
+            padding: 6px;
+            margin-bottom: 2rem;
+            gap: 4px;
+        }
+
+        .portal-tab {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 8px;
+            color: var(--text-gray);
+            font-weight: 600;
+            font-size: 0.95rem;
+            border-radius: 99px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .portal-tab:hover {
+            color: var(--primary-green) !important;
+            background: rgba(16, 69, 79, 0.05);
+        }
+
+        .portal-tab.active {
+            background: #fff;
+            color: var(--primary-green) !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .portal-tab i {
+            font-size: 1.1em;
+        }
+
         /* Link Style */
         a {
             transition: all 0.3s ease;
@@ -185,6 +228,89 @@
             color: var(--primary-red) !important;
         }
 
+                .social-login-divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin: 1.5rem 0;
+        }
+
+        .social-login-divider::before,
+        .social-login-divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid #e1e8ed;
+        }
+
+        .social-login-divider span {
+            padding: 0 10px;
+            color: #8c98a4;
+            font-size: 0.85rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .social-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            margin-bottom: 10px;
+            border: 1px solid transparent;
+        }
+
+        .btn-google {
+            background-color: #fff;
+            color: #3c4043;
+            border-color: #dadce0;
+        }
+
+        .btn-google:hover {
+            background-color: #f8f9fa;
+            border-color: #d2e3fc;
+            box-shadow: 0 1px 3px rgba(60,64,67,0.1);
+        }
+
+        .btn-google img {
+            width: 20px;
+        }
+
+        .btn-facebook {
+            background-color: #1877F2;
+            color: #fff;
+        }
+
+        .btn-facebook:hover {
+            background-color: #166fe5;
+            color: #fff !important;
+        }
+
+        .btn-facebook i {
+            font-size: 1.2rem;
+        }
+
+        .btn-apple {
+            background-color: #000;
+            color: #fff;
+        }
+
+        .btn-apple:hover {
+            background-color: #1a1a1a;
+            color: #fff !important;
+        }
+
+        .btn-apple i {
+            font-size: 1.25rem;
+            margin-bottom: 2px;
+        }
         /* Responsive */
         @media (max-width: 991px) {
             .img_login {
@@ -193,10 +319,8 @@
 
             .page_login .row.gx-0>div:first-child {
                 min-height: 100vh;
-                background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+                background: linear-gradient(135deg, #fff 0%, #f1f5f9 100%);
             }
-
-            .fs-48 {
                 font-size: 2.2rem;
             }
 
@@ -208,11 +332,41 @@
             .logo_abs img {
                 height: 40px;
             }
-        }
+
+            }
     </style>
 @endsection
 @section('content')
     <div class="page_login">
+        @php
+            $portalLinks = collect([
+                [
+                    'label' => 'Đăng nhập học viên',
+                    'short_label' => 'Học viên',
+                    'description' => 'Lớp học, hồ sơ, thanh toán và bài tập.',
+                    'icon' => 'fas fa-user-graduate',
+                    'url' => route('login'),
+                    'active' => ($portal ?? 'student') === 'student',
+                ],
+                [
+                    'label' => 'Đăng nhập giảng viên',
+                    'short_label' => 'Giảng viên',
+                    'description' => 'Lịch dạy, lớp phụ trách và tài liệu giảng dạy.',
+                    'icon' => 'fas fa-chalkboard-teacher',
+                    'url' => route('teacher.login'),
+                    'active' => ($portal ?? 'student') === 'teacher',
+                ],
+                [
+                    'label' => 'Đăng nhập nhân viên',
+                    'short_label' => 'Nhân viên',
+                    'description' => 'Quản trị đào tạo, vận hành và nghiệp vụ nội bộ.',
+                    'icon' => 'fas fa-briefcase',
+                    'url' => route('staff.login'),
+                    'active' => ($portal ?? 'student') === 'staff',
+                ],
+            ]);
+            $currentPortalLink = $portalLinks->firstWhere('active', true) ?? $portalLinks->first();
+        @endphp
         {{-- Logo --}}
         <div class="logo_abs">
             <a href="{{ route('home.index') }}" class="logo_site">
@@ -224,28 +378,25 @@
             <div class="row gx-0">
                 {{-- Form Column --}}
                 <div class="col-lg-6">
-                    <div class="h-100 d-flex flex-column justify-content-center">
+                    <div class="auth-form-shell h-100 d-flex flex-column justify-content-center">
                         <div class="row justify-content-center">
                             <div class="col-lg-8 col-xl-6 px-4">
                                 <form id="loginform" name="loginform" class="needs-validation" novalidate data-joi-schema="login"
                                     action="{{ $submitRoute ?? route('login') }}" method="POST">
                                     @csrf
                                     <h3 class="fs-48 ff-title text-center cl-green mb-lg-3 mb-2">{{ $portalTitle ?? 'Đăng nhập' }}</h3>
-                                    <div class="text-center mb-4">
-                                        @if (!empty($registerRoute))
-                                            <div class="mt-2">
-                                                Chưa có tài khoản?
-                                                <a href="{{ $registerRoute }}" class="ff-title cl-green">Đăng ký ngay!</a>
-                                            </div>
-                                        @endif
-                                        @if (!empty($alternateRoute))
-                                            <div class="mt-2">
-                                                <a href="{{ $alternateRoute }}" class="ff-title cl-green">{{ $alternateLabel }}</a>
-                                            </div>
-                                        @endif
+                                    <div class="portal-selector mt-3 mb-4">
+                                        @foreach ($portalLinks as $link)
+                                            <a href="{{ $link['url'] }}" class="portal-tab {{ $link['active'] ? 'active' : '' }}" title="{{ $link['description'] }}">
+                                                <i class="{{ $link['icon'] }}"></i>
+                                                <span>{{ $link['short_label'] }}</span>
+                                            </a>
+                                        @endforeach
                                     </div>
+
                                     @php
                                         $lockoutUntil = session('lockout_until', 0);
+                                        $lockoutMessage = session('lockout_message');
                                         $currentTime = time();
                                         $isLockedOut = $lockoutUntil > $currentTime;
                                         // Tính sẵn số giây còn lại từ server
@@ -266,7 +417,8 @@
                                                 <i class="fas fa-lock me-2" style="font-size:1.1rem"></i>
                                                 <strong>Đăng nhập bị tạm khóa</strong>
                                             </div>
-                                            <div>Phát hiện đăng nhập sai quá 5 lần liên tiếp. Vui lòng thử lại sau:</div>
+                                            <div>{{ $lockoutMessage ?: 'Phát hiện nhiều lần đăng nhập sai liên tiếp. Vui lòng thử lại sau:' }}</div>
+                                           
                                             <div class="text-center mt-2">
                                                 <span id="lockoutCountdown" style="
                                                     font-size: 1.6rem;
@@ -289,7 +441,11 @@
                                         <input type="text" id="taiKhoan" name="taiKhoan"
                                             class="form-control @if(!$isLockedOut) @error('taiKhoan') is-invalid @enderror @endif"
                                             value="{{ old('taiKhoan') }}" required autocomplete="username" autofocus
-                                            placeholder="{{ ($portal ?? 'student') === 'admin' ? 'Email hoặc mã nhân sự' : 'Tài khoản hoặc email' }}">
+                                            placeholder="{{ match ($portal ?? 'student') {
+                                                'teacher' => 'Email hoặc mã giảng viên',
+                                                'staff' => 'Email hoặc mã nhân viên',
+                                                default => 'Tài khoản hoặc email',
+                                            } }}">
                                         @if (!$isLockedOut)
                                             @error('taiKhoan')
                                                 <div class="invalid-feedback d-block text-danger mt-1">
@@ -329,20 +485,53 @@
                                     <button type="submit"
                                         class="btn btn-red d-block text-center w-100 mt-3 mb-lg-4 mb-2 ls-1">Đăng
                                         nhập</button>
-                                    @if (!empty($googleRoute))
-                                        <a href="{{ $googleRoute }}" class="btn btn-outline-dark d-flex align-items-center justify-content-center gap-2 w-100 mb-3"
-                                            style="border-radius:10px;padding:12px 16px;font-weight:600">
-                                            <i class="fab fa-google"></i>
-                                            Đăng nhập bằng Google
-                                        </a>
+@if (($portal ?? 'student') === 'student')
+                                        <div class="social-login-divider">
+                                            <span>Hoặc</span>
+                                        </div>
+
+                                        @if (!empty($googleRoute))
+                                            <a href="{{ $googleRoute }}" class="social-btn btn-google">
+                                                <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google">
+                                                Đăng nhập bằng Google
+                                            </a>
+                                        @endif
+                                        
+                                        {{-- Uncomment các route dưới đây khi có chức năng thật --}}
+                                        {{-- @if (!empty($facebookRoute)) --}}
+                                            <a href="#" class="social-btn btn-facebook">
+                                                <i class="fab fa-facebook-f"></i>
+                                                Đăng nhập bằng Facebook
+                                            </a>
+                                        {{-- @endif --}}
+
+                                        {{-- @if (!empty($appleRoute)) --}}
+                                            <a href="#" class="social-btn btn-apple">
+                                                <i class="fab fa-apple"></i>
+                                                Đăng nhập bằng Apple
+                                            </a>
+                                        {{-- @endif --}}
                                     @endif
-                                    {{-- Forgot Password --}}
-                                    <div class="text-center mb-2">
+                                    {{-- Links --}}
+                                    <div class="d-flex flex-column flex-sm-row justify-content-center align-items-center gap-3 mt-4 text-center">
                                         @if (Route::has('password.request'))
-                                            <a href="{{ route('password.request') }}" class="cl-green ff-title ls-1">Quên
-                                                mật khẩu?</a>
+                                            <a href="{{ route('password.request') }}" class="text-muted text-decoration-none" style="font-size: 0.95rem; font-weight: 500;">
+                                                <i class="fas fa-key me-1"></i> Quên mật khẩu?
+                                            </a>
+                                        @endif
+                                        
+                                        @if (Route::has('password.request') && !empty($registerRoute))
+                                            <span class="d-none d-sm-inline text-muted" style="opacity: 0.5;">|</span>
+                                        @endif
+
+                                        @if (!empty($registerRoute))
+                                            <div style="font-size: 0.95rem;">
+                                                Chưa có tài khoản? 
+                                                <a href="{{ $registerRoute }}" class="cl-green ff-title text-decoration-none ms-1">Đăng ký ngay</a>
+                                            </div>
                                         @endif
                                     </div>
+
                                 </form>
                                 @include('auth.partials.recaptcha-script', [
                                     'formId' => 'loginform',
@@ -362,7 +551,6 @@
                     </div>
                 </div>
             </div>
-        </div>
     </div>
 @endsection
 
@@ -434,5 +622,6 @@
                 updateDisplay(remaining);
             }, 1000);
         });
+
     </script>
 @endsection

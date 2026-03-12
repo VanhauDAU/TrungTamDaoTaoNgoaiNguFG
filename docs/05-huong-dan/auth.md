@@ -9,6 +9,10 @@ Tài liệu này là điểm vào chính cho module Auth sau đợt nâng cấp.
 Module Auth hiện bao gồm:
 - đăng nhập học viên
 - đăng nhập nhân sự
+- ghi nhớ đăng nhập
+- quản lý thiết bị đã đăng nhập
+- logout khỏi tất cả thiết bị
+- audit log bảo mật nền
 - đăng ký học viên
 - xác thực email
 - quên mật khẩu
@@ -36,8 +40,11 @@ Module Auth hiện bao gồm:
 
 ### Staff
 
-- `GET /admin/login`
-- `POST /admin/login`
+- `GET /teacher/login`
+- `POST /teacher/login`
+- `GET /staff/login`
+- `POST /staff/login`
+- `GET /admin/login` là đường dẫn cũ, hiện redirect sang `/staff/login`
 
 ### Protected student area
 
@@ -108,6 +115,7 @@ Ví dụ:
 - `resources/views/auth/verify.blade.php`
 - `resources/views/auth/passwords/email.blade.php`
 - `resources/views/auth/partials/recaptcha-script.blade.php`
+- `resources/views/clients/hoc-vien/devices/index.blade.php`
 
 ### Frontend validation
 
@@ -117,6 +125,9 @@ Ví dụ:
 ### Migration
 
 - `database/migrations/2026_03_12_120000_add_auth_columns_to_taikhoan_table.php`
+- `database/migrations/2026_03_12_130000_add_remember_token_to_taikhoan_table.php`
+- `database/migrations/2026_03_12_140000_create_phien_dang_nhap_table.php`
+- `database/migrations/2026_03_12_140100_create_nhatky_bao_mat_table.php`
 
 ## 6. Hành vi quan trọng
 
@@ -127,12 +138,20 @@ Ví dụ:
 - Có reCAPTCHA nếu đã bật cấu hình.
 - Nếu chưa verify email thì sẽ bị chuyển sang trang verify.
 - Nút Google chỉ hiện khi cả `GOOGLE_CLIENT_ID` và `GOOGLE_CLIENT_SECRET` đều đã được cấu hình.
+- Checkbox `Ghi nhớ đăng nhập` dùng cơ chế remember me chuẩn của Laravel.
+- Nếu nhập sai liên tiếp, hệ thống khóa đăng nhập theo backoff tăng dần thay vì khóa cố định:
+  - lần sai thứ 5: khóa 1 phút
+  - lần sai thứ 6: khóa 5 phút
+  - lần sai thứ 7: khóa 10 phút
+  - các lần sau tăng thêm 5 phút mỗi lần
 
 ### Đăng nhập staff
 
-- Chỉ dùng ở `/admin/login`.
-- Chỉ chấp nhận giáo viên, nhân viên, admin.
-- Không dùng Google login ở đây.
+- Giảng viên dùng `/teacher/login`.
+- Nhân viên và admin dùng `/staff/login`.
+- Không dùng Google login ở các cổng nội bộ.
+- Vẫn hỗ trợ checkbox `Ghi nhớ đăng nhập`.
+- Hiện tại sau đăng nhập vẫn vào khu nội bộ `/admin/*`; sau này có thể tách `teacher.dashboard` và `staff.dashboard` mà không cần đổi core auth.
 
 ### Đăng ký học viên
 
@@ -177,6 +196,22 @@ Ví dụ:
   - đổi mật khẩu bắt buộc
   - đổi mật khẩu ở khu học viên
 - `Joi` không thay thế validation của Laravel. Backend vẫn là lớp kiểm tra bắt buộc để bảo mật.
+
+### Ghi nhớ đăng nhập
+
+- Login bằng form thường chỉ remembered khi người dùng tick checkbox.
+- Google login hiện được giữ ở chế độ remembered để đồng nhất với trải nghiệm social login hiện tại.
+- Khi mật khẩu bị đổi hoặc reset, hệ thống rotate `remember_token` để buộc các phiên remembered cũ hết hiệu lực.
+
+### Thiết bị đã đăng nhập
+
+- Hệ thống theo dõi phiên đăng nhập đang hoạt động trong bảng `phien_dang_nhap`.
+- Trang học viên có mục `Thiết bị đã đăng nhập` để:
+  - xem thiết bị hiện tại
+  - xem các thiết bị khác còn đang hoạt động
+  - thu hồi từng thiết bị
+  - đăng xuất khỏi tất cả thiết bị
+- Audit log nền được ghi vào `nhatky_bao_mat`.
 
 ## 7. Checklist đọc nhanh
 

@@ -61,6 +61,13 @@
                     <span>Đổi mật khẩu</span>
                 </a>
             </li>
+            <li class="menu-item">
+                <a href="{{ route('home.student.devices') }}"
+                    class="menu-link {{ request()->routeIs('home.student.devices*') ? 'active' : '' }}">
+                    <i class="fas fa-laptop-house"></i>
+                    <span>Thiết bị đã đăng nhập</span>
+                </a>
+            </li>
             <li class="menu-item mt-3">
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf

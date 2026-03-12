@@ -20,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Middleware bắt buộc đổi mật khẩu lần đầu (áp dụng toàn bộ web)
         $middleware->appendToGroup('web', [
             \App\Http\Middleware\ForceChangePassword::class,
+            \App\Http\Middleware\TrackAuthenticatedDeviceSession::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

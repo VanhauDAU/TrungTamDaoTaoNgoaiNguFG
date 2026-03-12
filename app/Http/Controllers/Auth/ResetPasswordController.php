@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Auth\TaiKhoan;
 use Illuminate\Foundation\Auth\ResetsPasswords;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 class ResetPasswordController extends Controller
 {
@@ -31,11 +31,15 @@ class ResetPasswordController extends Controller
 
     protected function resetPassword($user, $password)
     {
+        if (!$user instanceof TaiKhoan) {
+            return;
+        }
+
         $user->forceFill([
             'matKhau' => Hash::make($password),
-            'remember_token' => Str::random(60),
             'phaiDoiMatKhau' => 0,
         ])->save();
+        $user->rotateRememberToken('password_reset');
 
         $this->guard()->login($user);
     }

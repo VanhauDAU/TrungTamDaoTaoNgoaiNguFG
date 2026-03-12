@@ -6,11 +6,13 @@ use App\Http\Controllers\Auth\Concerns\ValidatesRecaptcha;
 use App\Http\Controllers\Controller;
 use App\Models\Auth\NhatKyDangNhap;
 use App\Models\Auth\TaiKhoan;
+use App\Services\Auth\DeviceSessionService;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\ValidationException;
 
 class LoginController extends Controller
@@ -20,8 +22,10 @@ class LoginController extends Controller
     }
     use ValidatesRecaptcha;
 
-    protected const MAX_ATTEMPTS = 5;
-    protected const LOCKOUT_MINUTES = 15;
+    protected const FIRST_LOCKOUT_ATTEMPTS = 5;
+    protected const FIRST_LOCKOUT_MINUTES = 1;
+    protected const LOCKOUT_INCREMENT_MINUTES = 5;
+    protected const FAILURE_STREAK_RESET_HOURS = 24;
     protected $redirectTo = '/';
 
     public function __construct()
@@ -37,7 +41,17 @@ class LoginController extends Controller
 
     public function showAdminLoginForm()
     {
-        return view('auth.login', $this->loginViewData('admin'));
+        return redirect()->route('staff.login');
+    }
+
+    public function showTeacherLoginForm()
+    {
+        return view('auth.login', $this->loginViewData('teacher'));
+    }
+
+    public function showStaffLoginForm()
+    {
+        return view('auth.login', $this->loginViewData('staff'));
     }
 
     public function login(Request $request)
@@ -49,7 +63,21 @@ class LoginController extends Controller
 
     public function adminLogin(Request $request)
     {
-        $request->attributes->set('login_portal', 'admin');
+        $request->attributes->set('login_portal', 'staff');
+
+        return $this->traitLogin($request);
+    }
+
+    public function teacherLogin(Request $request)
+    {
+        $request->attributes->set('login_portal', 'teacher');
+
+        return $this->traitLogin($request);
+    }
+
+    public function staffLogin(Request $request)
+    {
+        $request->attributes->set('login_portal', 'staff');
 
         return $this->traitLogin($request);
     }
@@ -61,12 +89,46 @@ class LoginController extends Controller
 
     protected function loginViewData(string $portal): array
     {
+        $portalTitle = match ($portal) {
+            default => 'Đăng nhập',
+        };
+
+        $submitRoute = match ($portal) {
+            'teacher' => route('teacher.login.submit'),
+            'staff' => route('staff.login.submit'),
+            default => route('login'),
+        };
+
+        $alternateRoute = match ($portal) {
+            'teacher' => route('staff.login'),
+            'staff' => route('teacher.login'),
+            default => route('staff.login'),
+        };
+
+        $alternateLabel = match ($portal) {
+            'teacher' => 'Đăng nhập nhân viên',
+            'staff' => 'Đăng nhập giảng viên',
+            default => 'Đăng nhập nhân viên',
+        };
+
+        $secondaryAlternateRoute = match ($portal) {
+            'student' => route('teacher.login'),
+            default => route('login'),
+        };
+
+        $secondaryAlternateLabel = match ($portal) {
+            'student' => 'Đăng nhập giảng viên',
+            default => 'Đăng nhập học viên',
+        };
+
         return [
             'portal' => $portal,
-            'portalTitle' => $portal === 'admin' ? 'Đăng nhập nhân sự' : 'Đăng nhập',
-            'submitRoute' => $portal === 'admin' ? route('admin.login.submit') : route('login'),
-            'alternateRoute' => $portal === 'admin' ? route('login') : route('admin.login'),
-            'alternateLabel' => $portal === 'admin' ? 'Đăng nhập học viên' : 'Đăng nhập nhân sự',
+            'portalTitle' => $portalTitle,
+            'submitRoute' => $submitRoute,
+            'alternateRoute' => $alternateRoute,
+            'alternateLabel' => $alternateLabel,
+            'secondaryAlternateRoute' => $secondaryAlternateRoute,
+            'secondaryAlternateLabel' => $secondaryAlternateLabel,
             'registerRoute' => $portal === 'student' ? route('register') : null,
             'googleRoute' => $portal === 'student'
                 && filled(config('services.google.client_id'))
@@ -91,7 +153,12 @@ class LoginController extends Controller
             $request->userAgent()
         );
 
-        session()->forget('lockout_until');
+        session()->forget(['lockout_until', 'lockout_message']);
+        $request->session()->put([
+            'auth_portal' => $this->loginPortal($request),
+            'auth_login_method' => 'password',
+            'auth_remembered' => $request->boolean('remember'),
+        ]);
 
         $user->forceFill(['lastLogin' => now()])->save();
 
@@ -105,7 +172,7 @@ class LoginController extends Controller
         }
 
         if ($user->isStaff()) {
-            return redirect()->route('admin.dashboard');
+            return redirect()->route($this->staffDashboardRouteFor($user));
         }
 
         return redirect()->route('home.student.index');
@@ -142,15 +209,16 @@ class LoginController extends Controller
     {
         $loginInput = trim((string) $request->input($this->username()));
         $ip = $request->ip();
-        $soLanSai = NhatKyDangNhap::soLanThatBaiGanDay($loginInput, $ip, self::LOCKOUT_MINUTES);
+        $soLanSai = $this->consecutiveFailedAttempts($loginInput, $ip);
+        $lockoutMinutes = $this->lockoutMinutesForFailures($soLanSai);
 
-        if ($soLanSai >= self::MAX_ATTEMPTS) {
+        if ($lockoutMinutes > 0) {
             $thoiDiemCuoi = NhatKyDangNhap::thoiDiemThatBaiCuoi($loginInput, $ip);
-            $hetHan = $thoiDiemCuoi?->copy()->addMinutes(self::LOCKOUT_MINUTES);
+            $hetHan = $thoiDiemCuoi?->copy()->addMinutes($lockoutMinutes);
             $giayConLai = $hetHan ? (int) max(0, now()->diffInSeconds($hetHan, false)) : 0;
 
             if ($giayConLai > 0) {
-                $this->lockoutResponse($giayConLai);
+                $this->lockoutResponse($giayConLai, $this->lockoutMessage($soLanSai, $lockoutMinutes));
             }
         }
 
@@ -182,29 +250,36 @@ class LoginController extends Controller
 
         $loginInput = trim((string) $request->input($this->username()));
         $ip = $request->ip();
-        $soLanSai = NhatKyDangNhap::soLanThatBaiGanDay($loginInput, $ip, self::LOCKOUT_MINUTES);
-        $conLai = self::MAX_ATTEMPTS - $soLanSai;
+        $soLanSai = $this->consecutiveFailedAttempts($loginInput, $ip);
+        $lockoutMinutes = $this->lockoutMinutesForFailures($soLanSai);
 
-        if ($conLai <= 0) {
+        if ($lockoutMinutes > 0) {
             $thoiDiemCuoi = NhatKyDangNhap::thoiDiemThatBaiCuoi($loginInput, $ip);
-            $hetHan = $thoiDiemCuoi?->copy()->addMinutes(self::LOCKOUT_MINUTES);
+            $hetHan = $thoiDiemCuoi?->copy()->addMinutes($lockoutMinutes);
             $giayConLai = $hetHan ? (int) max(1, now()->diffInSeconds($hetHan, false)) : 1;
 
-            $this->lockoutResponse($giayConLai);
+            $this->lockoutResponse($giayConLai, $this->lockoutMessage($soLanSai, $lockoutMinutes));
         }
 
-        $message = $this->loginPortal($request) === 'admin'
-            ? "Tài khoản nhân sự hoặc mật khẩu không chính xác. Bạn còn {$conLai} lần thử."
-            : "Tài khoản, email hoặc mật khẩu không chính xác. Bạn còn {$conLai} lần thử.";
+        $conLai = max(0, self::FIRST_LOCKOUT_ATTEMPTS - $soLanSai);
+
+        $message = match ($this->loginPortal($request)) {
+            'teacher' => "Tài khoản giảng viên hoặc mật khẩu không chính xác. Bạn còn {$conLai} lần thử.",
+            'staff', 'admin' => "Tài khoản nhân viên hoặc admin hoặc mật khẩu không chính xác. Bạn còn {$conLai} lần thử.",
+            default => "Tài khoản, email hoặc mật khẩu không chính xác. Bạn còn {$conLai} lần thử.",
+        };
 
         throw ValidationException::withMessages([
             $this->username() => [$message],
         ]);
     }
 
-    protected function lockoutResponse(int $giayConLai)
+    protected function lockoutResponse(int $giayConLai, string $message)
     {
-        session()->put('lockout_until', now()->addSeconds($giayConLai)->timestamp);
+        session()->put([
+            'lockout_until' => now()->addSeconds($giayConLai)->timestamp,
+            'lockout_message' => $message,
+        ]);
 
         throw ValidationException::withMessages([
             'lockout' => ['locked'],
@@ -213,7 +288,38 @@ class LoginController extends Controller
 
     protected function maxAttempts(): int
     {
-        return self::MAX_ATTEMPTS;
+        return self::FIRST_LOCKOUT_ATTEMPTS;
+    }
+
+    private function consecutiveFailedAttempts(string $loginInput, string $ip): int
+    {
+        return NhatKyDangNhap::soLanThatBaiLienTiep(
+            $loginInput,
+            $ip,
+            self::FAILURE_STREAK_RESET_HOURS
+        );
+    }
+
+    private function lockoutMinutesForFailures(int $failures): int
+    {
+        if ($failures < self::FIRST_LOCKOUT_ATTEMPTS) {
+            return 0;
+        }
+
+        if ($failures === self::FIRST_LOCKOUT_ATTEMPTS) {
+            return self::FIRST_LOCKOUT_MINUTES;
+        }
+
+        return ($failures - self::FIRST_LOCKOUT_ATTEMPTS) * self::LOCKOUT_INCREMENT_MINUTES;
+    }
+
+    private function lockoutMessage(int $failures, int $minutes): string
+    {
+        if ($failures === self::FIRST_LOCKOUT_ATTEMPTS) {
+            return "Bạn đã nhập sai {$failures} lần liên tiếp. Tài khoản bị tạm khóa 1 phút.";
+        }
+
+        return "Bạn đã nhập sai {$failures} lần liên tiếp. Tài khoản bị tạm khóa {$minutes} phút. Mỗi lần sai tiếp theo thời gian khóa sẽ tăng thêm 5 phút cho đến khi đăng nhập thành công.";
     }
 
     public function showForceChangePassword()
@@ -240,9 +346,10 @@ class LoginController extends Controller
             'matKhau' => Hash::make($request->new_password),
             'phaiDoiMatKhau' => 0,
         ]);
+        $user->rotateRememberToken('force_password_change', (string) $request->session()->getId());
 
         if ($user->isStaff()) {
-            return redirect()->route('admin.dashboard')
+            return redirect()->route($this->staffDashboardRouteFor($user))
                 ->with('success', 'Đổi mật khẩu thành công! Chào mừng bạn đến hệ thống.');
         }
 
@@ -255,10 +362,21 @@ class LoginController extends Controller
             ->with('success', 'Đổi mật khẩu thành công! Chào mừng bạn đến hệ thống.');
     }
 
-    public function logout(Request $request)
+    public function logout(Request $request, DeviceSessionService $deviceSessionService)
     {
         $currentUser = Auth::user();
-        $redirectRoute = $currentUser instanceof TaiKhoan && $currentUser->isStaff() ? 'admin.login' : 'login';
+        $redirectRoute = $currentUser instanceof TaiKhoan
+            ? $this->logoutRedirectRouteFor($currentUser)
+            : 'login';
+
+        if ($currentUser instanceof TaiKhoan) {
+            $deviceSessionService->revokeSessionById(
+                $currentUser,
+                (string) $request->session()->getId(),
+                'logout_current',
+                $request
+            );
+        }
 
         $this->guard()->logout();
 
@@ -281,9 +399,11 @@ class LoginController extends Controller
 
     private function matchesPortal(TaiKhoan $user, string $portal): bool
     {
-        return $portal === 'admin'
-            ? $user->isStaff()
-            : $user->role === TaiKhoan::ROLE_HOC_VIEN;
+        return match ($portal) {
+            'teacher' => $user->role === TaiKhoan::ROLE_GIAO_VIEN,
+            'staff' => in_array($user->role, [TaiKhoan::ROLE_NHAN_VIEN, TaiKhoan::ROLE_ADMIN], true),
+            default => $user->role === TaiKhoan::ROLE_HOC_VIEN,
+        };
     }
 
     private function currentUser(): TaiKhoan
@@ -293,5 +413,28 @@ class LoginController extends Controller
         abort_unless($user instanceof TaiKhoan, 403);
 
         return $user;
+    }
+
+    private function staffDashboardRouteFor(TaiKhoan $user): string
+    {
+        if ($user->role === TaiKhoan::ROLE_GIAO_VIEN && Route::has('teacher.dashboard')) {
+            return 'teacher.dashboard';
+        }
+
+        if (in_array($user->role, [TaiKhoan::ROLE_NHAN_VIEN, TaiKhoan::ROLE_ADMIN], true) && Route::has('staff.dashboard')) {
+            return 'staff.dashboard';
+        }
+
+        return 'admin.dashboard';
+    }
+
+    private function logoutRedirectRouteFor(TaiKhoan $user): string
+    {
+        return match ($user->role) {
+            TaiKhoan::ROLE_GIAO_VIEN => 'teacher.login',
+            TaiKhoan::ROLE_NHAN_VIEN,
+            TaiKhoan::ROLE_ADMIN => 'staff.login',
+            default => 'login',
+        };
     }
 }

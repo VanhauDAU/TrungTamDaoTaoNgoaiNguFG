@@ -47,9 +47,15 @@
                                 </li>
                             @endif
 
-                            @if (Route::has('admin.login'))
+                            @if (Route::has('teacher.login'))
                                 <li class="nav-item">
-                                    <a class="nav-link" href="{{ route('admin.login') }}">Đăng nhập nhân sự</a>
+                                    <a class="nav-link" href="{{ route('teacher.login') }}">Đăng nhập giảng viên</a>
+                                </li>
+                            @endif
+
+                            @if (Route::has('staff.login'))
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{{ route('staff.login') }}">Đăng nhập nhân viên</a>
                                 </li>
                             @endif
 
