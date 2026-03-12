@@ -14,6 +14,7 @@ Module Auth hiện bao gồm:
 - quên mật khẩu
 - đăng nhập Google cho học viên
 - thiết lập mật khẩu local cho tài khoản Google qua email reset password
+- xác thực client-side bằng `Joi` cho các form Auth
 - Google reCAPTCHA cho form public
 - quy ước username hệ thống
 - hiển thị avatar và hình thức đăng nhập cho tài khoản học viên
@@ -67,6 +68,8 @@ Ví dụ:
   - `docs/05-huong-dan/auth-cau-hinh-va-trien-khai.md`
 - Vận hành và kiểm thử:
   - `docs/05-huong-dan/auth-van-hanh-va-kiem-thu.md`
+- Luồng hoạt động Joi:
+  - `docs/05-huong-dan/auth-joi-validation.md`
 - Changelog:
   - `CHANGELOG.md`
 
@@ -96,6 +99,7 @@ Ví dụ:
 - `config/auth.php`
 - `config/services.php`
 - `.env.example`
+- `package.json`
 
 ### View
 
@@ -104,6 +108,11 @@ Ví dụ:
 - `resources/views/auth/verify.blade.php`
 - `resources/views/auth/passwords/email.blade.php`
 - `resources/views/auth/partials/recaptcha-script.blade.php`
+
+### Frontend validation
+
+- `resources/js/validation/forms.js`
+- `resources/js/app.js`
 
 ### Migration
 
@@ -114,6 +123,7 @@ Ví dụ:
 ### Đăng nhập học viên
 
 - Cho phép dùng email hoặc username.
+- Validate đầu vào bằng `Joi` trước khi submit.
 - Có reCAPTCHA nếu đã bật cấu hình.
 - Nếu chưa verify email thì sẽ bị chuyển sang trang verify.
 - Nút Google chỉ hiện khi cả `GOOGLE_CLIENT_ID` và `GOOGLE_CLIENT_SECRET` đều đã được cấu hình.
@@ -129,6 +139,7 @@ Ví dụ:
 - Tạo `TaiKhoan` role học viên.
 - Hệ thống tự cấp username.
 - Gửi email verification.
+- Validate client-side bằng `Joi` cho họ tên, email, mật khẩu, xác nhận mật khẩu.
 - Nếu Google OAuth đã được cấu hình, trang đăng ký sẽ hiện nút đăng ký / đăng nhập bằng Google.
 
 ### Avatar và provider
@@ -154,6 +165,18 @@ Ví dụ:
 - Học viên, giáo viên, nhân viên đều được cấp username hệ thống.
 - Tài khoản nội bộ được đánh dấu verified để không chặn vận hành.
 - Nếu `phaiDoiMatKhau = 1` thì bị ép đổi mật khẩu khi đăng nhập lần đầu.
+
+### Joi ở frontend
+
+- `Joi` hiện được áp dụng cho:
+  - đăng nhập học viên
+  - đăng nhập nhân sự
+  - đăng ký học viên
+  - quên mật khẩu
+  - đặt lại mật khẩu
+  - đổi mật khẩu bắt buộc
+  - đổi mật khẩu ở khu học viên
+- `Joi` không thay thế validation của Laravel. Backend vẫn là lớp kiểm tra bắt buộc để bảo mật.
 
 ## 7. Checklist đọc nhanh
 

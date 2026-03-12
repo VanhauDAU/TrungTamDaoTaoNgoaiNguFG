@@ -31,6 +31,7 @@
         @include('components.client.sticky-contact')
     @endunless
     @include('partials.client.script')
+    @vite(['resources/js/app.js'])
     @yield('script')
     @unless ($isChatPage)
         @include('components.client.floating-contact')

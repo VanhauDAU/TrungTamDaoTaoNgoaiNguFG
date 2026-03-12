@@ -92,6 +92,7 @@ Xem thêm bộ tài liệu Auth chuyên biệt:
 - `docs/05-huong-dan/auth.md`
 - `docs/05-huong-dan/auth-cau-hinh-va-trien-khai.md`
 - `docs/05-huong-dan/auth-van-hanh-va-kiem-thu.md`
+- `docs/05-huong-dan/auth-joi-validation.md`
 - `docs/01-phan-tich/auth-kien-truc-va-quyet-dinh.md`
 
 ### 3.1 Đăng nhập

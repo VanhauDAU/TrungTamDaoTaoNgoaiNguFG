@@ -38,6 +38,16 @@
                     return;
                 }
 
+                if (event.defaultPrevented) {
+                    return;
+                }
+
+                if (window.FiveGeniusValidation && !window.FiveGeniusValidation.validateForm(form)) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    return;
+                }
+
                 if (typeof form.checkValidity === 'function' && !form.checkValidity()) {
                     return;
                 }

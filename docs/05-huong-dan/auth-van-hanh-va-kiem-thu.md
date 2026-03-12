@@ -55,6 +55,7 @@
 
 - [ ] Đăng nhập bằng email thành công
 - [ ] Đăng nhập bằng username thành công
+- [ ] Submit trống thì `Joi` chặn ngay ở phía trình duyệt
 - [ ] Sai mật khẩu thì hiện lỗi
 - [ ] Sai nhiều lần thì lockout
 - [ ] Tài khoản chưa verify bị chuyển tới `/email/verify`
@@ -69,6 +70,7 @@
 ### 2.3 Registration
 
 - [ ] Đăng ký học viên mới thành công
+- [ ] Email sai định dạng bị `Joi` chặn trước khi submit
 - [ ] Tạo ra username hệ thống, không dùng email
 - [ ] Gửi email verification thành công
 - [ ] Chưa verify thì không vào được `/hoc-vien`
@@ -89,6 +91,7 @@
 - [ ] `/login` có token reCAPTCHA khi bật config
 - [ ] `/register` có token reCAPTCHA khi bật config
 - [ ] `/password/email` có token reCAPTCHA khi bật config
+- [ ] Form invalid theo `Joi` thì không gọi tiếp flow reCAPTCHA submit
 - [ ] Tắt `RECAPTCHA_ENABLED` thì form vẫn submit bình thường
 - [ ] Khi submit, request thực sự có trường `recaptcha_token`
 
@@ -175,6 +178,7 @@ Kiểm tra:
 - Dữ liệu cũ được đánh dấu verified trong migration để tránh khóa nhầm toàn bộ user đang hoạt động.
 - Google login đang được triển khai theo flow OAuth trực tiếp bằng HTTP client, không dùng Socialite.
 - reCAPTCHA đang triển khai theo v3, action-based verification.
+- `Joi` đang là lớp validate client-side dùng chung cho các form Auth quan trọng.
 - Token reCAPTCHA được gắn vào form bằng JavaScript trước khi submit; nếu form bị chỉnh sửa layout, cần đảm bảo token vẫn được append vào đúng form.
 
 ## 6. Khuyến nghị backlog tiếp theo

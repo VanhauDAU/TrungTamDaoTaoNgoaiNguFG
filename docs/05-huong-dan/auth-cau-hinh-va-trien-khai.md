@@ -9,6 +9,7 @@ Trước khi bật đầy đủ Auth mới, cần có:
 - mail server chạy được
 - Google OAuth App nếu muốn bật Google login
 - Google reCAPTCHA v3 keys nếu muốn bật reCAPTCHA
+- `node_modules` đã cài để bundle được `Joi` và asset frontend Auth
 
 ## 2. Migration bắt buộc
 
@@ -156,6 +157,10 @@ php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 ```
+
+Ghi chú:
+- từ khi thêm `Joi`, nếu thiếu `npm install` hoặc chưa build lại asset, form Auth sẽ không có lớp validate phía trình duyệt mới
+- nếu chỉ sửa PHP/.env thì không cần build lại frontend
 
 ## 6. Kiểm tra sau deploy
 
