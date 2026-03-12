@@ -65,14 +65,8 @@
                                 @csrf
                                 <div class="avatar-upload-area">
                                     <div class="avatar-preview" id="avatarPreviewWrap">
-                                        @if (Auth::user()->hoSoNguoiDung && Auth::user()->hoSoNguoiDung->anhDaiDien)
-                                            <img id="avatarPreview"
-                                                src="{{ asset('storage/' . Auth::user()->hoSoNguoiDung->anhDaiDien) }}"
-                                                alt="Ảnh đại diện">
-                                        @else
-                                            <img id="avatarPreview" src="{{ asset('assets/images/user-default.png') }}"
-                                                alt="Ảnh đại diện">
-                                        @endif
+                                        <img id="avatarPreview" src="{{ Auth::user()->getAvatarUrl() }}"
+                                            alt="Ảnh đại diện">
                                         <div class="avatar-overlay">
                                             <i class="fas fa-camera"></i>
                                         </div>
@@ -130,6 +124,11 @@
                                         <label class="form-label-custom">Tên đăng nhập</label>
                                         <input type="text" class="form-control form-control-custom bg-light"
                                             value="{{ Auth::user()->taiKhoan }}" disabled readonly>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label-custom">Hình thức đăng nhập</label>
+                                        <input type="text" class="form-control form-control-custom bg-light"
+                                            value="{{ Auth::user()->getAuthProviderLabel() }}" disabled readonly>
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label-custom">Số điện thoại</label>

@@ -15,6 +15,7 @@ Module Auth hiện bao gồm:
 - đăng nhập Google cho học viên
 - Google reCAPTCHA cho form public
 - quy ước username hệ thống
+- hiển thị avatar và hình thức đăng nhập cho tài khoản học viên
 
 ## 2. Route chính
 
@@ -113,6 +114,7 @@ Ví dụ:
 - Cho phép dùng email hoặc username.
 - Có reCAPTCHA nếu đã bật cấu hình.
 - Nếu chưa verify email thì sẽ bị chuyển sang trang verify.
+- Nút Google chỉ hiện khi cả `GOOGLE_CLIENT_ID` và `GOOGLE_CLIENT_SECRET` đều đã được cấu hình.
 
 ### Đăng nhập staff
 
@@ -125,6 +127,16 @@ Ví dụ:
 - Tạo `TaiKhoan` role học viên.
 - Hệ thống tự cấp username.
 - Gửi email verification.
+- Nếu Google OAuth đã được cấu hình, trang đăng ký sẽ hiện nút đăng ký / đăng nhập bằng Google.
+
+### Avatar và provider
+
+- Tài khoản local hiển thị avatar từ `hoSoNguoiDung.anhDaiDien` nếu có.
+- Tài khoản Google ưu tiên hiển thị `google_avatar`.
+- Nếu không có avatar hợp lệ, hệ thống fallback về `assets/images/user-default.png`.
+- Trang hồ sơ học viên hiển thị nhãn hình thức đăng nhập:
+  - `Google`
+  - `Email và mật khẩu`
 
 ### Tạo tài khoản bởi admin
 
@@ -141,4 +153,5 @@ Khi debug Auth, kiểm tra theo thứ tự:
 3. `email_verified_at` có giá trị chưa.
 4. `phaiDoiMatKhau` có đang bật không.
 5. `GOOGLE_*` hoặc `RECAPTCHA_*` có cấu hình chưa.
-6. SMTP có gửi mail thật không.
+6. `APP_URL` có khớp với redirect URI của Google không.
+7. SMTP có gửi mail thật không.

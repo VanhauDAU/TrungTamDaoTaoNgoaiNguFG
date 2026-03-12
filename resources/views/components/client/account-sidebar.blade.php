@@ -2,15 +2,11 @@
     <div class="account-sidebar">
         <div class="sidebar-user-info">
             <div class="user-avatar-wrapper">
-                @if (Auth::user()->hoSoNguoiDung && Auth::user()->hoSoNguoiDung->anhDaiDien)
-                    <img src="{{ asset('storage/' . Auth::user()->hoSoNguoiDung->anhDaiDien) }}" alt="Avatar"
-                        class="sidebar-avatar">
-                @else
-                    <img src="{{ asset('assets/images/user-default.png') }}" alt="Avatar" class="sidebar-avatar">
-                @endif
+                <img src="{{ Auth::user()->getAvatarUrl() }}" alt="Avatar" class="sidebar-avatar">
             </div>
             <h3 class="user-name">{{ Auth::user()->hoSoNguoiDung->hoTen ?? Auth::user()->name }}</h3>
             <p class="user-email">{{ Auth::user()->email }}</p>
+            <p class="user-email">{{ Auth::user()->getAuthProviderLabel() }}</p>
         </div>
 
         <ul class="sidebar-menu">
