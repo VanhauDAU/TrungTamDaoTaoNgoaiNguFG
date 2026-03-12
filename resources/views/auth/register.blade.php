@@ -371,16 +371,16 @@
                                         </div>
                                     </div>
 
-                                    @if (!empty($googleRoute))
-                                        <a href="{{ $googleRoute }}" class="btn btn-social btn-google mb-3">
-                                            <i class="fab fa-google"></i> Đăng ký / đăng nhập bằng Google
-                                        </a>
-                                    @endif
+                                    
 
                                     {{-- Submit --}}
                                     <button type="submit" class="btn btn-red d-block text-center w-100 mt-3 mb-3 ls-1">Đăng
                                         ký</button>
-
+                                    @if (!empty($googleRoute))
+                                        <a href="{{ $googleRoute }}" class="btn btn-social btn-google mb-3">
+                                            <i class="fab fa-google"></i>Đăng nhập bằng Google
+                                        </a>
+                                    @endif
                                     {{-- Terms of Service --}}
                                     <div class="text-center mb-2">
                                         <small class="text-muted">
