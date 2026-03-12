@@ -98,7 +98,6 @@ class GiaoVienController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'taiKhoan' => 'required|string|max:50',
             'email' => 'required|email|max:100|unique:taikhoan,email',
             'matKhau' => 'required|string|min:8|confirmed',
             'hoTen' => 'required|string|max:100',
@@ -117,7 +116,6 @@ class GiaoVienController extends Controller
             'coSoId' => 'required|exists:cosodaotao,coSoId',
             'ghiChu' => 'nullable|string',
         ], [
-            'taiKhoan.required' => 'Vui lòng nhập tên đăng nhập.',
             'email.required' => 'Vui lòng nhập email.',
             'email.unique' => 'Email đã được sử dụng.',
             'matKhau.required' => 'Vui lòng nhập mật khẩu.',
@@ -130,8 +128,6 @@ class GiaoVienController extends Controller
         ]);
 
         DB::transaction(function () use ($request) {
-            $tenDangNhap = $this->generateUniqueUsername($request->taiKhoan);
-
             // ── Tìm nhóm quyền "Giáo viên" ──────────────────────
             $nhomGV = NhomQuyen::where('tenNhom', 'like', '%giáo viên%')
                 ->orWhere('tenNhom', 'like', '%giao vien%')
@@ -139,14 +135,18 @@ class GiaoVienController extends Controller
 
             // ── Tạo tài khoản ────────────────────────────────────
             $taiKhoan = TaiKhoan::create([
-                'taiKhoan' => $tenDangNhap,
+                'taiKhoan' => TaiKhoan::generateTemporaryUsername(TaiKhoan::ROLE_GIAO_VIEN),
                 'email' => $request->email,
                 'matKhau' => Hash::make($request->matKhau),
                 'role' => TaiKhoan::ROLE_GIAO_VIEN,
                 'trangThai' => 1,
                 'phaiDoiMatKhau' => 1,
                 'nhomQuyenId' => $nhomGV?->nhomQuyenId,
+                'auth_provider' => 'local',
+                'email_verified_at' => now(),
             ]);
+
+            $taiKhoan->assignSystemUsername();
 
             // ── Tạo hồ sơ người dùng ────────────────────────────
             HoSoNguoiDung::create([
@@ -177,23 +177,6 @@ class GiaoVienController extends Controller
 
         return redirect()->route('admin.giao-vien.index')
             ->with('success', 'Đã tạo giáo viên «' . $request->hoTen . '» thành công.');
-    }
-
-    /**
-     * Tạo tên đăng nhập duy nhất:
-     * User_123456 → nếu trùng → User_123456_1 → User_123456_2 ...
-     */
-    private function generateUniqueUsername(string $base): string
-    {
-        $candidate = $base;
-        $counter = 1;
-
-        while (TaiKhoan::where('taiKhoan', $candidate)->exists()) {
-            $candidate = $base . '_' . $counter;
-            $counter++;
-        }
-
-        return $candidate;
     }
 
     /** Form chỉnh sửa giáo viên */

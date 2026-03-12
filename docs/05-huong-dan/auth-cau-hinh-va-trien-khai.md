@@ -1,0 +1,176 @@
+# Auth - Cấu Hình Và Triển Khai
+
+> Cập nhật: 2026-03-12
+
+## 1. Điều kiện tiên quyết
+
+Trước khi bật đầy đủ Auth mới, cần có:
+- database đã migrate cột auth mới
+- mail server chạy được
+- Google OAuth App nếu muốn bật Google login
+- Google reCAPTCHA v3 keys nếu muốn bật reCAPTCHA
+
+## 2. Migration bắt buộc
+
+```bash
+php artisan migrate
+```
+
+Migration mới:
+- `2026_03_12_120000_add_auth_columns_to_taikhoan_table.php`
+
+Migration này thêm:
+- `email_verified_at`
+- `auth_provider`
+- `google_id`
+- `google_avatar`
+
+Ngoài ra migration sẽ đánh dấu `email_verified_at` cho tài khoản cũ để tránh khóa nhầm user hiện có.
+
+## 3. Cấu hình `.env`
+
+### 3.1 Mail
+
+```env
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=your@gmail.com
+MAIL_PASSWORD=app_password
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=your@gmail.com
+MAIL_FROM_NAME="Five Genius"
+```
+
+Nếu mail không chạy:
+- email verification sẽ không gửi được
+- reset password mail cũng không gửi được
+
+### 3.2 Google OAuth
+
+```env
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+```
+
+Redirect URI cần khai báo ở Google Console:
+
+```text
+http://your-domain/auth/google/callback
+```
+
+Ví dụ local:
+
+```text
+http://127.0.0.1:8000/auth/google/callback
+```
+
+Ví dụ XAMPP:
+
+```text
+http://localhost/DACNCNPM_TrungTamNN/public/auth/google/callback
+```
+
+Lưu ý:
+- nếu dùng virtual host thì phải dùng đúng domain đó
+- nếu `GOOGLE_*` trống, nút Google login sẽ không hiển thị
+
+### 3.3 Google reCAPTCHA v3
+
+```env
+RECAPTCHA_ENABLED=true
+RECAPTCHA_SITE_KEY=
+RECAPTCHA_SECRET_KEY=
+RECAPTCHA_MIN_SCORE=0.5
+```
+
+Actions đang dùng:
+- `student_login`
+- `student_register`
+- `forgot_password`
+
+Nếu chưa muốn bật thật:
+
+```env
+RECAPTCHA_ENABLED=false
+```
+
+## 4. Cấu hình production
+
+Checklist tối thiểu:
+- `APP_URL` đúng domain thật
+- `MAIL_FROM_*` đúng brand
+- `SESSION_DOMAIN` đúng nếu dùng subdomain
+- `GOOGLE_CLIENT_*` đúng project production
+- `RECAPTCHA_*` đúng site production
+- chạy `php artisan config:cache`
+
+## 5. Trình tự deploy khuyến nghị
+
+```bash
+git pull
+composer install --no-dev --optimize-autoloader
+npm install
+npm run build
+php artisan migrate --force
+php artisan optimize:clear
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+```
+
+## 6. Kiểm tra sau deploy
+
+### Student login
+
+- mở `/login`
+- thử đăng nhập học viên
+- thử tài khoản chưa verify
+
+### Staff login
+
+- mở `/admin/login`
+- thử đăng nhập giáo viên/nhân viên/admin
+- thử dùng tài khoản học viên ở `/admin/login` và xác nhận bị từ chối
+
+### Registration
+
+- tạo học viên mới qua `/register`
+- xác nhận có email verification
+- xác nhận chưa verify thì không vào được `/hoc-vien`
+
+### Google login
+
+- bấm Google ở `/login` hoặc `/register`
+- xác nhận callback hoạt động
+- xác nhận staff email không dùng được Google login
+
+### reCAPTCHA
+
+- bật `RECAPTCHA_ENABLED=true`
+- submit form public
+- xác nhận token được tạo và backend verify thành công
+
+## 7. Lỗi thường gặp
+
+### Lỗi: không nhận email xác thực
+
+Nguyên nhân thường gặp:
+- SMTP sai
+- port/mail encryption sai
+- `MAIL_FROM_ADDRESS` không hợp lệ
+
+### Lỗi: Google callback 400
+
+Nguyên nhân thường gặp:
+- redirect URI sai
+- domain local không khớp cấu hình Google Console
+- client secret sai
+
+### Lỗi: reCAPTCHA luôn fail
+
+Nguyên nhân thường gặp:
+- site key / secret key không cùng site
+- domain chưa add vào reCAPTCHA console
+- action trả về khác với action backend chờ
+- điểm score thấp hơn `RECAPTCHA_MIN_SCORE`

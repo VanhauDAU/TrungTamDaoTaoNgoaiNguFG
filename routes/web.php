@@ -28,6 +28,8 @@ use App\Http\Controllers\Admin\BaiViet\TagController as AdminTagController;
 use App\Http\Controllers\Admin\ThongBao\ThongBaoController as AdminThongBaoController;
 use App\Http\Controllers\Admin\TaiChinh\HoaDonController as AdminHoaDonController;
 use App\Http\Controllers\Client\ClientThongBaoController;
+use App\Http\Controllers\Auth\GoogleLoginController;
+use App\Http\Controllers\Auth\LoginController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
@@ -66,7 +68,7 @@ Route::prefix('/')->name('home.')->group(function () {
         Route::get('/{slug}/{slugLopHoc}/dang-ky', [CourseController::class, 'confirmRegistration'])->name('confirm');
         Route::post('/{slug}/{slugLopHoc}/xac-nhan-dang-ky', [CourseController::class, 'processRegistration'])->name('process');
     });
-    Route::prefix('hoc-vien')->name('student.')->middleware('auth')->group(function () {
+    Route::prefix('hoc-vien')->name('student.')->middleware(['auth', 'verified.student'])->group(function () {
         Route::get('/', [StudentController::class, 'index'])->name('index');
         Route::post('/', [StudentController::class, 'updateProfile'])->name('update-profile');
         Route::post('/anh-dai-dien', [StudentController::class, 'updateAvatar'])->name('update-avatar');
@@ -80,12 +82,12 @@ Route::prefix('/')->name('home.')->group(function () {
     });
 
     // ── Thông báo client (auth required) ────────────────────────────────────
-    Route::prefix('thong-bao')->name('thong-bao.')->middleware('auth')->group(function () {
+    Route::prefix('thong-bao')->name('thong-bao.')->middleware(['auth', 'verified.student'])->group(function () {
         Route::get('/', [ClientThongBaoController::class, 'index'])->name('index');
     });
 
     // ── Thông báo client API (auth, JSON) ────────────────────────────────────
-    Route::prefix('api/thong-bao')->name('api.thong-bao.')->middleware('auth')->group(function () {
+    Route::prefix('api/thong-bao')->name('api.thong-bao.')->middleware(['auth', 'verified.student'])->group(function () {
         Route::get('/stream', [ClientThongBaoController::class, 'stream'])->name('stream');
         Route::get('/dropdown', [ClientThongBaoController::class, 'getDropdown'])->name('dropdown');
         Route::get('/chua-doc', [ClientThongBaoController::class, 'getUnreadCount'])->name('unread-count');
@@ -94,7 +96,7 @@ Route::prefix('/')->name('home.')->group(function () {
         Route::patch('/da-doc-tat-ca', [ClientThongBaoController::class, 'markAllRead'])->name('mark-all-read');
     });
 
-    Route::prefix('api/chat')->name('api.chat.')->middleware('auth')->group(function () {
+    Route::prefix('api/chat')->name('api.chat.')->middleware(['auth', 'verified.student'])->group(function () {
         Route::get('/poll', [ClientChatController::class, 'poll'])->name('poll');
         Route::get('/attachments/{id}/view', [ClientChatController::class, 'viewAttachment'])->name('attachments.view');
         Route::get('/attachments/{id}/download', [ClientChatController::class, 'downloadAttachment'])->name('attachments.download');
@@ -357,7 +359,15 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
 });
 
 // ─── AUTH ROUTES ─────────────────────────────────────────────────────────────
-Auth::routes();
+Auth::routes(['verify' => true]);
+
+Route::middleware('guest')->group(function () {
+    Route::get('/admin/login', [LoginController::class, 'showAdminLoginForm'])->name('admin.login');
+    Route::post('/admin/login', [LoginController::class, 'adminLogin'])->name('admin.login.submit');
+
+    Route::get('/auth/google/redirect', [GoogleLoginController::class, 'redirect'])->name('auth.google.redirect');
+    Route::get('/auth/google/callback', [GoogleLoginController::class, 'callback'])->name('auth.google.callback');
+});
 
 // ─── ĐỔI MẬT KHẨU BẮT BUỘC (lần đầu đăng nhập) ─────────────────────────────
 Route::middleware('auth')->group(function () {

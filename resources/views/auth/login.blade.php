@@ -1,6 +1,6 @@
 @extends('layouts.auth')
 
-@section('title', 'Đăng nhập - Five Genius')
+@section('title', ($portalTitle ?? 'Đăng nhập') . ' - Five Genius')
 @section('stylesheet')
     <style>
         /* ===== LOGIN PAGE CSS ===== */
@@ -228,12 +228,21 @@
                         <div class="row justify-content-center">
                             <div class="col-lg-8 col-xl-6 px-4">
                                 <form id="loginform" name="loginform" class="needs-validation" novalidate
-                                    action="{{ route('login') }}" method="POST">
+                                    action="{{ $submitRoute ?? route('login') }}" method="POST">
                                     @csrf
-                                    <h3 class="fs-48 ff-title text-center cl-green mb-lg-3 mb-2">Đăng nhập</h3>
+                                    <h3 class="fs-48 ff-title text-center cl-green mb-lg-3 mb-2">{{ $portalTitle ?? 'Đăng nhập' }}</h3>
                                     <div class="text-center mb-4">
-                                        Chưa có tài khoản? <a href="{{ route('register') }}" class="ff-title cl-green">Đăng
-                                            ký ngay!</a>
+                                        @if (!empty($registerRoute))
+                                            <div class="mt-2">
+                                                Chưa có tài khoản?
+                                                <a href="{{ $registerRoute }}" class="ff-title cl-green">Đăng ký ngay!</a>
+                                            </div>
+                                        @endif
+                                        @if (!empty($alternateRoute))
+                                            <div class="mt-2">
+                                                <a href="{{ $alternateRoute }}" class="ff-title cl-green">{{ $alternateLabel }}</a>
+                                            </div>
+                                        @endif
                                     </div>
                                     @php
                                         $lockoutUntil = session('lockout_until', 0);
@@ -280,7 +289,7 @@
                                         <input type="text" id="taiKhoan" name="taiKhoan"
                                             class="form-control @if(!$isLockedOut) @error('taiKhoan') is-invalid @enderror @endif"
                                             value="{{ old('taiKhoan') }}" required autocomplete="username" autofocus
-                                            placeholder="Tài khoản hoặc email">
+                                            placeholder="{{ ($portal ?? 'student') === 'admin' ? 'Email hoặc mã nhân sự' : 'Tài khoản hoặc email' }}">
                                         @if (!$isLockedOut)
                                             @error('taiKhoan')
                                                 <div class="invalid-feedback d-block text-danger mt-1">
@@ -314,6 +323,14 @@
                                         <label class="cl-green ff-title ls-1 mb-0" for="remember">Ghi nhớ đăng nhập</label>
                                     </div>
 
+                                    @if (!empty($googleRoute))
+                                        <a href="{{ $googleRoute }}" class="btn btn-outline-dark d-flex align-items-center justify-content-center gap-2 w-100 mb-3"
+                                            style="border-radius:10px;padding:12px 16px;font-weight:600">
+                                            <i class="fab fa-google"></i>
+                                            Đăng nhập bằng Google
+                                        </a>
+                                    @endif
+
                                     {{-- Submit --}}
                                     <button type="submit"
                                         class="btn btn-red d-block text-center w-100 mt-3 mb-lg-4 mb-2 ls-1">Đăng
@@ -327,6 +344,11 @@
                                         @endif
                                     </div>
                                 </form>
+                                @include('auth.partials.recaptcha-script', [
+                                    'formId' => 'loginform',
+                                    'recaptchaEnabled' => $recaptchaEnabled ?? false,
+                                    'recaptchaAction' => $recaptchaAction ?? null,
+                                ])
                             </div>
                         </div>
                     </div>

@@ -85,9 +85,24 @@ MAIL_FROM_NAME="Five Genius"
 
 ## Phần 3: Hướng dẫn sử dụng Admin Panel
 
+### 3.0 Tài liệu Auth mới
+
+Xem thêm bộ tài liệu Auth chuyên biệt:
+
+- `docs/05-huong-dan/auth.md`
+- `docs/05-huong-dan/auth-cau-hinh-va-trien-khai.md`
+- `docs/05-huong-dan/auth-van-hanh-va-kiem-thu.md`
+- `docs/01-phan-tich/auth-kien-truc-va-quyet-dinh.md`
+
 ### 3.1 Đăng nhập
 
-Vào `http://localhost/admin/dashboard` → Redirect về trang login nếu chưa đăng nhập.
+Vào `http://localhost/admin/login` để đăng nhập nhân sự.
+
+Học viên dùng:
+
+- `http://localhost/login`
+
+Nếu truy cập `http://localhost/admin/dashboard` khi chưa đăng nhập, hệ thống sẽ điều hướng về cổng đăng nhập nhân sự.
 
 Tài khoản mặc định (sau seeder):
 
@@ -127,7 +142,7 @@ Tài khoản mặc định (sau seeder):
 
 ### 4.1 Đăng ký tài khoản
 
-- Vào `/register` → điền thông tin → đăng nhập
+- Vào `/register` → điền thông tin → xác thực email → đăng nhập
 
 ### 4.2 Đăng ký lớp học
 

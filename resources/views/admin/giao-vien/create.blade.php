@@ -128,7 +128,7 @@
                         <div class="form-group">
                             <label class="form-label" for="cccd">
                                 <i class="fas fa-id-badge"></i> CCCD / CMND
-                                <span class="form-hint-inline">(dùng làm mật khẩu)</span>
+                                <span class="form-hint-inline">(dùng làm mật khẩu tạm)</span>
                             </label>
                             <input type="text" id="cccd" name="cccd"
                                 class="form-control @error('cccd') is-invalid @enderror" value="{{ old('cccd') }}"
@@ -146,12 +146,12 @@
                                     <strong>Tài khoản &amp; mật khẩu được tạo tự động</strong>
                                     <div class="gv-pass-grid">
                                         <span class="gv-pass-label">Tên đăng nhập:</span>
-                                        <code id="username-preview">User_<em>theo CCCD</em></code>
+                                        <code id="username-preview">GV######</code>
                                         <span class="gv-pass-label">Mật khẩu:</span>
                                         <code id="password-preview">theo CCCD (hoặc <strong>12345678</strong> nếu chưa
                                             có)</code>
                                     </div>
-                                    <p>Giáo viên có thể đổi sau lần đăng nhập đầu tiên.</p>
+                                    <p>Tên đăng nhập sẽ được hệ thống cấp tự động theo mã giáo viên. Giáo viên có thể đổi mật khẩu sau lần đăng nhập đầu tiên.</p>
                                 </div>
                             </div>
                         </div>
@@ -528,20 +528,17 @@
             btn.addEventListener('click', () => switchTab(btn.dataset.tab));
         });
 
-        // ── CCCD → auto username & password ──────────────────────────────────────────
+        // ── CCCD → auto temporary password ───────────────────────────────────────────
         const cccdInput = document.getElementById('cccd');
-        const userHidden = document.getElementById('taiKhoan');
         const passHidden = document.getElementById('matKhau');
         const passConfirm = document.getElementById('matKhau_confirmation');
         const DEFAULT_PASS = '12345678';
 
         function syncFromCCCD() {
             const cccd = cccdInput?.value?.trim() || '';
-            const username = cccd ? 'User_' + cccd : 'User_';
-            if (userHidden) userHidden.value = username;
             const uPrev = document.getElementById('username-preview');
             const pPrev = document.getElementById('password-preview');
-            if (uPrev) uPrev.textContent = username;
+            if (uPrev) uPrev.textContent = 'GV######';
             const pwd = cccd && cccd.length >= 8 ? cccd : DEFAULT_PASS;
             if (passHidden) passHidden.value = pwd;
             if (passConfirm) passConfirm.value = pwd;

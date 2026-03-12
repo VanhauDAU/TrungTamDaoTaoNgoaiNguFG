@@ -161,7 +161,7 @@
                     <div class="h-100 d-flex flex-column justify-content-center">
                         <div class="row justify-content-center">
                             <div class="col-lg-8 col-xl-7 px-4">
-                                <form method="POST" action="{{ route('password.email') }}" class="needs-validation">
+                                <form id="forgot-password-form" method="POST" action="{{ route('password.email') }}" class="needs-validation">
                                     @csrf
                                     <h3 class="fs-48 ff-title text-center cl-green mb-lg-3 mb-2">Quên mật khẩu?</h3>
                                     <p class="text-center text-muted mb-4">
@@ -173,6 +173,12 @@
                                             {{ session('status') }}
                                             <button type="button" class="btn-close" data-bs-dismiss="alert"
                                                 aria-label="Close"></button>
+                                        </div>
+                                    @endif
+
+                                    @if ($errors->any() && !$errors->has('email'))
+                                        <div class="alert alert-danger mb-3">
+                                            {{ $errors->first() }}
                                         </div>
                                     @endif
 
@@ -204,6 +210,11 @@
                                         </small>
                                     </div>
                                 </form>
+                                @include('auth.partials.recaptcha-script', [
+                                    'formId' => 'forgot-password-form',
+                                    'recaptchaEnabled' => $recaptchaEnabled ?? false,
+                                    'recaptchaAction' => $recaptchaAction ?? null,
+                                ])
                             </div>
                         </div>
                     </div>

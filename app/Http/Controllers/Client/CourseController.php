@@ -152,6 +152,11 @@ class CourseController extends Controller
                 ->with('error', 'Chỉ học viên mới có thể đăng ký lớp học.');
         }
 
+        if (!$user->hasVerifiedEmail()) {
+            return redirect()->route('verification.notice')
+                ->with('warning', 'Vui lòng xác thực email trước khi đăng ký lớp học.');
+        }
+
         // 3. Get Class Info
         $class = LopHoc::where('slug', $slugLopHoc)
             ->with(['buoiHocs.caHoc', 'dangKyLopHocs', 'hocPhi', 'khoaHoc'])
@@ -185,6 +190,11 @@ class CourseController extends Controller
         if ($user->role !== TaiKhoan::ROLE_HOC_VIEN) {
             return redirect()->route('home.classes.show', ['slug' => $slug, 'slugLopHoc' => $slugLopHoc])
                 ->with('error', 'Chỉ học viên mới có thể đăng ký lớp học.');
+        }
+
+        if (!$user->hasVerifiedEmail()) {
+            return redirect()->route('verification.notice')
+                ->with('warning', 'Vui lòng xác thực email trước khi đăng ký lớp học.');
         }
 
         $class = LopHoc::where('slug', $slugLopHoc)->with(['hocPhi', 'khoaHoc', 'dangKyLopHocs', 'buoiHocs.caHoc', 'coSo'])->firstOrFail();

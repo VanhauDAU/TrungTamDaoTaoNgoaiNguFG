@@ -2,89 +2,112 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Http\Controllers\Auth\Concerns\ValidatesRecaptcha;
 use App\Http\Controllers\Controller;
 use App\Models\Auth\NhatKyDangNhap;
+use App\Models\Auth\TaiKhoan;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 
 class LoginController extends Controller
 {
-    /*
-    |--------------------------------------------------------------------------
-    | Login Controller
-    |--------------------------------------------------------------------------
-    |
-    | This controller handles authenticating users for the application and
-    | redirecting them to your home screen. The controller uses a trait
-    | to conveniently provide its functionality to your applications.
-    |
-    */
+    use AuthenticatesUsers {
+        login as protected traitLogin;
+    }
+    use ValidatesRecaptcha;
 
-    use AuthenticatesUsers;
-
-    /** Số lần đăng nhập sai tối đa trước khi bị khóa */
     protected const MAX_ATTEMPTS = 5;
-
-    /** Thời gian khóa (phút) */
     protected const LOCKOUT_MINUTES = 15;
-
-    /**
-     * Where to redirect users after login.
-     *
-     * @var string
-     */
     protected $redirectTo = '/';
 
-    /**
-     * Create a new controller instance.
-     *
-     * @return void
-     */
     public function __construct()
     {
         $this->middleware('guest')->except('logout', 'showForceChangePassword', 'processForceChangePassword');
         $this->middleware('auth')->only('logout', 'showForceChangePassword', 'processForceChangePassword');
     }
 
-    /**
-     * Dùng trường 'taiKhoan' để đăng nhập thay vì 'email'
-     */
-    public function username()
+    public function showLoginForm()
+    {
+        return view('auth.login', $this->loginViewData('student'));
+    }
+
+    public function showAdminLoginForm()
+    {
+        return view('auth.login', $this->loginViewData('admin'));
+    }
+
+    public function login(Request $request)
+    {
+        $request->attributes->set('login_portal', 'student');
+
+        return $this->traitLogin($request);
+    }
+
+    public function adminLogin(Request $request)
+    {
+        $request->attributes->set('login_portal', 'admin');
+
+        return $this->traitLogin($request);
+    }
+
+    public function username(): string
     {
         return 'taiKhoan';
     }
 
-    /**
-     * Phân hướng sau khi đăng nhập thành công theo role.
-     * Ghi nhận log thành công + kiểm tra đổi mật khẩu bắt buộc.
-     */
+    protected function loginViewData(string $portal): array
+    {
+        return [
+            'portal' => $portal,
+            'portalTitle' => $portal === 'admin' ? 'Đăng nhập nhân sự' : 'Đăng nhập',
+            'submitRoute' => $portal === 'admin' ? route('admin.login.submit') : route('login'),
+            'alternateRoute' => $portal === 'admin' ? route('login') : route('admin.login'),
+            'alternateLabel' => $portal === 'admin' ? 'Đăng nhập học viên' : 'Đăng nhập nhân sự',
+            'registerRoute' => $portal === 'student' ? route('register') : null,
+            'googleRoute' => $portal === 'student'
+                && filled(config('services.google.client_id'))
+                && filled(config('services.google.client_secret'))
+                    ? route('auth.google.redirect')
+                    : null,
+            'recaptchaAction' => $portal === 'student' ? 'student_login' : null,
+            'recaptchaEnabled' => $portal === 'student' && $this->recaptchaEnabled(),
+        ];
+    }
+
     protected function authenticated(Request $request, $user)
     {
-        // Ghi log đăng nhập thành công
+        if (!$user instanceof TaiKhoan) {
+            return redirect()->route('login');
+        }
+
         NhatKyDangNhap::ghiLog(
-            $request->input($this->username()),
+            (string) $request->input($this->username(), ''),
             $request->ip(),
             true,
             $request->userAgent()
         );
 
-        // Xóa lockout khỏi session khi đăng nhập thành công
         session()->forget('lockout_until');
 
-        // Cập nhật thời gian đăng nhập cuối
-        $user->lastLogin = now();
-        $user->save();
+        $user->forceFill(['lastLogin' => now()])->save();
 
-        // Nếu phải đổi mật khẩu → redirect sang trang bắt buộc đổi
         if ($user->phaiDoiMatKhau == 1) {
             return redirect()->route('force-change-password');
+        }
+
+        if ($user->role === TaiKhoan::ROLE_HOC_VIEN && !$user->hasVerifiedEmail()) {
+            return redirect()->route('verification.notice')
+                ->with('warning', 'Vui lòng xác thực email trước khi vào khu vực học viên.');
         }
 
         if ($user->isStaff()) {
             return redirect()->route('admin.dashboard');
         }
+
         return redirect()->route('home.student.index');
     }
 
@@ -98,55 +121,58 @@ class LoginController extends Controller
             'password.required' => 'Vui lòng nhập Mật khẩu',
             'password.min' => 'Mật khẩu phải có ít nhất 8 ký tự',
         ]);
+
+        if ($this->loginPortal($request) === 'student') {
+            $this->validateRecaptcha($request, 'student_login');
+        }
     }
 
     protected function credentials(Request $request)
     {
-        $loginInput = $request->input($this->username());
-
-        // Kiểm tra xem chuỗi nhập vào có định dạng email không
+        $loginInput = trim((string) $request->input($this->username()));
         $field = filter_var($loginInput, FILTER_VALIDATE_EMAIL) ? 'email' : 'taiKhoan';
 
         return [
             $field => $loginInput,
-            'password' => $request->input('password')
+            'password' => $request->input('password'),
         ];
     }
 
-    /**
-     * Override attemptLogin: kiểm tra lockout trước khi thử đăng nhập.
-     */
     public function attemptLogin(Request $request)
     {
-        $loginInput = $request->input($this->username());
+        $loginInput = trim((string) $request->input($this->username()));
         $ip = $request->ip();
-
-        // Đếm số lần thất bại gần đây
         $soLanSai = NhatKyDangNhap::soLanThatBaiGanDay($loginInput, $ip, self::LOCKOUT_MINUTES);
 
         if ($soLanSai >= self::MAX_ATTEMPTS) {
-            // Lấy thời điểm thất bại cuối cùng để tính thời gian còn lại
             $thoiDiemCuoi = NhatKyDangNhap::thoiDiemThatBaiCuoi($loginInput, $ip);
-            $hetHan = $thoiDiemCuoi->copy()->addMinutes(self::LOCKOUT_MINUTES);
-            $giayConLai = (int) max(0, now()->diffInSeconds($hetHan, false));
+            $hetHan = $thoiDiemCuoi?->copy()->addMinutes(self::LOCKOUT_MINUTES);
+            $giayConLai = $hetHan ? (int) max(0, now()->diffInSeconds($hetHan, false)) : 0;
 
             if ($giayConLai > 0) {
                 $this->lockoutResponse($giayConLai);
             }
         }
 
-        return $this->guard()->attempt(
-            $this->credentials($request),
-            $request->boolean('remember')
-        );
+        $remember = $request->boolean('remember');
+
+        if (!$this->guard()->attempt($this->credentials($request), $remember)) {
+            return false;
+        }
+
+        $user = $this->guard()->user();
+
+        if (!$user instanceof TaiKhoan || !$this->matchesPortal($user, $this->loginPortal($request))) {
+            $this->guard()->logout();
+
+            return false;
+        }
+
+        return true;
     }
 
-    /**
-     * Ghi log thất bại trước khi gửi response lỗi.
-     */
     protected function sendFailedLoginResponse(Request $request)
     {
-        // Ghi log đăng nhập thất bại
         NhatKyDangNhap::ghiLog(
             $request->input($this->username()),
             $request->ip(),
@@ -154,82 +180,51 @@ class LoginController extends Controller
             $request->userAgent()
         );
 
-        // Đếm lại số lần sai sau khi ghi log
-        $loginInput = $request->input($this->username());
+        $loginInput = trim((string) $request->input($this->username()));
         $ip = $request->ip();
         $soLanSai = NhatKyDangNhap::soLanThatBaiGanDay($loginInput, $ip, self::LOCKOUT_MINUTES);
         $conLai = self::MAX_ATTEMPTS - $soLanSai;
 
         if ($conLai <= 0) {
             $thoiDiemCuoi = NhatKyDangNhap::thoiDiemThatBaiCuoi($loginInput, $ip);
-            $hetHan = $thoiDiemCuoi->copy()->addMinutes(self::LOCKOUT_MINUTES);
-            $giayConLai = (int) max(1, now()->diffInSeconds($hetHan, false));
+            $hetHan = $thoiDiemCuoi?->copy()->addMinutes(self::LOCKOUT_MINUTES);
+            $giayConLai = $hetHan ? (int) max(1, now()->diffInSeconds($hetHan, false)) : 1;
 
             $this->lockoutResponse($giayConLai);
         }
 
-        throw \Illuminate\Validation\ValidationException::withMessages([
-            $this->username() => [
-                "Tài khoản, email hoặc mật khẩu không chính xác. Bạn còn {$conLai} lần thử."
-            ],
+        $message = $this->loginPortal($request) === 'admin'
+            ? "Tài khoản nhân sự hoặc mật khẩu không chính xác. Bạn còn {$conLai} lần thử."
+            : "Tài khoản, email hoặc mật khẩu không chính xác. Bạn còn {$conLai} lần thử.";
+
+        throw ValidationException::withMessages([
+            $this->username() => [$message],
         ]);
     }
 
-    /**
-     * Format giây thành "X phút Y giây".
-     */
-    protected function formatThoiGian(int $giay): string
-    {
-        $phut = intdiv($giay, 60);
-        $giayDu = $giay % 60;
-
-        if ($phut > 0 && $giayDu > 0) {
-            return "{$phut} phút {$giayDu} giây";
-        } elseif ($phut > 0) {
-            return "{$phut} phút";
-        }
-        return "{$giayDu} giây";
-    }
-
-    /**
-     * Trả response lockout — lưu lockout_until vào session + redirect back.
-     */
     protected function lockoutResponse(int $giayConLai)
     {
-        // Lưu thời điểm hết lockout (Unix timestamp) — persist qua redirect
         session()->put('lockout_until', now()->addSeconds($giayConLai)->timestamp);
 
-        throw \Illuminate\Validation\ValidationException::withMessages([
+        throw ValidationException::withMessages([
             'lockout' => ['locked'],
         ]);
     }
 
-    /**
-     * Trả về số lần tối đa cho phép đăng nhập sai.
-     */
     protected function maxAttempts(): int
     {
         return self::MAX_ATTEMPTS;
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // ĐỔI MẬT KHẨU BẮT BUỘC (lần đầu đăng nhập)
-    // ═══════════════════════════════════════════════════════════════
-
-    /**
-     * Hiển thị form đổi mật khẩu bắt buộc.
-     */
     public function showForceChangePassword()
     {
-        if (auth()->user()->phaiDoiMatKhau != 1) {
+        if ($this->currentUser()->phaiDoiMatKhau != 1) {
             return redirect('/');
         }
+
         return view('auth.force-change-password');
     }
 
-    /**
-     * Xử lý đổi mật khẩu bắt buộc.
-     */
     public function processForceChangePassword(Request $request)
     {
         $request->validate([
@@ -240,23 +235,31 @@ class LoginController extends Controller
             'new_password.confirmed' => 'Xác nhận mật khẩu không khớp.',
         ]);
 
-        $user = auth()->user();
+        $user = $this->currentUser();
         $user->update([
             'matKhau' => Hash::make($request->new_password),
             'phaiDoiMatKhau' => 0,
         ]);
 
-        // Redirect theo role
         if ($user->isStaff()) {
             return redirect()->route('admin.dashboard')
                 ->with('success', 'Đổi mật khẩu thành công! Chào mừng bạn đến hệ thống.');
         }
+
+        if ($user->role === TaiKhoan::ROLE_HOC_VIEN && !$user->hasVerifiedEmail()) {
+            return redirect()->route('verification.notice')
+                ->with('success', 'Mật khẩu đã được cập nhật. Vui lòng xác thực email để tiếp tục.');
+        }
+
         return redirect()->route('home.student.index')
             ->with('success', 'Đổi mật khẩu thành công! Chào mừng bạn đến hệ thống.');
     }
 
     public function logout(Request $request)
     {
+        $currentUser = Auth::user();
+        $redirectRoute = $currentUser instanceof TaiKhoan && $currentUser->isStaff() ? 'admin.login' : 'login';
+
         $this->guard()->logout();
 
         $request->session()->invalidate();
@@ -268,6 +271,27 @@ class LoginController extends Controller
 
         return $request->wantsJson()
             ? new JsonResponse([], 204)
-            : redirect(route('login'));
+            : redirect(route($redirectRoute));
+    }
+
+    private function loginPortal(Request $request): string
+    {
+        return (string) $request->attributes->get('login_portal', 'student');
+    }
+
+    private function matchesPortal(TaiKhoan $user, string $portal): bool
+    {
+        return $portal === 'admin'
+            ? $user->isStaff()
+            : $user->role === TaiKhoan::ROLE_HOC_VIEN;
+    }
+
+    private function currentUser(): TaiKhoan
+    {
+        $user = Auth::user();
+
+        abort_unless($user instanceof TaiKhoan, 403);
+
+        return $user;
     }
 }

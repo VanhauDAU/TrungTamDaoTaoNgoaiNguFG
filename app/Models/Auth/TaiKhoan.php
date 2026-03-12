@@ -3,15 +3,18 @@
 namespace App\Models\Auth;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Auth\MustVerifyEmail as MustVerifyEmailTrait;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 use App\Models\Education\DangKyLopHoc;
 use App\Models\Facility\CoSoDaoTao;
 use App\Models\Interaction\ThongBao;
 use App\Models\Interaction\ThongBaoNguoiDung;
 
-class TaiKhoan extends Authenticatable
+class TaiKhoan extends Authenticatable implements MustVerifyEmail
 {
     // Constants cho role
     const ROLE_HOC_VIEN = 0;
@@ -20,7 +23,7 @@ class TaiKhoan extends Authenticatable
     const ROLE_ADMIN = 3;
 
     //
-    use Notifiable, SoftDeletes;
+    use MustVerifyEmailTrait, Notifiable, SoftDeletes;
     protected $table = 'taikhoan';
     protected $primaryKey = 'taiKhoanId';
     protected $keyType = 'int';
@@ -33,6 +36,10 @@ class TaiKhoan extends Authenticatable
         'nhomQuyenId',
         'trangThai',
         'phaiDoiMatKhau',
+        'auth_provider',
+        'google_id',
+        'google_avatar',
+        'email_verified_at',
         'remember_token',
         'lastLogin'
     ];
@@ -45,10 +52,43 @@ class TaiKhoan extends Authenticatable
         'trangThai' => 'integer',
         'phaiDoiMatKhau' => 'integer',
         'nhomQuyenId' => 'integer',
+        'email_verified_at' => 'datetime',
+        'lastLogin' => 'datetime',
     ];
+
     public function username()
     {
         return 'taiKhoan';
+    }
+
+    public static function prefixForRole(int $role): string
+    {
+        return match ($role) {
+            self::ROLE_HOC_VIEN => 'HV',
+            self::ROLE_GIAO_VIEN => 'GV',
+            self::ROLE_NHAN_VIEN => 'NV',
+            self::ROLE_ADMIN => 'AD',
+            default => 'TK',
+        };
+    }
+
+    public static function generateTemporaryUsername(int $role): string
+    {
+        return strtolower(static::prefixForRole($role)) . '_pending_' . Str::lower((string) Str::ulid());
+    }
+
+    public static function buildSystemUsername(int $role, int $taiKhoanId): string
+    {
+        return static::prefixForRole($role) . str_pad((string) $taiKhoanId, 6, '0', STR_PAD_LEFT);
+    }
+
+    public function assignSystemUsername(): void
+    {
+        $username = static::buildSystemUsername((int) $this->role, (int) $this->getKey());
+
+        if ($this->taiKhoan !== $username) {
+            $this->forceFill(['taiKhoan' => $username])->saveQuietly();
+        }
     }
 
     /** Kiểm tra có phải Admin (role = 3) không */
@@ -64,7 +104,7 @@ class TaiKhoan extends Authenticatable
             self::ROLE_GIAO_VIEN,
             self::ROLE_NHAN_VIEN,
             self::ROLE_ADMIN,
-        ]);
+        ], true);
     }
 
     /** Trả về nhãn tên role */
