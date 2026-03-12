@@ -38,6 +38,16 @@
 3. Callback về `/auth/google/callback`
 4. Nếu email là học viên hợp lệ thì đăng nhập
 5. Nếu email là staff thì bị từ chối
+6. Sau khi đăng nhập, hồ sơ hiển thị đúng hình thức đăng nhập và avatar
+
+### 1.5 Thiết lập mật khẩu cho tài khoản Google
+
+1. Học viên đăng nhập bằng Google
+2. Vào hồ sơ cá nhân hoặc trang đổi mật khẩu
+3. Bấm `Thiết lập mật khẩu`
+4. Hệ thống gửi email reset password tới email của học viên
+5. Học viên mở email và đặt mật khẩu mới
+6. Từ thời điểm đó có thể đăng nhập bằng cả Google lẫn email/username + mật khẩu
 
 ## 2. Checklist kiểm thử thủ công
 
@@ -68,6 +78,11 @@
 - [ ] Học viên mới có thể tạo tài khoản bằng Google
 - [ ] Học viên cũ trùng email được link đúng tài khoản
 - [ ] Staff trùng email bị chặn
+- [ ] Header và sidebar hiển thị đúng avatar Google
+- [ ] Trang hồ sơ hiển thị `Google` ở trường hình thức đăng nhập
+- [ ] Tài khoản Google có nút `Thiết lập mật khẩu`
+- [ ] Bấm nút sẽ gửi email reset password thành công
+- [ ] Sau khi đặt mật khẩu, đăng nhập bằng email hoặc username hoạt động
 
 ### 2.5 reCAPTCHA
 
@@ -75,6 +90,7 @@
 - [ ] `/register` có token reCAPTCHA khi bật config
 - [ ] `/password/email` có token reCAPTCHA khi bật config
 - [ ] Tắt `RECAPTCHA_ENABLED` thì form vẫn submit bình thường
+- [ ] Khi submit, request thực sự có trường `recaptcha_token`
 
 ## 3. Dữ liệu cần quan sát khi debug
 
@@ -87,6 +103,7 @@ Trong bảng `taikhoan`, kiểm tra:
 - `email_verified_at`
 - `auth_provider`
 - `google_id`
+- `google_avatar`
 - `lastLogin`
 
 Trong bảng `nhatky_dangnhap`, kiểm tra:
@@ -127,6 +144,30 @@ Kiểm tra:
 2. `GOOGLE_CLIENT_SECRET`
 3. redirect URI
 4. email tài khoản thuộc role nào
+5. `APP_URL` có khớp với callback đã khai báo trong Google Console không
+
+### User đăng nhập Google nhưng không biết mật khẩu local
+
+Kiểm tra:
+1. tài khoản có email hợp lệ không
+2. SMTP có gửi mail thật không
+3. học viên đã bấm nút `Thiết lập mật khẩu` ở hồ sơ hoặc trang đổi mật khẩu chưa
+4. mail reset password có vào spam folder không
+
+### User báo avatar bị hỏng sau Google login
+
+Kiểm tra:
+1. `google_avatar` có dữ liệu không
+2. UI có đang dùng helper lấy avatar chuẩn không
+3. `hoSoNguoiDung.anhDaiDien` có bị lưu nhầm URL ngoài không
+
+### User báo reCAPTCHA lỗi `browser-error`
+
+Kiểm tra:
+1. trình duyệt có chặn script Google không
+2. domain local có nằm trong reCAPTCHA console không
+3. có đang dùng đúng key v3 không
+4. thử browser khác hoặc tab ẩn danh
 
 ## 5. Ghi chú kỹ thuật
 
@@ -134,6 +175,7 @@ Kiểm tra:
 - Dữ liệu cũ được đánh dấu verified trong migration để tránh khóa nhầm toàn bộ user đang hoạt động.
 - Google login đang được triển khai theo flow OAuth trực tiếp bằng HTTP client, không dùng Socialite.
 - reCAPTCHA đang triển khai theo v3, action-based verification.
+- Token reCAPTCHA được gắn vào form bằng JavaScript trước khi submit; nếu form bị chỉnh sửa layout, cần đảm bảo token vẫn được append vào đúng form.
 
 ## 6. Khuyến nghị backlog tiếp theo
 

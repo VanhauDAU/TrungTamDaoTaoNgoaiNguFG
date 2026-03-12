@@ -118,6 +118,33 @@ class TaiKhoan extends Authenticatable implements MustVerifyEmail
             default => 'Không xác định',
         };
     }
+
+    public function getAuthProviderLabel(): string
+    {
+        return match ($this->auth_provider) {
+            'google' => 'Google',
+            default => 'Email và mật khẩu',
+        };
+    }
+
+    public function getAvatarUrl(): string
+    {
+        $path = $this->hoSoNguoiDung?->anhDaiDien;
+
+        if (is_string($path) && $path !== '') {
+            if (Str::startsWith($path, ['http://', 'https://'])) {
+                return $path;
+            }
+
+            return asset('storage/' . ltrim($path, '/'));
+        }
+
+        if (is_string($this->google_avatar) && $this->google_avatar !== '') {
+            return $this->google_avatar;
+        }
+
+        return asset('assets/images/user-default.png');
+    }
     public function getAuthPassword()
     {
         return $this->matKhau;

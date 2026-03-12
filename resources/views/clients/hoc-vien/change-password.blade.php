@@ -35,6 +35,32 @@
                             </div>
                         @endif
 
+                        @error('password_setup')
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                <i class="fas fa-exclamation-circle me-2"></i> {{ $message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                    aria-label="Close"></button>
+                            </div>
+                        @enderror
+
+                        @if (Auth::user()->auth_provider === 'google')
+                            <div class="alert alert-info border-0 bg-light">
+                                <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+                                    <div>
+                                        <i class="fab fa-google me-2 text-danger"></i>
+                                        Bạn đang dùng tài khoản Google. Nếu chưa có mật khẩu local để đăng nhập bằng
+                                        email hoặc tên tài khoản, hãy gửi email thiết lập mật khẩu.
+                                    </div>
+                                    <form action="{{ route('home.student.setup-password') }}" method="POST">
+                                        @csrf
+                                        <button type="submit" class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-key me-1"></i> Gửi email thiết lập mật khẩu
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        @endif
+
                         <form action="{{ route('home.student.update-password') }}" method="POST">
                             @csrf
                             <div class="row g-4">

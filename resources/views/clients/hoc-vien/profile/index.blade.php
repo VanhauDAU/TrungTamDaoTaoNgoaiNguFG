@@ -55,6 +55,30 @@
                             </div>
                         @endif
 
+                        @if (Auth::user()->auth_provider === 'google')
+                            <div class="alert alert-info alert-dismissible fade show" role="alert">
+                                <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+                                    <div>
+                                        <i class="fab fa-google me-2"></i>
+                                        Tài khoản của bạn đang đăng nhập bằng Google. Nếu muốn đăng nhập thêm bằng email
+                                        hoặc tên tài khoản, hãy thiết lập mật khẩu local qua email.
+                                    </div>
+                                    <form action="{{ route('home.student.setup-password') }}" method="POST">
+                                        @csrf
+                                        <button type="submit" class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-key me-1"></i> Thiết lập mật khẩu
+                                        </button>
+                                    </form>
+                                </div>
+                                @error('password_setup')
+                                    <div class="text-danger small mt-2">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>{{ $message }}
+                                    </div>
+                                @enderror
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        @endif
+
                         {{-- ═══ AVATAR ═══ --}}
                         <div class="profile-section">
                             <h6 class="profile-section-title">
@@ -65,14 +89,8 @@
                                 @csrf
                                 <div class="avatar-upload-area">
                                     <div class="avatar-preview" id="avatarPreviewWrap">
-                                        @if (Auth::user()->hoSoNguoiDung && Auth::user()->hoSoNguoiDung->anhDaiDien)
-                                            <img id="avatarPreview"
-                                                src="{{ asset('storage/' . Auth::user()->hoSoNguoiDung->anhDaiDien) }}"
-                                                alt="Ảnh đại diện">
-                                        @else
-                                            <img id="avatarPreview" src="{{ asset('assets/images/user-default.png') }}"
-                                                alt="Ảnh đại diện">
-                                        @endif
+                                        <img id="avatarPreview" src="{{ Auth::user()->getAvatarUrl() }}"
+                                            alt="Ảnh đại diện">
                                         <div class="avatar-overlay">
                                             <i class="fas fa-camera"></i>
                                         </div>
@@ -130,6 +148,11 @@
                                         <label class="form-label-custom">Tên đăng nhập</label>
                                         <input type="text" class="form-control form-control-custom bg-light"
                                             value="{{ Auth::user()->taiKhoan }}" disabled readonly>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label-custom">Hình thức đăng nhập</label>
+                                        <input type="text" class="form-control form-control-custom bg-light"
+                                            value="{{ Auth::user()->getAuthProviderLabel() }}" disabled readonly>
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label-custom">Số điện thoại</label>

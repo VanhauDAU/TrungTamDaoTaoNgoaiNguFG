@@ -108,14 +108,8 @@
                     @auth
                         <div class="dropdown">
                             <a class="user-pill d-flex align-items-center gap-2" href="#" data-bs-toggle="dropdown">
-                                @if (Auth::user()->hoSoNguoiDung && Auth::user()->hoSoNguoiDung->anhDaiDien)
-                                    <img src="{{ asset('storage/' . Auth::user()->hoSoNguoiDung->anhDaiDien) }}"
-                                        class="rounded-circle shadow-sm" width="38" height="38"
-                                        style="object-fit: cover;">
-                                @else
-                                    <img src="{{ asset('assets/images/user-default.png') }}"
-                                        class="rounded-circle shadow-sm" width="38" height="38">
-                                @endif
+                                <img src="{{ Auth::user()->getAvatarUrl() }}" class="rounded-circle shadow-sm"
+                                    width="38" height="38" style="object-fit: cover;">
                                 <span
                                     class="fw-semibold d-none d-md-block">{{ Auth::user()->hoSoNguoiDung->hoTen ?? Auth::user()->name }}</span>
                                 <i class="fas fa-chevron-down small opacity-50 ms-1"></i>

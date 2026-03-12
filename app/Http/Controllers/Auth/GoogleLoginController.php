@@ -148,7 +148,6 @@ class GoogleLoginController extends Controller
             HoSoNguoiDung::create([
                 'taiKhoanId' => $taiKhoan->taiKhoanId,
                 'hoTen' => $googleUser['name'],
-                'anhDaiDien' => $googleUser['picture'],
             ]);
 
             return $taiKhoan;

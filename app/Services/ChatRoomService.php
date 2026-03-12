@@ -443,13 +443,7 @@ class ChatRoomService
 
     private function avatarUrlForAccount(?TaiKhoan $account): ?string
     {
-        $path = optional($account?->hoSoNguoiDung)->anhDaiDien;
-
-        if (!$path) {
-            return null;
-        }
-
-        return asset('storage/' . ltrim($path, '/'));
+        return $account?->getAvatarUrl();
     }
 
     private function makeLastMessagePreview(?ChatMessage $message): ?string
