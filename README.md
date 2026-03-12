@@ -18,11 +18,12 @@ Tai lieu:
 - [5. Cai dat moi truong local](#5-cai-dat-moi-truong-local)
 - [6. Chay du an](#6-chay-du-an)
 - [7. Bien moi truong quan trong](#7-bien-moi-truong-quan-trong)
-- [8. Lenh huu ich](#8-lenh-huu-ich)
-- [9. Test va chat luong ma nguon](#9-test-va-chat-luong-ma-nguon)
-- [10. Luu y du lieu va migration](#10-luu-y-du-lieu-va-migration)
-- [11. Quy trinh phat trien](#11-quy-trinh-phat-trien)
-- [12. Ho tro](#12-ho-tro)
+- [8. Tai lieu Auth](#8-tai-lieu-auth)
+- [9. Lenh huu ich](#9-lenh-huu-ich)
+- [10. Test va chat luong ma nguon](#10-test-va-chat-luong-ma-nguon)
+- [11. Luu y du lieu va migration](#11-luu-y-du-lieu-va-migration)
+- [12. Quy trinh phat trien](#12-quy-trinh-phat-trien)
+- [13. Ho tro](#13-ho-tro)
 
 ## 1. Tong quan
 - Nganh: He thong thong tin quan ly trung tam ngoai ngu.
@@ -32,7 +33,10 @@ Tai lieu:
   - Nhan su/Admin: van hanh dao tao, tai chinh, noi dung, thong bao, lien he.
 - Route chinh:
   - `web client`: `/`
-  - `admin`: `/admin` (yeu cau dang nhap + middleware staff)
+  - `dang nhap hoc vien`: `/login`
+  - `dang nhap giang vien`: `/teacher/login`
+  - `dang nhap nhan vien/admin`: `/staff/login`
+  - `khu noi bo`: `/admin` (yeu cau dang nhap + middleware staff)
 
 ## 2. Tinh nang chinh
 ### Client
@@ -40,6 +44,7 @@ Tai lieu:
 - Dang ky lop hoc va checkout.
 - Trang lien he, form dang ky tu van.
 - Khu vuc hoc vien: profile, doi mat khau, lich hoc, lop hoc, hoa don.
+- Auth hoc vien: dang ky, xac thuc email, quen/dat lai mat khau, dang nhap Google, reCAPTCHA, ghi nho dang nhap.
 - Thong bao realtime cho hoc vien (dropdown + stream API).
 
 ### Admin
@@ -51,6 +56,9 @@ Tai lieu:
 - Quan ly thong bao noi bo.
 - Quan ly lien he/lead (co ho tro thung rac va thao tac loat).
 - Cau hinh co so dao tao, phong hoc, dia chi theo tinh/phuong.
+- Cong noi bo tach theo portal:
+  - `/teacher/login` cho giang vien
+  - `/staff/login` cho nhan vien va admin
 
 ## 3. Cong nghe su dung
 - Backend: Laravel 12, PHP 8.2+
@@ -138,9 +146,24 @@ Neu dung XAMPP/Apache:
 - `DB_*`: ket noi CSDL.
 - `QUEUE_CONNECTION`: mac dinh `database`.
 - `MAIL_*`: cau hinh gui mail.
+- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`: dang nhap Google cho hoc vien.
+- `RECAPTCHA_*`: reCAPTCHA v3 cho login/register/quen mat khau public.
 - `GEMINI_API_KEY`, `GEMINI_MODEL`: khoa/mode AI (neu kich hoat tinh nang lien quan).
 
-## 8. Lenh huu ich
+## 8. Tai lieu Auth
+- Portal dang nhap hien tai:
+  - Hoc vien: `/login`
+  - Giang vien: `/teacher/login`
+  - Nhan vien/Admin: `/staff/login`
+- Giao dien login su dung dock chuyen portal co dinh o day man hinh de doi nhanh giua cac cong dang nhap.
+- Tong quan module Auth: `docs/05-huong-dan/auth.md`
+- Kien truc va quyet dinh: `docs/01-phan-tich/auth-kien-truc-va-quyet-dinh.md`
+- Cau hinh va trien khai: `docs/05-huong-dan/auth-cau-hinh-va-trien-khai.md`
+- Van hanh va kiem thu: `docs/05-huong-dan/auth-van-hanh-va-kiem-thu.md`
+- Joi validation phia client: `docs/05-huong-dan/auth-joi-validation.md`
+- Thay doi theo moc: `CHANGELOG.md`
+
+## 9. Lenh huu ich
 ```bash
 # Chay test
 php artisan test
@@ -156,7 +179,7 @@ php artisan invoice:check-overdue
 php artisan invoice:check-overdue --dry-run
 ```
 
-## 9. Test va chat luong ma nguon
+## 10. Test va chat luong ma nguon
 ```bash
 # Test full
 composer test
@@ -169,7 +192,7 @@ Thu muc test hien co:
 - `tests/Feature`
 - `tests/Unit`
 
-## 10. Luu y du lieu va migration
+## 11. Luu y du lieu va migration
 - Du an hien co nhieu bang domain custom (`taikhoan`, `lienhe`, `hoadon`, ...).
 - Thu muc migration trong repo chu yeu la migration bo sung/cap nhat.
 - Neu khoi tao moi tren may sach, can dam bao da co schema nen tu team (hoac bo migration day du) truoc khi chay du an toan phan.
@@ -179,7 +202,7 @@ Lenh migrate co ban:
 php artisan migrate
 ```
 
-## 11. Quy trinh phat trien
+## 12. Quy trinh phat trien
 - Khong push truc tiep vao `main`.
 - Tao branch theo chuc nang, mo Pull Request de review.
 - Viet commit message ro rang theo muc dich:
@@ -189,7 +212,7 @@ php artisan migrate
   - `docs:` cap nhat tai lieu
   - `chore:` viec he thong/cau hinh
 
-## 12. Ho tro
+## 13. Ho tro
 - Neu gap loi khi setup, tao issue trong repository va kem:
   - log loi
   - buoc tai hien

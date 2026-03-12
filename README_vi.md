@@ -31,7 +31,10 @@ Monolith Laravel phục vụ quản lý vận hành trung tâm ngoại ngữ: kh
   - Nhân sự/Admin: vận hành đào tạo, tài chính, nội dung, thông báo, liên hệ.
 - Route chính:
   - `web client`: `/`
-  - `admin`: `/admin` (yêu cầu đăng nhập + middleware staff)
+  - `đăng nhập học viên`: `/login`
+  - `đăng nhập giảng viên`: `/teacher/login`
+  - `đăng nhập nhân viên/admin`: `/staff/login`
+  - `khu nội bộ`: `/admin` (yêu cầu đăng nhập + middleware staff)
 
 ## 2. Sơ đồ luồng hệ thống
 ```mermaid
@@ -58,6 +61,7 @@ flowchart LR
 - Đăng ký lớp học và checkout.
 - Trang liên hệ, form đăng ký tư vấn.
 - Khu vực học viên: profile, đổi mật khẩu, lịch học, lớp học, hóa đơn.
+- Auth học viên: đăng ký, xác thực email, quên/đặt lại mật khẩu, đăng nhập Google, reCAPTCHA, ghi nhớ đăng nhập.
 - Thông báo realtime cho học viên (dropdown + stream API).
 
 ### Admin
@@ -69,6 +73,9 @@ flowchart LR
 - Quản lý thông báo nội bộ.
 - Quản lý liên hệ/lead (có hỗ trợ thùng rác và thao tác loạt).
 - Cấu hình cơ sở đào tạo, phòng học, địa chỉ theo tỉnh/phường.
+- Cổng nội bộ tách theo portal:
+  - `/teacher/login` cho giảng viên
+  - `/staff/login` cho nhân viên và admin
 
 ## 4. Công nghệ sử dụng
 - Backend: Laravel 12, PHP 8.2+
@@ -156,6 +163,8 @@ Nếu dùng XAMPP/Apache:
 - `DB_*`: kết nối CSDL.
 - `QUEUE_CONNECTION`: mặc định `database`.
 - `MAIL_*`: cấu hình gửi mail.
+- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`: đăng nhập Google cho học viên.
+- `RECAPTCHA_*`: reCAPTCHA v3 cho login/register/quên mật khẩu public.
 - `GEMINI_API_KEY`, `GEMINI_MODEL`: khóa/mode AI (nếu kích hoạt tính năng liên quan).
 
 ## 9. Lệnh hữu ích
@@ -198,10 +207,16 @@ php artisan migrate
 ```
 
 ## 12. Tài liệu Auth
+- Portal đăng nhập hiện tại:
+  - Học viên: `/login`
+  - Giảng viên: `/teacher/login`
+  - Nhân viên/Admin: `/staff/login`
+- Giao diện login sử dụng dock chuyển portal cố định ở đáy màn hình để đổi nhanh giữa các cổng đăng nhập.
 - Tổng quan module Auth: `docs/05-huong-dan/auth.md`
 - Kiến trúc và quyết định: `docs/01-phan-tich/auth-kien-truc-va-quyet-dinh.md`
 - Cấu hình và triển khai: `docs/05-huong-dan/auth-cau-hinh-va-trien-khai.md`
 - Vận hành và kiểm thử: `docs/05-huong-dan/auth-van-hanh-va-kiem-thu.md`
+- Joi validation phía client: `docs/05-huong-dan/auth-joi-validation.md`
 - Thay đổi theo mốc: `CHANGELOG.md`
 
 ## 13. Quy trình phát triển
