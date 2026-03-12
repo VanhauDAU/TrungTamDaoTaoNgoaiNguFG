@@ -323,6 +323,12 @@
                                         <label class="cl-green ff-title ls-1 mb-0" for="remember">Ghi nhớ đăng nhập</label>
                                     </div>
 
+                                    
+
+                                    {{-- Submit --}}
+                                    <button type="submit"
+                                        class="btn btn-red d-block text-center w-100 mt-3 mb-lg-4 mb-2 ls-1">Đăng
+                                        nhập</button>
                                     @if (!empty($googleRoute))
                                         <a href="{{ $googleRoute }}" class="btn btn-outline-dark d-flex align-items-center justify-content-center gap-2 w-100 mb-3"
                                             style="border-radius:10px;padding:12px 16px;font-weight:600">
@@ -330,12 +336,6 @@
                                             Đăng nhập bằng Google
                                         </a>
                                     @endif
-
-                                    {{-- Submit --}}
-                                    <button type="submit"
-                                        class="btn btn-red d-block text-center w-100 mt-3 mb-lg-4 mb-2 ls-1">Đăng
-                                        nhập</button>
-
                                     {{-- Forgot Password --}}
                                     <div class="text-center mb-2">
                                         @if (Route::has('password.request'))
