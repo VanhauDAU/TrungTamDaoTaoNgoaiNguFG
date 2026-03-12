@@ -72,6 +72,7 @@ Route::prefix('/')->name('home.')->group(function () {
         Route::get('/', [StudentController::class, 'index'])->name('index');
         Route::post('/', [StudentController::class, 'updateProfile'])->name('update-profile');
         Route::post('/anh-dai-dien', [StudentController::class, 'updateAvatar'])->name('update-avatar');
+        Route::post('/thiet-lap-mat-khau', [StudentController::class, 'sendPasswordSetupLink'])->name('setup-password');
         Route::get('/doi-mat-khau', [StudentController::class, 'changePassword'])->name('change-password');
         Route::post('/doi-mat-khau', [StudentController::class, 'updatePassword'])->name('update-password');
         Route::get('/hoa-don', [StudentController::class, 'invoices'])->name('invoices');

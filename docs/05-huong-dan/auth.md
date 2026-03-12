@@ -13,6 +13,7 @@ Module Auth hiện bao gồm:
 - xác thực email
 - quên mật khẩu
 - đăng nhập Google cho học viên
+- thiết lập mật khẩu local cho tài khoản Google qua email reset password
 - Google reCAPTCHA cho form public
 - quy ước username hệ thống
 - hiển thị avatar và hình thức đăng nhập cho tài khoản học viên
@@ -78,6 +79,7 @@ Ví dụ:
 - `app/Http/Controllers/Auth/ForgotPasswordController.php`
 - `app/Http/Controllers/Auth/VerificationController.php`
 - `app/Http/Controllers/Auth/GoogleLoginController.php`
+- `app/Http/Controllers/Client/StudentController.php`
 
 ### Middleware
 
@@ -137,6 +139,15 @@ Ví dụ:
 - Trang hồ sơ học viên hiển thị nhãn hình thức đăng nhập:
   - `Google`
   - `Email và mật khẩu`
+
+### Thiết lập mật khẩu cho tài khoản Google
+
+- Tài khoản học viên đăng nhập bằng Google vẫn có thể dùng thêm đăng nhập bằng email hoặc username.
+- Ở trang hồ sơ và trang đổi mật khẩu có nút `Thiết lập mật khẩu`.
+- Khi bấm nút, hệ thống gửi email reset password tới email của tài khoản hiện tại.
+- Sau khi đặt mật khẩu xong, học viên đăng nhập được cả:
+  - Google login
+  - email hoặc username + mật khẩu
 
 ### Tạo tài khoản bởi admin
 

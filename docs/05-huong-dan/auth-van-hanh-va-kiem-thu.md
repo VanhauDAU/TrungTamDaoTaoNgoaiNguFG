@@ -40,6 +40,15 @@
 5. Nếu email là staff thì bị từ chối
 6. Sau khi đăng nhập, hồ sơ hiển thị đúng hình thức đăng nhập và avatar
 
+### 1.5 Thiết lập mật khẩu cho tài khoản Google
+
+1. Học viên đăng nhập bằng Google
+2. Vào hồ sơ cá nhân hoặc trang đổi mật khẩu
+3. Bấm `Thiết lập mật khẩu`
+4. Hệ thống gửi email reset password tới email của học viên
+5. Học viên mở email và đặt mật khẩu mới
+6. Từ thời điểm đó có thể đăng nhập bằng cả Google lẫn email/username + mật khẩu
+
 ## 2. Checklist kiểm thử thủ công
 
 ### 2.1 Student login
@@ -71,6 +80,9 @@
 - [ ] Staff trùng email bị chặn
 - [ ] Header và sidebar hiển thị đúng avatar Google
 - [ ] Trang hồ sơ hiển thị `Google` ở trường hình thức đăng nhập
+- [ ] Tài khoản Google có nút `Thiết lập mật khẩu`
+- [ ] Bấm nút sẽ gửi email reset password thành công
+- [ ] Sau khi đặt mật khẩu, đăng nhập bằng email hoặc username hoạt động
 
 ### 2.5 reCAPTCHA
 
@@ -133,6 +145,14 @@ Kiểm tra:
 3. redirect URI
 4. email tài khoản thuộc role nào
 5. `APP_URL` có khớp với callback đã khai báo trong Google Console không
+
+### User đăng nhập Google nhưng không biết mật khẩu local
+
+Kiểm tra:
+1. tài khoản có email hợp lệ không
+2. SMTP có gửi mail thật không
+3. học viên đã bấm nút `Thiết lập mật khẩu` ở hồ sơ hoặc trang đổi mật khẩu chưa
+4. mail reset password có vào spam folder không
 
 ### User báo avatar bị hỏng sau Google login
 

@@ -8,6 +8,7 @@ use App\Models\Education\LopHoc;
 use App\Models\Auth\HoSoNguoiDung;
 use App\Models\Finance\HoaDon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Storage;
 
 class StudentController extends Controller
@@ -106,6 +107,38 @@ class StudentController extends Controller
     public function changePassword()
     {
         return view('clients.hoc-vien.change-password');
+    }
+
+    public function sendPasswordSetupLink(Request $request)
+    {
+        $user = $request->user();
+
+        if (!is_string($user->email) || $user->email === '') {
+            return back()->withErrors([
+                'password_setup' => 'Tài khoản của bạn chưa có email để nhận liên kết thiết lập mật khẩu.',
+            ]);
+        }
+
+        $status = Password::broker()->sendResetLink([
+            'email' => $user->email,
+        ]);
+
+        if ($status !== Password::RESET_LINK_SENT) {
+            return back()->withErrors([
+                'password_setup' => $this->passwordSetupStatusMessage($status),
+            ]);
+        }
+
+        return back()->with('success', 'Đã gửi email thiết lập mật khẩu. Vui lòng kiểm tra hộp thư của bạn.');
+    }
+
+    protected function passwordSetupStatusMessage(string $status): string
+    {
+        return match ($status) {
+            Password::INVALID_USER => 'Không tìm thấy tài khoản phù hợp để gửi email thiết lập mật khẩu.',
+            Password::RESET_THROTTLED => 'Bạn vừa yêu cầu quá nhanh. Vui lòng đợi ít phút rồi thử lại.',
+            default => 'Không thể gửi email thiết lập mật khẩu lúc này. Vui lòng thử lại sau.',
+        };
     }
 
     public function updatePassword(Request $request)
