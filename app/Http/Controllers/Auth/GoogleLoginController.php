@@ -67,7 +67,7 @@ class GoogleLoginController extends Controller
                 'grant_type' => 'authorization_code',
             ]);
 
-        if (!$tokenResponse->successful()) {
+        if (!$tokenResponse instanceof \Illuminate\Http\Client\Response || !$tokenResponse->successful()) {
             return redirect()->route('login')
                 ->withErrors(['google' => 'Không thể xác thực với Google. Vui lòng thử lại.']);
         }
@@ -83,7 +83,7 @@ class GoogleLoginController extends Controller
             ->timeout(15)
             ->get('https://www.googleapis.com/oauth2/v3/userinfo');
 
-        if (!$profileResponse->successful()) {
+        if (!$profileResponse instanceof \Illuminate\Http\Client\Response || !$profileResponse->successful()) {
             return redirect()->route('login')
                 ->withErrors(['google' => 'Không lấy được thông tin tài khoản Google.']);
         }

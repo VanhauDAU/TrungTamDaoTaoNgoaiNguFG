@@ -9,6 +9,7 @@ use App\Models\Auth\TaiKhoan;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
@@ -256,7 +257,7 @@ class LoginController extends Controller
 
     public function logout(Request $request)
     {
-        $currentUser = auth()->user();
+        $currentUser = Auth::user();
         $redirectRoute = $currentUser instanceof TaiKhoan && $currentUser->isStaff() ? 'admin.login' : 'login';
 
         $this->guard()->logout();
@@ -287,7 +288,7 @@ class LoginController extends Controller
 
     private function currentUser(): TaiKhoan
     {
-        $user = auth()->user();
+        $user = Auth::user();
 
         abort_unless($user instanceof TaiKhoan, 403);
 
