@@ -240,6 +240,7 @@ class LoginController extends Controller
             'matKhau' => Hash::make($request->new_password),
             'phaiDoiMatKhau' => 0,
         ]);
+        $user->rotateRememberToken();
 
         if ($user->isStaff()) {
             return redirect()->route('admin.dashboard')

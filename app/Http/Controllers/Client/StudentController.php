@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Education\DangKyLopHoc;
 use App\Models\Education\LopHoc;
 use App\Models\Auth\HoSoNguoiDung;
+use App\Models\Auth\TaiKhoan;
 use App\Models\Finance\HoaDon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Storage;
 
@@ -113,6 +115,10 @@ class StudentController extends Controller
     {
         $user = $request->user();
 
+        if (!$user instanceof TaiKhoan) {
+            abort(403);
+        }
+
         if (!is_string($user->email) || $user->email === '') {
             return back()->withErrors([
                 'password_setup' => 'Tài khoản của bạn chưa có email để nhận liên kết thiết lập mật khẩu.',
@@ -155,13 +161,18 @@ class StudentController extends Controller
 
         $user = auth()->user();
 
-        if (!\Illuminate\Support\Facades\Hash::check($request->current_password, $user->matKhau)) {
+        if (!$user instanceof TaiKhoan) {
+            abort(403);
+        }
+
+        if (!Hash::check($request->current_password, $user->matKhau)) {
             return back()->withErrors(['current_password' => 'Mật khẩu hiện tại không đúng']);
         }
 
         $user->update([
-            'matKhau' => \Illuminate\Support\Facades\Hash::make($request->new_password)
+            'matKhau' => Hash::make($request->new_password)
         ]);
+        $user->rotateRememberToken();
 
         return back()->with('success', 'Đổi mật khẩu thành công!');
     }

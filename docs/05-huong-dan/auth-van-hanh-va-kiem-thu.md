@@ -56,6 +56,8 @@
 - [ ] Đăng nhập bằng email thành công
 - [ ] Đăng nhập bằng username thành công
 - [ ] Submit trống thì `Joi` chặn ngay ở phía trình duyệt
+- [ ] Không tick `Ghi nhớ đăng nhập` thì hết session phải đăng nhập lại
+- [ ] Tick `Ghi nhớ đăng nhập` thì có thể đăng nhập lại tự động sau khi session thường hết hạn
 - [ ] Sai mật khẩu thì hiện lỗi
 - [ ] Sai nhiều lần thì lockout
 - [ ] Tài khoản chưa verify bị chuyển tới `/email/verify`
@@ -66,6 +68,7 @@
 - [ ] Nhân viên vào được `/admin/login`
 - [ ] Admin vào được `/admin/login`
 - [ ] Học viên không vào được `/admin/login`
+- [ ] Tick `Ghi nhớ đăng nhập` ở `/admin/login` hoạt động đúng
 
 ### 2.3 Registration
 
@@ -85,6 +88,7 @@
 - [ ] Tài khoản Google có nút `Thiết lập mật khẩu`
 - [ ] Bấm nút sẽ gửi email reset password thành công
 - [ ] Sau khi đặt mật khẩu, đăng nhập bằng email hoặc username hoạt động
+- [ ] Google login vẫn hoạt động ở chế độ remembered
 
 ### 2.5 reCAPTCHA
 
@@ -94,6 +98,13 @@
 - [ ] Form invalid theo `Joi` thì không gọi tiếp flow reCAPTCHA submit
 - [ ] Tắt `RECAPTCHA_ENABLED` thì form vẫn submit bình thường
 - [ ] Khi submit, request thực sự có trường `recaptcha_token`
+
+### 2.6 Remembered session invalidation
+
+- [ ] Học viên tự đổi mật khẩu thì remembered session cũ hết hiệu lực
+- [ ] Đổi mật khẩu bắt buộc thì remembered session cũ hết hiệu lực
+- [ ] Reset mật khẩu qua email thì remembered session cũ hết hiệu lực
+- [ ] Admin reset mật khẩu cho user thì remembered session cũ hết hiệu lực
 
 ## 3. Dữ liệu cần quan sát khi debug
 
@@ -156,6 +167,13 @@ Kiểm tra:
 2. SMTP có gửi mail thật không
 3. học viên đã bấm nút `Thiết lập mật khẩu` ở hồ sơ hoặc trang đổi mật khẩu chưa
 4. mail reset password có vào spam folder không
+
+### User báo vẫn còn đăng nhập trên thiết bị cũ sau khi đổi mật khẩu
+
+Kiểm tra:
+1. request đổi/reset mật khẩu có chạy thành công không
+2. `remember_token` trong bảng `taikhoan` có đổi sau thao tác đó không
+3. user đang dùng remembered login hay chỉ là session hiện tại chưa logout
 
 ### User báo avatar bị hỏng sau Google login
 

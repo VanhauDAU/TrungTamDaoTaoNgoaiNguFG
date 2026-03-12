@@ -91,6 +91,12 @@ class TaiKhoan extends Authenticatable implements MustVerifyEmail
         }
     }
 
+    public function rotateRememberToken(): void
+    {
+        $this->setRememberToken(Str::random(60));
+        $this->saveQuietly();
+    }
+
     /** Kiểm tra có phải Admin (role = 3) không */
     public function isAdmin(): bool
     {

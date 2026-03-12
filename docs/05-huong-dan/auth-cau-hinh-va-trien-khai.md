@@ -19,12 +19,14 @@ php artisan migrate
 
 Migration mới:
 - `2026_03_12_120000_add_auth_columns_to_taikhoan_table.php`
+- `2026_03_12_130000_add_remember_token_to_taikhoan_table.php`
 
 Migration này thêm:
 - `email_verified_at`
 - `auth_provider`
 - `google_id`
 - `google_avatar`
+- `remember_token` nếu bảng `taikhoan` chưa có cột này
 
 Ngoài ra migration sẽ đánh dấu `email_verified_at` cho tài khoản cũ để tránh khóa nhầm user hiện có.
 
@@ -169,12 +171,14 @@ Ghi chú:
 - mở `/login`
 - thử đăng nhập học viên
 - thử tài khoản chưa verify
+- thử login có và không tick `Ghi nhớ đăng nhập`
 
 ### Staff login
 
 - mở `/admin/login`
 - thử đăng nhập giáo viên/nhân viên/admin
 - thử dùng tài khoản học viên ở `/admin/login` và xác nhận bị từ chối
+- thử remembered login ở `/admin/login`
 
 ### Registration
 

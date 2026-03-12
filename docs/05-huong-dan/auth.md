@@ -9,6 +9,7 @@ Tài liệu này là điểm vào chính cho module Auth sau đợt nâng cấp.
 Module Auth hiện bao gồm:
 - đăng nhập học viên
 - đăng nhập nhân sự
+- ghi nhớ đăng nhập
 - đăng ký học viên
 - xác thực email
 - quên mật khẩu
@@ -127,12 +128,14 @@ Ví dụ:
 - Có reCAPTCHA nếu đã bật cấu hình.
 - Nếu chưa verify email thì sẽ bị chuyển sang trang verify.
 - Nút Google chỉ hiện khi cả `GOOGLE_CLIENT_ID` và `GOOGLE_CLIENT_SECRET` đều đã được cấu hình.
+- Checkbox `Ghi nhớ đăng nhập` dùng cơ chế remember me chuẩn của Laravel.
 
 ### Đăng nhập staff
 
 - Chỉ dùng ở `/admin/login`.
 - Chỉ chấp nhận giáo viên, nhân viên, admin.
 - Không dùng Google login ở đây.
+- Vẫn hỗ trợ checkbox `Ghi nhớ đăng nhập`.
 
 ### Đăng ký học viên
 
@@ -177,6 +180,12 @@ Ví dụ:
   - đổi mật khẩu bắt buộc
   - đổi mật khẩu ở khu học viên
 - `Joi` không thay thế validation của Laravel. Backend vẫn là lớp kiểm tra bắt buộc để bảo mật.
+
+### Ghi nhớ đăng nhập
+
+- Login bằng form thường chỉ remembered khi người dùng tick checkbox.
+- Google login hiện được giữ ở chế độ remembered để đồng nhất với trải nghiệm social login hiện tại.
+- Khi mật khẩu bị đổi hoặc reset, hệ thống rotate `remember_token` để buộc các phiên remembered cũ hết hiệu lực.
 
 ## 7. Checklist đọc nhanh
 
