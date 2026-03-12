@@ -17,7 +17,8 @@
 ### 2.1 Tách hai cổng đăng nhập
 
 - Học viên dùng `/login`
-- Giáo viên, nhân viên, admin dùng `/admin/login`
+- Giáo viên dùng `/teacher/login`
+- Nhân viên và admin dùng `/staff/login`
 
 Lý do:
 - UX rõ ràng hơn.
@@ -52,7 +53,8 @@ Lý do:
 - `/password/email`
 
 Không áp dụng ở giai đoạn này cho:
-- `/admin/login`
+- `/teacher/login`
+- `/staff/login`
 
 Lý do:
 - Giảm bot/spam ở khu vực public.
@@ -95,7 +97,7 @@ Luồng mới:
 ### Giáo viên / Nhân viên / Admin
 
 Luồng mới:
-- vào `/admin/login`
+- vào `/teacher/login` hoặc `/staff/login`
 - đăng nhập bằng email hoặc mã hệ thống
 - nếu là tài khoản mới tạo thì bị chuyển sang đổi mật khẩu bắt buộc
 
@@ -114,7 +116,7 @@ Luồng mới:
 ### Routing
 
 - Bật `Auth::routes(['verify' => true])`
-- Thêm `/admin/login`
+- Thêm `/teacher/login` và `/staff/login`
 - Thêm `/auth/google/redirect`
 - Thêm `/auth/google/callback`
 - Áp middleware `verified.student` cho khu vực học viên
@@ -134,7 +136,7 @@ Thêm cột vào `taikhoan`:
 - Audit log chuyên biệt cho Google link/unlink
 - Tách guard riêng cho staff và student
 - Social login cho Facebook
-- reCAPTCHA cho `/admin/login`
+- không dùng reCAPTCHA cho các cổng nội bộ `/teacher/login` và `/staff/login` ở giai đoạn đầu
 
 ## 6. Rủi ro và lưu ý
 

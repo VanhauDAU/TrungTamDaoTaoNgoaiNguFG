@@ -7,7 +7,7 @@
 ### Auth & User Management
 
 - [x] Đăng nhập / Đăng xuất (Laravel Auth)
-- [x] Tách cổng đăng nhập học viên `/login` và nhân sự `/admin/login`
+- [x] Tách cổng đăng nhập học viên `/login`, giảng viên `/teacher/login`, nhân viên-admin `/staff/login`
 - [x] Phân quyền: Admin, Giáo viên, Nhân viên, Học viên
 - [x] Quản lý tài khoản hệ thống (bật/tắt, đặt lại mật khẩu)
 - [x] Hồ sơ người dùng (ảnh đại diện, thông tin cá nhân)

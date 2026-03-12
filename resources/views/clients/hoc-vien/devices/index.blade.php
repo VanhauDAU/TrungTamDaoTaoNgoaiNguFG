@@ -151,7 +151,9 @@
                                     };
 
                                     $portalLabel = match ($device['portal']) {
-                                        'admin' => 'Cổng nhân sự',
+                                        'teacher' => 'Cổng giảng viên',
+                                        'staff' => 'Cổng nhân viên',
+                                        'admin' => 'Cổng nhân viên',
                                         default => 'Cổng học viên',
                                     };
                                 @endphp

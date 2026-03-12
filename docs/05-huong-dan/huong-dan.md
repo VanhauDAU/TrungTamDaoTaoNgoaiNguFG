@@ -97,13 +97,16 @@ Xem thêm bộ tài liệu Auth chuyên biệt:
 
 ### 3.1 Đăng nhập
 
-Vào `http://localhost/admin/login` để đăng nhập nhân sự.
+Vào một trong các cổng nội bộ:
+
+- `http://localhost/teacher/login` cho giảng viên
+- `http://localhost/staff/login` cho nhân viên và admin
 
 Học viên dùng:
 
 - `http://localhost/login`
 
-Nếu truy cập `http://localhost/admin/dashboard` khi chưa đăng nhập, hệ thống sẽ điều hướng về cổng đăng nhập nhân sự.
+Nếu truy cập `http://localhost/admin/dashboard` khi chưa đăng nhập, hệ thống sẽ điều hướng về cổng nội bộ `/staff/login`.
 
 Tài khoản mặc định (sau seeder):
 

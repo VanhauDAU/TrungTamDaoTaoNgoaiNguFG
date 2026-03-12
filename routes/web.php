@@ -366,6 +366,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
 Auth::routes(['verify' => true]);
 
 Route::middleware('guest')->group(function () {
+    Route::get('/teacher/login', [LoginController::class, 'showTeacherLoginForm'])->name('teacher.login');
+    Route::post('/teacher/login', [LoginController::class, 'teacherLogin'])->name('teacher.login.submit');
+
+    Route::get('/staff/login', [LoginController::class, 'showStaffLoginForm'])->name('staff.login');
+    Route::post('/staff/login', [LoginController::class, 'staffLogin'])->name('staff.login.submit');
+
+    // Legacy internal login URL, giữ lại để không gãy bookmark cũ
     Route::get('/admin/login', [LoginController::class, 'showAdminLoginForm'])->name('admin.login');
     Route::post('/admin/login', [LoginController::class, 'adminLogin'])->name('admin.login.submit');
 

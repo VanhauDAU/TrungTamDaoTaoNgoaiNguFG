@@ -180,10 +180,10 @@ Ghi chú:
 
 ### Staff login
 
-- mở `/admin/login`
-- thử đăng nhập giáo viên/nhân viên/admin
-- thử dùng tài khoản học viên ở `/admin/login` và xác nhận bị từ chối
-- thử remembered login ở `/admin/login`
+- mở `/teacher/login` và thử tài khoản giáo viên
+- mở `/staff/login` và thử tài khoản nhân viên/admin
+- thử dùng tài khoản học viên ở các cổng nội bộ và xác nhận bị từ chối
+- thử remembered login ở cả `/teacher/login` và `/staff/login`
 
 ### Registration
 

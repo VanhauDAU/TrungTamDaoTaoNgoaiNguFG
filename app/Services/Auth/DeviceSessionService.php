@@ -243,11 +243,24 @@ class DeviceSessionService
 
     private function detectPortal(Request $request, TaiKhoan $user): string
     {
-        if ($request->routeIs('admin.*') || Str::startsWith($request->path(), 'admin')) {
-            return 'admin';
+        if ($request->routeIs('teacher.*') || Str::startsWith($request->path(), 'teacher')) {
+            return 'teacher';
         }
 
-        return $user->isStaff() ? 'admin' : 'student';
+        if ($request->routeIs('staff.*') || Str::startsWith($request->path(), 'staff')) {
+            return 'staff';
+        }
+
+        if ($request->routeIs('admin.*') || Str::startsWith($request->path(), 'admin')) {
+            return in_array($user->role, [TaiKhoan::ROLE_NHAN_VIEN, TaiKhoan::ROLE_ADMIN], true) ? 'staff' : 'teacher';
+        }
+
+        return match ($user->role) {
+            TaiKhoan::ROLE_GIAO_VIEN => 'teacher',
+            TaiKhoan::ROLE_NHAN_VIEN,
+            TaiKhoan::ROLE_ADMIN => 'staff',
+            default => 'student',
+        };
     }
 
     private function parseUserAgent(?string $userAgent): array

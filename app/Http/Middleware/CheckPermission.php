@@ -20,7 +20,7 @@ class CheckPermission
     public function handle(Request $request, Closure $next, string $feature, string $action = 'xem'): Response
     {
         if (!auth()->check()) {
-            return redirect()->route('login');
+            return redirect()->route('staff.login');
         }
 
         $user = auth()->user();

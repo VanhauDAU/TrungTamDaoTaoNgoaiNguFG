@@ -40,8 +40,11 @@ Module Auth hiện bao gồm:
 
 ### Staff
 
-- `GET /admin/login`
-- `POST /admin/login`
+- `GET /teacher/login`
+- `POST /teacher/login`
+- `GET /staff/login`
+- `POST /staff/login`
+- `GET /admin/login` là đường dẫn cũ, hiện redirect sang `/staff/login`
 
 ### Protected student area
 
@@ -136,13 +139,19 @@ Ví dụ:
 - Nếu chưa verify email thì sẽ bị chuyển sang trang verify.
 - Nút Google chỉ hiện khi cả `GOOGLE_CLIENT_ID` và `GOOGLE_CLIENT_SECRET` đều đã được cấu hình.
 - Checkbox `Ghi nhớ đăng nhập` dùng cơ chế remember me chuẩn của Laravel.
+- Nếu nhập sai liên tiếp, hệ thống khóa đăng nhập theo backoff tăng dần thay vì khóa cố định:
+  - lần sai thứ 5: khóa 1 phút
+  - lần sai thứ 6: khóa 5 phút
+  - lần sai thứ 7: khóa 10 phút
+  - các lần sau tăng thêm 5 phút mỗi lần
 
 ### Đăng nhập staff
 
-- Chỉ dùng ở `/admin/login`.
-- Chỉ chấp nhận giáo viên, nhân viên, admin.
-- Không dùng Google login ở đây.
+- Giảng viên dùng `/teacher/login`.
+- Nhân viên và admin dùng `/staff/login`.
+- Không dùng Google login ở các cổng nội bộ.
 - Vẫn hỗ trợ checkbox `Ghi nhớ đăng nhập`.
+- Hiện tại sau đăng nhập vẫn vào khu nội bộ `/admin/*`; sau này có thể tách `teacher.dashboard` và `staff.dashboard` mà không cần đổi core auth.
 
 ### Đăng ký học viên
 

@@ -25,11 +25,12 @@
 
 ### 1.3 Giáo viên / Nhân viên / Admin
 
-1. Truy cập `/admin/login`
-2. Nhập email hoặc mã tài khoản
-3. Đăng nhập thành công
-4. Nếu là tài khoản mới tạo thì bị ép đổi mật khẩu
-5. Vào `/admin/dashboard`
+1. Giảng viên truy cập `/teacher/login`
+2. Nhân viên hoặc admin truy cập `/staff/login`
+3. Nhập email hoặc mã tài khoản
+4. Đăng nhập thành công
+5. Nếu là tài khoản mới tạo thì bị ép đổi mật khẩu
+6. Hiện tại đều đi vào khu nội bộ `/admin/dashboard`
 
 ### 1.4 Google login cho học viên
 
@@ -59,17 +60,19 @@
 - [ ] Không tick `Ghi nhớ đăng nhập` thì hết session phải đăng nhập lại
 - [ ] Tick `Ghi nhớ đăng nhập` thì có thể đăng nhập lại tự động sau khi session thường hết hạn
 - [ ] Sai mật khẩu thì hiện lỗi
-- [ ] Sai nhiều lần thì lockout
+- [ ] Sai lần thứ 5 liên tiếp thì lockout 1 phút
+- [ ] Sai tiếp sau khi hết khóa thì thời gian lockout tăng 5 phút mỗi bậc
 - [ ] Tài khoản chưa verify bị chuyển tới `/email/verify`
 - [ ] Trang `/hoc-vien/thiet-bi-dang-nhap` hiển thị đúng thiết bị hiện tại
 
 ### 2.2 Admin login
 
-- [ ] Giáo viên vào được `/admin/login`
-- [ ] Nhân viên vào được `/admin/login`
-- [ ] Admin vào được `/admin/login`
-- [ ] Học viên không vào được `/admin/login`
-- [ ] Tick `Ghi nhớ đăng nhập` ở `/admin/login` hoạt động đúng
+- [ ] Giáo viên vào được `/teacher/login`
+- [ ] Nhân viên vào được `/staff/login`
+- [ ] Admin vào được `/staff/login`
+- [ ] Học viên không vào được các cổng nội bộ
+- [ ] Tick `Ghi nhớ đăng nhập` ở `/teacher/login` hoạt động đúng
+- [ ] Tick `Ghi nhớ đăng nhập` ở `/staff/login` hoạt động đúng
 
 ### 2.3 Registration
 
@@ -148,7 +151,7 @@ Kiểm tra:
 ### Staff báo không vào được admin
 
 Kiểm tra:
-1. có đang login ở `/admin/login` không
+1. có đang login đúng cổng `/teacher/login` hoặc `/staff/login` không
 2. role có phải `1`, `2`, `3` không
 3. tài khoản có bị khóa hoặc bị tắt không
 
@@ -184,6 +187,14 @@ Kiểm tra:
 2. `remember_token` trong bảng `taikhoan` có đổi sau thao tác đó không
 3. user đang dùng remembered login hay chỉ là session hiện tại chưa logout
 
+### User báo bị khóa đăng nhập quá lâu
+
+Kiểm tra:
+1. số lần sai liên tiếp gần đây trong `nhatky_dangnhap`
+2. lần đăng nhập thành công gần nhất đã xảy ra chưa
+3. `lockout_until` trong session còn bao lâu
+4. người dùng có đang tiếp tục nhập sai sau mỗi lần hết khóa hay không
+
 ### User báo avatar bị hỏng sau Google login
 
 Kiểm tra:
@@ -206,11 +217,12 @@ Kiểm tra:
 - Google login đang được triển khai theo flow OAuth trực tiếp bằng HTTP client, không dùng Socialite.
 - reCAPTCHA đang triển khai theo v3, action-based verification.
 - `Joi` đang là lớp validate client-side dùng chung cho các form Auth quan trọng.
+- Lockout hiện dùng chuỗi thất bại liên tiếp trong vòng 24 giờ gần nhất; đăng nhập thành công sẽ reset chuỗi này.
 - Token reCAPTCHA được gắn vào form bằng JavaScript trước khi submit; nếu form bị chỉnh sửa layout, cần đảm bảo token vẫn được append vào đúng form.
 
 ## 6. Khuyến nghị backlog tiếp theo
 
-- thêm 2FA cho `/admin/login`
+- thêm 2FA cho `/teacher/login` và `/staff/login`
 - thêm trang profile staff để tự đổi mật khẩu
 - thêm audit log cho link/unlink Google
 - thêm test feature riêng cho Auth khi repo có migration nền đầy đủ

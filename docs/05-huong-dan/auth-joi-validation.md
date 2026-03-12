@@ -27,7 +27,8 @@ Nói ngắn gọn:
 Hiện `Joi` đã áp dụng cho các form sau:
 
 - đăng nhập học viên `/login`
-- đăng nhập nhân sự `/admin/login`
+- đăng nhập giảng viên `/teacher/login`
+- đăng nhập nhân viên `/staff/login`
 - đăng ký học viên `/register`
 - quên mật khẩu `/password/email`
 - đặt lại mật khẩu `/password/reset`
