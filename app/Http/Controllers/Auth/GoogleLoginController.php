@@ -50,7 +50,9 @@ class GoogleLoginController extends Controller
                 ->withErrors(['google' => 'Đăng nhập Google đã bị hủy hoặc không thành công.']);
         }
 
-        if (!$request->filled('code') || $request->input('state') !== $request->session()->pull('google_oauth_state')) {
+        $state = (string) $request->session()->pull('google_oauth_state', '');
+
+        if (!$request->filled('code') || (string) $request->input('state', '') !== $state) {
             return redirect()->route('login')
                 ->withErrors(['google' => 'Phiên đăng nhập Google không hợp lệ. Vui lòng thử lại.']);
         }
@@ -72,6 +74,11 @@ class GoogleLoginController extends Controller
 
         $accessToken = $tokenResponse->json('access_token');
 
+        if (!is_string($accessToken) || $accessToken === '') {
+            return redirect()->route('login')
+                ->withErrors(['google' => 'Google không trả về access token hợp lệ.']);
+        }
+
         $profileResponse = Http::withToken($accessToken)
             ->timeout(15)
             ->get('https://www.googleapis.com/oauth2/v3/userinfo');
@@ -81,16 +88,16 @@ class GoogleLoginController extends Controller
                 ->withErrors(['google' => 'Không lấy được thông tin tài khoản Google.']);
         }
 
-        $googleUser = $profileResponse->json();
+        $googleUser = $this->normalizeGoogleUser($profileResponse->json());
 
-        if (!($googleUser['email_verified'] ?? false) || empty($googleUser['email'])) {
+        if (!$googleUser['email_verified'] || $googleUser['email'] === '') {
             return redirect()->route('login')
                 ->withErrors(['google' => 'Tài khoản Google chưa có email xác thực hợp lệ.']);
         }
 
         $existing = TaiKhoan::query()
             ->where(function ($query) use ($googleUser) {
-                if (!empty($googleUser['sub'])) {
+                if ($googleUser['sub'] !== null && $googleUser['sub'] !== '') {
                     $query->where('google_id', $googleUser['sub'])
                         ->orWhere('email', $googleUser['email']);
                     return;
@@ -117,7 +124,7 @@ class GoogleLoginController extends Controller
 
                 $existing->hoSoNguoiDung()->updateOrCreate(
                     ['taiKhoanId' => $existing->taiKhoanId],
-                    ['hoTen' => $existing->hoSoNguoiDung->hoTen ?? ($googleUser['name'] ?? $googleUser['email'])]
+                    ['hoTen' => $existing->hoSoNguoiDung?->hoTen ?? $googleUser['name']]
                 );
 
                 return $existing;
@@ -131,8 +138,8 @@ class GoogleLoginController extends Controller
                 'trangThai' => 1,
                 'phaiDoiMatKhau' => 0,
                 'auth_provider' => 'google',
-                'google_id' => $googleUser['sub'] ?? null,
-                'google_avatar' => $googleUser['picture'] ?? null,
+                'google_id' => $googleUser['sub'],
+                'google_avatar' => $googleUser['picture'],
                 'email_verified_at' => now(),
             ]);
 
@@ -140,8 +147,8 @@ class GoogleLoginController extends Controller
 
             HoSoNguoiDung::create([
                 'taiKhoanId' => $taiKhoan->taiKhoanId,
-                'hoTen' => $googleUser['name'] ?? $googleUser['email'],
-                'anhDaiDien' => $googleUser['picture'] ?? null,
+                'hoTen' => $googleUser['name'],
+                'anhDaiDien' => $googleUser['picture'],
             ]);
 
             return $taiKhoan;
@@ -164,5 +171,27 @@ class GoogleLoginController extends Controller
     {
         return filled(config('services.google.client_id'))
             && filled(config('services.google.client_secret'));
+    }
+
+    /**
+     * @param mixed $payload
+     * @return array{email:string,name:string,picture:?string,sub:?string,email_verified:bool}
+     */
+    private function normalizeGoogleUser(mixed $payload): array
+    {
+        $data = is_array($payload) ? $payload : [];
+        $email = isset($data['email']) && is_string($data['email']) ? $data['email'] : '';
+        $name = isset($data['name']) && is_string($data['name']) && $data['name'] !== '' ? $data['name'] : $email;
+        $picture = isset($data['picture']) && is_string($data['picture']) ? $data['picture'] : null;
+        $sub = isset($data['sub']) && is_string($data['sub']) ? $data['sub'] : null;
+        $emailVerified = (bool) ($data['email_verified'] ?? false);
+
+        return [
+            'email' => $email,
+            'name' => $name,
+            'picture' => $picture,
+            'sub' => $sub,
+            'email_verified' => $emailVerified,
+        ];
     }
 }

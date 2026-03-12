@@ -53,7 +53,7 @@ class LoginController extends Controller
         return $this->traitLogin($request);
     }
 
-    public function username()
+    public function username(): string
     {
         return 'taiKhoan';
     }
@@ -79,8 +79,12 @@ class LoginController extends Controller
 
     protected function authenticated(Request $request, $user)
     {
+        if (!$user instanceof TaiKhoan) {
+            return redirect()->route('login');
+        }
+
         NhatKyDangNhap::ghiLog(
-            $request->input($this->username()),
+            (string) $request->input($this->username(), ''),
             $request->ip(),
             true,
             $request->userAgent()
@@ -213,7 +217,7 @@ class LoginController extends Controller
 
     public function showForceChangePassword()
     {
-        if (auth()->user()->phaiDoiMatKhau != 1) {
+        if ($this->currentUser()->phaiDoiMatKhau != 1) {
             return redirect('/');
         }
 
@@ -230,7 +234,7 @@ class LoginController extends Controller
             'new_password.confirmed' => 'Xác nhận mật khẩu không khớp.',
         ]);
 
-        $user = auth()->user();
+        $user = $this->currentUser();
         $user->update([
             'matKhau' => Hash::make($request->new_password),
             'phaiDoiMatKhau' => 0,
@@ -252,7 +256,8 @@ class LoginController extends Controller
 
     public function logout(Request $request)
     {
-        $redirectRoute = auth()->user()?->isStaff() ? 'admin.login' : 'login';
+        $currentUser = auth()->user();
+        $redirectRoute = $currentUser instanceof TaiKhoan && $currentUser->isStaff() ? 'admin.login' : 'login';
 
         $this->guard()->logout();
 
@@ -270,7 +275,7 @@ class LoginController extends Controller
 
     private function loginPortal(Request $request): string
     {
-        return $request->attributes->get('login_portal', 'student');
+        return (string) $request->attributes->get('login_portal', 'student');
     }
 
     private function matchesPortal(TaiKhoan $user, string $portal): bool
@@ -278,5 +283,14 @@ class LoginController extends Controller
         return $portal === 'admin'
             ? $user->isStaff()
             : $user->role === TaiKhoan::ROLE_HOC_VIEN;
+    }
+
+    private function currentUser(): TaiKhoan
+    {
+        $user = auth()->user();
+
+        abort_unless($user instanceof TaiKhoan, 403);
+
+        return $user;
     }
 }
