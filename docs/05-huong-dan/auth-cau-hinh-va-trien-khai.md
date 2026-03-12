@@ -20,6 +20,8 @@ php artisan migrate
 Migration mới:
 - `2026_03_12_120000_add_auth_columns_to_taikhoan_table.php`
 - `2026_03_12_130000_add_remember_token_to_taikhoan_table.php`
+- `2026_03_12_140000_create_phien_dang_nhap_table.php`
+- `2026_03_12_140100_create_nhatky_bao_mat_table.php`
 
 Migration này thêm:
 - `email_verified_at`
@@ -27,6 +29,8 @@ Migration này thêm:
 - `google_id`
 - `google_avatar`
 - `remember_token` nếu bảng `taikhoan` chưa có cột này
+- `phien_dang_nhap` để theo dõi phiên và thiết bị hoạt động
+- `nhatky_bao_mat` để audit các sự kiện bảo mật nền
 
 Ngoài ra migration sẽ đánh dấu `email_verified_at` cho tài khoản cũ để tránh khóa nhầm user hiện có.
 
@@ -172,6 +176,7 @@ Ghi chú:
 - thử đăng nhập học viên
 - thử tài khoản chưa verify
 - thử login có và không tick `Ghi nhớ đăng nhập`
+- vào `/hoc-vien/thiet-bi-dang-nhap` và xác nhận thấy thiết bị hiện tại
 
 ### Staff login
 
@@ -193,6 +198,7 @@ Ghi chú:
 - xác nhận staff email không dùng được Google login
 - xác nhận avatar Google hiển thị đúng trên header/sidebar/profile
 - xác nhận profile hiển thị đúng hình thức đăng nhập
+- xác nhận phiên Google login được ghi vào trang thiết bị đã đăng nhập
 
 ### reCAPTCHA
 

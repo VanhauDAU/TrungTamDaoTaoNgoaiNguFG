@@ -39,7 +39,7 @@ class ResetPasswordController extends Controller
             'matKhau' => Hash::make($password),
             'phaiDoiMatKhau' => 0,
         ])->save();
-        $user->rotateRememberToken();
+        $user->rotateRememberToken('password_reset');
 
         $this->guard()->login($user);
     }

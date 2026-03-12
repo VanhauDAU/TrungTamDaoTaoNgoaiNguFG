@@ -133,7 +133,7 @@ class TaiKhoanController extends Controller
             'matKhau' => Hash::make($request->matKhau),
             'phaiDoiMatKhau' => 1,
         ]);
-        $taiKhoan->rotateRememberToken();
+        $taiKhoan->rotateRememberToken('admin_password_reset');
 
         return response()->json([
             'success' => true,

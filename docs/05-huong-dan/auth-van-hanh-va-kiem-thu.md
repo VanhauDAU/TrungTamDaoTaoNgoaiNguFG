@@ -61,6 +61,7 @@
 - [ ] Sai mật khẩu thì hiện lỗi
 - [ ] Sai nhiều lần thì lockout
 - [ ] Tài khoản chưa verify bị chuyển tới `/email/verify`
+- [ ] Trang `/hoc-vien/thiet-bi-dang-nhap` hiển thị đúng thiết bị hiện tại
 
 ### 2.2 Admin login
 
@@ -105,6 +106,14 @@
 - [ ] Đổi mật khẩu bắt buộc thì remembered session cũ hết hiệu lực
 - [ ] Reset mật khẩu qua email thì remembered session cũ hết hiệu lực
 - [ ] Admin reset mật khẩu cho user thì remembered session cũ hết hiệu lực
+
+### 2.7 Device session management
+
+- [ ] Thu hồi một thiết bị khác sẽ làm session của thiết bị đó hết hiệu lực
+- [ ] Thu hồi thiết bị đang dùng sẽ đăng xuất phiên hiện tại
+- [ ] `Đăng xuất khỏi tất cả thiết bị` sẽ logout luôn thiết bị hiện tại
+- [ ] Sau khi thu hồi thiết bị, remembered cookie cũ không tự khôi phục lại phiên đã bị cắt
+- [ ] `nhatky_bao_mat` có log cho `session_registered`, `session_revoked`, `logout_all_devices`, `remember_token_rotated`
 
 ## 3. Dữ liệu cần quan sát khi debug
 

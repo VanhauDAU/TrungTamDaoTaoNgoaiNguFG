@@ -13,6 +13,7 @@ use App\Models\Education\DangKyLopHoc;
 use App\Models\Facility\CoSoDaoTao;
 use App\Models\Interaction\ThongBao;
 use App\Models\Interaction\ThongBaoNguoiDung;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class TaiKhoan extends Authenticatable implements MustVerifyEmail
 {
@@ -91,10 +92,21 @@ class TaiKhoan extends Authenticatable implements MustVerifyEmail
         }
     }
 
-    public function rotateRememberToken(): void
+    public function rotateRememberToken(?string $reason = null, ?string $sessionId = null): void
     {
         $this->setRememberToken(Str::random(60));
         $this->saveQuietly();
+
+        if ($reason !== null) {
+            NhatKyBaoMat::create([
+                'taiKhoanId' => $this->taiKhoanId,
+                'sessionId' => $sessionId,
+                'suKien' => 'remember_token_rotated',
+                'moTa' => $this->rememberTokenRotationDescription($reason),
+                'duLieu' => ['reason' => $reason],
+                'thoiGian' => now(),
+            ]);
+        }
     }
 
     /** Kiểm tra có phải Admin (role = 3) không */
@@ -185,6 +197,16 @@ class TaiKhoan extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(ThongBaoNguoiDung::class, 'taiKhoanId', 'taiKhoanId');
     }
 
+    public function phienDangNhaps(): HasMany
+    {
+        return $this->hasMany(PhienDangNhap::class, 'taiKhoanId', 'taiKhoanId');
+    }
+
+    public function nhatKyBaoMats(): HasMany
+    {
+        return $this->hasMany(NhatKyBaoMat::class, 'taiKhoanId', 'taiKhoanId');
+    }
+
     /**
      * Kiểm tra user có quyền thực hiện action trên tính năng không.
      *
@@ -217,5 +239,18 @@ class TaiKhoan extends Authenticatable implements MustVerifyEmail
             ->first();
 
         return $pq ? (bool) $pq->{$col} : false;
+    }
+
+    private function rememberTokenRotationDescription(string $reason): string
+    {
+        return match ($reason) {
+            'password_changed' => 'Xoay remember token sau khi người dùng đổi mật khẩu.',
+            'force_password_change' => 'Xoay remember token sau khi đổi mật khẩu bắt buộc.',
+            'password_reset' => 'Xoay remember token sau khi đặt lại mật khẩu qua email.',
+            'admin_password_reset' => 'Xoay remember token do quản trị viên reset mật khẩu.',
+            'logout_all_devices' => 'Xoay remember token khi đăng xuất khỏi tất cả thiết bị.',
+            'device_revoke' => 'Xoay remember token khi thu hồi một thiết bị đã đăng nhập.',
+            default => 'Xoay remember token.',
+        };
     }
 }

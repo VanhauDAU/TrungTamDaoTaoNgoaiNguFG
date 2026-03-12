@@ -72,6 +72,9 @@ Route::prefix('/')->name('home.')->group(function () {
         Route::get('/', [StudentController::class, 'index'])->name('index');
         Route::post('/', [StudentController::class, 'updateProfile'])->name('update-profile');
         Route::post('/anh-dai-dien', [StudentController::class, 'updateAvatar'])->name('update-avatar');
+        Route::get('/thiet-bi-dang-nhap', [StudentController::class, 'devices'])->name('devices');
+        Route::post('/thiet-bi-dang-nhap/dang-xuat-tat-ca', [StudentController::class, 'logoutAllDevices'])->name('devices.logout-all');
+        Route::post('/thiet-bi-dang-nhap/{sessionId}/dang-xuat', [StudentController::class, 'revokeDeviceSession'])->name('devices.logout');
         Route::post('/thiet-lap-mat-khau', [StudentController::class, 'sendPasswordSetupLink'])->name('setup-password');
         Route::get('/doi-mat-khau', [StudentController::class, 'changePassword'])->name('change-password');
         Route::post('/doi-mat-khau', [StudentController::class, 'updatePassword'])->name('update-password');

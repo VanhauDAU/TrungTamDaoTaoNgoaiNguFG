@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\Concerns\ValidatesRecaptcha;
 use App\Http\Controllers\Controller;
 use App\Models\Auth\NhatKyDangNhap;
 use App\Models\Auth\TaiKhoan;
+use App\Services\Auth\DeviceSessionService;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -92,6 +93,11 @@ class LoginController extends Controller
         );
 
         session()->forget('lockout_until');
+        $request->session()->put([
+            'auth_portal' => $this->loginPortal($request),
+            'auth_login_method' => 'password',
+            'auth_remembered' => $request->boolean('remember'),
+        ]);
 
         $user->forceFill(['lastLogin' => now()])->save();
 
@@ -240,7 +246,7 @@ class LoginController extends Controller
             'matKhau' => Hash::make($request->new_password),
             'phaiDoiMatKhau' => 0,
         ]);
-        $user->rotateRememberToken();
+        $user->rotateRememberToken('force_password_change', (string) $request->session()->getId());
 
         if ($user->isStaff()) {
             return redirect()->route('admin.dashboard')
@@ -256,10 +262,19 @@ class LoginController extends Controller
             ->with('success', 'Đổi mật khẩu thành công! Chào mừng bạn đến hệ thống.');
     }
 
-    public function logout(Request $request)
+    public function logout(Request $request, DeviceSessionService $deviceSessionService)
     {
         $currentUser = Auth::user();
         $redirectRoute = $currentUser instanceof TaiKhoan && $currentUser->isStaff() ? 'admin.login' : 'login';
+
+        if ($currentUser instanceof TaiKhoan) {
+            $deviceSessionService->revokeSessionById(
+                $currentUser,
+                (string) $request->session()->getId(),
+                'logout_current',
+                $request
+            );
+        }
 
         $this->guard()->logout();
 

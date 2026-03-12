@@ -8,7 +8,9 @@ use App\Models\Education\LopHoc;
 use App\Models\Auth\HoSoNguoiDung;
 use App\Models\Auth\TaiKhoan;
 use App\Models\Finance\HoaDon;
+use App\Services\Auth\DeviceSessionService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Storage;
@@ -111,6 +113,19 @@ class StudentController extends Controller
         return view('clients.hoc-vien.change-password');
     }
 
+    public function devices(Request $request, DeviceSessionService $deviceSessionService)
+    {
+        $user = $request->user();
+
+        if (!$user instanceof TaiKhoan) {
+            abort(403);
+        }
+
+        $devices = $deviceSessionService->activeSessionsForUser($user, $request);
+
+        return view('clients.hoc-vien.devices.index', compact('devices'));
+    }
+
     public function sendPasswordSetupLink(Request $request)
     {
         $user = $request->user();
@@ -172,9 +187,57 @@ class StudentController extends Controller
         $user->update([
             'matKhau' => Hash::make($request->new_password)
         ]);
-        $user->rotateRememberToken();
+        $user->rotateRememberToken('password_changed', (string) $request->session()->getId());
 
         return back()->with('success', 'Đổi mật khẩu thành công!');
+    }
+
+    public function revokeDeviceSession(string $sessionId, Request $request, DeviceSessionService $deviceSessionService)
+    {
+        $user = $request->user();
+
+        if (!$user instanceof TaiKhoan) {
+            abort(403);
+        }
+
+        $deviceSessionService->revokeSessionById(
+            $user,
+            $sessionId,
+            $sessionId === (string) $request->session()->getId() ? 'logout_current' : 'manual_revoke',
+            $request
+        );
+
+        if ($sessionId === (string) $request->session()->getId()) {
+            Auth::guard()->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('login')
+                ->with('success', 'Đã đăng xuất thiết bị hiện tại.');
+        }
+
+        $user->rotateRememberToken('device_revoke', (string) $request->session()->getId());
+
+        return back()->with('success', 'Đã đăng xuất thiết bị đã chọn. Các cookie ghi nhớ đăng nhập cũ cũng đã bị vô hiệu.');
+    }
+
+    public function logoutAllDevices(Request $request, DeviceSessionService $deviceSessionService)
+    {
+        $user = $request->user();
+
+        if (!$user instanceof TaiKhoan) {
+            abort(403);
+        }
+
+        $deviceSessionService->revokeAllSessions($user, $request, 'logout_all_devices');
+        $user->rotateRememberToken('logout_all_devices', (string) $request->session()->getId());
+
+        Auth::guard()->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('login')
+            ->with('success', 'Đã đăng xuất khỏi tất cả thiết bị.');
     }
 
     public function invoices()
