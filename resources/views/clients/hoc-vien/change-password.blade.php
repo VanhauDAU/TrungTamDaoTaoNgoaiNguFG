@@ -61,7 +61,7 @@
                             </div>
                         @endif
 
-                        <form action="{{ route('home.student.update-password') }}" method="POST">
+                        <form id="student-change-password-form" action="{{ route('home.student.update-password') }}" method="POST" novalidate data-joi-schema="studentChangePassword">
                             @csrf
                             <div class="row g-4">
                                 <div class="col-12">

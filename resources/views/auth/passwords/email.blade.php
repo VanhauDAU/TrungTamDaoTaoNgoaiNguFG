@@ -161,7 +161,7 @@
                     <div class="h-100 d-flex flex-column justify-content-center">
                         <div class="row justify-content-center">
                             <div class="col-lg-8 col-xl-7 px-4">
-                                <form id="forgot-password-form" method="POST" action="{{ route('password.email') }}" class="needs-validation">
+                                <form id="forgot-password-form" method="POST" action="{{ route('password.email') }}" class="needs-validation" novalidate data-joi-schema="forgotPassword">
                                     @csrf
                                     <h3 class="fs-48 ff-title text-center cl-green mb-lg-3 mb-2">Quên mật khẩu?</h3>
                                     <p class="text-center text-muted mb-4">
@@ -230,24 +230,4 @@
             </div>
         </div>
     </div>
-@endsection
-
-@section('script')
-    <script>
-        // Bootstrap validation
-        (function() {
-            'use strict'
-            var forms = document.querySelectorAll('.needs-validation')
-            Array.prototype.slice.call(forms)
-                .forEach(function(form) {
-                    form.addEventListener('submit', function(event) {
-                        if (!form.checkValidity()) {
-                            event.preventDefault()
-                            event.stopPropagation()
-                        }
-                        form.classList.add('was-validated')
-                    }, false)
-                })
-        })()
-    </script>
 @endsection

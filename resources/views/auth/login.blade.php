@@ -227,7 +227,7 @@
                     <div class="h-100 d-flex flex-column justify-content-center">
                         <div class="row justify-content-center">
                             <div class="col-lg-8 col-xl-6 px-4">
-                                <form id="loginform" name="loginform" class="needs-validation" novalidate
+                                <form id="loginform" name="loginform" class="needs-validation" novalidate data-joi-schema="login"
                                     action="{{ $submitRoute ?? route('login') }}" method="POST">
                                     @csrf
                                     <h3 class="fs-48 ff-title text-center cl-green mb-lg-3 mb-2">{{ $portalTitle ?? 'Đăng nhập' }}</h3>
@@ -381,22 +381,6 @@
                 icon.classList.add("fa-eye-slash");
             }
         }
-
-        // Bootstrap validation
-        (function() {
-            'use strict'
-            var forms = document.querySelectorAll('.needs-validation')
-            Array.prototype.slice.call(forms)
-                .forEach(function(form) {
-                    form.addEventListener('submit', function(event) {
-                        if (!form.checkValidity()) {
-                            event.preventDefault()
-                            event.stopPropagation()
-                        }
-                        form.classList.add('was-validated')
-                    }, false)
-                })
-        })()
 
         // ── Lockout Countdown Timer (Realtime & Safe) ──
         document.addEventListener("DOMContentLoaded", function() {

@@ -210,7 +210,7 @@
                                     </div>
                                 @endif
 
-                                <form action="{{ route('force-change-password.process') }}" method="POST">
+                                <form id="force-change-password-form" action="{{ route('force-change-password.process') }}" method="POST" novalidate data-joi-schema="forceChangePassword">
                                     @csrf
 
                                     {{-- Mật khẩu mới --}}
