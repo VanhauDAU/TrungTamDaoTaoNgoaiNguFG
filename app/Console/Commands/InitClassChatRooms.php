@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Services\ChatRoomService;
+use App\Services\Client\Chat\ChatRoomService;
 use Illuminate\Console\Command;
 
 class InitClassChatRooms extends Command

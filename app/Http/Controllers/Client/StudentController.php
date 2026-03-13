@@ -25,7 +25,7 @@ class StudentController extends Controller
     public function updateProfile(Request $request)
     {
         /** @var TaiKhoan $user */
-        $user = auth()->user();
+        $user = Auth::user();
         if (!$user instanceof TaiKhoan) abort(403);
         $this->studentService->updateProfile($request, $user);
         return back()->with('success', 'Cập nhật thông tin thành công!');
@@ -34,7 +34,7 @@ class StudentController extends Controller
     public function updateAvatar(Request $request)
     {
         /** @var TaiKhoan $user */
-        $user = auth()->user();
+        $user = Auth::user();
         if (!$user instanceof TaiKhoan) abort(403);
         $this->studentService->updateAvatar($request, $user);
         return back()->with('success_avatar', 'Cập nhật ảnh đại diện thành công!');
@@ -74,7 +74,7 @@ class StudentController extends Controller
     public function updatePassword(Request $request)
     {
         /** @var TaiKhoan $user */
-        $user = auth()->user();
+        $user = Auth::user();
         if (!$user instanceof TaiKhoan) abort(403);
         try {
             $this->studentService->updatePassword($request, $user);
@@ -114,7 +114,7 @@ class StudentController extends Controller
     public function invoices()
     {
         /** @var TaiKhoan $user */
-        $user = auth()->user();
+        $user = Auth::user();
         if (!$user instanceof TaiKhoan) abort(403);
         return view('clients.hoc-vien.invoices.index', $this->studentService->getInvoices($user));
     }
@@ -122,7 +122,7 @@ class StudentController extends Controller
     public function invoiceDetail(int $id)
     {
         /** @var TaiKhoan $user */
-        $user = auth()->user();
+        $user = Auth::user();
         if (!$user instanceof TaiKhoan) abort(403);
         return view('clients.hoc-vien.invoices.show', $this->studentService->getInvoiceDetail($user, $id));
     }
@@ -130,7 +130,7 @@ class StudentController extends Controller
     public function myClasses()
     {
         /** @var TaiKhoan $user */
-        $user = auth()->user();
+        $user = Auth::user();
         if (!$user instanceof TaiKhoan) abort(403);
         return view('clients.hoc-vien.classes.index', $this->studentService->getMyClasses($user));
     }
@@ -138,7 +138,7 @@ class StudentController extends Controller
     public function schedule(Request $request)
     {
         /** @var TaiKhoan $user */
-        $user = auth()->user();
+        $user = Auth::user();
         if (!$user instanceof TaiKhoan) abort(403);
         return view('clients.hoc-vien.lich-hoc.index', $this->studentService->getSchedule($request, $user));
     }

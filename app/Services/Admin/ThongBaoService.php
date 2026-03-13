@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Admin;
 
 use App\Models\Interaction\ThongBao;
 use App\Models\Interaction\ThongBaoNguoiDung;

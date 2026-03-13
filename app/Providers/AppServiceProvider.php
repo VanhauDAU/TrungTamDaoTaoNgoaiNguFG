@@ -60,7 +60,7 @@ use App\Contracts\ThongBaoServiceInterface;
 // ── Phase 8 Services ─────────────────────────────────────────────
 use App\Services\Admin\BaiVietService;
 use App\Services\Admin\LienHeService;
-use App\Services\ThongBaoService;
+use App\Services\Admin\ThongBaoService;
 
 class AppServiceProvider extends ServiceProvider
 {

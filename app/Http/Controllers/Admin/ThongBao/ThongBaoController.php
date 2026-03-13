@@ -11,7 +11,7 @@ use App\Models\Auth\TaiKhoan;
 use App\Models\Education\LopHoc;
 use App\Models\Course\KhoaHoc;
 use App\Models\Facility\CoSoDaoTao;
-use App\Services\ThongBaoService;
+use App\Services\Admin\ThongBaoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;

@@ -12,6 +12,7 @@ use App\Models\Finance\HoaDon;
 use App\Models\Auth\TaiKhoan;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class CourseService implements CourseServiceInterface
@@ -100,7 +101,7 @@ class CourseService implements CourseServiceInterface
 
     public function getConfirmRegistrationData(string $slug, string $slugLopHoc): array
     {
-        $user  = auth()->user();
+        $user  = Auth::user();
         if (!$user instanceof TaiKhoan) {
             throw new \RuntimeException('Vui lòng đăng nhập để đăng ký lớp học.');
         }
@@ -120,7 +121,7 @@ class CourseService implements CourseServiceInterface
 
     public function processRegistration(Request $request, string $slug, string $slugLopHoc): void
     {
-        $user  = auth()->user();
+        $user  = Auth::user();
         if (!$user instanceof TaiKhoan) {
             throw new \RuntimeException('Vui lòng đăng nhập để đăng ký lớp học.');
         }

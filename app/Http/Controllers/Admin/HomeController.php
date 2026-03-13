@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Auth\TaiKhoan;
-use App\Services\DashboardService;
+use App\Services\Admin\DashboardService;
 use Illuminate\Http\Request;
 
 class HomeController extends Controller
