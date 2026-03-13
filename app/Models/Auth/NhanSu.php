@@ -3,7 +3,7 @@
 namespace App\Models\Auth;
 
 use Illuminate\Database\Eloquent\Model;
-
+use App\Models\Facility\CoSoDaoTao;
 class NhanSu extends Model
 {
     //
