@@ -45,7 +45,7 @@ use App\Services\Admin\PhongHocService;
 use App\Services\Admin\HoaDonService;
 
 // ── Client Contracts ──────────────────────────────────────────────
- use App\Contracts\Client\CourseServiceInterface;
+use App\Contracts\Client\CourseServiceInterface;
 use App\Contracts\Client\StudentServiceInterface;
 
 // ── Client Services ──────────────────────────────────────────────

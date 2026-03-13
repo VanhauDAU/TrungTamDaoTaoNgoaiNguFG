@@ -16,6 +16,7 @@ class StudentController extends Controller
         protected StudentServiceInterface $studentService
     ) {}
 
+    /** @return \Illuminate\Http\RedirectResponse|\Illuminate\Contracts\View\View */
     public function index()
     {
         return view('clients.hoc-vien.profile.index');
@@ -23,13 +24,17 @@ class StudentController extends Controller
 
     public function updateProfile(Request $request)
     {
-        $this->studentService->updateProfile($request, auth()->user());
+        /** @var TaiKhoan $user */
+        $user = auth()->user();
+        $this->studentService->updateProfile($request, $user);
         return back()->with('success', 'Cập nhật thông tin thành công!');
     }
 
     public function updateAvatar(Request $request)
     {
-        $this->studentService->updateAvatar($request, auth()->user());
+        /** @var TaiKhoan $user */
+        $user = auth()->user();
+        $this->studentService->updateAvatar($request, $user);
         return back()->with('success_avatar', 'Cập nhật ảnh đại diện thành công!');
     }
 
@@ -66,8 +71,8 @@ class StudentController extends Controller
 
     public function updatePassword(Request $request)
     {
+        /** @var TaiKhoan $user */
         $user = auth()->user();
-        if (!$user instanceof TaiKhoan) abort(403);
         try {
             $this->studentService->updatePassword($request, $user);
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -105,21 +110,29 @@ class StudentController extends Controller
 
     public function invoices()
     {
-        return view('clients.hoc-vien.invoices.index', $this->studentService->getInvoices(auth()->user()));
+        /** @var TaiKhoan $user */
+        $user = auth()->user();
+        return view('clients.hoc-vien.invoices.index', $this->studentService->getInvoices($user));
     }
 
     public function invoiceDetail(int $id)
     {
-        return view('clients.hoc-vien.invoices.show', $this->studentService->getInvoiceDetail(auth()->user(), $id));
+        /** @var TaiKhoan $user */
+        $user = auth()->user();
+        return view('clients.hoc-vien.invoices.show', $this->studentService->getInvoiceDetail($user, $id));
     }
 
     public function myClasses()
     {
-        return view('clients.hoc-vien.classes.index', $this->studentService->getMyClasses(auth()->user()));
+        /** @var TaiKhoan $user */
+        $user = auth()->user();
+        return view('clients.hoc-vien.classes.index', $this->studentService->getMyClasses($user));
     }
 
     public function schedule(Request $request)
     {
-        return view('clients.hoc-vien.lich-hoc.index', $this->studentService->getSchedule($request, auth()->user()));
+        /** @var TaiKhoan $user */
+        $user = auth()->user();
+        return view('clients.hoc-vien.lich-hoc.index', $this->studentService->getSchedule($request, $user));
     }
 }
