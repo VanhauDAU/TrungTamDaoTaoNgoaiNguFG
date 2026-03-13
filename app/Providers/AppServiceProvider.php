@@ -44,6 +44,14 @@ use App\Services\Admin\CoSoService;
 use App\Services\Admin\PhongHocService;
 use App\Services\Admin\HoaDonService;
 
+// ── Client Contracts ──────────────────────────────────────────────
+ use App\Contracts\Client\CourseServiceInterface;
+use App\Contracts\Client\StudentServiceInterface;
+
+// ── Client Services ──────────────────────────────────────────────
+use App\Services\Client\CourseService;
+use App\Services\Client\StudentService;
+
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -74,7 +82,9 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(PhongHocServiceInterface::class, PhongHocService::class);
         $this->app->bind(HoaDonServiceInterface::class, HoaDonService::class);
 
-        // ── Phase 5: Client (sẽ bổ sung) ──────────────────────────────────
+        // ── Phase 5: Client ──────────────────────────────────────────────
+        $this->app->bind(CourseServiceInterface::class, CourseService::class);
+        $this->app->bind(StudentServiceInterface::class, StudentService::class);
     }
 
     /**

@@ -58,8 +58,6 @@ class LoginService implements LoginServiceInterface
             default   => 'Đăng nhập học viên',
         };
 
-        $recaptchaService = app(\App\Http\Controllers\Auth\Concerns\ValidatesRecaptcha::class);
-
         return [
             'portal'                  => $portal,
             'portalTitle'             => 'Đăng nhập',
