@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Admin;
 
 use App\Models\Interaction\ThongBao;
 use App\Models\Interaction\ThongBaoNguoiDung;
@@ -12,7 +12,9 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
-class ThongBaoService
+use App\Contracts\ThongBaoServiceInterface;
+
+class ThongBaoService implements ThongBaoServiceInterface
 {
     /**
      * Gửi thông báo đi: tạo records trong thongbaonguoidung

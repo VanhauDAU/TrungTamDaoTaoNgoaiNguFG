@@ -29,8 +29,8 @@
             rooms: @json($rooms),
             selectedRoom: @json($selectedRoom),
             csrf: '{{ csrf_token() }}',
-            reactionEmojis: @json(\App\Services\ChatMessageService::reactionEmojis()),
-            composerEmojis: @json(\App\Services\ChatMessageService::composerEmojis()),
+            reactionEmojis: @json(\App\Services\Client\Chat\ChatMessageService::reactionEmojis()),
+            composerEmojis: @json(\App\Services\Client\Chat\ChatMessageService::composerEmojis()),
             endpoints: {
                 poll: '{{ route('home.api.chat.poll') }}',
                 rooms: '{{ route('home.api.chat.rooms') }}',

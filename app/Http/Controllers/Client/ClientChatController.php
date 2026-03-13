@@ -4,10 +4,10 @@ namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
 use App\Models\Interaction\Chat\ChatRoomMember;
-use App\Services\ChatAccessService;
-use App\Services\ChatMessageService;
-use App\Services\ChatPresenceService;
-use App\Services\ChatRoomService;
+use App\Services\Client\Chat\ChatAccessService;
+use App\Services\Client\Chat\ChatMessageService;
+use App\Services\Client\Chat\ChatPresenceService;
+use App\Services\Client\Chat\ChatRoomService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;

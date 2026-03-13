@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Client\Chat;
 
 use App\Models\Auth\TaiKhoan;
 use App\Models\Education\LopHoc;
