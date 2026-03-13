@@ -19,6 +19,11 @@ class CourseService implements CourseServiceInterface
 {
     public function getList(Request $request): array
     {
+        $visibleStatuses = [
+            LopHoc::TRANG_THAI_SAP_MO,
+            LopHoc::TRANG_THAI_DANG_TUYEN_SINH,
+        ];
+
         $tree = DanhMucKhoaHoc::with(['childrenRecursive' => fn($q) => $q->where('trangThai', 1)->ordered()])
             ->whereNull('parent_id')->where('trangThai', 1)->withCount('khoaHocs')->ordered()->get();
 
@@ -28,7 +33,11 @@ class CourseService implements CourseServiceInterface
         $activeDanhMuc = null;
         $activeIds    = [];
 
-        $query = KhoaHoc::where('trangThai', 1)->whereHas('lopHoc');
+        $query = KhoaHoc::where('trangThai', 1)
+            ->whereHas('lopHoc', fn($q) => $q->whereIn('trangThai', $visibleStatuses))
+            ->withCount([
+                'lopHoc as openClassCount' => fn($q) => $q->whereIn('trangThai', $visibleStatuses),
+            ]);
 
         if ($activeSlug) {
             $dm = DanhMucKhoaHoc::with('childrenRecursive')->where('slug', $activeSlug)->first();
@@ -67,15 +76,26 @@ class CourseService implements CourseServiceInterface
 
     public function getDetail(string $slug): array
     {
+        $visibleStatuses = [
+            LopHoc::TRANG_THAI_SAP_MO,
+            LopHoc::TRANG_THAI_DANG_TUYEN_SINH,
+        ];
+
         $course = KhoaHoc::where('slug', $slug)->with([
-            'danhMuc', 'lopHoc.coSo.tinhThanh', 'lopHoc.phongHoc',
-            'lopHoc.taiKhoan.hoSoNguoiDung', 'lopHoc.dangKyLopHocs', 'hocPhis',
+            'danhMuc',
+            'hocPhis',
+            'lopHoc' => fn($q) => $q->whereIn('trangThai', $visibleStatuses)->with([
+                'coSo.tinhThanh',
+                'phongHoc',
+                'taiKhoan.hoSoNguoiDung',
+                'dangKyLopHocs',
+            ]),
         ])->firstOrFail();
 
         $coSos = $course->lopHoc->filter(fn($l) => $l->coSo !== null)->map(fn($l) => $l->coSo)->unique('coSoId')->values();
 
         $upcomingClass = $course->lopHoc
-            ->filter(fn($l) => in_array((int) $l->trangThai, [LopHoc::TRANG_THAI_SAP_MO, LopHoc::TRANG_THAI_DANG_TUYEN_SINH]) && $l->ngayBatDau !== null)
+            ->filter(fn($l) => in_array((int) $l->trangThai, $visibleStatuses) && $l->ngayBatDau !== null)
             ->sortBy('ngayBatDau')->first();
 
         $relatedCourses = KhoaHoc::where('danhMucId', $course->danhMucId)
