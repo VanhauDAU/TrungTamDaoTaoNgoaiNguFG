@@ -8,14 +8,46 @@ use App\Models\Course\KhoaHoc;
 use App\Models\Facility\CoSoDaoTao;
 use Illuminate\Pagination\Paginator;
 
+// ── Auth Contracts ─────────────────────────────────────────────────────────
+use App\Contracts\Auth\LoginServiceInterface;
+use App\Contracts\Auth\RegisterServiceInterface;
+use App\Contracts\Auth\GoogleAuthServiceInterface;
+
+// ── Auth Services ──────────────────────────────────────────────────────────
+use App\Services\Auth\LoginService;
+use App\Services\Auth\RegisterService;
+use App\Services\Auth\GoogleAuthService;
+
+// ── Admin Contracts ────────────────────────────────────────────────────────
+use App\Contracts\Admin\LopHocServiceInterface;
+use App\Contracts\Admin\KhoaHocServiceInterface;
+
+// ── Admin Services ─────────────────────────────────────────────────────────
+use App\Services\Admin\LopHocService;
+use App\Services\Admin\KhoaHocService;
+
 class AppServiceProvider extends ServiceProvider
 {
     /**
      * Register any application services.
+     * Đăng ký Interface → Implementation binding.
      */
     public function register(): void
     {
-        //
+        // ── Phase 1: Auth ──────────────────────────────────────────────────
+        $this->app->bind(LoginServiceInterface::class, LoginService::class);
+        $this->app->bind(RegisterServiceInterface::class, RegisterService::class);
+        $this->app->bind(GoogleAuthServiceInterface::class, GoogleAuthService::class);
+
+        // ── Phase 2: Admin/KhoaHoc ─────────────────────────────────────────
+        $this->app->bind(LopHocServiceInterface::class, LopHocService::class);
+        $this->app->bind(KhoaHocServiceInterface::class, KhoaHocService::class);
+
+        // ── Phase 3: Admin/User (sẽ bổ sung) ─────────────────────────────
+
+        // ── Phase 4: Admin/CoSo, TaiChinh, BaiViet (sẽ bổ sung) ──────────
+
+        // ── Phase 5: Client (sẽ bổ sung) ──────────────────────────────────
     }
 
     /**
@@ -24,16 +56,16 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Paginator::useBootstrapFive();
-        //
+
         View::composer(
-            ['components.client.footer', 'components.client.register-advice'], 
+            ['components.client.footer', 'components.client.register-advice'],
             function ($view) {
-                $courses = KhoaHoc::where('trangThai', 1)->get();
-                $branches = CoSoDaoTao::where('trangThai',1)->get();
+                $courses  = KhoaHoc::where('trangThai', 1)->get();
+                $branches = CoSoDaoTao::where('trangThai', 1)->get();
                 $view->with('footerCourses', $courses);
-                $view->with('danhSachKhoaHoc', $courses); 
+                $view->with('danhSachKhoaHoc', $courses);
                 $view->with('danhSachCoSo', $branches);
-                }
-            );
+            }
+        );
     }
 }

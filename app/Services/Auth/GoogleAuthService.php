@@ -5,6 +5,7 @@ namespace App\Services\Auth;
 use App\Contracts\Auth\GoogleAuthServiceInterface;
 use App\Models\Auth\HoSoNguoiDung;
 use App\Models\Auth\TaiKhoan;
+use Illuminate\Http\Client\Response as HttpResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -47,6 +48,7 @@ class GoogleAuthService implements GoogleAuthServiceInterface
         }
 
         // Exchange code → access token
+        /** @var HttpResponse $tokenResponse */
         $tokenResponse = Http::asForm()
             ->timeout(15)
             ->post('https://oauth2.googleapis.com/token', [
@@ -67,6 +69,7 @@ class GoogleAuthService implements GoogleAuthServiceInterface
         }
 
         // Fetch user profile
+        /** @var HttpResponse $profileResponse */
         $profileResponse = Http::withToken($accessToken)
             ->timeout(15)
             ->get('https://www.googleapis.com/oauth2/v3/userinfo');

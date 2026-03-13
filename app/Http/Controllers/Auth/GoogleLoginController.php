@@ -2,45 +2,34 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Contracts\Auth\GoogleAuthServiceInterface;
 use App\Http\Controllers\Controller;
-use App\Models\Auth\HoSoNguoiDung;
 use App\Models\Auth\NhatKyDangNhap;
-use App\Models\Auth\TaiKhoan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Str;
+use RuntimeException;
 
 class GoogleLoginController extends Controller
 {
+    public function __construct(
+        protected GoogleAuthServiceInterface $googleAuthService
+    ) {}
+
     public function redirect(Request $request)
     {
-        if (!$this->configured()) {
+        if (!$this->googleAuthService->isConfigured()) {
             return redirect()->route('login')
                 ->withErrors(['google' => 'Google đăng nhập chưa được cấu hình trên hệ thống.']);
         }
 
-        $state = Str::random(40);
-        $request->session()->put('google_oauth_state', $state);
+        $url = $this->googleAuthService->getRedirectUrl($request);
 
-        $query = http_build_query([
-            'client_id' => config('services.google.client_id'),
-            'redirect_uri' => route('auth.google.callback'),
-            'response_type' => 'code',
-            'scope' => 'openid email profile',
-            'state' => $state,
-            'access_type' => 'online',
-            'prompt' => 'select_account',
-        ]);
-
-        return redirect()->away('https://accounts.google.com/o/oauth2/v2/auth?' . $query);
+        return redirect()->away($url);
     }
 
     public function callback(Request $request)
     {
-        if (!$this->configured()) {
+        if (!$this->googleAuthService->isConfigured()) {
             return redirect()->route('login')
                 ->withErrors(['google' => 'Google đăng nhập chưa được cấu hình trên hệ thống.']);
         }
@@ -50,116 +39,21 @@ class GoogleLoginController extends Controller
                 ->withErrors(['google' => 'Đăng nhập Google đã bị hủy hoặc không thành công.']);
         }
 
-        $state = (string) $request->session()->pull('google_oauth_state', '');
-
-        if (!$request->filled('code') || (string) $request->input('state', '') !== $state) {
+        try {
+            $taiKhoan = $this->googleAuthService->handleCallback($request);
+        } catch (RuntimeException $e) {
             return redirect()->route('login')
-                ->withErrors(['google' => 'Phiên đăng nhập Google không hợp lệ. Vui lòng thử lại.']);
+                ->withErrors(['google' => $e->getMessage()]);
         }
-
-        $tokenResponse = Http::asForm()
-            ->timeout(15)
-            ->post('https://oauth2.googleapis.com/token', [
-                'code' => $request->input('code'),
-                'client_id' => config('services.google.client_id'),
-                'client_secret' => config('services.google.client_secret'),
-                'redirect_uri' => route('auth.google.callback'),
-                'grant_type' => 'authorization_code',
-            ]);
-
-        if (!$tokenResponse instanceof \Illuminate\Http\Client\Response || !$tokenResponse->successful()) {
-            return redirect()->route('login')
-                ->withErrors(['google' => 'Không thể xác thực với Google. Vui lòng thử lại.']);
-        }
-
-        $accessToken = $tokenResponse->json('access_token');
-
-        if (!is_string($accessToken) || $accessToken === '') {
-            return redirect()->route('login')
-                ->withErrors(['google' => 'Google không trả về access token hợp lệ.']);
-        }
-
-        $profileResponse = Http::withToken($accessToken)
-            ->timeout(15)
-            ->get('https://www.googleapis.com/oauth2/v3/userinfo');
-
-        if (!$profileResponse instanceof \Illuminate\Http\Client\Response || !$profileResponse->successful()) {
-            return redirect()->route('login')
-                ->withErrors(['google' => 'Không lấy được thông tin tài khoản Google.']);
-        }
-
-        $googleUser = $this->normalizeGoogleUser($profileResponse->json());
-
-        if (!$googleUser['email_verified'] || $googleUser['email'] === '') {
-            return redirect()->route('login')
-                ->withErrors(['google' => 'Tài khoản Google chưa có email xác thực hợp lệ.']);
-        }
-
-        $existing = TaiKhoan::query()
-            ->where(function ($query) use ($googleUser) {
-                if ($googleUser['sub'] !== null && $googleUser['sub'] !== '') {
-                    $query->where('google_id', $googleUser['sub'])
-                        ->orWhere('email', $googleUser['email']);
-                    return;
-                }
-
-                $query->where('email', $googleUser['email']);
-            })
-            ->first();
-
-        if ($existing && $existing->isStaff()) {
-            return redirect()->route('login')
-                ->withErrors(['google' => 'Đăng nhập Google chỉ áp dụng cho tài khoản học viên.']);
-        }
-
-        $taiKhoan = DB::transaction(function () use ($googleUser, $existing) {
-            if ($existing instanceof TaiKhoan) {
-                $existing->loadMissing('hoSoNguoiDung');
-
-                $existing->forceFill([
-                    'google_id' => $googleUser['sub'] ?? $existing->google_id,
-                    'google_avatar' => $googleUser['picture'] ?? $existing->google_avatar,
-                    'email_verified_at' => $existing->email_verified_at ?? now(),
-                ])->save();
-
-                $existing->hoSoNguoiDung()->updateOrCreate(
-                    ['taiKhoanId' => $existing->taiKhoanId],
-                    ['hoTen' => $existing->hoSoNguoiDung?->hoTen ?? $googleUser['name']]
-                );
-
-                return $existing;
-            }
-
-            $taiKhoan = TaiKhoan::create([
-                'taiKhoan' => TaiKhoan::generateTemporaryUsername(TaiKhoan::ROLE_HOC_VIEN),
-                'email' => $googleUser['email'],
-                'matKhau' => Hash::make(Str::random(32)),
-                'role' => TaiKhoan::ROLE_HOC_VIEN,
-                'trangThai' => 1,
-                'phaiDoiMatKhau' => 0,
-                'auth_provider' => 'google',
-                'google_id' => $googleUser['sub'],
-                'google_avatar' => $googleUser['picture'],
-                'email_verified_at' => now(),
-            ]);
-
-            $taiKhoan->assignSystemUsername();
-
-            HoSoNguoiDung::create([
-                'taiKhoanId' => $taiKhoan->taiKhoanId,
-                'hoTen' => $googleUser['name'],
-            ]);
-
-            return $taiKhoan;
-        });
 
         Auth::login($taiKhoan, true);
         $request->session()->regenerate();
         $request->session()->put([
-            'auth_portal' => 'student',
+            'auth_portal'       => 'student',
             'auth_login_method' => 'google',
-            'auth_remembered' => true,
+            'auth_remembered'   => true,
         ]);
+
         $taiKhoan->forceFill(['lastLogin' => now()])->save();
         NhatKyDangNhap::ghiLog($taiKhoan->email, $request->ip(), true, $request->userAgent());
 
@@ -170,33 +64,5 @@ class GoogleLoginController extends Controller
 
         return redirect()->route('home.student.index')
             ->with('success', 'Đăng nhập Google thành công.');
-    }
-
-    private function configured(): bool
-    {
-        return filled(config('services.google.client_id'))
-            && filled(config('services.google.client_secret'));
-    }
-
-    /**
-     * @param mixed $payload
-     * @return array{email:string,name:string,picture:?string,sub:?string,email_verified:bool}
-     */
-    private function normalizeGoogleUser(mixed $payload): array
-    {
-        $data = is_array($payload) ? $payload : [];
-        $email = isset($data['email']) && is_string($data['email']) ? $data['email'] : '';
-        $name = isset($data['name']) && is_string($data['name']) && $data['name'] !== '' ? $data['name'] : $email;
-        $picture = isset($data['picture']) && is_string($data['picture']) ? $data['picture'] : null;
-        $sub = isset($data['sub']) && is_string($data['sub']) ? $data['sub'] : null;
-        $emailVerified = (bool) ($data['email_verified'] ?? false);
-
-        return [
-            'email' => $email,
-            'name' => $name,
-            'picture' => $picture,
-            'sub' => $sub,
-            'email_verified' => $emailVerified,
-        ];
     }
 }
