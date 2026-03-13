@@ -19,14 +19,22 @@ use App\Services\Auth\RegisterService;
 use App\Services\Auth\GoogleAuthService;
 
 // ── Admin Contracts ────────────────────────────────────────────────────────
+use App\Contracts\Admin\BuoiHocServiceInterface;
+use App\Contracts\Admin\CaHocServiceInterface;
+use App\Contracts\Admin\DanhMucKhoaHocServiceInterface;
 use App\Contracts\Admin\LopHocServiceInterface;
 use App\Contracts\Admin\KhoaHocServiceInterface;
+use App\Contracts\Admin\HocPhiServiceInterface;
 use App\Contracts\Admin\NhanSuServiceInterface;
 use App\Contracts\Admin\HocVienServiceInterface;
 
 // ── Admin Services ─────────────────────────────────────────────────────────
+use App\Services\Admin\BuoiHocService;
+use App\Services\Admin\CaHocService;
+use App\Services\Admin\DanhMucKhoaHocService;
 use App\Services\Admin\LopHocService;
 use App\Services\Admin\KhoaHocService;
+use App\Services\Admin\HocPhiService;
 use App\Services\Admin\NhanSuService;
 use App\Services\Admin\HocVienService;
 
@@ -44,12 +52,16 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(GoogleAuthServiceInterface::class, GoogleAuthService::class);
 
         // ── Phase 2: Admin/KhoaHoc ─────────────────────────────────────────
+        $this->app->bind(DanhMucKhoaHocServiceInterface::class, DanhMucKhoaHocService::class);
+        $this->app->bind(CaHocServiceInterface::class, CaHocService::class);
+        $this->app->bind(BuoiHocServiceInterface::class, BuoiHocService::class);
+        $this->app->bind(HocPhiServiceInterface::class, HocPhiService::class);
         $this->app->bind(LopHocServiceInterface::class, LopHocService::class);
         $this->app->bind(KhoaHocServiceInterface::class, KhoaHocService::class);
 
         // ── Phase 3: Admin/User ─────────────────────────────────────────
         $this->app->bind(NhanSuServiceInterface::class, NhanSuService::class);
-        $this->app->bind(HocVienServiceInterface::class, HocVienService::class);───
+        $this->app->bind(HocVienServiceInterface::class, HocVienService::class);
 
         // ── Phase 4: Admin/CoSo, TaiChinh, BaiViet (sẽ bổ sung) ──────────
 
