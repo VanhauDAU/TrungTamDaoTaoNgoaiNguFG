@@ -19,47 +19,47 @@ class StudentService implements StudentServiceInterface
     public function updateProfile(Request $request, TaiKhoan $user): void
     {
         $request->validate([
-            'hoTen'          => 'required|string|max:100',
-            'soDienThoai'    => 'nullable|string|max:15',
-            'zalo'           => 'nullable|string|max:20',
-            'ngaySinh'       => 'nullable|date',
-            'gioiTinh'       => 'nullable|in:0,1,2',
-            'diaChi'         => 'nullable|string|max:255',
-            'cccd'           => 'nullable|string|max:20',
-            'nguoiGiamHo'    => 'nullable|string|max:100',
-            'sdtGuardian'    => 'nullable|string|max:20',
-            'moiQuanHe'      => 'nullable|string|max:50',
+            'hoTen' => 'required|string|max:100',
+            'soDienThoai' => 'nullable|string|max:15',
+            'zalo' => 'nullable|string|max:20',
+            'ngaySinh' => 'nullable|date',
+            'gioiTinh' => 'nullable|in:0,1,2',
+            'diaChi' => 'nullable|string|max:255',
+            'cccd' => 'nullable|string|max:20',
+            'nguoiGiamHo' => 'nullable|string|max:100',
+            'sdtGuardian' => 'nullable|string|max:20',
+            'moiQuanHe' => 'nullable|string|max:50',
             'trinhDoHienTai' => 'nullable|string|max:30',
             'ngonNguMucTieu' => 'nullable|string|max:50',
-            'nguonBietDen'   => 'nullable|string|max:50',
-            'ghiChu'         => 'nullable|string',
+            'nguonBietDen' => 'nullable|string|max:50',
+            'ghiChu' => 'nullable|string',
         ], [
-            'hoTen.required'  => 'Vui lòng nhập họ và tên.',
-            'hoTen.max'       => 'Họ và tên không được quá 100 ký tự.',
+            'hoTen.required' => 'Vui lòng nhập họ và tên.',
+            'hoTen.max' => 'Họ và tên không được quá 100 ký tự.',
             'soDienThoai.max' => 'Số điện thoại không được quá 15 ký tự.',
-            'ngaySinh.date'   => 'Ngày sinh không hợp lệ.',
-            'gioiTinh.in'     => 'Giới tính không hợp lệ.',
-            'diaChi.max'      => 'Địa chỉ không được quá 255 ký tự.',
+            'ngaySinh.date' => 'Ngày sinh không hợp lệ.',
+            'gioiTinh.in' => 'Giới tính không hợp lệ.',
+            'diaChi.max' => 'Địa chỉ không được quá 255 ký tự.',
             'nguoiGiamHo.max' => 'Tên người giám hộ không quá 100 ký tự.',
         ]);
 
         $user->hoSoNguoiDung()->updateOrCreate(
             ['taiKhoanId' => $user->taiKhoanId],
             [
-                'hoTen'          => $request->hoTen,
-                'soDienThoai'    => $request->soDienThoai,
-                'zalo'           => $request->zalo,
-                'ngaySinh'       => $request->ngaySinh ?: null,
-                'gioiTinh'       => $request->gioiTinh !== '' ? $request->gioiTinh : null,
-                'diaChi'         => $request->diaChi,
-                'cccd'           => $request->cccd,
-                'nguoiGiamHo'    => $request->nguoiGiamHo,
-                'sdtGuardian'    => $request->sdtGuardian,
-                'moiQuanHe'      => $request->moiQuanHe,
+                'hoTen' => $request->hoTen,
+                'soDienThoai' => $request->soDienThoai,
+                'zalo' => $request->zalo,
+                'ngaySinh' => $request->ngaySinh ?: null,
+                'gioiTinh' => $request->gioiTinh !== '' ? $request->gioiTinh : null,
+                'diaChi' => $request->diaChi,
+                'cccd' => $request->cccd,
+                'nguoiGiamHo' => $request->nguoiGiamHo,
+                'sdtGuardian' => $request->sdtGuardian,
+                'moiQuanHe' => $request->moiQuanHe,
                 'trinhDoHienTai' => $request->trinhDoHienTai,
                 'ngonNguMucTieu' => $request->ngonNguMucTieu,
-                'nguonBietDen'   => $request->nguonBietDen,
-                'ghiChu'         => $request->ghiChu,
+                'nguonBietDen' => $request->nguonBietDen,
+                'ghiChu' => $request->ghiChu,
             ]
         );
     }
@@ -70,9 +70,9 @@ class StudentService implements StudentServiceInterface
             'anhDaiDien' => 'required|image|mimes:jpg,jpeg,png,gif,webp|max:2048',
         ], [
             'anhDaiDien.required' => 'Vui lòng chọn ảnh.',
-            'anhDaiDien.image'    => 'File phải là ảnh.',
-            'anhDaiDien.mimes'    => 'Chỉ chấp nhận JPG, PNG, GIF hoặc WebP.',
-            'anhDaiDien.max'      => 'Ảnh không được vượt quá 2MB.',
+            'anhDaiDien.image' => 'File phải là ảnh.',
+            'anhDaiDien.mimes' => 'Chỉ chấp nhận JPG, PNG, GIF hoặc WebP.',
+            'anhDaiDien.max' => 'Ảnh không được vượt quá 2MB.',
         ]);
 
         $hoSo = $user->hoSoNguoiDung;
@@ -92,12 +92,12 @@ class StudentService implements StudentServiceInterface
     {
         $request->validate([
             'current_password' => 'required',
-            'new_password'     => 'required|string|min:8|confirmed',
+            'new_password' => 'required|string|min:8|confirmed',
         ], [
             'current_password.required' => 'Vui lòng nhập mật khẩu hiện tại',
-            'new_password.required'     => 'Vui lòng nhập mật khẩu mới',
-            'new_password.min'          => 'Mật khẩu mới phải có ít nhất 8 ký tự',
-            'new_password.confirmed'    => 'Xác nhận mật khẩu không khớp',
+            'new_password.required' => 'Vui lòng nhập mật khẩu mới',
+            'new_password.min' => 'Mật khẩu mới phải có ít nhất 8 ký tự',
+            'new_password.confirmed' => 'Xác nhận mật khẩu không khớp',
         ]);
 
         if (!Hash::check($request->current_password, $user->matKhau)) {
@@ -137,9 +137,9 @@ class StudentService implements StudentServiceInterface
 
     public function getSchedule(Request $request, TaiKhoan $user): array
     {
-        $baseDate    = $request->get('tuan') ? Carbon::parse($request->get('tuan')) : Carbon::now();
+        $baseDate = $request->get('tuan') ? Carbon::parse($request->get('tuan')) : Carbon::now();
         $startOfWeek = $baseDate->copy()->startOfWeek(Carbon::MONDAY);
-        $endOfWeek   = $baseDate->copy()->endOfWeek(Carbon::SUNDAY);
+        $endOfWeek = $baseDate->copy()->endOfWeek(Carbon::SUNDAY);
 
         $lopHocIds = DangKyLopHoc::where('taiKhoanId', $user->taiKhoanId)
             ->eligibleForSchedule()
@@ -151,11 +151,11 @@ class StudentService implements StudentServiceInterface
             ->with(['caHoc', 'phongHoc', 'lopHoc.khoaHoc', 'lopHoc.taiKhoan.hoSoNguoiDung', 'lopHoc.coSo'])
             ->orderBy('ngayHoc')->orderBy('caHocId')->get();
 
-        $caHocs  = CaHoc::where('trangThai', 1)->orderBy('gioBatDau')->get();
+        $caHocs = CaHoc::where('trangThai', 1)->orderBy('gioBatDau')->get();
         $schedule = [];
         foreach ($buoiHocs as $buoi) {
-            $ngay  = Carbon::parse($buoi->ngayHoc);
-            $thu   = $ngay->dayOfWeek === 0 ? 8 : $ngay->dayOfWeek + 1;
+            $ngay = Carbon::parse($buoi->ngayHoc);
+            $thu = $ngay->dayOfWeek === 0 ? 8 : $ngay->dayOfWeek + 1;
             $schedule[$thu][$buoi->caHocId][] = $buoi;
         }
 

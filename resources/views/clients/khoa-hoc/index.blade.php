@@ -152,7 +152,7 @@
                                         <h3 class="cl-card-title">{{ $course->tenKhoaHoc }}</h3>
                                         <p class="cl-card-desc">{{ Str::limit($course->moTa, 100) }}</p>
                                         <div class="cl-card-meta">
-                                            <span><i class="fas fa-layer-group"></i>{{ $course->lopHoc->count() }}
+                                            <span><i class="fas fa-layer-group"></i>{{ $course->openClassCount ?? 0 }}
                                                 lớp</span>
                                             <span><i
                                                     class="fas fa-signal"></i>{{ $course->capDo ?? 'Mọi trình độ' }}</span>
