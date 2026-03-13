@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Admin\KhoaHoc;
 
-use App\Contracts\Admin\DanhMucKhoaHocServiceInterface;
+use App\Contracts\Admin\KhoaHoc\DanhMucKhoaHocServiceInterface;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
@@ -10,7 +10,9 @@ class DanhMucKhoaHocController extends Controller
 {
     public function __construct(
         protected DanhMucKhoaHocServiceInterface $danhMucKhoaHocService
-    ) {}
+        )
+    {
+    }
 
     public function index(Request $request)
     {
@@ -50,7 +52,8 @@ class DanhMucKhoaHocController extends Controller
 
             return redirect()->route('admin.danh-muc-khoa-hoc.index')
                 ->with('success', "Đã xóa danh mục «{$ten}» thành công.");
-        } catch (\Throwable $e) {
+        }
+        catch (\Throwable $e) {
             return redirect()->route('admin.danh-muc-khoa-hoc.index')
                 ->with('error', 'Đã xảy ra lỗi: ' . $e->getMessage());
         }

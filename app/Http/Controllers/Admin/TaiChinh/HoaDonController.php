@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Admin\TaiChinh;
 
-use App\Contracts\Admin\HoaDonServiceInterface;
+use App\Contracts\Admin\TaiChinh\HoaDonServiceInterface;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
@@ -10,7 +10,8 @@ class HoaDonController extends Controller
 {
     public function __construct(
         protected HoaDonServiceInterface $hoaDonService
-    ) {
+        )
+    {
         $this->middleware('permission:tai_chinh,xem')->only('index', 'show');
         $this->middleware('permission:tai_chinh,sua')->only('update', 'storePhieuThu', 'destroyPhieuThu');
     }

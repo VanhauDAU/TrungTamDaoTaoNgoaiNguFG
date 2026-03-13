@@ -22,7 +22,8 @@ class LoginService implements LoginServiceInterface
 
     public function __construct(
         protected DeviceSessionService $deviceSessionService
-    ) {}
+    ) {
+    }
 
     // ─────────────────────────────────────────────────────────────────────────
     // VIEW DATA
@@ -32,48 +33,48 @@ class LoginService implements LoginServiceInterface
     {
         $submitRoute = match ($portal) {
             'teacher' => route('teacher.login.submit'),
-            'staff'   => route('staff.login.submit'),
-            default   => route('login'),
+            'staff' => route('staff.login.submit'),
+            default => route('login'),
         };
 
         $alternateRoute = match ($portal) {
             'teacher' => route('staff.login'),
-            'staff'   => route('teacher.login'),
-            default   => route('staff.login'),
+            'staff' => route('teacher.login'),
+            default => route('staff.login'),
         };
 
         $alternateLabel = match ($portal) {
             'teacher' => 'Đăng nhập nhân viên',
-            'staff'   => 'Đăng nhập giảng viên',
-            default   => 'Đăng nhập nhân viên',
+            'staff' => 'Đăng nhập giảng viên',
+            default => 'Đăng nhập nhân viên',
         };
 
         $secondaryAlternateRoute = match ($portal) {
             'student' => route('teacher.login'),
-            default   => route('login'),
+            default => route('login'),
         };
 
         $secondaryAlternateLabel = match ($portal) {
             'student' => 'Đăng nhập giảng viên',
-            default   => 'Đăng nhập học viên',
+            default => 'Đăng nhập học viên',
         };
 
         return [
-            'portal'                  => $portal,
-            'portalTitle'             => 'Đăng nhập',
-            'submitRoute'             => $submitRoute,
-            'alternateRoute'          => $alternateRoute,
-            'alternateLabel'          => $alternateLabel,
+            'portal' => $portal,
+            'portalTitle' => 'Đăng nhập',
+            'submitRoute' => $submitRoute,
+            'alternateRoute' => $alternateRoute,
+            'alternateLabel' => $alternateLabel,
             'secondaryAlternateRoute' => $secondaryAlternateRoute,
             'secondaryAlternateLabel' => $secondaryAlternateLabel,
-            'registerRoute'           => $portal === 'student' ? route('register') : null,
-            'googleRoute'             => $portal === 'student'
+            'registerRoute' => $portal === 'student' ? route('register') : null,
+            'googleRoute' => $portal === 'student'
                 && filled(config('services.google.client_id'))
                 && filled(config('services.google.client_secret'))
-                    ? route('auth.google.redirect')
-                    : null,
-            'recaptchaAction'   => $portal === 'student' ? 'student_login' : null,
-            'recaptchaEnabled'  => $portal === 'student' && $this->isRecaptchaEnabled(),
+                ? route('auth.google.redirect')
+                : null,
+            'recaptchaAction' => $portal === 'student' ? 'student_login' : null,
+            'recaptchaEnabled' => $portal === 'student' && $this->isRecaptchaEnabled(),
         ];
     }
 
@@ -84,21 +85,21 @@ class LoginService implements LoginServiceInterface
     public function attemptLogin(Request $request, string $portal): bool
     {
         $loginInput = trim((string) $request->input('taiKhoan'));
-        $ip         = $request->ip();
-        $soLanSai   = $this->consecutiveFailedAttempts($loginInput, $ip);
+        $ip = $request->ip();
+        $soLanSai = $this->consecutiveFailedAttempts($loginInput, $ip);
         $lockoutMin = $this->lockoutMinutesForFailures($soLanSai);
 
         if ($lockoutMin > 0) {
             $thoiDiemCuoi = NhatKyDangNhap::thoiDiemThatBaiCuoi($loginInput, $ip);
-            $hetHan       = $thoiDiemCuoi?->copy()->addMinutes($lockoutMin);
-            $giayConLai   = $hetHan ? (int) max(0, now()->diffInSeconds($hetHan, false)) : 0;
+            $hetHan = $thoiDiemCuoi?->copy()->addMinutes($lockoutMin);
+            $giayConLai = $hetHan ? (int) max(0, now()->diffInSeconds($hetHan, false)) : 0;
 
             if ($giayConLai > 0) {
                 $this->lockoutResponse($giayConLai, $this->lockoutMessage($soLanSai, $lockoutMin));
             }
         }
 
-        $field       = filter_var($loginInput, FILTER_VALIDATE_EMAIL) ? 'email' : 'taiKhoan';
+        $field = filter_var($loginInput, FILTER_VALIDATE_EMAIL) ? 'email' : 'taiKhoan';
         $credentials = [$field => $loginInput, 'password' => $request->input('password')];
 
         if (!Auth::guard()->attempt($credentials, $request->boolean('remember'))) {
@@ -126,9 +127,9 @@ class LoginService implements LoginServiceInterface
 
         session()->forget(['lockout_until', 'lockout_message']);
         $request->session()->put([
-            'auth_portal'        => $portal,
-            'auth_login_method'  => 'password',
-            'auth_remembered'    => $request->boolean('remember'),
+            'auth_portal' => $portal,
+            'auth_login_method' => 'password',
+            'auth_remembered' => $request->boolean('remember'),
         ]);
 
         $user->forceFill(['lastLogin' => now()])->save();
@@ -159,23 +160,23 @@ class LoginService implements LoginServiceInterface
         );
 
         $loginInput = trim((string) $request->input('taiKhoan'));
-        $ip         = $request->ip();
-        $soLanSai   = $this->consecutiveFailedAttempts($loginInput, $ip);
+        $ip = $request->ip();
+        $soLanSai = $this->consecutiveFailedAttempts($loginInput, $ip);
         $lockoutMin = $this->lockoutMinutesForFailures($soLanSai);
 
         if ($lockoutMin > 0) {
             $thoiDiemCuoi = NhatKyDangNhap::thoiDiemThatBaiCuoi($loginInput, $ip);
-            $hetHan       = $thoiDiemCuoi?->copy()->addMinutes($lockoutMin);
-            $giayConLai   = $hetHan ? (int) max(1, now()->diffInSeconds($hetHan, false)) : 1;
+            $hetHan = $thoiDiemCuoi?->copy()->addMinutes($lockoutMin);
+            $giayConLai = $hetHan ? (int) max(1, now()->diffInSeconds($hetHan, false)) : 1;
 
             $this->lockoutResponse($giayConLai, $this->lockoutMessage($soLanSai, $lockoutMin));
         }
 
-        $conLai  = max(0, self::FIRST_LOCKOUT_ATTEMPTS - $soLanSai);
+        $conLai = max(0, self::FIRST_LOCKOUT_ATTEMPTS - $soLanSai);
         $message = match ($portal) {
-            'teacher'         => "Tài khoản giảng viên hoặc mật khẩu không chính xác. Bạn còn {$conLai} lần thử.",
-            'staff', 'admin'  => "Tài khoản nhân viên hoặc mật khẩu không chính xác. Bạn còn {$conLai} lần thử.",
-            default           => "Tài khoản, email hoặc mật khẩu không chính xác. Bạn còn {$conLai} lần thử.",
+            'teacher' => "Tài khoản giảng viên hoặc mật khẩu không chính xác. Bạn còn {$conLai} lần thử.",
+            'staff', 'admin' => "Tài khoản nhân viên hoặc mật khẩu không chính xác. Bạn còn {$conLai} lần thử.",
+            default => "Tài khoản, email hoặc mật khẩu không chính xác. Bạn còn {$conLai} lần thử.",
         };
 
         throw ValidationException::withMessages(['taiKhoan' => [$message]]);
@@ -184,7 +185,7 @@ class LoginService implements LoginServiceInterface
     public function lockoutResponse(int $remainingSeconds, string $message): never
     {
         session()->put([
-            'lockout_until'   => now()->addSeconds($remainingSeconds)->timestamp,
+            'lockout_until' => now()->addSeconds($remainingSeconds)->timestamp,
             'lockout_message' => $message,
         ]);
 
@@ -197,7 +198,7 @@ class LoginService implements LoginServiceInterface
 
     public function logout(Request $request): string
     {
-        $currentUser  = Auth::user();
+        $currentUser = Auth::user();
         $redirectRoute = $currentUser instanceof TaiKhoan
             ? $this->logoutRedirectRouteFor($currentUser)
             : 'login';
@@ -225,7 +226,7 @@ class LoginService implements LoginServiceInterface
     public function processForceChangePassword(Request $request, TaiKhoan $user): RedirectResponse
     {
         $user->update([
-            'matKhau'        => Hash::make($request->new_password),
+            'matKhau' => Hash::make($request->new_password),
             'phaiDoiMatKhau' => 0,
         ]);
         $user->rotateRememberToken('force_password_change', (string) $request->session()->getId());
@@ -252,8 +253,8 @@ class LoginService implements LoginServiceInterface
     {
         return match ($portal) {
             'teacher' => $user->role === TaiKhoan::ROLE_GIAO_VIEN,
-            'staff'   => in_array($user->role, [TaiKhoan::ROLE_NHAN_VIEN, TaiKhoan::ROLE_ADMIN], true),
-            default   => $user->role === TaiKhoan::ROLE_HOC_VIEN,
+            'staff' => in_array($user->role, [TaiKhoan::ROLE_NHAN_VIEN, TaiKhoan::ROLE_ADMIN], true),
+            default => $user->role === TaiKhoan::ROLE_HOC_VIEN,
         };
     }
 
@@ -273,9 +274,9 @@ class LoginService implements LoginServiceInterface
     public function logoutRedirectRouteFor(TaiKhoan $user): string
     {
         return match ($user->role) {
-            TaiKhoan::ROLE_GIAO_VIEN                       => 'teacher.login',
+            TaiKhoan::ROLE_GIAO_VIEN => 'teacher.login',
             TaiKhoan::ROLE_NHAN_VIEN, TaiKhoan::ROLE_ADMIN => 'staff.login',
-            default                                         => 'login',
+            default => 'login',
         };
     }
 

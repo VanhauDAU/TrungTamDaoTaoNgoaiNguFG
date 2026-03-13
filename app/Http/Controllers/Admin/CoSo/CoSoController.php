@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Admin\CoSo;
 
-use App\Contracts\Admin\CoSoServiceInterface;
+use App\Contracts\Admin\CoSo\CoSoServiceInterface;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
@@ -10,7 +10,9 @@ class CoSoController extends Controller
 {
     public function __construct(
         protected CoSoServiceInterface $coSoService
-    ) {}
+        )
+    {
+    }
 
     public function index(Request $request)
     {
@@ -51,7 +53,8 @@ class CoSoController extends Controller
         try {
             $ten = $this->coSoService->destroy($id);
             return redirect()->route('admin.co-so.index')->with('success', "Đã xóa cơ sở «{$ten}».");
-        } catch (\RuntimeException $e) {
+        }
+        catch (\RuntimeException $e) {
             return redirect()->route('admin.co-so.index')->with('error', $e->getMessage());
         }
     }

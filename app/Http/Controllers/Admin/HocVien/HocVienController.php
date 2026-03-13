@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Admin\HocVien;
 
-use App\Contracts\Admin\HocVienServiceInterface;
+use App\Contracts\Admin\HocVien\HocVienServiceInterface;
 use App\Exports\HocViensExport;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -12,7 +12,8 @@ class HocVienController extends Controller
 {
     public function __construct(
         protected HocVienServiceInterface $hocVienService
-    ) {
+        )
+    {
         $this->middleware('permission:hoc_vien,xem')->only('index', 'export', 'trash');
         $this->middleware('permission:hoc_vien,them')->only('create', 'store', 'restore');
         $this->middleware('permission:hoc_vien,sua')->only('edit', 'update');

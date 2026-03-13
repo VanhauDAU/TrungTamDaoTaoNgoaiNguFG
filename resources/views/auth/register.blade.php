@@ -304,13 +304,7 @@
                                     action="{{ route('register') }}" method="POST">
                                     @csrf
                                     <h3 class="fs-48 ff-title text-center cl-green mb-lg-3 mb-2">Đăng ký</h3>
-                                    <div class="text-center mb-4">
-                                        Đã có tài khoản? <a href="{{ route('login') }}" class="ff-title cl-green">Đăng nhập
-                                            ngay!</a>
-                                        <div class="mt-2 text-muted small">
-                                            Tài khoản học viên mới sẽ cần xác thực email trước khi sử dụng đầy đủ hệ thống.
-                                        </div>
-                                    </div>
+                                    
 
                                     {{-- Error Display --}}
                                     @if ($errors->any())
@@ -345,7 +339,18 @@
                                             </span>
                                         @enderror
                                     </div>
-
+                                    {{-- Phone --}}
+                                    <div class="mb-3">
+                                        <input type="text" id="phone" name="phone"
+                                            class="form-control @error('phone') is-invalid @enderror"
+                                            value="{{ old('phone') }}" required autocomplete="phone" autofocus
+                                            placeholder="Số điện thoại">
+                                        @error('phone')
+                                            <span class="invalid-feedback" role="alert">
+                                                <strong>{{ $message }}</strong>
+                                            </span>
+                                        @enderror
+                                    </div>
                                     {{-- Password --}}
                                     <div class="password_box mb-3">
                                         <input type="password" name="password" id="password"
@@ -381,6 +386,13 @@
                                             <i class="fab fa-google"></i>Đăng nhập bằng Google
                                         </a>
                                     @endif
+                                    <div class="text-center mb-4">
+                                        Đã có tài khoản? <a href="{{ route('login') }}" class="ff-title cl-green">Đăng nhập
+                                            ngay!</a>
+                                        <div class="mt-2 text-muted small">
+                                            Tài khoản học viên mới sẽ cần xác thực email trước khi sử dụng đầy đủ hệ thống.
+                                        </div>
+                                    </div>
                                     {{-- Terms of Service --}}
                                     <div class="text-center mb-2">
                                         <small class="text-muted">

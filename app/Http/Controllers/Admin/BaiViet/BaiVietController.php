@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Admin\BaiViet;
 
-use App\Contracts\Admin\BaiVietServiceInterface;
+use App\Contracts\Admin\BaiViet\BaiVietServiceInterface;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
@@ -10,7 +10,9 @@ class BaiVietController extends Controller
 {
     public function __construct(
         protected BaiVietServiceInterface $baiVietService
-    ) {}
+        )
+    {
+    }
 
     public function index(Request $request)
     {
@@ -51,7 +53,8 @@ class BaiVietController extends Controller
         try {
             $ten = $this->baiVietService->destroy($id);
             return redirect()->route('admin.bai-viet.index')->with('success', "Đã chuyển bài viết «{$ten}» vào thùng rác.");
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
             return redirect()->route('admin.bai-viet.index')->with('error', 'Đã xảy ra lỗi: ' . $e->getMessage());
         }
     }

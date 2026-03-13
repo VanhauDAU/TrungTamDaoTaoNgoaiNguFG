@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Admin\KhoaHoc;
 
-use App\Contracts\Admin\LopHocServiceInterface;
+use App\Contracts\Admin\KhoaHoc\LopHocServiceInterface;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 

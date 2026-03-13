@@ -4,7 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\Interaction\ThongBao;
 use App\Models\Interaction\ThongBaoLichSu;
-use App\Services\Admin\ThongBaoService;
+use App\Services\Admin\ThongBao\ThongBaoService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;

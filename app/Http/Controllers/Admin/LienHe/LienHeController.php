@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Admin\LienHe;
 
-use App\Contracts\Admin\LienHeServiceInterface;
+use App\Contracts\Admin\LienHe\LienHeServiceInterface;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
@@ -10,7 +10,9 @@ class LienHeController extends Controller
 {
     public function __construct(
         protected LienHeServiceInterface $lienHeService
-    ) {}
+        )
+    {
+    }
 
     public function index(Request $request)
     {

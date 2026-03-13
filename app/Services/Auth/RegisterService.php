@@ -32,11 +32,14 @@ class RegisterService implements RegisterServiceInterface
         $validator = Validator::make($data, [
             'name'     => ['required', 'string', 'max:255'],
             'email'    => ['required', 'string', 'email', 'max:255', 'unique:taikhoan,email'],
+            'phone'    => ['required', 'string', 'regex:/^[0-9]{10}$/'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ], [
             'name.required'     => 'Vui lòng nhập họ và tên.',
             'email.required'    => 'Vui lòng nhập email.',
             'email.unique'      => 'Email này đã được đăng ký, vui lòng dùng email khác.',
+            'phone.required'    => 'Vui lòng nhập số điện thoại.',
+            'phone.regex'       => 'Số điện thoại không hợp lệ (phải có 10 chữ số).',
             'password.required' => 'Vui lòng nhập mật khẩu.',
             'password.min'      => 'Mật khẩu phải có ít nhất 8 ký tự.',
             'password.confirmed'=> 'Xác nhận mật khẩu không khớp.',
@@ -65,8 +68,9 @@ class RegisterService implements RegisterServiceInterface
             $taiKhoan->assignSystemUsername();
 
             HoSoNguoiDung::create([
-                'taiKhoanId' => $taiKhoan->taiKhoanId,
-                'hoTen'      => $data['name'],
+                'taiKhoanId'  => $taiKhoan->taiKhoanId,
+                'hoTen'       => $data['name'],
+                'soDienThoai' => $data['phone'],
             ]);
 
             return $taiKhoan;

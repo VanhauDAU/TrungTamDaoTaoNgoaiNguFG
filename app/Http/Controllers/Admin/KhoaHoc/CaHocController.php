@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Admin\KhoaHoc;
 
-use App\Contracts\Admin\CaHocServiceInterface;
+use App\Contracts\Admin\KhoaHoc\CaHocServiceInterface;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
@@ -10,7 +10,9 @@ class CaHocController extends Controller
 {
     public function __construct(
         protected CaHocServiceInterface $caHocService
-    ) {}
+        )
+    {
+    }
 
     public function index(Request $request)
     {

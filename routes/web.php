@@ -1,12 +1,12 @@
 <?php
 
-use App\Http\Controllers\Client\BlogController;
-use App\Http\Controllers\Client\ContactController;
+use App\Http\Controllers\Client\Blog\BlogController;
+use App\Http\Controllers\Client\LienHe\ContactController;
 use App\Http\Controllers\Client\HomeController;
-use App\Http\Controllers\Client\AboutController;
-use App\Http\Controllers\Client\CourseController;
-use App\Http\Controllers\Client\StudentController;
-use App\Http\Controllers\Client\ClientChatController;
+use App\Http\Controllers\Client\Blog\AboutController;
+use App\Http\Controllers\Client\KhoaHoc\CourseController;
+use App\Http\Controllers\Client\HocVien\StudentController;
+use App\Http\Controllers\Client\Chat\ClientChatController;
 use App\Http\Controllers\Admin\HomeController as AdminHomeController;
 use App\Http\Controllers\Admin\NhomQuyenController;
 use App\Http\Controllers\Admin\HocVien\HocVienController as AdminHocVienController;
@@ -27,7 +27,7 @@ use App\Http\Controllers\Admin\BaiViet\DanhMucBaiVietController as AdminDanhMucB
 use App\Http\Controllers\Admin\BaiViet\TagController as AdminTagController;
 use App\Http\Controllers\Admin\ThongBao\ThongBaoController as AdminThongBaoController;
 use App\Http\Controllers\Admin\TaiChinh\HoaDonController as AdminHoaDonController;
-use App\Http\Controllers\Client\ClientThongBaoController;
+use App\Http\Controllers\Client\ThongBao\ClientThongBaoController;
 use App\Http\Controllers\Auth\GoogleLoginController;
 use App\Http\Controllers\Auth\LoginController;
 use Illuminate\Support\Facades\Route;

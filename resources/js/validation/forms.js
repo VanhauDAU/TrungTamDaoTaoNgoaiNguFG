@@ -29,6 +29,11 @@ const schemas = {
             'string.email': 'Email không đúng định dạng.',
             'any.required': 'Vui lòng nhập email.',
         }),
+        phone: Joi.string().trim().length(10).required().messages({
+            'string.empty': 'Vui lòng nhập số điện thoại.',
+            'string.length': 'Số điện thoại phải có 10 ký tự.',
+            'any.required': 'Vui lòng nhập số điện thoại.',
+        }),
         password: Joi.string().min(8).required().messages({
             'string.empty': 'Vui lòng nhập mật khẩu.',
             'string.min': 'Mật khẩu phải có ít nhất 8 ký tự.',
