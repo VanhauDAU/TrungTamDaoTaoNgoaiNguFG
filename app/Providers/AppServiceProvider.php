@@ -21,10 +21,14 @@ use App\Services\Auth\GoogleAuthService;
 // ── Admin Contracts ────────────────────────────────────────────────────────
 use App\Contracts\Admin\LopHocServiceInterface;
 use App\Contracts\Admin\KhoaHocServiceInterface;
+use App\Contracts\Admin\NhanSuServiceInterface;
+use App\Contracts\Admin\HocVienServiceInterface;
 
 // ── Admin Services ─────────────────────────────────────────────────────────
 use App\Services\Admin\LopHocService;
 use App\Services\Admin\KhoaHocService;
+use App\Services\Admin\NhanSuService;
+use App\Services\Admin\HocVienService;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -43,7 +47,9 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(LopHocServiceInterface::class, LopHocService::class);
         $this->app->bind(KhoaHocServiceInterface::class, KhoaHocService::class);
 
-        // ── Phase 3: Admin/User (sẽ bổ sung) ─────────────────────────────
+        // ── Phase 3: Admin/User ─────────────────────────────────────────
+        $this->app->bind(NhanSuServiceInterface::class, NhanSuService::class);
+        $this->app->bind(HocVienServiceInterface::class, HocVienService::class);───
 
         // ── Phase 4: Admin/CoSo, TaiChinh, BaiViet (sẽ bổ sung) ──────────
 
