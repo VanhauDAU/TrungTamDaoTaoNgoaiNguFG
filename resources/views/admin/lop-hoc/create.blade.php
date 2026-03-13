@@ -546,7 +546,7 @@
         document.getElementById('khoaHocSel').addEventListener('change', function() {
             loadHocPhi(this.value);
         });
-        const oldKhoa = '{{ old('khoaHocId', $selectedKhoaHocId ?? '') }}';
+        const oldKhoa = "{{ old('khoaHocId', $selectedKhoaHocId ?? '') }}";
         if (oldKhoa) loadHocPhi(oldKhoa);
 
         // Re-check mismatch whenever soBuoiDuKien changes

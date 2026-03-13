@@ -197,7 +197,7 @@
             const spinner = document.getElementById('phuongXaSpinner');
 
             // Giá trị đang được chọn (preload)
-            const currentMaPhuongXa = '{{ old('maPhuongXa', $coSo->maPhuongXa) }}';
+            const currentMaPhuongXa = "{{ old('maPhuongXa', $coSo->maPhuongXa) }}";
 
             async function loadPhuongXa(maTinh, selectedMa) {
                 if (!maTinh) {

@@ -437,7 +437,7 @@
                 maPhuongXa: phuongId
             });
             const res = await fetch(`/admin/api/co-so-by-location?${params}`).then(r => r.json());
-            const oldCoSo = '{{ old('coSoId', $lopHoc->coSoId) }}';
+            const oldCoSo = "{{ old('coSoId', $lopHoc->coSoId) }}";
             if (res.success && res.coSos.length) {
                 cSel.innerHTML = '<option value="">-- Chọn cơ sở --</option>' +
                     res.coSos.map(c =>
@@ -460,8 +460,8 @@
         });
 
         // Giá trị đã lưu từ DB – dùng để pre-select sau khi cascade load xong
-        const _savedPhong = '{{ old('phongHocId', $lopHoc->phongHocId) }}';
-        const _savedGV = '{{ old('taiKhoanId', $lopHoc->taiKhoanId) }}';
+        const _savedPhong = "{{ old('phongHocId', $lopHoc->phongHocId) }}";
+        const _savedGV = "{{ old('taiKhoanId', $lopHoc->taiKhoanId) }}";
 
         async function loadPhongVaGV(coSoId) {
             const ps = document.getElementById('phongHocSel');

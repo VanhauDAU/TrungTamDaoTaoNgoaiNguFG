@@ -244,7 +244,7 @@
             // Load ngay nếu có giá trị cũ (old())
             const selectedOpt = tinhSelect.options[tinhSelect.selectedIndex];
             if (selectedOpt && selectedOpt.dataset.maApi) {
-                loadPhuongXa(selectedOpt.dataset.maApi, '{{ old('maPhuongXa') }}');
+                loadPhuongXa(selectedOpt.dataset.maApi, "{{ old('maPhuongXa') }}");
             }
 
             // ── Tự động xử lý link Google Map / Iframe ──────────────────────
