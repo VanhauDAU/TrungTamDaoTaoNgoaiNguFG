@@ -52,6 +52,16 @@ use App\Contracts\Client\StudentServiceInterface;
 use App\Services\Client\CourseService;
 use App\Services\Client\StudentService;
 
+// ── Phase 8 Contracts ─────────────────────────────────────────────
+use App\Contracts\Admin\BaiVietServiceInterface;
+use App\Contracts\Admin\LienHeServiceInterface;
+use App\Contracts\ThongBaoServiceInterface;
+
+// ── Phase 8 Services ─────────────────────────────────────────────
+use App\Services\Admin\BaiVietService;
+use App\Services\Admin\LienHeService;
+use App\Services\ThongBaoService;
+
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -85,6 +95,11 @@ class AppServiceProvider extends ServiceProvider
         // ── Phase 5: Client ──────────────────────────────────────────────
         $this->app->bind(CourseServiceInterface::class, CourseService::class);
         $this->app->bind(StudentServiceInterface::class, StudentService::class);
+
+        // ── Phase 8: BaiViet, LienHe, ThongBao ───────────────────────────────
+        $this->app->bind(BaiVietServiceInterface::class, BaiVietService::class);
+        $this->app->bind(LienHeServiceInterface::class, LienHeService::class);
+        $this->app->bind(ThongBaoServiceInterface::class, ThongBaoService::class);
     }
 
     /**

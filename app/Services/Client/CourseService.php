@@ -101,6 +101,9 @@ class CourseService implements CourseServiceInterface
     public function getConfirmRegistrationData(string $slug, string $slugLopHoc): array
     {
         $user  = auth()->user();
+        if (!$user instanceof TaiKhoan) {
+            throw new \RuntimeException('Vui lòng đăng nhập để đăng ký lớp học.');
+        }
         $class = LopHoc::where('slug', $slugLopHoc)->with(['buoiHocs.caHoc', 'dangKyLopHocs', 'hocPhi', 'khoaHoc'])->firstOrFail();
 
         $validation = $this->validateClassRegistration($user, $class);
@@ -118,6 +121,9 @@ class CourseService implements CourseServiceInterface
     public function processRegistration(Request $request, string $slug, string $slugLopHoc): void
     {
         $user  = auth()->user();
+        if (!$user instanceof TaiKhoan) {
+            throw new \RuntimeException('Vui lòng đăng nhập để đăng ký lớp học.');
+        }
         $class = LopHoc::where('slug', $slugLopHoc)->with(['hocPhi', 'khoaHoc', 'dangKyLopHocs', 'buoiHocs.caHoc', 'coSo'])->firstOrFail();
 
         $validation = $this->validateClassRegistration($user, $class);
@@ -166,7 +172,7 @@ class CourseService implements CourseServiceInterface
     // PRIVATE
     // ─────────────────────────────────────────────────────────────────────────
 
-    private function validateClassRegistration($user, $class): bool|string
+    private function validateClassRegistration(TaiKhoan $user, LopHoc $class): bool|string
     {
         if (!$class->isOpenForRegistration()) return 'Lớp học hiện không nhận đăng ký.';
 
