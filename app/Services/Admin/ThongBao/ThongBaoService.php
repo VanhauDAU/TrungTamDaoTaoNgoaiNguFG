@@ -1,6 +1,10 @@
 <?php
 
+<<<<<<<< HEAD:app/Services/Admin/ThongBao/ThongBaoService.php
 namespace App\Services\Admin\ThongBao;
+========
+namespace App\Services\Admin;
+>>>>>>>> d8f9a518b484652b18400e34ccc6b448ec262d0a:app/Services/Admin/ThongBaoService.php
 
 use App\Models\Interaction\ThongBao;
 use App\Models\Interaction\ThongBaoNguoiDung;
@@ -12,7 +16,11 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
+<<<<<<<< HEAD:app/Services/Admin/ThongBao/ThongBaoService.php
 use App\Contracts\Admin\ThongBao\ThongBaoServiceInterface;
+========
+use App\Contracts\ThongBaoServiceInterface;
+>>>>>>>> d8f9a518b484652b18400e34ccc6b448ec262d0a:app/Services/Admin/ThongBaoService.php
 
 class ThongBaoService implements ThongBaoServiceInterface
 {

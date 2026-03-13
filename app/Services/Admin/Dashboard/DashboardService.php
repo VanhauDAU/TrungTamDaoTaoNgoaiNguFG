@@ -1,6 +1,10 @@
 <?php
 
+<<<<<<<< HEAD:app/Services/Admin/Dashboard/DashboardService.php
 namespace App\Services\Admin\Dashboard;
+========
+namespace App\Services\Admin;
+>>>>>>>> d8f9a518b484652b18400e34ccc6b448ec262d0a:app/Services/Admin/DashboardService.php
 
 use App\Models\Auth\TaiKhoan;
 use App\Models\Education\LopHoc;
