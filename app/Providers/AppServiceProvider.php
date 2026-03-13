@@ -27,6 +27,9 @@ use App\Contracts\Admin\KhoaHocServiceInterface;
 use App\Contracts\Admin\HocPhiServiceInterface;
 use App\Contracts\Admin\NhanSuServiceInterface;
 use App\Contracts\Admin\HocVienServiceInterface;
+use App\Contracts\Admin\CoSoServiceInterface;
+use App\Contracts\Admin\PhongHocServiceInterface;
+use App\Contracts\Admin\HoaDonServiceInterface;
 
 // ── Admin Services ─────────────────────────────────────────────────────────
 use App\Services\Admin\BuoiHocService;
@@ -37,6 +40,9 @@ use App\Services\Admin\KhoaHocService;
 use App\Services\Admin\HocPhiService;
 use App\Services\Admin\NhanSuService;
 use App\Services\Admin\HocVienService;
+use App\Services\Admin\CoSoService;
+use App\Services\Admin\PhongHocService;
+use App\Services\Admin\HoaDonService;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -63,7 +69,10 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(NhanSuServiceInterface::class, NhanSuService::class);
         $this->app->bind(HocVienServiceInterface::class, HocVienService::class);
 
-        // ── Phase 4: Admin/CoSo, TaiChinh, BaiViet (sẽ bổ sung) ──────────
+        // ── Phase 4: Admin/CoSo, TaiChinh ──────────────────────────────────
+        $this->app->bind(CoSoServiceInterface::class, CoSoService::class);
+        $this->app->bind(PhongHocServiceInterface::class, PhongHocService::class);
+        $this->app->bind(HoaDonServiceInterface::class, HoaDonService::class);
 
         // ── Phase 5: Client (sẽ bổ sung) ──────────────────────────────────
     }
