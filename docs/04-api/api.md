@@ -111,7 +111,11 @@ Ghi chú:
 | ------ | ------------------------------------------ | ---------------------- |
 | GET    | `/admin/api/phuong-xa-co-so/{tinhThanhId}` | Phường xã có cơ sở     |
 | GET    | `/admin/api/co-so-by-location`             | Cơ sở theo quận/phường |
-| GET    | `/admin/api/hoc-phi/{khoaHocId}`           | Gói học phí theo khóa  |
+
+Ghi chú:
+
+- Endpoint `/admin/api/hoc-phi/{khoaHocId}` đã bị loại bỏ.
+- Chính sách giá hiện được nhập trực tiếp trong form `lớp học`, không còn AJAX lấy gói học phí theo khóa.
 
 ### Thông báo Admin
 
@@ -148,12 +152,16 @@ Ghi chú:
 | Lớp học     | `/admin/lop-hoc`           | index, create, store, show, edit, update, destroy                   |
 | Buổi học    | `/admin/buoi-hoc`          | store, update, destroy, auto-generate                               |
 | Ca học      | `/admin/ca-hoc`            | index, store, update, destroy, toggle-status                        |
-| Học phí     | `/admin/hoc-phi`           | store, update, destroy, toggle-status                               |
 | Hóa đơn     | `/admin/hoa-don`           | index, show, update, phieu-thu.store, phieu-thu.destroy             |
 | Bài viết    | `/admin/bai-viet`          | full CRUD + trash + bulk + toggle-status + upload-image             |
 | Thông báo   | `/admin/thong-bao`         | index, create, store, show, edit, update, destroy, toggle-pin, bulk |
 | Phân quyền  | `/admin/phan-quyen`        | index, create, store, edit, update, destroy                         |
 | Tài khoản   | `/admin/tai-khoan`         | index, update-nhom-quyen, toggle-status, reset-password             |
+
+Ghi chú:
+
+- Module `Học phí` riêng đã bị bỏ.
+- Cấu hình giá được quản lý bên trong CRUD `Lớp học`.
 
 ---
 

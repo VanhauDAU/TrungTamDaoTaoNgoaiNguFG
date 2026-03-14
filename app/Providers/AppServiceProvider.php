@@ -24,11 +24,10 @@ use App\Contracts\Admin\KhoaHoc\CaHocServiceInterface;
 use App\Contracts\Admin\KhoaHoc\DanhMucKhoaHocServiceInterface;
 use App\Contracts\Admin\KhoaHoc\LopHocServiceInterface;
 use App\Contracts\Admin\KhoaHoc\KhoaHocServiceInterface;
-use App\Contracts\Admin\KhoaHoc\HocPhiServiceInterface;
 use App\Contracts\Admin\NhanVien\NhanSuServiceInterface;
 use App\Contracts\Admin\HocVien\HocVienServiceInterface;
 use App\Contracts\Admin\CoSo\CoSoServiceInterface;
-use App\Contracts\Admin\PhongHoc\PhongHocServiceInterface;
+use App\Contracts\Admin\CoSo\PhongHocServiceInterface;
 use App\Contracts\Admin\TaiChinh\HoaDonServiceInterface;
 
 // ── Admin Services ─────────────────────────────────────────────────────────
@@ -37,11 +36,10 @@ use App\Services\Admin\KhoaHoc\CaHocService;
 use App\Services\Admin\KhoaHoc\DanhMucKhoaHocService;
 use App\Services\Admin\KhoaHoc\LopHocService;
 use App\Services\Admin\KhoaHoc\KhoaHocService;
-use App\Services\Admin\KhoaHoc\HocPhiService;
 use App\Services\Admin\NhanVien\NhanSuService;
 use App\Services\Admin\HocVien\HocVienService;
 use App\Services\Admin\CoSo\CoSoService;
-use App\Services\Admin\PhongHoc\PhongHocService;
+use App\Services\Admin\CoSo\PhongHocService;
 use App\Services\Admin\TaiChinh\HoaDonService;
 
 // ── Client Contracts ──────────────────────────────────────────────
@@ -79,7 +77,6 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(DanhMucKhoaHocServiceInterface::class , DanhMucKhoaHocService::class);
         $this->app->bind(CaHocServiceInterface::class , CaHocService::class);
         $this->app->bind(BuoiHocServiceInterface::class , BuoiHocService::class);
-        $this->app->bind(HocPhiServiceInterface::class , HocPhiService::class);
         $this->app->bind(LopHocServiceInterface::class , LopHocService::class);
         $this->app->bind(KhoaHocServiceInterface::class , KhoaHocService::class);
 

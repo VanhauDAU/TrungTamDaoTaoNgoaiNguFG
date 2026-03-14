@@ -3,32 +3,30 @@
 namespace App\Services\Admin\KhoaHoc;
 
 use App\Contracts\Admin\KhoaHoc\LopHocServiceInterface;
-use App\Models\Course\HocPhi;
+use App\Models\Auth\TaiKhoan;
 use App\Models\Course\KhoaHoc;
 use App\Models\Education\BuoiHoc;
 use App\Models\Education\CaHoc;
 use App\Models\Education\DangKyLopHoc;
 use App\Models\Education\LopHoc;
+use App\Models\Education\LopHocChinhSachGia;
 use App\Models\Facility\CoSoDaoTao;
 use App\Models\Facility\PhongHoc;
 use App\Models\Facility\TinhThanh;
-use App\Models\Auth\TaiKhoan;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class LopHocService implements LopHocServiceInterface
 {
-    // ─────────────────────────────────────────────────────────────────────────
-    // LIST
-    // ─────────────────────────────────────────────────────────────────────────
-
     public function getList(Request $request): array
     {
         $query = LopHoc::with([
-            'khoaHoc', 'coSo', 'caHoc',
+            'khoaHoc', 'coSo', 'caHoc', 'chinhSachGia',
             'taiKhoan.hoSoNguoiDung', 'dangKyLopHocs',
         ]);
 
@@ -38,21 +36,25 @@ class LopHocService implements LopHocServiceInterface
                     ->orWhereHas('khoaHoc', fn($q2) => $q2->where('tenKhoaHoc', 'like', "%{$search}%"));
             });
         }
-        if ($request->filled('khoaHocId'))
+        if ($request->filled('khoaHocId')) {
             $query->where('khoaHocId', $request->khoaHocId);
-        if ($request->filled('coSoId'))
+        }
+        if ($request->filled('coSoId')) {
             $query->where('coSoId', $request->coSoId);
-        if ($request->filled('namBatDau'))
+        }
+        if ($request->filled('namBatDau')) {
             $query->whereYear('ngayBatDau', $request->namBatDau);
-        if ($request->filled('thangBatDau'))
+        }
+        if ($request->filled('thangBatDau')) {
             $query->whereMonth('ngayBatDau', $request->thangBatDau);
+        }
         if ($request->filled('trangThai') && $request->trangThai !== '') {
             $query->where('trangThai', $request->trangThai);
         }
 
         $orderBy = $request->get('orderBy', 'lopHocId');
         $dir = $request->get('dir', 'desc');
-        if (in_array($orderBy, ['lopHocId', 'tenLopHoc', 'ngayBatDau'])) {
+        if (in_array($orderBy, ['lopHocId', 'tenLopHoc', 'ngayBatDau'], true)) {
             $query->orderBy($orderBy, $dir === 'asc' ? 'asc' : 'desc');
         }
 
@@ -62,8 +64,9 @@ class LopHocService implements LopHocServiceInterface
             ->whereNotNull('ngayBatDau')
             ->orderByDesc('ngayBatDau')
             ->get(['ngayBatDau'])
-            ->map(fn($l) => Carbon::parse($l->ngayBatDau)->year)
-            ->unique()->values();
+            ->map(fn($lopHoc) => Carbon::parse($lopHoc->ngayBatDau)->year)
+            ->unique()
+            ->values();
 
         return [
             'lopHocs' => $lopHocs,
@@ -81,7 +84,7 @@ class LopHocService implements LopHocServiceInterface
     public function getTrashList(Request $request): array
     {
         $query = LopHoc::onlyTrashed()->with([
-            'khoaHoc', 'coSo', 'caHoc',
+            'khoaHoc', 'coSo', 'caHoc', 'chinhSachGia',
             'taiKhoan.hoSoNguoiDung', 'dangKyLopHocs',
         ]);
 
@@ -99,10 +102,6 @@ class LopHocService implements LopHocServiceInterface
         ];
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // FORM DATA
-    // ─────────────────────────────────────────────────────────────────────────
-
     public function getCreateFormData(Request $request): array
     {
         $selectedKhoaHocId = $request->get('khoaHocId');
@@ -112,9 +111,7 @@ class LopHocService implements LopHocServiceInterface
             'caHocs' => CaHoc::where('trangThai', 1)->orderBy('tenCa')->get(),
             'tinhThanhs' => TinhThanh::whereHas('coSoDaoTao', fn($q) => $q->where('trangThai', 1))->orderBy('tenTinhThanh')->get(),
             'selectedKhoaHocId' => $selectedKhoaHocId,
-            'hocPhis' => $selectedKhoaHocId
-            ?HocPhi::where('khoaHocId', $selectedKhoaHocId)->where('trangThai', 1)->get()
-            : collect(),
+            'loaiThuOptions' => LopHocChinhSachGia::loaiThuOptions(),
         ];
     }
 
@@ -123,6 +120,7 @@ class LopHocService implements LopHocServiceInterface
         $lopHoc = LopHoc::with([
             'khoaHoc', 'coSo', 'caHoc', 'phongHoc',
             'taiKhoan.hoSoNguoiDung',
+            'chinhSachGia.dotThus',
             'buoiHocs.caHoc', 'buoiHocs.phongHoc', 'buoiHocs.taiKhoan.hoSoNguoiDung',
             'dangKyLopHocs.taiKhoan.hoSoNguoiDung',
         ])->where('slug', $slug)->firstOrFail();
@@ -142,7 +140,7 @@ class LopHocService implements LopHocServiceInterface
 
     public function getEditFormData(string $slug): array
     {
-        $lopHoc = LopHoc::with('coSo')->where('slug', $slug)->firstOrFail();
+        $lopHoc = LopHoc::with(['coSo', 'chinhSachGia.dotThus'])->where('slug', $slug)->firstOrFail();
         $coSoId = $lopHoc->coSoId;
 
         return [
@@ -153,39 +151,45 @@ class LopHocService implements LopHocServiceInterface
             'phongHocs' => PhongHoc::where('coSoId', $coSoId)->get(),
             'giaoVienCoSo' => $this->giaoVienTheoCoSo($coSoId, true),
             'giaoVienKhac' => $this->giaoVienTheoCoSo($coSoId, false),
-            'hocPhis' => HocPhi::where('khoaHocId', $lopHoc->khoaHocId)->where('trangThai', 1)->get(),
             'currentCoSo' => $lopHoc->coSo,
+            'loaiThuOptions' => LopHocChinhSachGia::loaiThuOptions(),
         ];
     }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // CRUD
-    // ─────────────────────────────────────────────────────────────────────────
 
     public function store(Request $request): LopHoc
     {
         $data = $this->validateLopHoc($request);
-        $this->checkRoomCapacity($data);
+        $lopHocData = $this->extractLopHocData($data);
+        $pricingPayload = $this->buildPricingPayload($request, $data);
 
-        $data['slug'] = $this->generateUniqueSlug($request->tenLopHoc);
-        $data['maLopHoc'] = LopHoc::generateMaLopHoc($request->khoaHocId);
+        $this->checkRoomCapacity($lopHocData);
+        $this->ensurePricingBusinessRules(null, $lopHocData, $pricingPayload);
 
-        $lopHoc = LopHoc::create($data);
+        $lopHocData['slug'] = $this->generateUniqueSlug($request->tenLopHoc);
+        $lopHocData['maLopHoc'] = LopHoc::generateMaLopHoc($request->khoaHocId);
+
+        $lopHoc = LopHoc::create($lopHocData);
+        $this->syncPricingPolicy($lopHoc, $pricingPayload);
         $this->syncRegistrationStatuses($lopHoc);
 
-        return $lopHoc;
+        return $lopHoc->fresh(['chinhSachGia.dotThus']);
     }
 
     public function update(Request $request, string $slug): LopHoc
     {
-        $lopHoc = LopHoc::where('slug', $slug)->firstOrFail();
+        $lopHoc = LopHoc::with(['chinhSachGia.dotThus', 'dangKyLopHocs'])->where('slug', $slug)->firstOrFail();
         $data = $this->validateLopHoc($request);
-        $this->checkRoomCapacity($data);
+        $lopHocData = $this->extractLopHocData($data);
+        $pricingPayload = $this->buildPricingPayload($request, $data);
 
-        $lopHoc->update($data);
+        $this->checkRoomCapacity($lopHocData);
+        $this->ensurePricingBusinessRules($lopHoc, $lopHocData, $pricingPayload);
+
+        $lopHoc->update($lopHocData);
+        $this->syncPricingPolicy($lopHoc->fresh(), $pricingPayload);
         $this->syncRegistrationStatuses($lopHoc->fresh());
 
-        return $lopHoc->fresh();
+        return $lopHoc->fresh(['chinhSachGia.dotThus']);
     }
 
     public function destroy(string $slug): string
@@ -235,23 +239,6 @@ class LopHocService implements LopHocServiceInterface
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // API HELPERS
-    // ─────────────────────────────────────────────────────────────────────────
-
-    public function getHocPhiByKhoaHoc(int $khoaHocId): Collection
-    {
-        return HocPhi::where('khoaHocId', $khoaHocId)
-            ->where('trangThai', 1)->get()
-            ->map(fn($hp) => [
-            'hocPhiId' => $hp->hocPhiId,
-            'soBuoi' => $hp->soBuoi,
-            'donGia' => $hp->donGia,
-            'tongHocPhi' => $hp->tongHocPhi,
-            'label' => 'Gói ' . $hp->soBuoi . ' buổi – ' . $hp->tongHocPhiFormat,
-            ]);
-    }
-
     public function getPhongByCoso(int $coSoId): Collection
     {
         return PhongHoc::where('coSoId', $coSoId)
@@ -262,20 +249,16 @@ class LopHocService implements LopHocServiceInterface
     public function getGiaoVienByCoso(int $coSoId): array
     {
         return [
-            'cung_co_so' => $this->giaoVienTheoCoSo($coSoId, true)->map(fn($gv) => [
-            'taiKhoanId' => $gv->taiKhoanId,
-            'hoTen' => $gv->hoSoNguoiDung->hoTen ?? $gv->taiKhoan,
+            'cung_co_so' => $this->giaoVienTheoCoSo($coSoId, true)->map(fn($giaoVien) => [
+                'taiKhoanId' => $giaoVien->taiKhoanId,
+                'hoTen' => $giaoVien->hoSoNguoiDung->hoTen ?? $giaoVien->taiKhoan,
             ])->values(),
-            'khac_co_so' => $this->giaoVienTheoCoSo($coSoId, false)->map(fn($gv) => [
-            'taiKhoanId' => $gv->taiKhoanId,
-            'hoTen' => $gv->hoSoNguoiDung->hoTen ?? $gv->taiKhoan,
+            'khac_co_so' => $this->giaoVienTheoCoSo($coSoId, false)->map(fn($giaoVien) => [
+                'taiKhoanId' => $giaoVien->taiKhoanId,
+                'hoTen' => $giaoVien->hoSoNguoiDung->hoTen ?? $giaoVien->taiKhoan,
             ])->values(),
         ];
     }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // PRIVATE HELPERS
-    // ─────────────────────────────────────────────────────────────────────────
 
     private function validateLopHoc(Request $request): array
     {
@@ -291,9 +274,16 @@ class LopHocService implements LopHocServiceInterface
             'soBuoiDuKien' => 'nullable|integer|min:1',
             'soHocVienToiDa' => 'nullable|integer|min:1',
             'donGiaDay' => 'nullable|numeric|min:0',
-            'hocPhiId' => 'nullable|exists:hocphi,hocPhiId',
             'lichHoc' => 'nullable|string|max:20',
             'trangThai' => ['required', Rule::in(array_map('strval', array_keys(LopHoc::trangThaiLabels())))],
+            'hocPhiNiemYet' => 'nullable|numeric|min:0',
+            'soBuoiCamKet' => 'nullable|integer|min:1',
+            'loaiThu' => ['nullable', Rule::in(array_map('strval', array_keys(LopHocChinhSachGia::loaiThuOptions())))],
+            'ghiChuChinhSach' => 'nullable|string',
+            'hieuLucTu' => 'nullable|date',
+            'hieuLucDen' => 'nullable|date|after_or_equal:hieuLucTu',
+            'trangThaiChinhSachGia' => 'nullable|in:0,1',
+            'dotThu' => 'nullable|array',
         ], [
             'tenLopHoc.required' => 'Vui lòng nhập tên lớp học.',
             'khoaHocId.required' => 'Vui lòng chọn khóa học.',
@@ -302,7 +292,170 @@ class LopHocService implements LopHocServiceInterface
             'ngayBatDau.required' => 'Vui lòng chọn ngày bắt đầu.',
             'ngayKetThuc.required' => 'Vui lòng chọn ngày kết thúc.',
             'ngayKetThuc.after' => 'Ngày kết thúc phải sau ngày bắt đầu.',
+            'hocPhiNiemYet.min' => 'Học phí niêm yết không được âm.',
+            'soBuoiCamKet.min' => 'Số buổi cam kết phải tối thiểu là 1.',
         ]);
+    }
+
+    private function extractLopHocData(array $data): array
+    {
+        return Arr::only($data, [
+            'tenLopHoc',
+            'khoaHocId',
+            'coSoId',
+            'caHocId',
+            'taiKhoanId',
+            'phongHocId',
+            'ngayBatDau',
+            'ngayKetThuc',
+            'soBuoiDuKien',
+            'soHocVienToiDa',
+            'donGiaDay',
+            'lichHoc',
+            'trangThai',
+        ]);
+    }
+
+    private function buildPricingPayload(Request $request, array $validatedData): array
+    {
+        $hocPhiNiemYet = $validatedData['hocPhiNiemYet'] ?? null;
+        $soBuoiCamKet = $validatedData['soBuoiCamKet'] ?? null;
+        $loaiThu = isset($validatedData['loaiThu']) && $validatedData['loaiThu'] !== ''
+            ? (int) $validatedData['loaiThu']
+            : LopHocChinhSachGia::LOAI_THU_TRON_GOI;
+        $ghiChuChinhSach = trim((string) ($validatedData['ghiChuChinhSach'] ?? ''));
+        $hieuLucTu = $validatedData['hieuLucTu'] ?? null;
+        $hieuLucDen = $validatedData['hieuLucDen'] ?? null;
+        $trangThai = (int) ($validatedData['trangThaiChinhSachGia'] ?? 1);
+        $dotThus = $this->normalizeDotThuRows($request->input('dotThu', []));
+
+        $hasAnyPricingInput = $hocPhiNiemYet !== null
+            || $soBuoiCamKet !== null
+            || $ghiChuChinhSach !== ''
+            || !empty($dotThus)
+            || $request->filled('loaiThu')
+            || $request->filled('hieuLucTu')
+            || $request->filled('hieuLucDen');
+
+        if (!$hasAnyPricingInput) {
+            return [];
+        }
+
+        if ($hocPhiNiemYet === null || (float) $hocPhiNiemYet <= 0) {
+            throw ValidationException::withMessages([
+                'hocPhiNiemYet' => 'Vui lòng nhập học phí niêm yết lớn hơn 0 khi cấu hình chính sách giá.',
+            ]);
+        }
+
+        if (!empty($dotThus)) {
+            $tongDotThu = collect($dotThus)->sum(fn(array $dotThu) => (float) $dotThu['soTien']);
+            if (round($tongDotThu, 2) !== round((float) $hocPhiNiemYet, 2)) {
+                throw ValidationException::withMessages([
+                    'dotThu' => 'Tổng các đợt thu phải bằng học phí niêm yết của lớp.',
+                ]);
+            }
+        }
+
+        return [
+            'loaiThu' => $loaiThu,
+            'hocPhiNiemYet' => (float) $hocPhiNiemYet,
+            'soBuoiCamKet' => $soBuoiCamKet ? (int) $soBuoiCamKet : null,
+            'ghiChuChinhSach' => $ghiChuChinhSach !== '' ? $ghiChuChinhSach : null,
+            'hieuLucTu' => $hieuLucTu ?: null,
+            'hieuLucDen' => $hieuLucDen ?: null,
+            'trangThai' => $trangThai,
+            'dotThus' => $dotThus,
+        ];
+    }
+
+    private function normalizeDotThuRows(array $rows): array
+    {
+        $normalizedRows = [];
+
+        foreach ($rows as $index => $row) {
+            $tenDotThu = trim((string) ($row['tenDotThu'] ?? ''));
+            $soTien = $row['soTien'] ?? null;
+            $hanThanhToan = $row['hanThanhToan'] ?? null;
+            $batBuoc = !empty($row['batBuoc']) ? 1 : 0;
+            $hasAnyValue = $tenDotThu !== '' || $soTien !== null || !empty($hanThanhToan);
+
+            if (!$hasAnyValue) {
+                continue;
+            }
+
+            if ($tenDotThu === '') {
+                throw ValidationException::withMessages([
+                    "dotThu.{$index}.tenDotThu" => 'Mỗi đợt thu phải có tên đợt thu.',
+                ]);
+            }
+
+            if (!is_numeric($soTien) || (float) $soTien <= 0) {
+                throw ValidationException::withMessages([
+                    "dotThu.{$index}.soTien" => 'Số tiền mỗi đợt thu phải lớn hơn 0.',
+                ]);
+            }
+
+            $normalizedRows[] = [
+                'tenDotThu' => $tenDotThu,
+                'thuTu' => count($normalizedRows) + 1,
+                'soTien' => (float) $soTien,
+                'hanThanhToan' => $hanThanhToan ?: null,
+                'batBuoc' => $batBuoc,
+                'trangThai' => 1,
+            ];
+        }
+
+        return $normalizedRows;
+    }
+
+    private function ensurePricingBusinessRules(?LopHoc $existingClass, array $lopHocData, array $pricingPayload): void
+    {
+        $trangThai = (int) $lopHocData['trangThai'];
+        $requiresPricing = in_array($trangThai, [
+            LopHoc::TRANG_THAI_DANG_TUYEN_SINH,
+            LopHoc::TRANG_THAI_CHOT_DANH_SACH,
+            LopHoc::TRANG_THAI_DANG_HOC,
+            LopHoc::TRANG_THAI_DA_KET_THUC,
+        ], true);
+
+        $hasPricing = !empty($pricingPayload) && (float) ($pricingPayload['hocPhiNiemYet'] ?? 0) > 0;
+
+        if ($requiresPricing && !$hasPricing) {
+            throw ValidationException::withMessages([
+                'hocPhiNiemYet' => 'Lớp học phải có chính sách giá hợp lệ trước khi mở tuyển sinh hoặc vận hành.',
+            ]);
+        }
+
+        if ($existingClass && $existingClass->dangKyLopHocs()->count() > 0 && !$hasPricing) {
+            throw ValidationException::withMessages([
+                'hocPhiNiemYet' => 'Không thể gỡ chính sách giá của lớp khi đã có học viên đăng ký.',
+            ]);
+        }
+    }
+
+    private function syncPricingPolicy(LopHoc $lopHoc, array $pricingPayload): void
+    {
+        $existingPolicy = $lopHoc->chinhSachGia()->first();
+
+        if (empty($pricingPayload)) {
+            if ($existingPolicy) {
+                $existingPolicy->dotThus()->delete();
+                $existingPolicy->delete();
+            }
+            return;
+        }
+
+        $policyData = Arr::except($pricingPayload, ['dotThus']);
+
+        $policy = $existingPolicy
+            ? tap($existingPolicy)->update($policyData)
+            : $lopHoc->chinhSachGia()->create($policyData);
+
+        $policy->dotThus()->delete();
+
+        foreach ($pricingPayload['dotThus'] as $dotThu) {
+            $policy->dotThus()->create($dotThu);
+        }
     }
 
     private function checkRoomCapacity(array $data): void
@@ -310,7 +463,7 @@ class LopHocService implements LopHocServiceInterface
         if (!empty($data['phongHocId']) && !empty($data['soHocVienToiDa'])) {
             $phong = PhongHoc::find($data['phongHocId']);
             if ($phong && $data['soHocVienToiDa'] > $phong->sucChua) {
-                throw \Illuminate\Validation\ValidationException::withMessages([
+                throw ValidationException::withMessages([
                     'soHocVienToiDa' => 'Sĩ số tối đa (' . $data['soHocVienToiDa'] . ') không được vượt quá sức chứa phòng học ' . $phong->tenPhong . ' (' . $phong->sucChua . ' chỗ).',
                 ]);
             }
@@ -325,8 +478,7 @@ class LopHocService implements LopHocServiceInterface
 
         if ($cungCoSo) {
             $query->whereHas('nhanSu', fn($q) => $q->where('coSoId', $coSoId));
-        }
-        else {
+        } else {
             $query->where(function ($q) use ($coSoId) {
                 $q->whereDoesntHave('nhanSu')
                     ->orWhereHas('nhanSu', fn($sq) => $sq->where('coSoId', '!=', $coSoId));
@@ -341,14 +493,18 @@ class LopHocService implements LopHocServiceInterface
         $slug = Str::slug($name, '-');
         $candidate = $slug;
         $counter = 1;
+
         while (true) {
-            $q = LopHoc::where('slug', $candidate);
-            if ($excludeId)
-                $q->where('lopHocId', '!=', $excludeId);
-            if (!$q->exists())
+            $query = LopHoc::where('slug', $candidate);
+            if ($excludeId) {
+                $query->where('lopHocId', '!=', $excludeId);
+            }
+            if (!$query->exists()) {
                 break;
+            }
             $candidate = $slug . '-' . $counter++;
         }
+
         return $candidate;
     }
 }

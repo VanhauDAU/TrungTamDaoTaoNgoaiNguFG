@@ -109,10 +109,21 @@ DACNCNPM_TrungTamNN/
 ```
 Học viên chọn lớp → Xác nhận thông tin
  → POST /lop-hoc/{slug}/{lopSlug}/xac-nhan-dang-ky
- → DangKyLopHoc::create()
- → HoaDon::create()  ← tự động tạo hóa đơn
+ → Kiểm tra lớp có chính sách giá hợp lệ
+ → DangKyLopHoc::create() + snapshot học phí
+ → HoaDon::create() từ snapshot học phí
  → ThongBao gửi cho học viên + admin
  → Redirect trang hồ sơ học viên
+```
+
+### Admin mở lớp ra tuyển sinh
+
+```text
+Admin tạo khóa học
+ → Admin tạo lớp học
+ → Admin cấu hình chính sách giá cho lớp
+ → Hệ thống kiểm tra chính sách giá hợp lệ
+ → Chuyển lớp sang trạng thái đang tuyển sinh
 ```
 
 ### Admin gửi thông báo

@@ -232,14 +232,16 @@
                         {{-- HỌC PHÍ CARD --}}
                         <div class="sidebar-card p-4 text-center mb-4">
                             <p class="text-muted mb-1">Học phí khóa học</p>
-                            @if ($class->hocPhi)
+                            @if ($class->chinhSachGia)
                                 <h2 class="text-primary fw-bold mb-1">
-                                    {{ number_format($class->hocPhi->tongHocPhi, 0, ',', '.') }}đ
+                                    {{ number_format($class->chinhSachGia->hocPhiNiemYet, 0, ',', '.') }}đ
                                 </h2>
                                 <p class="text-muted small mb-3">
                                     <i class="fas fa-info-circle me-1"></i>
-                                    {{ $class->hocPhi->soBuoi }} buổi &times;
-                                    {{ number_format($class->hocPhi->donGia, 0, ',', '.') }}đ/buổi
+                                    {{ $class->chinhSachGia->loaiThuLabel }}
+                                    @if ($class->chinhSachGia->soBuoiCamKet)
+                                        · {{ $class->chinhSachGia->soBuoiCamKet }} buổi cam kết
+                                    @endif
                                 </p>
                             @else
                                 <h2 class="text-muted fw-bold mb-3">Liên hệ</h2>

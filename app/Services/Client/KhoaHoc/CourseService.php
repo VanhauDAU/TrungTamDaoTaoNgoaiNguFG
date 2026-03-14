@@ -8,6 +8,7 @@ use App\Models\Course\KhoaHoc;
 use App\Models\Education\BuoiHoc;
 use App\Models\Education\DangKyLopHoc;
 use App\Models\Education\LopHoc;
+use App\Models\Education\LopHocChinhSachGia;
 use App\Models\Finance\HoaDon;
 use App\Models\Auth\TaiKhoan;
 use Carbon\Carbon;
@@ -83,11 +84,11 @@ class CourseService implements CourseServiceInterface
 
         $course = KhoaHoc::where('slug', $slug)->with([
             'danhMuc',
-            'hocPhis',
             'lopHoc' => fn($q) => $q->whereIn('trangThai', $visibleStatuses)->with([
         'coSo.tinhThanh',
         'phongHoc',
         'taiKhoan.hoSoNguoiDung',
+        'chinhSachGia',
         'dangKyLopHocs',
         ]),
         ])->firstOrFail();
@@ -109,7 +110,7 @@ class CourseService implements CourseServiceInterface
     {
         $class = LopHoc::where('slug', $slugLopHoc)->with([
             'khoaHoc.danhMuc', 'coSo.tinhThanh', 'phongHoc',
-            'taiKhoan.hoSoNguoiDung', 'hocPhi', 'dangKyLopHocs',
+            'taiKhoan.hoSoNguoiDung', 'chinhSachGia.dotThus', 'dangKyLopHocs',
         ])->firstOrFail();
 
         if ($class->khoaHoc->slug !== $slug) {
@@ -125,14 +126,14 @@ class CourseService implements CourseServiceInterface
         if (!$user instanceof TaiKhoan) {
             throw new \RuntimeException('Vui lòng đăng nhập để đăng ký lớp học.');
         }
-        $class = LopHoc::where('slug', $slugLopHoc)->with(['buoiHocs.caHoc', 'dangKyLopHocs', 'hocPhi', 'khoaHoc'])->firstOrFail();
+        $class = LopHoc::where('slug', $slugLopHoc)->with(['buoiHocs.caHoc', 'dangKyLopHocs', 'chinhSachGia.dotThus', 'khoaHoc'])->firstOrFail();
 
         $validation = $this->validateClassRegistration($user, $class);
         if ($validation !== true) {
             throw new \RuntimeException($validation);
         }
 
-        if (!$class->hocPhi || $class->hocPhi->tongHocPhi <= 0) {
+        if (!$class->hasValidPricingPolicy()) {
             throw new \RuntimeException('Lớp học chưa có thông tin học phí. Vui lòng liên hệ trung tâm để được tư vấn.');
         }
 
@@ -145,7 +146,7 @@ class CourseService implements CourseServiceInterface
         if (!$user instanceof TaiKhoan) {
             throw new \RuntimeException('Vui lòng đăng nhập để đăng ký lớp học.');
         }
-        $class = LopHoc::where('slug', $slugLopHoc)->with(['hocPhi', 'khoaHoc', 'dangKyLopHocs', 'buoiHocs.caHoc', 'coSo'])->firstOrFail();
+        $class = LopHoc::where('slug', $slugLopHoc)->with(['chinhSachGia.dotThus', 'khoaHoc', 'dangKyLopHocs', 'buoiHocs.caHoc', 'coSo'])->firstOrFail();
 
         $validation = $this->validateClassRegistration($user, $class);
         if ($validation !== true) {
@@ -155,18 +156,26 @@ class CourseService implements CourseServiceInterface
         $request->validate(['payment_method' => 'required|in:1,2,3'], ['payment_method.required' => 'Vui lòng chọn hình thức thanh toán']);
 
         DB::transaction(function () use ($user, $class, $request) {
-            $registration = DangKyLopHoc::create([
-                'taiKhoanId' => $user->taiKhoanId,
-                'lopHocId' => $class->lopHocId,
-                'ngayDangKy' => now(),
-                'trangThai' => DangKyLopHoc::TRANG_THAI_CHO_THANH_TOAN,
-            ]);
+            $pricingPolicy = $class->chinhSachGia;
 
-            if (!$class->hocPhi || $class->hocPhi->tongHocPhi <= 0) {
+            if (!$pricingPolicy || !$pricingPolicy->isActive() || (float) $pricingPolicy->hocPhiNiemYet <= 0) {
                 throw new \Exception('Lớp học chưa có thông tin học phí. Không thể tạo hóa đơn.');
             }
 
-            $tongTien = $class->hocPhi->tongHocPhi;
+            $tongTien = (float) $pricingPolicy->hocPhiNiemYet;
+            $registration = DangKyLopHoc::create([
+                'taiKhoanId' => $user->taiKhoanId,
+                'lopHocId' => $class->lopHocId,
+                'lopHocChinhSachGiaId' => $pricingPolicy->lopHocChinhSachGiaId,
+                'loaiThuSnapshot' => $pricingPolicy->loaiThu,
+                'hocPhiNiemYetSnapshot' => $tongTien,
+                'giamGiaSnapshot' => 0,
+                'hocPhiPhaiThuSnapshot' => $tongTien,
+                'soBuoiCamKetSnapshot' => $pricingPolicy->soBuoiCamKet,
+                'ghiChuGiaSnapshot' => $pricingPolicy->ghiChuChinhSach,
+                'ngayDangKy' => now(),
+                'trangThai' => DangKyLopHoc::TRANG_THAI_CHO_THANH_TOAN,
+            ]);
 
             HoaDon::create([
                 'maHoaDon' => HoaDon::generateMaHoaDon(),
@@ -197,6 +206,11 @@ class CourseService implements CourseServiceInterface
     {
         if (!$class->isOpenForRegistration())
             return 'Lớp học hiện không nhận đăng ký.';
+
+        $pricingPolicy = $class->chinhSachGia;
+        if (!$pricingPolicy || !$pricingPolicy->isActive() || (float) $pricingPolicy->hocPhiNiemYet <= 0) {
+            return 'Lớp học chưa được cấu hình học phí hợp lệ.';
+        }
 
         if ($class->soHocVienToiDa !== null) {
             $currentStudents = $class->dangKyLopHocs->filter(fn(DangKyLopHoc $r) => $r->blocksSeat())->count();

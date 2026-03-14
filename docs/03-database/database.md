@@ -20,9 +20,13 @@ TaiKhoan ──< HoSoNguoiDung
 
 DanhMucKhoaHoc (self-join parent_id, đệ quy)
          └──< KhoaHoc ──< LopHoc
-                    └──< HocPhi
                     └──< NoiDungBaiHoc
                     └──< TaiLieu
+LopHoc ──||── LopHocChinhSachGia ──< LopHocDotThu
+   │
+   └──< DangKyLopHoc >── HoaDon >── PhieuThu
+            │
+            └── snapshot học phí tại thời điểm đăng ký
 
 ThongBao ──< ThongBaoNguoiDung (polymorphic nhận)
          └──< ThongBaoTepDinh
@@ -68,7 +72,6 @@ ChatRoom >──< ChatRoomMember >── TaiKhoan
 | ---------------- | ------------------- | -------------------------------------------------------------------- |
 | `danhmuckhoahoc` | Danh mục cây đệ quy | danhMucId, tenDanhMuc, slug, parent_id, trangThai                    |
 | `khoahoc`        | Khóa học            | khoaHocId, tenKhoaHoc, danhMucId, moTa, slug, anhKhoaHoc, deleted_at |
-| `hocphi`         | Gói học phí         | hocPhiId, khoaHocId, tenGoi, gia, trangThai                          |
 | `noidungbaihoc`  | Nội dung bài học    | noiDungId, khoaHocId, tieuDe, noiDung, thuTu                         |
 | `tailieu`        | Tài liệu khóa học   | taiLieuId, khoaHocId, tenFile, duongDan                              |
 
@@ -77,16 +80,18 @@ ChatRoom >──< ChatRoomMember >── TaiKhoan
 | Bảng           | Mô tả                        | Cột chính                                                                                                  |
 | -------------- | ---------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | `cahoc`        | Ca học (giờ, thứ)            | caHocId, tenCa, gioKetThuc, gioBatDau, thu, trangThai                                                      |
-| `lophoc`       | Lớp học cụ thể               | lopHocId, khoaHocId, coSoId, phongHocId, nhanSuId, caHocId, slug, ngayBatDau, ngayKetThuc, siSo, trangThai |
-| `buoihoc`      | Buổi học                     | buoiHocId, lopHocId, ngayHoc, ghiChu, trangThai                                                            |
-| `diemdanh`     | Điểm danh học viên theo buổi | diemDanhId, buoiHocId, taiKhoanId, trangThai, ghiChu                                                       |
-| `dangkylophoc` | Học viên đăng ký lớp         | dangKyId, lopHocId, taiKhoanId, ngayDangKy, trangThai                                                      |
+| `lophoc` | Lớp học cụ thể | lopHocId, khoaHocId, coSoId, phongHocId, taiKhoanId, caHocId, slug, ngayBatDau, ngayKetThuc, soBuoiDuKien, soHocVienToiDa, donGiaDay, lichHoc, trangThai |
+| `lophoc_chinhsachgia` | Chính sách giá của lớp | lopHocChinhSachGiaId, lopHocId, loaiThu, hocPhiNiemYet, soBuoiCamKet, hieuLucTu, hieuLucDen, trangThai |
+| `lophoc_dotthu` | Kế hoạch thu theo đợt của lớp | lopHocDotThuId, lopHocChinhSachGiaId, tenDotThu, thuTu, soTien, hanThanhToan, batBuoc, trangThai |
+| `buoihoc` | Buổi học | buoiHocId, lopHocId, ngayHoc, ghiChu, trangThai |
+| `diemdanh` | Điểm danh học viên theo buổi | diemDanhId, buoiHocId, taiKhoanId, trangThai, ghiChu |
+| `dangkylophoc` | Học viên đăng ký lớp + snapshot giá | dangKyLopHocId, lopHocId, taiKhoanId, lopHocChinhSachGiaId, hocPhiNiemYetSnapshot, hocPhiPhaiThuSnapshot, ngayDangKy, trangThai |
 
 ### Tài chính
 
 | Bảng           | Mô tả                      | Cột chính                                                  |
 | -------------- | -------------------------- | ---------------------------------------------------------- |
-| `hoadon`       | Hóa đơn                    | hoaDonId, dangKyId, tongTien, soTienCon, trangThai, ghiChu |
+| `hoadon` | Hóa đơn | hoaDonId, dangKyLopHocId, lopHocDotThuId, tongTien, daTra, trangThai, ghiChu |
 | `phieuthu`     | Phiếu thu (lần thu tiền)   | phieuThuId, hoaDonId, soTien, ngayThu, hinhThucTT, ghiChu  |
 | `luong`        | Bảng lương nhân sự         | luongId, nhanSuId, thangNam, luongCoBan, tongLuong         |
 | `luongchitiet` | Chi tiết phụ cấp, khấu trừ | luongChiTietId, luongId, loai, soTien, moTa                |
@@ -148,10 +153,30 @@ ChatRoom >──< ChatRoomMember >── TaiKhoan
 | `2026_03_05_130245`                    | Tạo bảng `thongbao_tepdinh`           |
 | `2026_03_05_134900`                    | Thêm `parent_id` vào `danhmuckhoahoc` |
 | `2026_03_07_120000`                    | Tạo toàn bộ bảng chat client          |
+| `2026_03_14_150000`                    | Refactor học phí sang mô hình theo lớp |
 
 ---
 
-## 4. Index & Optimization gợi ý
+## 4. Luồng tài chính lớp học
+
+### 4.1 Mô hình hiện tại
+
+- `Khóa học` không còn sở hữu bảng giá.
+- `Lớp học` có thể được tạo trước, sau đó mới gắn `lophoc_chinhsachgia`.
+- `Buổi học` và `số buổi thực tế` chỉ là dữ liệu vận hành; không tự động đổi số tiền phải thu.
+- Khi học viên đăng ký, hệ thống chụp `snapshot` học phí vào `dangkylophoc`.
+- `HoaDon` mới phải đọc từ snapshot này, không đọc lại từ giá hiện tại của lớp.
+
+### 4.2 Quy tắc vận hành
+
+- Lớp ở trạng thái `Sắp mở` có thể chưa có học phí.
+- Trước khi chuyển sang `Đang tuyển sinh`, `Chốt danh sách`, `Đang học`, hoặc `Đã kết thúc`, lớp phải có chính sách giá hợp lệ.
+- Thay đổi học phí lớp chỉ áp dụng cho đăng ký mới.
+- Nếu cần kế hoạch thu theo đợt, dùng `lophoc_dotthu` để lưu cấu hình từng đợt.
+
+---
+
+## 5. Index & Optimization gợi ý
 
 ```sql
 -- Truy vấn thường xuyên theo slug
@@ -167,6 +192,13 @@ CREATE INDEX idx_notify_unread ON thongbao_nguoidung(nguoiNhanId, daDoc);
 
 -- Điểm danh theo buổi
 CREATE INDEX idx_diemdanh_buoi ON diemdanh(buoiHocId);
+
+-- Chính sách giá theo lớp
+CREATE UNIQUE INDEX uq_lophoc_chinhsachgia_lop ON lophoc_chinhsachgia(lopHocId);
+CREATE INDEX idx_lophoc_dotthu_policy_order ON lophoc_dotthu(lopHocChinhSachGiaId, thuTu);
+
+-- Snapshot đăng ký theo chính sách giá
+CREATE INDEX idx_dangkylophoc_pricing_policy ON dangkylophoc(lopHocChinhSachGiaId);
 
 -- Chat rooms theo loại và trạng thái
 CREATE INDEX idx_chat_rooms_loai_trang_thai ON chat_rooms(loai, trangThai);

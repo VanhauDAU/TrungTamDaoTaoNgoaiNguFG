@@ -4,7 +4,6 @@ namespace App\Contracts\Admin\KhoaHoc;
 
 use App\Models\Education\LopHoc;
 use Illuminate\Http\Request;
-use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 
 interface LopHocServiceInterface
@@ -58,11 +57,6 @@ interface LopHocServiceInterface
      * Đồng bộ trạng thái đăng ký học viên theo trạng thái lớp.
      */
     public function syncRegistrationStatuses(LopHoc $lopHoc): void;
-
-    /**
-     * API: Lấy học phí theo khóa học.
-     */
-    public function getHocPhiByKhoaHoc(int $khoaHocId): Collection;
 
     /**
      * API: Lấy phòng học theo cơ sở.
