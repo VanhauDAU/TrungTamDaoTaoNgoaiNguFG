@@ -18,12 +18,13 @@ Tai lieu:
 - [5. Cai dat moi truong local](#5-cai-dat-moi-truong-local)
 - [6. Chay du an](#6-chay-du-an)
 - [7. Bien moi truong quan trong](#7-bien-moi-truong-quan-trong)
-- [8. Tai lieu Auth](#8-tai-lieu-auth)
-- [9. Lenh huu ich](#9-lenh-huu-ich)
-- [10. Test va chat luong ma nguon](#10-test-va-chat-luong-ma-nguon)
-- [11. Luu y du lieu va migration](#11-luu-y-du-lieu-va-migration)
-- [12. Quy trinh phat trien](#12-quy-trinh-phat-trien)
-- [13. Ho tro](#13-ho-tro)
+- [8. Mo hinh hoc phi hien tai](#8-mo-hinh-hoc-phi-hien-tai)
+- [9. Tai lieu Auth](#9-tai-lieu-auth)
+- [10. Lenh huu ich](#10-lenh-huu-ich)
+- [11. Test va chat luong ma nguon](#11-test-va-chat-luong-ma-nguon)
+- [12. Luu y du lieu va migration](#12-luu-y-du-lieu-va-migration)
+- [13. Quy trinh phat trien](#13-quy-trinh-phat-trien)
+- [14. Ho tro](#14-ho-tro)
 
 ## 1. Tong quan
 - Nganh: He thong thong tin quan ly trung tam ngoai ngu.
@@ -50,7 +51,7 @@ Tai lieu:
 ### Admin
 - Dashboard thong ke tong quan.
 - Quan ly hoc vien, giao vien, nhan vien.
-- Quan ly dao tao: danh muc khoa hoc, khoa hoc, lop hoc, buoi hoc, ca hoc, hoc phi.
+- Quan ly dao tao: danh muc khoa hoc, khoa hoc, lop hoc, buoi hoc, ca hoc, chinh sach gia lop.
 - Quan ly tai chinh: hoa don, phieu thu, cap nhat trang thai.
 - Quan ly noi dung: bai viet, danh muc bai viet, tag.
 - Quan ly thong bao noi bo.
@@ -150,7 +151,15 @@ Neu dung XAMPP/Apache:
 - `RECAPTCHA_*`: reCAPTCHA v3 cho login/register/quen mat khau public.
 - `GEMINI_API_KEY`, `GEMINI_MODEL`: khoa/mode AI (neu kich hoat tinh nang lien quan).
 
-## 8. Tai lieu Auth
+## 8. Mo hinh hoc phi hien tai
+- Hoc phi duoc quan ly o cap `lop hoc`, khong con o cap `khoa hoc`.
+- `khoahoc` chi mo ta san pham dao tao; gia ban va cach thu tien nam o `lophoc_chinhsachgia`.
+- `lophoc` co the tao truoc khi nhap hoc phi, nhung phai co chinh sach gia hop le truoc khi chuyen sang trang thai tuyen sinh/van hanh.
+- Khi hoc vien dang ky, he thong chup `snapshot` hoc phi vao `dangkylophoc` de khoa gia tai thoi diem dang ky.
+- Bang `lophoc_dotthu` duoc dung de luu ke hoach thu theo dot cho mo rong nghiep vu; xem huong dan van hanh tai `docs/05-huong-dan/hoc-phi-lop-hoc.md`.
+- Huong dan van hanh tong hop: `docs/05-huong-dan/huong-dan.md`.
+
+## 9. Tai lieu Auth
 - Portal dang nhap hien tai:
   - Hoc vien: `/login`
   - Giang vien: `/teacher/login`
@@ -163,7 +172,7 @@ Neu dung XAMPP/Apache:
 - Joi validation phia client: `docs/05-huong-dan/auth-joi-validation.md`
 - Thay doi theo moc: `CHANGELOG.md`
 
-## 9. Lenh huu ich
+## 10. Lenh huu ich
 ```bash
 # Chay test
 php artisan test
@@ -179,7 +188,7 @@ php artisan invoice:check-overdue
 php artisan invoice:check-overdue --dry-run
 ```
 
-## 10. Test va chat luong ma nguon
+## 11. Test va chat luong ma nguon
 ```bash
 # Test full
 composer test
@@ -192,17 +201,18 @@ Thu muc test hien co:
 - `tests/Feature`
 - `tests/Unit`
 
-## 11. Luu y du lieu va migration
+## 12. Luu y du lieu va migration
 - Du an hien co nhieu bang domain custom (`taikhoan`, `lienhe`, `hoadon`, ...).
 - Thu muc migration trong repo chu yeu la migration bo sung/cap nhat.
 - Neu khoi tao moi tren may sach, can dam bao da co schema nen tu team (hoac bo migration day du) truoc khi chay du an toan phan.
+- Migration `2026_03_14_150000_refactor_class_pricing_to_lophoc_chinhsachgia.php` chuyen hoc phi tu mo hinh cu (`hocphi`, `lophoc.hocPhiId`) sang mo hinh moi theo lop hoc.
 
 Lenh migrate co ban:
 ```bash
 php artisan migrate
 ```
 
-## 12. Quy trinh phat trien
+## 13. Quy trinh phat trien
 - Khong push truc tiep vao `main`.
 - Tao branch theo chuc nang, mo Pull Request de review.
 - Viet commit message ro rang theo muc dich:
@@ -212,7 +222,7 @@ php artisan migrate
   - `docs:` cap nhat tai lieu
   - `chore:` viec he thong/cau hinh
 
-## 13. Ho tro
+## 14. Ho tro
 - Neu gap loi khi setup, tao issue trong repository va kem:
   - log loi
   - buoc tai hien
@@ -220,4 +230,4 @@ php artisan migrate
 
 ---
 
-Cap nhat README gan day: chuan hoa tai lieu, dong bo voi Laravel 12/PHP 8.2+, bo sung huong dan setup/chay/test va luu y migration.
+Cap nhat README gan day: dong bo mo hinh hoc phi theo lop hoc, bo sung link van hanh hoc phi va luu y migration refactor pricing.

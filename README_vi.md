@@ -16,12 +16,13 @@ Monolith Laravel phục vụ quản lý vận hành trung tâm ngoại ngữ: kh
 - [6. Cài đặt môi trường local](#6-cài-đặt-môi-trường-local)
 - [7. Chạy dự án](#7-chạy-dự-án)
 - [8. Biến môi trường quan trọng](#8-biến-môi-trường-quan-trọng)
-- [9. Lệnh hữu ích](#9-lệnh-hữu-ích)
-- [10. Test và chất lượng mã nguồn](#10-test-và-chất-lượng-mã-nguồn)
-- [11. Lưu ý dữ liệu và migration](#11-lưu-ý-dữ-liệu-và-migration)
-- [12. Tài liệu Auth](#12-tài-liệu-auth)
-- [13. Quy trình phát triển](#13-quy-trình-phát-triển)
-- [14. Hỗ trợ](#14-hỗ-trợ)
+- [9. Mô hình học phí hiện tại](#9-mô-hình-học-phí-hiện-tại)
+- [10. Lệnh hữu ích](#10-lệnh-hữu-ích)
+- [11. Test và chất lượng mã nguồn](#11-test-và-chất-lượng-mã-nguồn)
+- [12. Lưu ý dữ liệu và migration](#12-lưu-ý-dữ-liệu-và-migration)
+- [13. Tài liệu Auth](#13-tài-liệu-auth)
+- [14. Quy trình phát triển](#14-quy-trình-phát-triển)
+- [15. Hỗ trợ](#15-hỗ-trợ)
 
 ## 1. Tổng quan
 - Ngành: Hệ thống thông tin quản lý trung tâm ngoại ngữ.
@@ -67,7 +68,7 @@ flowchart LR
 ### Admin
 - Dashboard thống kê tổng quan.
 - Quản lý học viên, giáo viên, nhân viên.
-- Quản lý đào tạo: danh mục khóa học, khóa học, lớp học, buổi học, ca học, học phí.
+- Quản lý đào tạo: danh mục khóa học, khóa học, lớp học, buổi học, ca học, chính sách giá lớp.
 - Quản lý tài chính: hóa đơn, phiếu thu, cập nhật trạng thái.
 - Quản lý nội dung: bài viết, danh mục bài viết, tag.
 - Quản lý thông báo nội bộ.
@@ -167,7 +168,15 @@ Nếu dùng XAMPP/Apache:
 - `RECAPTCHA_*`: reCAPTCHA v3 cho login/register/quên mật khẩu public.
 - `GEMINI_API_KEY`, `GEMINI_MODEL`: khóa/mode AI (nếu kích hoạt tính năng liên quan).
 
-## 9. Lệnh hữu ích
+## 9. Mô hình học phí hiện tại
+- Học phí được quản lý ở cấp `lớp học`, không còn ở cấp `khóa học`.
+- `Khóa học` chỉ mô tả chương trình đào tạo; giá bán và cách thu tiền nằm ở `lophoc_chinhsachgia`.
+- `Lớp học` có thể được tạo trước khi nhập học phí, nhưng phải có chính sách giá hợp lệ trước khi chuyển sang trạng thái tuyển sinh hoặc đang học.
+- Khi học viên đăng ký, hệ thống chụp `snapshot` học phí vào `dangkylophoc` để không bị ảnh hưởng khi lớp thay đổi giá sau này.
+- `lophoc_dotthu` dùng để lưu kế hoạch thu theo đợt cho các pha mở rộng; tài liệu vận hành: `docs/05-huong-dan/hoc-phi-lop-hoc.md`.
+- Hướng dẫn vận hành tổng hợp: `docs/05-huong-dan/huong-dan.md`.
+
+## 10. Lệnh hữu ích
 ```bash
 # Chạy test
 php artisan test
@@ -183,7 +192,7 @@ php artisan invoice:check-overdue
 php artisan invoice:check-overdue --dry-run
 ```
 
-## 10. Test và chất lượng mã nguồn
+## 11. Test và chất lượng mã nguồn
 ```bash
 # Test full
 composer test
@@ -196,17 +205,18 @@ Thư mục test hiện có:
 - `tests/Feature`
 - `tests/Unit`
 
-## 11. Lưu ý dữ liệu và migration
+## 12. Lưu ý dữ liệu và migration
 - Dự án hiện có nhiều bảng domain custom (`taikhoan`, `lienhe`, `hoadon`, ...).
 - Thư mục migration trong repo chủ yếu là migration bổ sung/cập nhật.
 - Nếu khởi tạo mới trên máy sạch, cần đảm bảo đã có schema nền từ team (hoặc bộ migration đầy đủ) trước khi chạy dự án toàn phần.
+- Migration `2026_03_14_150000_refactor_class_pricing_to_lophoc_chinhsachgia.php` chuyển học phí từ mô hình cũ (`hocphi`, `lophoc.hocPhiId`) sang mô hình mới theo lớp học.
 
 Lệnh migrate cơ bản:
 ```bash
 php artisan migrate
 ```
 
-## 12. Tài liệu Auth
+## 13. Tài liệu Auth
 - Portal đăng nhập hiện tại:
   - Học viên: `/login`
   - Giảng viên: `/teacher/login`
@@ -219,7 +229,7 @@ php artisan migrate
 - Joi validation phía client: `docs/05-huong-dan/auth-joi-validation.md`
 - Thay đổi theo mốc: `CHANGELOG.md`
 
-## 13. Quy trình phát triển
+## 14. Quy trình phát triển
 - Không push trực tiếp vào `main`.
 - Tạo branch theo chức năng, mở Pull Request để review.
 - Viết commit message rõ ràng theo mục đích:
@@ -229,7 +239,7 @@ php artisan migrate
   - `docs:` cập nhật tài liệu
   - `chore:` việc hệ thống/cấu hình
 
-## 14. Hỗ trợ
+## 15. Hỗ trợ
 - Nếu gặp lỗi khi setup, tạo issue trong repository và kèm:
   - log lỗi
   - bước tái hiện

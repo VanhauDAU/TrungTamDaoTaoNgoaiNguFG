@@ -12,7 +12,8 @@ return new class extends Migration
         if (!Schema::hasTable('lophoc_chinhsachgia')) {
             Schema::create('lophoc_chinhsachgia', function (Blueprint $table) {
                 $table->increments('lopHocChinhSachGiaId');
-                $table->unsignedInteger('lopHocId')->unique();
+                // Bang lophoc hien tai dung INT co dau cho lopHocId, nen can khop kieu de FK tao duoc.
+                $table->integer('lopHocId')->unique();
                 $table->tinyInteger('loaiThu')->default(0)->comment('0=Tron goi, 1=Theo thang, 2=Theo dot');
                 $table->decimal('hocPhiNiemYet', 15, 2)->default(0);
                 $table->unsignedInteger('soBuoiCamKet')->nullable();

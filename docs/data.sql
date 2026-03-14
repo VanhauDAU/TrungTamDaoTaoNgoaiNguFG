@@ -99,18 +99,7 @@ INSERT INTO `khoahoc` (`khoaHocId`, `tenKhoaHoc`, `danhMucId`, `moTa`, `slug`, `
 (5, 'Tiếng Nhật N5',           10, 'Tiếng Nhật cơ bản N5 từ con số 0', 'tieng-nhat-n5', 1, NOW(), NOW());
 
 -- ────────────────────────────────────────────────────────────
--- 10. Gói học phí (hocphi)
--- ────────────────────────────────────────────────────────────
-INSERT INTO `hocphi` (`hocPhiId`, `khoaHocId`, `tenGoi`, `gia`, `trangThai`, `created_at`, `updated_at`) VALUES
-(1, 1, 'Học phí tiêu chuẩn', 3500000,  1, NOW(), NOW()),
-(2, 1, 'Học phí VIP (có tài liệu)', 4200000, 1, NOW(), NOW()),
-(3, 2, 'Học phí tiêu chuẩn', 4500000,  1, NOW(), NOW()),
-(4, 3, 'Học phí tiêu chuẩn', 2800000,  1, NOW(), NOW()),
-(5, 4, 'Học phí tiêu chuẩn', 2500000,  1, NOW(), NOW()),
-(6, 5, 'Học phí tiêu chuẩn', 3000000,  1, NOW(), NOW());
-
--- ────────────────────────────────────────────────────────────
--- 11. Lớp học (lophoc)
+-- 10. Lop hoc (lophoc)
 -- ────────────────────────────────────────────────────────────
 INSERT INTO `lophoc` (`lopHocId`, `khoaHocId`, `coSoId`, `phongHocId`, `nhanSuId`, `caHocId`, `tenLop`, `slug`, `ngayBatDau`, `ngayKetThuc`, `siSo`, `trangThai`, `created_at`, `updated_at`) VALUES
 (1, 1, 1, 1, 1, 1, 'IELTS CB-01/2026', 'ielts-cb-01-2026', '2026-03-10', '2026-06-10', 15, 'dang_hoc',    NOW(), NOW()),
@@ -119,30 +108,49 @@ INSERT INTO `lophoc` (`lopHocId`, `khoaHocId`, `coSoId`, `phongHocId`, `nhanSuId
 (4, 5, 3, 4, 1, 4, 'NHT-N5-01/2026',   'nht-n5-01-2026',   '2026-03-20', '2026-09-20', 18, 'dang_hoc',    NOW(), NOW());
 
 -- ────────────────────────────────────────────────────────────
--- 12. Đăng ký lớp học + Hóa đơn
+-- 11. Chinh sach gia lop hoc (lophoc_chinhsachgia)
 -- ────────────────────────────────────────────────────────────
-INSERT INTO `dangkylophoc` (`dangKyId`, `lopHocId`, `taiKhoanId`, `ngayDangKy`, `trangThai`, `created_at`, `updated_at`) VALUES
-(1, 1, 3, NOW(), 'da_xac_nhan', NOW(), NOW()),
-(2, 1, 4, NOW(), 'da_xac_nhan', NOW(), NOW()),
-(3, 4, 3, NOW(), 'cho_xac_nhan', NOW(), NOW());
+INSERT INTO `lophoc_chinhsachgia` (`lopHocChinhSachGiaId`, `lopHocId`, `loaiThu`, `hocPhiNiemYet`, `soBuoiCamKet`, `ghiChuChinhSach`, `hieuLucTu`, `hieuLucDen`, `trangThai`, `created_at`, `updated_at`) VALUES
+(1, 1, 0, 3500000, 24, 'Hoc phi tron goi lop IELTS co ban', NOW(), NULL, 1, NOW(), NOW()),
+(2, 2, 0, 4500000, 30, 'Hoc phi tron goi lop IELTS nang cao', NOW(), NULL, 1, NOW(), NOW()),
+(3, 3, 0, 2800000, 20, 'Hoc phi tron goi lop TOEIC', NOW(), NULL, 1, NOW(), NOW()),
+(4, 4, 0, 3000000, 28, 'Hoc phi tron goi lop N5', NOW(), NULL, 1, NOW(), NOW());
 
-INSERT INTO `hoadon` (`hoaDonId`, `dangKyId`, `tongTien`, `soTienCon`, `trangThai`, `created_at`, `updated_at`) VALUES
-(1, 1, 3500000, 0,       'da_thanh_toan', NOW(), NOW()),
-(2, 2, 3500000, 3500000, 'chua_thanh_toan', NOW(), NOW()),
-(3, 3, 3000000, 3000000, 'chua_thanh_toan', NOW(), NOW());
+-- ────────────────────────────────────────────────────────────
+-- 12. Dot thu cua lop (lophoc_dotthu)
+-- ────────────────────────────────────────────────────────────
+INSERT INTO `lophoc_dotthu` (`lopHocDotThuId`, `lopHocChinhSachGiaId`, `tenDotThu`, `thuTu`, `soTien`, `hanThanhToan`, `batBuoc`, `trangThai`, `created_at`, `updated_at`) VALUES
+(1, 1, 'Dat coc giu cho', 1, 1000000, '2026-03-08', 1, 1, NOW(), NOW()),
+(2, 1, 'Thanh toan khai giang', 2, 2500000, '2026-03-15', 1, 1, NOW(), NOW()),
+(3, 2, 'Thanh toan tron khoa', 1, 4500000, '2026-03-15', 1, 1, NOW(), NOW()),
+(4, 3, 'Thanh toan tron khoa', 1, 2800000, '2026-04-01', 1, 1, NOW(), NOW()),
+(5, 4, 'Thanh toan tron khoa', 1, 3000000, '2026-03-20', 1, 1, NOW(), NOW());
+
+-- ────────────────────────────────────────────────────────────
+-- 13. Dang ky lop hoc + Hoa don
+-- ────────────────────────────────────────────────────────────
+INSERT INTO `dangkylophoc` (`dangKyLopHocId`, `lopHocId`, `taiKhoanId`, `lopHocChinhSachGiaId`, `loaiThuSnapshot`, `hocPhiNiemYetSnapshot`, `giamGiaSnapshot`, `hocPhiPhaiThuSnapshot`, `soBuoiCamKetSnapshot`, `ghiChuGiaSnapshot`, `ngayDangKy`, `trangThai`, `created_at`, `updated_at`) VALUES
+(1, 1, 3, 1, 0, 3500000, 0, 3500000, 24, 'Chot gia tai thoi diem dang ky', NOW(), 'da_xac_nhan', NOW(), NOW()),
+(2, 1, 4, 1, 0, 3500000, 0, 3500000, 24, 'Chot gia tai thoi diem dang ky', NOW(), 'da_xac_nhan', NOW(), NOW()),
+(3, 4, 3, 4, 0, 3000000, 0, 3000000, 28, 'Chot gia tai thoi diem dang ky', NOW(), 'cho_xac_nhan', NOW(), NOW());
+
+INSERT INTO `hoadon` (`hoaDonId`, `dangKyLopHocId`, `lopHocDotThuId`, `tongTien`, `soTienCon`, `trangThai`, `created_at`, `updated_at`) VALUES
+(1, 1, NULL, 3500000, 0,       'da_thanh_toan', NOW(), NOW()),
+(2, 2, NULL, 3500000, 3500000, 'chua_thanh_toan', NOW(), NOW()),
+(3, 3, NULL, 3000000, 3000000, 'chua_thanh_toan', NOW(), NOW());
 
 INSERT INTO `phieuthu` (`phieuThuId`, `hoaDonId`, `soTien`, `ngayThu`, `hinhThucTT`, `ghiChu`, `created_at`, `updated_at`) VALUES
 (1, 1, 3500000, NOW(), 'tien_mat', 'Thanh toán đủ khi nhập học', NOW(), NOW());
 
 -- ────────────────────────────────────────────────────────────
--- 13. Liên hệ tư vấn (lienhe)
+-- 14. Liên hệ tư vấn (lienhe)
 -- ────────────────────────────────────────────────────────────
 INSERT INTO `lienhe` (`lienHeId`, `hoTen`, `soDienThoai`, `email`, `khoaHocQuan`, `ghiChu`, `trangThai`, `created_at`, `updated_at`) VALUES
 (1, 'Nguyễn Văn A', '0901234567', 'nguyenvana@gmail.com', 'IELTS', 'Muốn học buổi tối', 'moi',        NOW(), NOW()),
 (2, 'Lê Thị B',     '0912345678', 'lethib@gmail.com',     'TOEIC', NULL,                 'dang_xu_ly', NOW(), NOW());
 
 -- ────────────────────────────────────────────────────────────
--- 14. Bài viết (baiviet)
+-- 15. Bài viết (baiviet)
 -- ────────────────────────────────────────────────────────────
 INSERT INTO `danhmucbaiviet` (`danhMucId`, `tenDanhMuc`, `slug`, `created_at`, `updated_at`) VALUES
 (1, 'Kinh nghiệm học', 'kinh-nghiem-hoc', NOW(), NOW()),
@@ -162,5 +170,6 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- END OF DATA.SQL
 -- Chú ý:
 -- • Mật khẩu mặc định cho tất cả tài khoản: "password"
--- • Điều chỉnh coSoId, nhanSuId cho phù hợp với dữ liệu thực
+-- • File nay da duoc cap nhat theo mo hinh hoc phi theo lop hoc sau migration 2026_03_14_150000
+-- • Dieu chinh coSoId, nhanSuId cho phu hop voi du lieu thuc
 -- ============================================================

@@ -102,24 +102,56 @@ while ($current <= $ngayKetThuc) {
 
 ---
 
-## 3. Tự động tạo Hóa đơn khi đăng ký lớp
+## 3. Tạo snapshot học phí khi đăng ký lớp
 
 ### Luồng
 
 ```
 DangKyLopHoc::create()
-  → Lấy gói học phí mặc định (HocPhi::where('khoaHocId', ...)->first())
+  → Đọc chính sách giá của lớp (LopHocChinhSachGia)
+  → Snapshot vào dangkylophoc:
+        - loaiThuSnapshot
+        - hocPhiNiemYetSnapshot
+        - giamGiaSnapshot
+        - hocPhiPhaiThuSnapshot
+        - soBuoiCamKetSnapshot
   → HoaDon::create([
-        'dangKyId'    => $dangKyId,
-        'tongTien'    => $hocPhi->gia,
-        'soTienCon'   => $hocPhi->gia,  // Chưa thanh toán gì
+        'dangKyLopHocId' => $dangKyId,
+        'tongTien'       => $snapshot->hocPhiPhaiThuSnapshot,
         'trangThai'   => 'chua_thanh_toan',
     ])
 ```
 
+### Quy tắc
+
+- Không đọc lại học phí từ lớp sau khi học viên đã đăng ký.
+- Thay đổi `LopHocChinhSachGia` chỉ áp dụng cho đăng ký mới.
+- `soBuoiThucTe` và `buoihoc` không tự tính lại hóa đơn.
+
 ---
 
-## 4. Real-time Thông báo (Server-Sent Events / Polling)
+## 4. Rule mở tuyển sinh
+
+Trước khi lớp được chuyển sang các trạng thái vận hành, hệ thống phải kiểm tra:
+
+```php
+$requiresPricing = in_array($lopHoc->trangThai, [
+    LopHoc::TRANG_THAI_DANG_TUYEN_SINH,
+    LopHoc::TRANG_THAI_CHOT_DANH_SACH,
+    LopHoc::TRANG_THAI_DANG_HOC,
+    LopHoc::TRANG_THAI_DA_KET_THUC,
+], true);
+
+if ($requiresPricing && ! $lopHoc->hasValidPricingPolicy()) {
+    throw ValidationException::withMessages([
+        'hocPhiNiemYet' => 'Lớp học phải có chính sách giá hợp lệ trước khi mở tuyển sinh.',
+    ]);
+}
+```
+
+---
+
+## 5. Real-time Thông báo (Server-Sent Events / Polling)
 
 ### Cơ chế
 
@@ -145,7 +177,7 @@ fetch("/api/thong-bao/dropdown")
 
 ---
 
-## 5. Slug Generation (SEO-friendly URL)
+## 6. Slug Generation (SEO-friendly URL)
 
 ```php
 // Tạo slug duy nhất, tránh trùng lặp
@@ -167,7 +199,7 @@ private function generateUniqueSlug(string $name, ?int $existingId = null): stri
 
 ---
 
-## 6. Cascade Delete Logic
+## 7. Cascade Delete Logic
 
 Soft delete được áp dụng cho: `khoahoc`, `baiviet`, `lienhe`, `hocvien`.
 
@@ -184,7 +216,7 @@ if ($soKhoaHoc > 0 || $soKon > 0) abort(422, 'Không thể xóa');
 
 ---
 
-## 7. Phân quyền (Authorization)
+## 8. Phân quyền (Authorization)
 
 ### Middleware `isAdmin`
 
