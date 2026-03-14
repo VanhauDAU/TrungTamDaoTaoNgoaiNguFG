@@ -10,7 +10,6 @@
 @endsection
 
 @section('content')
-
     <div class="kf-page-header">
         <div>
             <div class="kf-breadcrumb">
@@ -41,10 +40,13 @@
         </div>
     @endif
 
+    @php
+        $oldDotThus = old('dotThu', []);
+    @endphp
+
     <form action="{{ route('admin.lop-hoc.store') }}" method="POST">
         @csrf
 
-        {{-- ── Tabs ──────────────────────────────────────────────── --}}
         <div class="kf-tabs">
             <button type="button" class="kf-tab-btn active" data-tab="tab-co-ban">
                 <i class="fas fa-info-circle"></i> Thông tin cơ bản
@@ -57,7 +59,6 @@
             </button>
         </div>
 
-        {{-- ── Tab 1: Thông tin cơ bản ──────────────────────────── --}}
         <div class="kf-tab-panel active" id="tab-co-ban">
             <div class="kf-card">
                 <div class="kf-card-title"><i class="fas fa-info-circle"></i> Thông tin chung</div>
@@ -107,8 +108,6 @@
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
-
-
                 </div>
             </div>
 
@@ -166,7 +165,6 @@
             </div>
         </div>
 
-        {{-- ── Tab 2: Lịch học & Thời gian ──────────────────────── --}}
         <div class="kf-tab-panel" id="tab-lich-hoc">
             <div class="kf-card">
                 <div class="kf-card-title"><i class="fas fa-calendar-days"></i> Lịch học trong tuần</div>
@@ -228,73 +226,136 @@
             </div>
         </div>
 
-        {{-- ── Tab 3: Học phí & Cài đặt ────────────────────────────────── --}}
         <div class="kf-tab-panel" id="tab-hoc-phi">
-            {{-- Gói học phí --}}
             <div class="kf-card">
-                <div class="kf-card-title"><i class="fas fa-file-invoice-dollar"></i> Gói học phí học viên</div>
+                <div class="kf-card-title"><i class="fas fa-file-invoice-dollar"></i> Chính sách giá lớp</div>
                 <p class="form-hint" style="margin:0 0 14px">
-                    Chọn gói học phí áp dụng cho lớp học này. Mỗi gói định nghĩa số buổi và đơn giá/buổi mà học viên phải
-                    nộp.
+                    Học phí là giá bán của lớp. Lớp có thể lưu khi chưa có giá, nhưng phải có chính sách giá hợp lệ trước
+                    khi chuyển sang trạng thái tuyển sinh hoặc đang học.
                 </p>
 
                 <div class="kf-form-row">
-                    <div class="kf-form-group" style="grid-column:1/-1">
-                        <label>Chọn gói học phí</label>
-                        <select name="hocPhiId" id="hocPhiSel" onchange="previewHocPhi()">
-                            <option value="">-- Chọn khóa học trước (Tab 1) --</option>
-                            @foreach ($hocPhis as $hp)
-                                <option value="{{ $hp->hocPhiId }}" data-sobuoi="{{ $hp->soBuoi }}"
-                                    data-dongia="{{ $hp->donGia }}" data-tong="{{ $hp->tongHocPhi }}"
-                                    {{ old('hocPhiId') == $hp->hocPhiId ? 'selected' : '' }}>
-                                    Gói {{ $hp->soBuoi }} buổi &ndash; {{ number_format($hp->donGia, 0, ',', '.') }}
-                                    đ/buổi
-                                    &rarr; Tổng: {{ number_format($hp->tongHocPhi, 0, ',', '.') }} đ
+                    <div class="kf-form-group">
+                        <label>Học phí niêm yết (VNĐ)</label>
+                        <input type="number" name="hocPhiNiemYet" id="hocPhiNiemYetInput"
+                            value="{{ old('hocPhiNiemYet') }}" min="0" step="1000" oninput="previewPricing()">
+                    </div>
+                    <div class="kf-form-group">
+                        <label>Số buổi cam kết</label>
+                        <input type="number" name="soBuoiCamKet" id="soBuoiCamKetInput"
+                            value="{{ old('soBuoiCamKet') }}" min="1" oninput="previewPricing()">
+                    </div>
+                    <div class="kf-form-group">
+                        <label>Loại thu</label>
+                        <select name="loaiThu" id="loaiThuInput" onchange="previewPricing()">
+                            @foreach ($loaiThuOptions as $value => $label)
+                                <option value="{{ $value }}" {{ (string) old('loaiThu', 0) === (string) $value ? 'selected' : '' }}>
+                                    {{ $label }}
                                 </option>
                             @endforeach
                         </select>
-                        <div class="form-hint">Danh sách gói sẽ cập nhật khi bạn chọn khóa học (AJAX).</div>
+                    </div>
+                    <div class="kf-form-group">
+                        <label>Trạng thái chính sách giá</label>
+                        <select name="trangThaiChinhSachGia">
+                            <option value="1" {{ old('trangThaiChinhSachGia', '1') === '1' ? 'selected' : '' }}>Đang áp dụng</option>
+                            <option value="0" {{ old('trangThaiChinhSachGia') === '0' ? 'selected' : '' }}>Tạm ngưng</option>
+                        </select>
                     </div>
                 </div>
 
-                {{-- Preview card --}}
-                <div id="hocPhiPreview" style="display:none;margin-top:16px">
+                <div class="kf-form-row">
+                    <div class="kf-form-group">
+                        <label>Hiệu lực từ</label>
+                        <input type="datetime-local" name="hieuLucTu"
+                            value="{{ old('hieuLucTu') ? \Carbon\Carbon::parse(old('hieuLucTu'))->format('Y-m-d\TH:i') : '' }}">
+                    </div>
+                    <div class="kf-form-group">
+                        <label>Hiệu lực đến</label>
+                        <input type="datetime-local" name="hieuLucDen"
+                            value="{{ old('hieuLucDen') ? \Carbon\Carbon::parse(old('hieuLucDen'))->format('Y-m-d\TH:i') : '' }}">
+                    </div>
+                    <div class="kf-form-group" style="grid-column:1/-1">
+                        <label>Ghi chú chính sách</label>
+                        <textarea name="ghiChuChinhSach" rows="3"
+                            placeholder="Ví dụ: học phí đã bao gồm tài liệu, chưa bao gồm lệ phí thi.">{{ old('ghiChuChinhSach') }}</textarea>
+                    </div>
+                </div>
+
+                <div id="pricingPreview" style="display:none;margin-top:16px">
                     <div
-                        style="background:linear-gradient(135deg,#7c3aed,#a78bfa);border-radius:10px;padding:16px 20px;color:#fff;display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px">
+                        style="background:linear-gradient(135deg,#0f766e,#14b8a6);border-radius:10px;padding:16px 20px;color:#fff;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px">
                         <div>
-                            <div style="font-size:.7rem;font-weight:700;opacity:.8;text-transform:uppercase">Số buổi gói
-                            </div>
-                            <div style="font-size:1.4rem;font-weight:700" id="prev-sobuoi">—</div>
+                            <div style="font-size:.72rem;font-weight:700;opacity:.8;text-transform:uppercase">Học phí niêm yết</div>
+                            <div style="font-size:1.35rem;font-weight:700" id="prev-hocphi">—</div>
                         </div>
                         <div>
-                            <div style="font-size:.7rem;font-weight:700;opacity:.8;text-transform:uppercase">Đơn giá/buổi
-                            </div>
-                            <div style="font-size:1.4rem;font-weight:700" id="prev-dongia">—</div>
+                            <div style="font-size:.72rem;font-weight:700;opacity:.8;text-transform:uppercase">Số buổi cam kết</div>
+                            <div style="font-size:1.35rem;font-weight:700" id="prev-camket">—</div>
                         </div>
                         <div>
-                            <div style="font-size:.7rem;font-weight:700;opacity:.8;text-transform:uppercase">Tổng học phí
-                                HV</div>
-                            <div style="font-size:1.4rem;font-weight:700;color:#fde68a" id="prev-tong">—</div>
+                            <div style="font-size:.72rem;font-weight:700;opacity:.8;text-transform:uppercase">Loại thu</div>
+                            <div style="font-size:1.1rem;font-weight:700" id="prev-loaithu">—</div>
                         </div>
                     </div>
-                    {{-- Cảnh báo lệch số buổi --}}
-                    <div id="hp-mismatch-warn"
-                        style="display:none;margin-top:10px;padding:10px 14px;border-radius:8px;font-size:.82rem"></div>
                 </div>
             </div>
 
-            {{-- Chi phí giáo viên --}}
+            <div class="kf-card">
+                <div class="kf-card-title" style="justify-content:space-between">
+                    <span><i class="fas fa-layer-group"></i> Kế hoạch thu theo đợt</span>
+                    <button type="button" class="kf-btn kf-btn-secondary" onclick="addDotThuRow()">
+                        <i class="fas fa-plus"></i> Thêm đợt thu
+                    </button>
+                </div>
+                <p class="form-hint" style="margin:0 0 14px">
+                    Có thể để trống nếu lớp thu một lần. Nếu cấu hình đợt thu, tổng số tiền các đợt phải bằng học phí niêm yết.
+                </p>
+
+                <div id="dotThuRows">
+                    @forelse ($oldDotThus as $index => $dotThu)
+                        <div class="dot-thu-row"
+                            style="display:grid;grid-template-columns:2fr 1fr 1fr auto auto;gap:10px;align-items:end;margin-bottom:10px">
+                            <div>
+                                <label>Tên đợt thu</label>
+                                <input type="text" name="dotThu[{{ $index }}][tenDotThu]"
+                                    value="{{ $dotThu['tenDotThu'] ?? '' }}" placeholder="VD: Đợt cọc giữ chỗ">
+                            </div>
+                            <div>
+                                <label>Số tiền</label>
+                                <input type="number" name="dotThu[{{ $index }}][soTien]"
+                                    value="{{ $dotThu['soTien'] ?? '' }}" min="0" step="1000" oninput="previewPricing()">
+                            </div>
+                            <div>
+                                <label>Hạn thanh toán</label>
+                                <input type="date" name="dotThu[{{ $index }}][hanThanhToan]"
+                                    value="{{ $dotThu['hanThanhToan'] ?? '' }}">
+                            </div>
+                            <label style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+                                <input type="checkbox" name="dotThu[{{ $index }}][batBuoc]" value="1"
+                                    {{ !empty($dotThu['batBuoc']) ? 'checked' : '' }}>
+                                Bắt buộc
+                            </label>
+                            <button type="button" class="kf-btn kf-btn-secondary" onclick="removeDotThuRow(this)">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    @empty
+                        <div class="form-hint" id="dotThuEmptyHint">Chưa cấu hình đợt thu nào.</div>
+                    @endforelse
+                </div>
+            </div>
+
             <div class="kf-card">
                 <div class="kf-card-title"><i class="fas fa-chalkboard-teacher"></i> Chi phí giáo viên</div>
                 <p class="form-hint" style="margin:0 0 14px">
-                    ĐÂY LÀ CHI PHÍ CỦA TRUNG TÂM (khác với học phí học viên ở trên).
+                    Đây là chi phí của trung tâm, tách biệt khỏi học phí học viên.
                 </p>
                 <div class="kf-form-row">
                     <div class="kf-form-group">
                         <label>Đơn giá dạy (VNĐ/buổi)</label>
                         <input type="number" name="donGiaDay" id="donGiaDayInput" value="{{ old('donGiaDay') }}"
-                            placeholder="VD: 150000" min="0" step="1000" onchange="previewHocPhi()">
-                        <div class="form-hint">Số tiền trả giáo viên mỗi buổi dạy.</div>
+                            placeholder="VD: 150000" min="0" step="1000">
                     </div>
                     <div class="kf-form-group">
                         <label>Sĩ số học viên tối đa</label>
@@ -304,7 +365,6 @@
                 </div>
             </div>
 
-            {{-- Trạng thái --}}
             <div class="kf-card">
                 <div class="kf-card-title"><i class="fas fa-sliders-h"></i> Trạng thái lớp</div>
                 <div class="kf-form-group">
@@ -333,12 +393,12 @@
             </button>
         </div>
     </form>
-
 @endsection
 
 @section('script')
     <script>
-        // ── Tab switching ──────────────────────────────────
+        let dotThuIndex = {{ count($oldDotThus) }};
+
         document.querySelectorAll('.kf-tab-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.kf-tab-btn').forEach(b => b.classList.remove('active'));
@@ -348,12 +408,10 @@
             });
         });
 
-        // ── Lịch học checkboxes → hidden input ────────────
         function updateLichHoc() {
             const checked = [...document.querySelectorAll('input[name="lichHoc_arr[]"]:checked')]
                 .map(cb => cb.value);
             document.getElementById('lichHocInput').value = checked.join(',');
-            // Style active
             document.querySelectorAll('#lichHocGrid label').forEach(lbl => {
                 const cb = lbl.querySelector('input');
                 if (cb.checked) {
@@ -369,7 +427,6 @@
             calcBuoi();
         }
 
-        // ── Tính số buổi dự kiến ──────────────────────────
         function calcBuoi() {
             const start = document.querySelector('[name=ngayBatDau]').value;
             const end = document.querySelector('[name=ngayKetThuc]').value;
@@ -400,7 +457,6 @@
             document.getElementById('calcHint').textContent = `Tính tự động: ${count} buổi học`;
         }
 
-        // ── AJAX: Cascade Tỉnh → Phường/Xã → Cơ sở ─────
         async function loadPhuongXa(tinhThanhId) {
             const pSel = document.getElementById('phuongXaSel');
             const cSel = document.getElementById('coSoSel');
@@ -445,7 +501,6 @@
             }
         }
 
-        // ── AJAX: Phòng học & Giáo viên theo cơ sở ───────
         async function loadPhongVaGV(coSoId) {
             const phongSel = document.getElementById('phongHocSel');
             const gvSel = document.getElementById('giaoVienSel');
@@ -485,7 +540,6 @@
             gvSel.innerHTML = gvHtml;
         }
 
-        // ── Validation sĩ số ≤ sức chứa phòng ──────────────────
         function updateSucChuaHint() {
             const ps = document.getElementById('phongHocSel');
             const opt = ps.options[ps.selectedIndex];
@@ -511,7 +565,6 @@
 
         document.getElementById('phongHocSel')?.addEventListener('change', updateSucChuaHint);
 
-        // Client-side guard trước khi submit
         document.querySelector('form')?.addEventListener('submit', function(e) {
             const ps = document.getElementById('phongHocSel');
             const opt = ps?.options[ps.selectedIndex];
@@ -525,81 +578,76 @@
             }
         });
 
-        // ── AJAX: HocPhi theo khóa học ──────────────────
-        async function loadHocPhi(khoaHocId) {
-            const sel = document.getElementById('hocPhiSel');
-            sel.innerHTML = '<option value="">Đang tải...</option>';
-            if (!khoaHocId) {
-                sel.innerHTML = '<option value="">-- Chọn khóa học trước --</option>';
-                return;
-            }
-            const data = await fetch(`/admin/api/hoc-phi/${khoaHocId}`).then(r => r.json());
-            sel.innerHTML = '<option value="">-- Chọn gói học phí --</option>' +
-                data.map(hp => `<option value="${hp.hocPhiId}"
-                    data-sobuoi="${hp.soBuoi}" data-dongia="${hp.donGia}" data-tong="${hp.tongHocPhi}">
-                    Gói ${hp.soBuoi} buổi – ${fmtMoney(hp.donGia)}/buổi → Tổng: ${fmtMoney(hp.tongHocPhi)}
-                </option>`).join('');
-            document.getElementById('hocPhiPreview').style.display = 'none';
-        }
-
-        // Wire khoaHocSel to also load HocPhi
-        document.getElementById('khoaHocSel').addEventListener('change', function() {
-            loadHocPhi(this.value);
-        });
-        const oldKhoa = "{{ old('khoaHocId', $selectedKhoaHocId ?? '') }}";
-        if (oldKhoa) loadHocPhi(oldKhoa);
-
-        // Re-check mismatch whenever soBuoiDuKien changes
-        document.getElementById('soBuoiInput')?.addEventListener('input', previewHocPhi);
-
-        // ── Live preview học phí ─────────────────────────
         function fmtMoney(n) {
-            return Number(n).toLocaleString('vi-VN') + ' đ';
+            return Number(n || 0).toLocaleString('vi-VN') + ' đ';
         }
 
-        function previewHocPhi() {
-            const sel = document.getElementById('hocPhiSel');
-            const opt = sel.options[sel.selectedIndex];
-            const preview = document.getElementById('hocPhiPreview');
-            if (!opt || !opt.value) {
+        function previewPricing() {
+            const hocPhi = parseFloat(document.getElementById('hocPhiNiemYetInput')?.value || 0);
+            const soBuoiCamKet = document.getElementById('soBuoiCamKetInput')?.value || '';
+            const loaiThuSelect = document.getElementById('loaiThuInput');
+            const preview = document.getElementById('pricingPreview');
+            const dotThuEmptyHint = document.getElementById('dotThuEmptyHint');
+            const rowCount = document.querySelectorAll('.dot-thu-row').length;
+
+            if (dotThuEmptyHint) {
+                dotThuEmptyHint.style.display = rowCount > 0 ? 'none' : 'block';
+            }
+
+            if (hocPhi <= 0 && !soBuoiCamKet) {
                 preview.style.display = 'none';
                 return;
             }
-            const soBuoiGoi = parseInt(opt.dataset.sobuoi) || 0;
-            const donGia = parseFloat(opt.dataset.dongia) || 0;
-            const tong = parseFloat(opt.dataset.tong) || soBuoiGoi * donGia;
-            const donGiaDay = parseFloat(document.getElementById('donGiaDayInput')?.value || 0);
-            const chiPhiGV = soBuoiGoi * donGiaDay;
-            const diff = tong - chiPhiGV;
-            document.getElementById('prev-sobuoi').textContent = soBuoiGoi + ' buổi';
-            document.getElementById('prev-dongia').textContent = fmtMoney(donGia);
-            document.getElementById('prev-tong').textContent = fmtMoney(tong);
-            document.getElementById('prev-diff').textContent =
-                (diff >= 0 ? '+' : '') + fmtMoney(diff);
-            document.getElementById('prev-diff').style.color = diff >= 0 ? '#a7f3d0' : '#fca5a5';
-            preview.style.display = 'block';
 
-            // ── Cảnh báo lệch số buổi ─────────────────────
-            const soBuoiLop = parseInt(document.getElementById('soBuoiInput')?.value || 0);
-            const warn = document.getElementById('hp-mismatch-warn');
-            if (soBuoiLop > 0 && soBuoiGoi !== soBuoiLop) {
-                const isMore = soBuoiGoi > soBuoiLop;
-                warn.style.display = 'block';
-                warn.style.background = isMore ? '#fef3c7' : '#fff7ed';
-                warn.style.border = isMore ? '1px solid #fcd34d' : '1px solid #fdba74';
-                warn.style.color = isMore ? '#92400e' : '#c2410c';
-                warn.innerHTML =
-                    `<i class="fas fa-info-circle me-1"></i>
-                    <strong>Lưu ý:</strong> Gói học phí có <strong>${soBuoiGoi} buổi</strong>,
-                    nhưng lớp học dự kiến <strong>${soBuoiLop} buổi</strong>.
-                    ${isMore
-                        ? 'Học viên mua nhiều hơn số buổi thực tế của lớp — kiểm tra lại.'
-                        : 'Lớp có nhiều buổi hơn gói mua — học viên sẽ thiếu buổi nếu mua đúng gói này.'
-                    }
-                    <br><small style="opacity:.8">Hai con số này độc lập: số buổi lớp tính từ lịch học, số buổi gói là số HV mua.</small>`;
-            } else {
-                warn.style.display = 'none';
-            }
+            document.getElementById('prev-hocphi').textContent = hocPhi > 0 ? fmtMoney(hocPhi) : 'Chưa nhập';
+            document.getElementById('prev-camket').textContent = soBuoiCamKet ? `${soBuoiCamKet} buổi` : 'Không ràng buộc';
+            document.getElementById('prev-loaithu').textContent = loaiThuSelect?.options[loaiThuSelect.selectedIndex]?.text || '—';
+            preview.style.display = 'block';
         }
+
+        function addDotThuRow() {
+            const container = document.getElementById('dotThuRows');
+            const emptyHint = document.getElementById('dotThuEmptyHint');
+            if (emptyHint) {
+                emptyHint.style.display = 'none';
+            }
+            const row = document.createElement('div');
+            row.className = 'dot-thu-row';
+            row.style.cssText = 'display:grid;grid-template-columns:2fr 1fr 1fr auto auto;gap:10px;align-items:end;margin-bottom:10px';
+            row.innerHTML = `
+                <div>
+                    <label>Tên đợt thu</label>
+                    <input type="text" name="dotThu[${dotThuIndex}][tenDotThu]" placeholder="VD: Đợt 1 giữ chỗ">
+                </div>
+                <div>
+                    <label>Số tiền</label>
+                    <input type="number" name="dotThu[${dotThuIndex}][soTien]" min="0" step="1000" oninput="previewPricing()">
+                </div>
+                <div>
+                    <label>Hạn thanh toán</label>
+                    <input type="date" name="dotThu[${dotThuIndex}][hanThanhToan]">
+                </div>
+                <label style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+                    <input type="checkbox" name="dotThu[${dotThuIndex}][batBuoc]" value="1" checked>
+                    Bắt buộc
+                </label>
+                <button type="button" class="kf-btn kf-btn-secondary" onclick="removeDotThuRow(this)">
+                    <i class="fas fa-trash"></i>
+                </button>
+            `;
+            container.appendChild(row);
+            dotThuIndex += 1;
+            previewPricing();
+        }
+
+        function removeDotThuRow(button) {
+            button.closest('.dot-thu-row')?.remove();
+            previewPricing();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            previewPricing();
+            updateLichHoc();
+        });
     </script>
 @endsection

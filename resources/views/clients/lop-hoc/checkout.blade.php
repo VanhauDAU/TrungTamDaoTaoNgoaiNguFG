@@ -219,18 +219,20 @@
 
                             <div class="summary-row">
                                 <span>Học phí</span>
-                                @if ($class->hocPhi)
-                                    <span>{{ number_format($class->hocPhi->tongHocPhi, 0, ',', '.') }}đ</span>
+                                @if ($class->chinhSachGia)
+                                    <span>{{ number_format($class->chinhSachGia->hocPhiNiemYet, 0, ',', '.') }}đ</span>
                                 @else
                                     <span>Liên hệ</span>
                                 @endif
                             </div>
-                            @if ($class->hocPhi)
+                            @if ($class->chinhSachGia)
                                 <div class="summary-row">
                                     <span class="text-muted small">
                                         <i class="fas fa-info-circle me-1"></i>
-                                        {{ $class->hocPhi->soBuoi }} buổi &times;
-                                        {{ number_format($class->hocPhi->donGia, 0, ',', '.') }}đ
+                                        {{ $class->chinhSachGia->loaiThuLabel }}
+                                        @if ($class->chinhSachGia->soBuoiCamKet)
+                                            · {{ $class->chinhSachGia->soBuoiCamKet }} buổi cam kết
+                                        @endif
                                     </span>
                                     <span></span>
                                 </div>
@@ -238,8 +240,8 @@
                             <div class="summary-row total">
                                 <span>Tổng thanh toán</span>
                                 <span class="text-danger">
-                                    @if ($class->hocPhi)
-                                        {{ number_format($class->hocPhi->tongHocPhi, 0, ',', '.') }}đ
+                                    @if ($class->chinhSachGia)
+                                        {{ number_format($class->chinhSachGia->hocPhiNiemYet, 0, ',', '.') }}đ
                                     @else
                                         Liên hệ
                                     @endif
@@ -255,7 +257,7 @@
                                     </ul>
                                 </div>
                             @endif
-                            @if ($class->hocPhi && $class->hocPhi->tongHocPhi > 0)
+                            @if ($class->chinhSachGia && $class->chinhSachGia->hocPhiNiemYet > 0)
                                 <button type="submit" class="btn btn-confirm mt-4">
                                     XÁC NHẬN & ĐĂNG KÝ <i class="fas fa-arrow-right ms-2"></i>
                                 </button>

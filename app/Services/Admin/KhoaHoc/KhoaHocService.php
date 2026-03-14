@@ -55,10 +55,7 @@ class KhoaHocService implements KhoaHocServiceInterface
             'lopHoc.coSo',
             'lopHoc.caHoc',
             'lopHoc.taiKhoan.hoSoNguoiDung',
-            'hocPhis',
         ])->where('slug', $slug)->firstOrFail();
-
-        $hocPhis = $khoaHoc->hocPhis->sortBy('soBuoi');
 
         return [
             'khoaHoc'     => $khoaHoc,
@@ -66,7 +63,6 @@ class KhoaHocService implements KhoaHocServiceInterface
             'lopDangHoc'  => $khoaHoc->lopHoc->where('trangThai', LopHoc::TRANG_THAI_DANG_HOC)->count(),
             'lopSapMo'    => $khoaHoc->lopHoc->where('trangThai', LopHoc::TRANG_THAI_SAP_MO)->count(),
             'tongHocVien' => $khoaHoc->lopHoc->sum(fn($l) => $l->dangKyLopHocs()->count() ?? 0),
-            'hocPhis'     => $hocPhis,
         ];
     }
 

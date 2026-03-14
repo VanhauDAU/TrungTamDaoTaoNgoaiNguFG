@@ -594,26 +594,27 @@
     </div>
 
     {{-- ── Học phí ────────────────────────────────────────────── --}}
-    @if ($lopHoc->hocPhi)
+    @if ($lopHoc->chinhSachGia)
         @php
-            $hp = $lopHoc->hocPhi;
-            $tongHocPhi = $hp->tongHocPhi; // Doanh thu 1 HV
+            $hp = $lopHoc->chinhSachGia;
+            $tongHocPhi = (float) $hp->hocPhiNiemYet;
             $tongDoanhThu = $tongHocPhi * $soHocVienDangKy; // Doanh thu thực tế
             $soBuoiThucHien = $lopHoc->buoiHocs->count();
-            $total_HVDuKien = $lopHoc->soHocVienToiDa ?? $soHocVienDangKy;
             $chiPhiGV = ($lopHoc->donGiaDay ?? 0) * $soBuoiThucHien; // Chi phí GV thực tế
             $loiNhuan = $tongDoanhThu - $chiPhiGV;
         @endphp
         <div class="kf-card" style="margin-bottom:22px">
             <div class="kf-card-title"><i class="fas fa-file-invoice-dollar"></i> Tổng kết học phí</div>
 
-            {{-- Gói học phí --}}
+            {{-- Chính sách giá --}}
             <div
                 style="background:linear-gradient(135deg,#7c3aed,#a78bfa);border-radius:10px;padding:16px 20px;color:#fff;display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:16px">
                 <div>
-                    <div style="font-size:.7rem;font-weight:700;opacity:.8;text-transform:uppercase">Gói học phí</div>
-                    <div style="font-size:1.1rem;font-weight:700;margin-top:4px">{{ $hp->soBuoi }} buổi</div>
-                    <div style="font-size:.78rem;opacity:.8">{{ number_format($hp->donGia, 0, ',', '.') }} đ/buổi</div>
+                    <div style="font-size:.7rem;font-weight:700;opacity:.8;text-transform:uppercase">Chính sách giá</div>
+                    <div style="font-size:1.1rem;font-weight:700;margin-top:4px">{{ $hp->loaiThuLabel }}</div>
+                    <div style="font-size:.78rem;opacity:.8">
+                        {{ $hp->soBuoiCamKet ? $hp->soBuoiCamKet . ' buổi cam kết' : 'Không ràng buộc số buổi' }}
+                    </div>
                 </div>
                 <div>
                     <div style="font-size:.7rem;font-weight:700;opacity:.8;text-transform:uppercase">HV đóng/người</div>
@@ -662,12 +663,39 @@
                         <div style="font-size:1.2rem;font-weight:700;color:#7c3aed;margin-top:4px">
                             {{ number_format($lopHoc->donGiaDay, 0, ',', '.') }} đ/buổi
                         </div>
-                        <div style="font-size:.72rem;color:#7c3aed;margin-top:2px">
-                            Chênh lệch: {{ number_format($hp->donGia - $lopHoc->donGiaDay, 0, ',', '.') }} đ/buổi
-                        </div>
                     </div>
                 @endif
             </div>
+
+            @if ($hp->dotThus->isNotEmpty())
+                <div style="margin-top:14px">
+                    <div style="font-size:.78rem;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:8px">
+                        Kế hoạch thu theo đợt
+                    </div>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px">
+                        @foreach ($hp->dotThus as $dotThu)
+                            <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px 14px">
+                                <div style="font-size:.84rem;font-weight:700;color:#1e293b">{{ $dotThu->tenDotThu }}</div>
+                                <div style="font-size:1rem;font-weight:700;color:#0f766e;margin-top:4px">
+                                    {{ number_format($dotThu->soTien, 0, ',', '.') }} đ
+                                </div>
+                                <div style="font-size:.72rem;color:#64748b;margin-top:4px">
+                                    Hạn thanh toán:
+                                    {{ $dotThu->hanThanhToan ? \Carbon\Carbon::parse($dotThu->hanThanhToan)->format('d/m/Y') : 'Chưa đặt' }}
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+        </div>
+    @elseif ($lopHoc->isOpenForRegistration() || $lopHoc->isClosedForRegistration() || $lopHoc->isInProgress())
+        <div class="kf-card" style="margin-bottom:22px;background:#fff7ed;border:1px solid #fdba74">
+            <div class="kf-card-title"><i class="fas fa-exclamation-triangle"></i> Thiếu chính sách giá</div>
+            <p style="margin:0;color:#9a3412;font-size:.88rem">
+                Lớp đang ở trạng thái vận hành nhưng chưa có chính sách giá hợp lệ. Cần cập nhật học phí ngay để đảm bảo
+                quy trình tuyển sinh và công nợ.
+            </p>
         </div>
     @endif
 

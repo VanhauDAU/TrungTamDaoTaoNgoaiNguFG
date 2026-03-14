@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\Auth\TaiKhoan;
 use App\Models\Education\DangKyLopHoc;
 use App\Models\Education\DiemDanh;
+use App\Models\Education\LopHocDotThu;
 use App\Models\Facility\CoSoDaoTao;
 use Carbon\Carbon;
 
@@ -40,6 +41,7 @@ class HoaDon extends Model
         'taiKhoanId',
         'nguoiLapId',
         'dangKyLopHocId',
+        'lopHocDotThuId',
         'phuongThucThanhToan',
         'loaiHoaDon',
         'coSoId',
@@ -78,6 +80,11 @@ class HoaDon extends Model
     public function coSo()
     {
         return $this->belongsTo(CoSoDaoTao::class, 'coSoId', 'coSoId');
+    }
+
+    public function lopHocDotThu()
+    {
+        return $this->belongsTo(LopHocDotThu::class, 'lopHocDotThuId', 'lopHocDotThuId');
     }
 
     public function phieuThus()

@@ -73,11 +73,6 @@ class LopHocController extends Controller
             ->with('success', "Đã khôi phục lớp học «{$lopHoc->tenLopHoc}» thành công.");
     }
 
-    public function getHocPhiByKhoaHoc(int $khoaHocId)
-    {
-        return response()->json($this->lopHocService->getHocPhiByKhoaHoc($khoaHocId));
-    }
-
     public function getPhongByCoso(int $coSoId)
     {
         return response()->json($this->lopHocService->getPhongByCoso($coSoId));

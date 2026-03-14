@@ -2,7 +2,7 @@
 
 namespace App\Services\Admin\KhoaHoc;
 
-use App\Contracts\Admin\BuoiHocServiceInterface;
+use App\Contracts\Admin\KhoaHoc\BuoiHocServiceInterface;
 use App\Models\Education\BuoiHoc;
 use App\Models\Education\LopHoc;
 use Carbon\Carbon;

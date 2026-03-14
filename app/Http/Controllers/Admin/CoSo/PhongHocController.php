@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Admin\CoSo;
 
-use App\Contracts\Admin\PhongHocServiceInterface;
+use App\Contracts\Admin\CoSo\PhongHocServiceInterface;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 

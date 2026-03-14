@@ -22,6 +22,13 @@ class DangKyLopHoc extends Model
     protected $fillable   = [
         'taiKhoanId',
         'lopHocId',
+        'lopHocChinhSachGiaId',
+        'loaiThuSnapshot',
+        'hocPhiNiemYetSnapshot',
+        'giamGiaSnapshot',
+        'hocPhiPhaiThuSnapshot',
+        'soBuoiCamKetSnapshot',
+        'ghiChuGiaSnapshot',
         'ngayDangKy',
         'trangThai',
     ];
@@ -29,6 +36,11 @@ class DangKyLopHoc extends Model
 
     protected $casts = [
         'trangThai' => 'integer',
+        'loaiThuSnapshot' => 'integer',
+        'hocPhiNiemYetSnapshot' => 'decimal:2',
+        'giamGiaSnapshot' => 'decimal:2',
+        'hocPhiPhaiThuSnapshot' => 'decimal:2',
+        'soBuoiCamKetSnapshot' => 'integer',
     ];
 
     /* ── Relationships ──────────────────────────────────────────────── */
@@ -45,7 +57,17 @@ class DangKyLopHoc extends Model
 
     public function hoaDon()
     {
-        return $this->hasOne(HoaDon::class, 'dangKyLopHocId', 'dangKyLopHocId');
+        return $this->hasOne(HoaDon::class, 'dangKyLopHocId', 'dangKyLopHocId')->latestOfMany('hoaDonId');
+    }
+
+    public function hoaDons()
+    {
+        return $this->hasMany(HoaDon::class, 'dangKyLopHocId', 'dangKyLopHocId');
+    }
+
+    public function chinhSachGia()
+    {
+        return $this->belongsTo(LopHocChinhSachGia::class, 'lopHocChinhSachGiaId', 'lopHocChinhSachGiaId');
     }
 
     public function diemDanhs()
@@ -72,6 +94,11 @@ class DangKyLopHoc extends Model
     public function getIsNoHocPhiAttribute(): bool
     {
         return (int) $this->trangThai === self::TRANG_THAI_TAM_DUNG_NO_HOC_PHI;
+    }
+
+    public function getHocPhiTongTienAttribute(): float
+    {
+        return (float) ($this->hocPhiPhaiThuSnapshot ?? $this->hocPhiNiemYetSnapshot ?? 0);
     }
 
     public function isPendingPayment(): bool

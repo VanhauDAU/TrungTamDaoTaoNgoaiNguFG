@@ -20,7 +20,6 @@ use App\Http\Controllers\Admin\KhoaHoc\KhoaHocController as AdminKhoaHocControll
 use App\Http\Controllers\Admin\KhoaHoc\LopHocController as AdminLopHocController;
 use App\Http\Controllers\Admin\KhoaHoc\BuoiHocController as AdminBuoiHocController;
 use App\Http\Controllers\Admin\KhoaHoc\CaHocController as AdminCaHocController;
-use App\Http\Controllers\Admin\KhoaHoc\HocPhiController as AdminHocPhiController;
 use App\Http\Controllers\Admin\KhoaHoc\DanhMucKhoaHocController as AdminDanhMucKhoaHocController;
 use App\Http\Controllers\Admin\BaiViet\BaiVietController as AdminBaiVietController;
 use App\Http\Controllers\Admin\BaiViet\DanhMucBaiVietController as AdminDanhMucBaiVietController;
@@ -275,17 +274,6 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
         Route::put('/{id}', [AdminCaHocController::class, 'update'])->name('update');
         Route::delete('/{id}', [AdminCaHocController::class, 'destroy'])->name('destroy');
         Route::patch('/{id}/toggle-status', [AdminCaHocController::class, 'toggleStatus'])->name('toggle-status');
-    });
-
-    // ── Học Phí (AJAX) ────────────────────────────────────────────────────────
-    Route::get('/api/hoc-phi/{khoaHocId}', [AdminLopHocController::class, 'getHocPhiByKhoaHoc'])->name('api.hoc-phi.by-khoa');
-
-    // ── Gói Học Phí (CRUD) ────────────────────────────────────────────────────
-    Route::prefix('hoc-phi')->name('hoc-phi.')->group(function () {
-        Route::post('/', [AdminHocPhiController::class, 'store'])->name('store');
-        Route::put('/{id}', [AdminHocPhiController::class, 'update'])->name('update');
-        Route::delete('/{id}', [AdminHocPhiController::class, 'destroy'])->name('destroy');
-        Route::patch('/{id}/toggle-status', [AdminHocPhiController::class, 'toggleStatus'])->name('toggle-status');
     });
 
     // ── Hóa Đơn & Phiếu Thu ─────────────────────────────────────

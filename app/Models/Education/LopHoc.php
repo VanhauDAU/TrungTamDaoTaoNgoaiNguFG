@@ -8,7 +8,6 @@ use App\Models\Course\KhoaHoc;
 use App\Models\Facility\PhongHoc;
 use App\Models\Facility\CoSoDaoTao as CoSo;
 use App\Models\Auth\TaiKhoan;
-use App\Models\Course\HocPhi;
 
 class LopHoc extends Model
 {
@@ -30,7 +29,6 @@ class LopHoc extends Model
         'tenLopHoc',
         'phongHocId',
         'taiKhoanId',
-        'hocPhiId', 
         'ngayBatDau',
         'ngayKetThuc',
         'soBuoiDuKien',
@@ -76,8 +74,13 @@ class LopHoc extends Model
     public function taiKhoan(){
         return $this->belongsTo(TaiKhoan::class, 'taiKhoanId', 'taiKhoanId');
     }
-    public function hocPhi(){
-        return $this->belongsTo(HocPhi::class, 'hocPhiId', 'hocPhiId');
+    public function chinhSachGia()
+    {
+        return $this->hasOne(LopHocChinhSachGia::class, 'lopHocId', 'lopHocId');
+    }
+    public function hocPhi()
+    {
+        return $this->chinhSachGia();
     }
     public function coSo(){
         return $this->belongsTo(CoSo::class, 'coSoId', 'coSoId');
@@ -90,6 +93,13 @@ class LopHoc extends Model
     }
     public function dangKyLopHocs(){
         return $this->hasMany(DangKyLopHoc::class, 'lopHocId', 'lopHocId');
+    }
+
+    public function hasValidPricingPolicy(): bool
+    {
+        return $this->relationLoaded('chinhSachGia')
+            ? $this->chinhSachGia !== null && $this->chinhSachGia->isActive() && (float) $this->chinhSachGia->hocPhiNiemYet > 0
+            : $this->chinhSachGia()->where('trangThai', 1)->where('hocPhiNiemYet', '>', 0)->exists();
     }
 
     public static function trangThaiLabels(): array
