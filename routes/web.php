@@ -252,6 +252,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
         Route::get('/thung-rac', [AdminLopHocController::class, 'trash'])->name('trash');
         Route::get('/tao-moi', [AdminLopHocController::class, 'create'])->name('create');
         Route::post('/', [AdminLopHocController::class, 'store'])->name('store');
+        Route::patch('/{slug}/trang-thai', [AdminLopHocController::class, 'updateStatus'])->name('update-status');
         Route::get('/{slug}', [AdminLopHocController::class, 'show'])->name('show');
         Route::get('/{slug}/sua', [AdminLopHocController::class, 'edit'])->name('edit');
         Route::put('/{slug}', [AdminLopHocController::class, 'update'])->name('update');

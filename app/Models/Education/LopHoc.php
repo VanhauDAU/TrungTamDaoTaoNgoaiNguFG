@@ -59,10 +59,29 @@ class LopHoc extends Model
         $namCuoi = substr(date('Y'), -2); // vd 2026 -> "26"
         $prefix = $namCuoi . strtoupper(substr($maVietTatKhoa, 0, 2));
 
-        $count = self::where('maLopHoc', 'LIKE', $prefix . '%')->count();
-        $so = str_pad($count + 1, 3, '0', STR_PAD_LEFT);
+        $existingCodes = self::withTrashed()
+            ->where('maLopHoc', 'LIKE', $prefix . '%')
+            ->pluck('maLopHoc');
 
-        return $prefix . $so;
+        $maxSequence = 0;
+
+        foreach ($existingCodes as $code) {
+            if (!is_string($code) || !str_starts_with($code, $prefix)) {
+                continue;
+            }
+
+            $suffix = substr($code, strlen($prefix));
+            if (ctype_digit($suffix)) {
+                $maxSequence = max($maxSequence, (int) $suffix);
+            }
+        }
+
+        do {
+            $maxSequence++;
+            $candidate = $prefix . str_pad((string) $maxSequence, 3, '0', STR_PAD_LEFT);
+        } while (self::withTrashed()->where('maLopHoc', $candidate)->exists());
+
+        return $candidate;
     }
 
     public function khoaHoc(){
@@ -126,9 +145,52 @@ class LopHoc extends Model
         ];
     }
 
+    public static function allowedStatusTransitions(): array
+    {
+        return [
+            self::TRANG_THAI_SAP_MO => [
+                self::TRANG_THAI_SAP_MO,
+                self::TRANG_THAI_DANG_TUYEN_SINH,
+                self::TRANG_THAI_DA_HUY,
+            ],
+            self::TRANG_THAI_DANG_TUYEN_SINH => [
+                self::TRANG_THAI_SAP_MO,
+                self::TRANG_THAI_DANG_TUYEN_SINH,
+                self::TRANG_THAI_CHOT_DANH_SACH,
+                self::TRANG_THAI_DA_HUY,
+            ],
+            self::TRANG_THAI_CHOT_DANH_SACH => [
+                self::TRANG_THAI_DANG_TUYEN_SINH,
+                self::TRANG_THAI_CHOT_DANH_SACH,
+                self::TRANG_THAI_DANG_HOC,
+                self::TRANG_THAI_DA_HUY,
+            ],
+            self::TRANG_THAI_DANG_HOC => [
+                self::TRANG_THAI_DANG_HOC,
+                self::TRANG_THAI_DA_KET_THUC,
+                self::TRANG_THAI_DA_HUY,
+            ],
+            self::TRANG_THAI_DA_HUY => [
+                self::TRANG_THAI_SAP_MO,
+                self::TRANG_THAI_DANG_TUYEN_SINH,
+                self::TRANG_THAI_DA_HUY,
+            ],
+            self::TRANG_THAI_DA_KET_THUC => [
+                self::TRANG_THAI_DA_KET_THUC,
+            ],
+        ];
+    }
+
     public function getTrangThaiLabelAttribute(): string
     {
         return self::trangThaiLabels()[$this->trangThai] ?? 'Không xác định';
+    }
+
+    public function canTransitionTo(int $newStatus): bool
+    {
+        $allowedTransitions = self::allowedStatusTransitions()[(int) $this->trangThai] ?? [];
+
+        return in_array($newStatus, $allowedTransitions, true);
     }
 
     public function isSapMo(): bool

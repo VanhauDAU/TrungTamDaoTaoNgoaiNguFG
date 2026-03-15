@@ -34,6 +34,7 @@ class BuoiHocService implements BuoiHocServiceInterface
         }
 
         BuoiHoc::create($data);
+        $this->syncClassTimingFromSessions($data['lopHocId']);
 
         return [
             'lopHocSlug' => $lopHoc->slug,
@@ -48,6 +49,7 @@ class BuoiHocService implements BuoiHocServiceInterface
         $data = $this->validateUpdatePayload($request);
         $data = BuoiHoc::normalizeStatePayload($data, $buoiHoc);
         $buoiHoc->update($data);
+        $this->syncClassTimingFromSessions($buoiHoc->lopHocId);
 
         return [
             'lopHocSlug' => $buoiHoc->lopHoc?->slug,
@@ -60,7 +62,9 @@ class BuoiHocService implements BuoiHocServiceInterface
     {
         $buoiHoc = BuoiHoc::with('lopHoc:lopHocId,slug')->findOrFail($id);
         $lopHocSlug = $buoiHoc->lopHoc?->slug;
+        $lopHocId = $buoiHoc->lopHocId;
         $buoiHoc->delete();
+        $this->syncClassTimingFromSessions($lopHocId);
 
         return [
             'lopHocSlug' => $lopHocSlug,
@@ -73,10 +77,10 @@ class BuoiHocService implements BuoiHocServiceInterface
     {
         $lopHoc = LopHoc::with('caHoc')->findOrFail($lopHocId);
 
-        if (empty($lopHoc->lichHoc) || empty($lopHoc->ngayBatDau) || empty($lopHoc->ngayKetThuc)) {
+        if (empty($lopHoc->lichHoc) || empty($lopHoc->ngayBatDau) || empty($lopHoc->soBuoiDuKien)) {
             return [
                 'lopHocSlug' => $lopHoc->slug,
-                'message' => 'Lớp học chưa thiết lập đầy đủ lịch học, ngày bắt đầu / kết thúc.',
+                'message' => 'Lớp học chưa thiết lập đầy đủ lịch học, ngày bắt đầu hoặc số buổi dự kiến.',
                 'flashType' => 'error',
             ];
         }
@@ -107,15 +111,19 @@ class BuoiHocService implements BuoiHocServiceInterface
         }
 
         $start = Carbon::parse($lopHoc->ngayBatDau);
-        $end = Carbon::parse($lopHoc->ngayKetThuc);
         $count = 0;
-        $soBuoi = BuoiHoc::where('lopHocId', $lopHocId)->count();
+        $targetSessions = max(1, (int) $lopHoc->soBuoiDuKien);
+        $soBuoi = BuoiHoc::where('lopHocId', $lopHocId)
+            ->whereNotIn('trangThai', [BuoiHoc::TRANG_THAI_DA_HUY, BuoiHoc::TRANG_THAI_DOI_LICH])
+            ->count();
 
         $current = $start->copy();
-        while ($current->lte($end)) {
+        $safetyLimit = 0;
+        while ($soBuoi < $targetSessions && $safetyLimit < 3660) {
             if (in_array($current->dayOfWeek, $thuDays, true)) {
                 $exists = BuoiHoc::where('lopHocId', $lopHocId)
                     ->whereDate('ngayHoc', $current->toDateString())
+                    ->whereNotIn('trangThai', [BuoiHoc::TRANG_THAI_DA_HUY, BuoiHoc::TRANG_THAI_DOI_LICH])
                     ->exists();
 
                 if (! $exists) {
@@ -136,10 +144,17 @@ class BuoiHocService implements BuoiHocServiceInterface
             }
 
             $current->addDay();
+            $safetyLimit++;
         }
 
-        if ((int) $lopHoc->soBuoiDuKien !== $soBuoi) {
-            $lopHoc->update(['soBuoiDuKien' => $soBuoi]);
+        $this->syncClassTimingFromSessions($lopHocId);
+
+        if ($count === 0 && $soBuoi >= $targetSessions) {
+            return [
+                'lopHocSlug' => $lopHoc->slug,
+                'message' => 'Số buổi học hiện có đã đạt số buổi dự kiến, không cần tạo thêm.',
+                'flashType' => 'success',
+            ];
         }
 
         return [
@@ -147,6 +162,18 @@ class BuoiHocService implements BuoiHocServiceInterface
             'message' => "Đã tự động tạo {$count} buổi học thành công.",
             'flashType' => 'success',
         ];
+    }
+
+    private function syncClassTimingFromSessions(int $lopHocId): void
+    {
+        $lastSessionDate = BuoiHoc::query()
+            ->where('lopHocId', $lopHocId)
+            ->whereNotIn('trangThai', [BuoiHoc::TRANG_THAI_DA_HUY, BuoiHoc::TRANG_THAI_DOI_LICH])
+            ->max('ngayHoc');
+
+        LopHoc::where('lopHocId', $lopHocId)->update([
+            'ngayKetThuc' => $lastSessionDate ?: null,
+        ]);
     }
 
     private function validateStorePayload(Request $request): array

@@ -44,4 +44,12 @@ class LopHocPricingTest extends TestCase
 
         $this->assertSame(3000000.0, $registration->hocPhiTongTien);
     }
+
+    public function test_class_status_transition_matrix_blocks_invalid_backward_move_from_in_progress(): void
+    {
+        $class = new LopHoc(['trangThai' => LopHoc::TRANG_THAI_DANG_HOC]);
+
+        $this->assertFalse($class->canTransitionTo(LopHoc::TRANG_THAI_DANG_TUYEN_SINH));
+        $this->assertTrue($class->canTransitionTo(LopHoc::TRANG_THAI_DA_KET_THUC));
+    }
 }

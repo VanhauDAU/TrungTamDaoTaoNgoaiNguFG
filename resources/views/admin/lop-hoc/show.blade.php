@@ -700,13 +700,13 @@
     @endif
 
     {{-- ── Auto generate buổi học ────────────────────────────── --}}
-    @if ($lopHoc->lichHoc && $lopHoc->ngayBatDau && $lopHoc->ngayKetThuc)
+    @if ($lopHoc->lichHoc && $lopHoc->ngayBatDau && $lopHoc->soBuoiDuKien)
         <div class="auto-gen-card">
             <h3><i class="fas fa-magic me-2"></i> Tự động tạo buổi học</h3>
             <p>Tạo tự động các buổi học theo lịch
                 <strong>Thứ {{ implode(', ', array_map('trim', explode(',', $lopHoc->lichHoc))) }}</strong>
-                từ <strong>{{ \Carbon\Carbon::parse($lopHoc->ngayBatDau)->format('d/m/Y') }}</strong>
-                đến <strong>{{ \Carbon\Carbon::parse($lopHoc->ngayKetThuc)->format('d/m/Y') }}</strong>.
+                bắt đầu từ <strong>{{ \Carbon\Carbon::parse($lopHoc->ngayBatDau)->format('d/m/Y') }}</strong>
+                cho đến khi đủ <strong>{{ $lopHoc->soBuoiDuKien }}</strong> buổi dự kiến.
             </p>
             <form action="{{ route('admin.buoi-hoc.auto-generate', $lopHoc->lopHocId) }}" method="POST"
                 style="display:inline">
