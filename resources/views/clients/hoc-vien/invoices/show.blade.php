@@ -30,7 +30,7 @@
                         <x-client.account-breadcrumb :items="[
                             ['label' => 'Trang chủ', 'url' => route('home.index'), 'icon' => 'fas fa-home'],
                             ['label' => 'Tài khoản', 'url' => route('home.student.index')],
-                            ['label' => 'Hóa đơn', 'url' => route('home.student.invoices')],
+                            ['label' => 'Học phí', 'url' => route('home.student.tuition.debts')],
                             ['label' => $maHD],
                         ]" />
 
@@ -70,7 +70,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <a href="{{ route('home.student.invoices') }}" class="inv-btn inv-btn--ghost">
+                            <a href="{{ route('home.student.tuition.debts') }}" class="inv-btn inv-btn--ghost">
                                 <i class="fas fa-arrow-left"></i> Quay lại
                             </a>
                         </div>

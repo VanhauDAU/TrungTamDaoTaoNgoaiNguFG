@@ -15,6 +15,12 @@ interface StudentServiceInterface
 
     public function getInvoices(TaiKhoan $user): array;
 
+    public function getTuitionDebtLookup(TaiKhoan $user): array;
+
+    public function getReceiptSummary(TaiKhoan $user): array;
+
+    public function getOnlinePayments(TaiKhoan $user): array;
+
     public function getInvoiceDetail(TaiKhoan $user, int $id): array;
 
     public function getMyClasses(TaiKhoan $user): array;

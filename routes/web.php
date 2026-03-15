@@ -79,6 +79,13 @@ Route::prefix('/')->name('home.')->group(function () {
         Route::post('/doi-mat-khau', [StudentController::class, 'updatePassword'])->name('update-password');
         Route::get('/hoa-don', [StudentController::class, 'invoices'])->name('invoices');
         Route::get('/hoa-don/{id}', [StudentController::class, 'invoiceDetail'])->name('invoices.show');
+        Route::prefix('hoc-phi')->name('tuition.')->group(function () {
+            Route::get('/', [StudentController::class, 'tuitionIndex'])->name('index');
+            Route::get('/cong-no', [StudentController::class, 'tuitionDebts'])->name('debts');
+            Route::get('/phieu-thu', [StudentController::class, 'tuitionReceipts'])->name('receipts');
+            Route::get('/thanh-toan-truc-tuyen', [StudentController::class, 'tuitionPayments'])->name('payments');
+            Route::get('/hoa-don/{id}', [StudentController::class, 'invoiceDetail'])->name('invoices.show');
+        });
         Route::get('/lop-hoc', [StudentController::class, 'myClasses'])->name('classes');
         Route::get('/lich-hoc', [StudentController::class, 'schedule'])->name('schedule');
         Route::get('/chat', [ClientChatController::class, 'index'])->name('chat');

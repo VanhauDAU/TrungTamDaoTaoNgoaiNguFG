@@ -10,7 +10,10 @@ use App\Models\Education\CaHoc;
 use App\Models\Education\DangKyLopHoc;
 use App\Models\Education\LopHoc;
 use App\Models\Finance\HoaDon;
+use App\Models\Finance\PhieuThu;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -111,10 +114,66 @@ class StudentService implements StudentServiceInterface
 
     public function getInvoices(TaiKhoan $user): array
     {
+        return $this->getTuitionDebtLookup($user);
+    }
+
+    public function getTuitionDebtLookup(TaiKhoan $user): array
+    {
+        $baseQuery = $this->invoiceQueryForUser($user);
+        $summary = $this->buildInvoiceSummary((clone $baseQuery)->get());
+
         return [
-            'invoices' => HoaDon::where('taiKhoanId', $user->taiKhoanId)
-            ->with(['dangKyLopHoc.lopHoc.khoaHoc', 'dangKyLopHocPhuPhi', 'coSo'])
-            ->orderBy('ngayLap', 'desc')->paginate(10),
+            'debts' => $baseQuery->orderByDesc('ngayLap')->paginate(10),
+            'summary' => $summary,
+        ];
+    }
+
+    public function getReceiptSummary(TaiKhoan $user): array
+    {
+        $receiptQuery = PhieuThu::where('taiKhoanId', $user->taiKhoanId)
+            ->where('trangThai', PhieuThu::TRANG_THAI_HOP_LE)
+            ->with([
+                'hoaDon.dangKyLopHoc.lopHoc.khoaHoc',
+                'hoaDon.dangKyLopHocPhuPhi',
+                'hoaDon.coSo',
+            ]);
+
+        $receipts = $receiptQuery->orderByDesc('ngayThu')->paginate(12);
+        $receiptCollection = (clone $receiptQuery)->get();
+
+        return [
+            'receipts' => $receipts,
+            'summary' => [
+                'count' => $receiptCollection->count(),
+                'totalCollected' => (float) $receiptCollection->sum(fn(PhieuThu $receipt) => (float) $receipt->soTien),
+                'bankTransferCount' => $receiptCollection->where('phuongThucThanhToan', 2)->count(),
+                'onlineCount' => $receiptCollection->where('phuongThucThanhToan', 3)->count(),
+            ],
+        ];
+    }
+
+    public function getOnlinePayments(TaiKhoan $user): array
+    {
+        $paymentQuery = $this->invoiceQueryForUser($user)
+            ->whereIn('trangThai', [HoaDon::TRANG_THAI_CHUA_TT, HoaDon::TRANG_THAI_MOT_PHAN]);
+
+        $pendingInvoices = $paymentQuery->orderByRaw('CASE WHEN ngayHetHan IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('ngayHetHan')
+            ->orderByDesc('ngayLap')
+            ->paginate(10);
+
+        $pendingCollection = (clone $paymentQuery)->get();
+
+        return [
+            'payments' => $pendingInvoices,
+            'summary' => [
+                'count' => $pendingCollection->count(),
+                'outstandingTotal' => (float) $pendingCollection->sum(function (HoaDon $invoice) {
+                    return $this->calculateOutstanding($invoice);
+                }),
+                'overdueCount' => $pendingCollection->filter(fn(HoaDon $invoice) => $invoice->isQuaHan)->count(),
+                'dueSoonCount' => $pendingCollection->filter(fn(HoaDon $invoice) => $invoice->isSapHetHan)->count(),
+            ],
         ];
     }
 
@@ -168,5 +227,30 @@ class StudentService implements StudentServiceInterface
         }
 
         return compact('schedule', 'caHocs', 'weekDays', 'startOfWeek', 'endOfWeek', 'baseDate');
+    }
+
+    private function invoiceQueryForUser(TaiKhoan $user): Builder
+    {
+        return HoaDon::where('taiKhoanId', $user->taiKhoanId)
+            ->with(['dangKyLopHoc.lopHoc.khoaHoc', 'dangKyLopHocPhuPhi', 'coSo']);
+    }
+
+    private function buildInvoiceSummary(Collection $invoices): array
+    {
+        return [
+            'count' => $invoices->count(),
+            'outstandingCount' => $invoices->where('trangThai', '!=', HoaDon::TRANG_THAI_DA_TT)->count(),
+            'outstandingTotal' => (float) $invoices->sum(function (HoaDon $invoice) {
+                return $this->calculateOutstanding($invoice);
+            }),
+            'paidTotal' => (float) $invoices->sum(fn(HoaDon $invoice) => (float) $invoice->daTra),
+        ];
+    }
+
+    private function calculateOutstanding(HoaDon $invoice): float
+    {
+        $net = (float) $invoice->tongTien - (float) ($invoice->giamGia ?? 0);
+
+        return max(0, $net - (float) $invoice->daTra);
     }
 }
