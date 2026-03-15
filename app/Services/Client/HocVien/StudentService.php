@@ -136,6 +136,7 @@ class StudentService implements StudentServiceInterface
                 'hoaDon.dangKyLopHoc.lopHoc.khoaHoc',
                 'hoaDon.dangKyLopHocPhuPhi',
                 'hoaDon.coSo',
+                'nguoiDuyet.hoSoNguoiDung',
             ]);
 
         $receipts = $receiptQuery->orderByDesc('ngayThu')->paginate(12);
@@ -180,8 +181,10 @@ class StudentService implements StudentServiceInterface
     public function getInvoiceDetail(TaiKhoan $user, int $id): array
     {
         return [
-            'invoice' => HoaDon::where('hoaDonId', $id)->where('taiKhoanId', $user->taiKhoanId)
-            ->with(['dangKyLopHoc.lopHoc.khoaHoc', 'dangKyLopHocPhuPhi', 'coSo.tinhThanh', 'phieuThus'])->firstOrFail(),
+            'invoice' => $this->invoiceQueryForUser($user)
+                ->where('hoaDonId', $id)
+                ->with(['coSo.tinhThanh', 'phieuThus.nguoiDuyet.hoSoNguoiDung'])
+                ->firstOrFail(),
         ];
     }
 
@@ -232,6 +235,13 @@ class StudentService implements StudentServiceInterface
     private function invoiceQueryForUser(TaiKhoan $user): Builder
     {
         return HoaDon::where('taiKhoanId', $user->taiKhoanId)
+            ->where(function (Builder $query) {
+                $query->whereNull('dangKyLopHocId')
+                    ->orWhereHas('dangKyLopHoc', function (Builder $registrationQuery) {
+                        $registrationQuery->where('trangThai', '!=', DangKyLopHoc::TRANG_THAI_HUY);
+                    })
+                    ->orWhere('daTra', '>', 0);
+            })
             ->with(['dangKyLopHoc.lopHoc.khoaHoc', 'dangKyLopHocPhuPhi', 'coSo']);
     }
 

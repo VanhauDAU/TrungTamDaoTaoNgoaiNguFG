@@ -152,7 +152,7 @@ class HoaDonService implements HoaDonServiceInterface
                 'soTien'               => $data['soTien'],
                 'ngayThu'              => $data['ngayThu'],
                 'phuongThucThanhToan'  => $data['phuongThucThanhToan'],
-                'taiKhoanId'           => $user?->taiKhoanId,
+                'taiKhoanId'           => $hoaDon->taiKhoanId,
                 'nguoiDuyetId'         => $user?->taiKhoanId,
                 'ghiChu'               => $data['ghiChu'] ?? null,
                 'trangThai'            => PhieuThu::TRANG_THAI_HOP_LE,
