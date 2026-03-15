@@ -95,6 +95,15 @@ Xem thêm bộ tài liệu Auth chuyên biệt:
 - `docs/05-huong-dan/auth-joi-validation.md`
 - `docs/01-phan-tich/auth-kien-truc-va-quyet-dinh.md`
 
+### 3.0.1 Tài liệu nhân sự và lương mới
+
+Xem thêm bộ tài liệu mới cho nhân sự:
+
+- `docs/05-huong-dan/nhan-su-ho-so-va-ban-giao-tai-khoan.md`
+- `docs/05-huong-dan/luong-nhan-su-va-payroll.md`
+- `docs/05-huong-dan/figma-luong-handoff.md`
+- `docs/05-huong-dan/figma-luong-wireframe.html`
+
 ### 3.1 Đăng nhập
 
 Vào một trong các cổng nội bộ:
@@ -123,7 +132,20 @@ Tài khoản mặc định (sau seeder):
 7. **Tạo Lớp học** → `/admin/lop-hoc/tao-moi`
 8. **Cấu hình Chính sách giá lớp** → Trong form tạo/sửa lớp học
 9. **Tạo Giáo viên** → `/admin/giao-vien/tao-moi`
-10. **Tự động tạo buổi học** → Trong trang chi tiết lớp học
+10. **Tạo Nhân viên** → `/admin/nhan-vien/tao-moi`
+11. **Hoàn thiện hồ sơ nhân sự** → Tải CV, chọn mẫu quy định, chốt gói lương đầu tiên
+12. **Tự động tạo buổi học** → Trong trang chi tiết lớp học
+
+### 3.2.1 Quy trình tạo và bàn giao tài khoản nhân sự
+
+Luồng chuẩn mới cho giáo viên và nhân viên:
+
+1. Tạo hồ sơ nhân sự từ màn tạo tương ứng.
+2. Hệ thống sinh `username` thật và mật khẩu tạm ngẫu nhiên.
+3. Sau khi lưu, hệ thống chuyển sang trang hồ sơ chi tiết.
+4. Nếu vừa tạo xong, trang hồ sơ hiển thị thẻ bàn giao tài khoản để copy hoặc in PDF.
+5. Mật khẩu tạm chỉ hiển thị một lần; các lần mở lại sau đó chỉ còn thao tác reset mật khẩu.
+6. Màn sửa giáo viên và nhân viên đã hoàn thiện đầy đủ để cập nhật hồ sơ sau này.
 
 ### 3.3 Quy trình vận hành học phí lớp
 
@@ -168,6 +190,24 @@ Quy tắc vận hành:
 - khôi phục phải kiểm tra lại sĩ số và trùng lịch
 - điều chuyển sẽ hủy đăng ký cũ và tạo đăng ký mới ở lớp đích
 - mọi thay đổi hóa đơn từ admin đều phải tự recalculate hóa đơn và trạng thái đăng ký liên quan
+
+### 3.4.1 Quản lý hồ sơ nhân sự và gói lương
+
+Module hồ sơ nhân sự hiện cho phép:
+
+- xem hồ sơ chi tiết giáo viên / nhân viên
+- sửa hồ sơ đầy đủ
+- tải lên CV và tài liệu nhân sự theo version
+- tải PDF hồ sơ nhân sự
+- tải phiếu bàn giao tài khoản khi còn token hợp lệ
+- cấu hình gói lương hiện hành và lịch sử gói lương
+
+Nguyên tắc vận hành:
+
+- không hiển thị lại mật khẩu cũ sau khi token bàn giao hết hạn
+- không cho đổi `username`
+- chỉ 1 gói lương được active tại một thời điểm
+- sửa mẫu quy định không tự đổi snapshot quy định ở hồ sơ cũ
 
 ### 3.5 Quản lý Danh mục Khóa học (Cây đa cấp)
 
@@ -232,3 +272,19 @@ Ghi chú hiện tại:
 - Chat client dùng short-poll, không dùng WebSocket trong bản hiện tại.
 - Nếu thêm dữ liệu lớp học trực tiếp vào database hoặc import từ nguồn khác, nên chạy lại `php artisan chat:init-class-rooms` để đồng bộ room nhóm.
 - Tài liệu kỹ thuật chi tiết xem `docs/04-api/chat.md`.
+
+---
+
+## Phần 5: Ghi chú import SQL và phục hồi dữ liệu
+
+- Không nên import dump SQL bằng cách tắt khóa ngoại rồi bỏ qua kiểm tra dữ liệu cha-con.
+- Với các bảng domain có quan hệ chặt như `lophoc`, `lophoc_chinhsachgia`, `buoihoc`, `chat_rooms`, cần bảo đảm:
+  - bản ghi cha tồn tại trước
+  - không có orphan record ở bảng con
+- Nếu import dump thủ công từ phpMyAdmin và gặp lỗi `#1452`, cần kiểm tra lại tính nhất quán của dữ liệu trong file dump thay vì chỉ bỏ khóa ngoại.
+- Với dữ liệu lớp học nhập ngoài hệ thống, sau khi import nên chạy:
+
+```bash
+php artisan chat:init-class-rooms --dry-run
+php artisan chat:init-class-rooms
+```

@@ -2,6 +2,41 @@
 
 Tất cả thay đổi đáng chú ý của dự án sẽ được ghi tại đây.
 
+## [2026-03-15] - Hoàn thiện hồ sơ nhân sự, bàn giao tài khoản và tài liệu vận hành
+
+### Added
+
+- Thêm hồ sơ nhân sự chi tiết cho giáo viên và nhân viên sau khi tạo tài khoản.
+- Thêm thẻ bàn giao tài khoản hiển thị `username` thật và mật khẩu tạm bằng one-time token.
+- Thêm xuất `Phiếu bàn giao tài khoản` PDF và `Hồ sơ nhân sự` PDF bằng DOMPDF.
+- Thêm module mẫu quy định nhân sự với snapshot quy định gắn vào hồ sơ.
+- Thêm các bảng nhân sự mở rộng:
+  - `nhansu_hoso`
+  - `nhansu_mau_quydinh`
+  - `nhansu_goi_luong`
+  - `nhansu_goi_luong_chi_tiet`
+  - `nhansu_tai_lieu`
+- Thêm cơ chế lưu CV / tài liệu nhân sự private-only, có version và metadata file.
+- Thêm tài liệu vận hành mới:
+  - hồ sơ nhân sự và bàn giao tài khoản
+  - vận hành lương / payroll
+  - Figma handoff cho luồng lương
+
+### Changed
+
+- Luồng tạo giáo viên và nhân viên không còn dừng ở danh sách; sau khi tạo sẽ đi vào hồ sơ chi tiết.
+- Mật khẩu khởi tạo của nhân sự đổi sang random tạm thời, không dùng giá trị suy đoán được như CCCD.
+- Create/Edit giáo viên và nhân viên được chuẩn hóa bằng partial dùng chung để giảm lệch field.
+- Phần lương được chốt lại theo mô hình `gói lương` tách biệt với `bảng lương kỳ`.
+- README, progress, hướng dẫn vận hành và database docs đã được đồng bộ lại theo các thay đổi mới.
+
+### Fixed
+
+- Hoàn thiện đầy đủ màn sửa giáo viên và màn sửa nhân viên vốn đã có controller nhưng thiếu view.
+- Sửa validation cập nhật email / CCCD theo cơ chế ignore bản ghi hiện tại.
+- Sửa hành vi cập nhật tài khoản nhân sự để rotate `remember_token` khi đổi mật khẩu hoặc khóa tài khoản.
+- Ghi rõ lưu ý import SQL khi dump có orphan record để tránh lỗi foreign key lúc phục hồi dữ liệu.
+
 ## [2026-03-15] - Củng cố đăng ký học, giữ chỗ, hóa đơn và phiếu thu
 
 ### Added

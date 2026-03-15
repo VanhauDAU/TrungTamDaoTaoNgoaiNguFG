@@ -20,7 +20,7 @@ Monolith Laravel phục vụ quản lý vận hành trung tâm ngoại ngữ: kh
 - [10. Lệnh hữu ích](#10-lệnh-hữu-ích)
 - [11. Test và chất lượng mã nguồn](#11-test-và-chất-lượng-mã-nguồn)
 - [12. Lưu ý dữ liệu và migration](#12-lưu-ý-dữ-liệu-và-migration)
-- [13. Tài liệu Auth](#13-tài-liệu-auth)
+- [13. Tài liệu Auth và Nhân sự](#13-tài-liệu-auth-và-nhân-sự)
 - [14. Quy trình phát triển](#14-quy-trình-phát-triển)
 - [15. Hỗ trợ](#15-hỗ-trợ)
 
@@ -68,8 +68,10 @@ flowchart LR
 ### Admin
 - Dashboard thống kê tổng quan.
 - Quản lý học viên, giáo viên, nhân viên.
+- Hồ sơ nhân sự chi tiết, bàn giao tài khoản, tài liệu nhân sự private.
 - Quản lý đào tạo: danh mục khóa học, khóa học, lớp học, buổi học, ca học, chính sách giá lớp.
 - Quản lý tài chính: hóa đơn, phiếu thu, cập nhật trạng thái.
+- Gói lương nhân sự và tài liệu handoff payroll/Figma.
 - Quản lý nội dung: bài viết, danh mục bài viết, tag.
 - Quản lý thông báo nội bộ.
 - Quản lý liên hệ/lead (có hỗ trợ thùng rác và thao tác loạt).
@@ -178,10 +180,13 @@ Nếu dùng XAMPP/Apache:
 - `lophoc_dotthu` dùng để lưu kế hoạch thu theo đợt; runtime hiện tại đã sinh nhiều hóa đơn học phí khi lớp cấu hình thu theo đợt.
 - Đăng ký `Chờ thanh toán` có `ngày hết hạn giữ chỗ`; job hệ thống sẽ tự hủy giữ chỗ quá hạn nếu chưa phát sinh thu tiền.
 - Hóa đơn quá hạn khi lớp đang học sẽ được job hệ thống xử lý để chuyển đăng ký sang trạng thái nợ học phí.
+- Hồ sơ giáo viên và nhân viên hiện có luồng create/edit/show hoàn chỉnh, xuất PDF hồ sơ và phiếu bàn giao tài khoản.
 - Hướng dẫn vận hành tổng hợp: `docs/05-huong-dan/huong-dan.md`.
 - Hướng dẫn chi tiết:
   - `docs/05-huong-dan/hoc-phi-lop-hoc.md`
   - `docs/05-huong-dan/dang-ky-thanh-toan-va-phieu-thu.md`
+  - `docs/05-huong-dan/nhan-su-ho-so-va-ban-giao-tai-khoan.md`
+  - `docs/05-huong-dan/luong-nhan-su-va-payroll.md`
 
 ## 10. Lệnh hữu ích
 ```bash
@@ -221,13 +226,20 @@ Thư mục test hiện có:
 - Thư mục migration trong repo chủ yếu là migration bổ sung/cập nhật.
 - Nếu khởi tạo mới trên máy sạch, cần đảm bảo đã có schema nền từ team (hoặc bộ migration đầy đủ) trước khi chạy dự án toàn phần.
 - Migration `2026_03_14_150000_refactor_class_pricing_to_lophoc_chinhsachgia.php` chuyển học phí từ mô hình cũ (`hocphi`, `lophoc.hocPhiId`) sang mô hình mới theo lớp học.
+- Migration `2026_03_15_200000` -> `2026_03_15_200400` bổ sung hồ sơ nhân sự, gói lương, tài liệu nhân sự và backfill dữ liệu cũ.
+
+Lưu ý import dump SQL:
+
+- Không nên phục hồi dữ liệu bằng cách tắt `FOREIGN_KEY_CHECKS` rồi bỏ qua orphan record.
+- Các bảng như `lophoc`, `lophoc_chinhsachgia`, `buoihoc`, `chat_rooms` phải đồng bộ khóa ngoại trước khi thêm constraint.
+- Nếu gặp lỗi `#1452`, cần soát lại file dump để đảm bảo bản ghi cha tồn tại trước bản ghi con.
 
 Lệnh migrate cơ bản:
 ```bash
 php artisan migrate
 ```
 
-## 13. Tài liệu Auth
+## 13. Tài liệu Auth và Nhân sự
 - Portal đăng nhập hiện tại:
   - Học viên: `/login`
   - Giảng viên: `/teacher/login`
@@ -238,6 +250,9 @@ php artisan migrate
 - Cấu hình và triển khai: `docs/05-huong-dan/auth-cau-hinh-va-trien-khai.md`
 - Vận hành và kiểm thử: `docs/05-huong-dan/auth-van-hanh-va-kiem-thu.md`
 - Joi validation phía client: `docs/05-huong-dan/auth-joi-validation.md`
+- Hồ sơ nhân sự, bàn giao tài khoản, CV, PDF: `docs/05-huong-dan/nhan-su-ho-so-va-ban-giao-tai-khoan.md`
+- Lương nhân sự và payroll: `docs/05-huong-dan/luong-nhan-su-va-payroll.md`
+- Figma handoff payroll: `docs/05-huong-dan/figma-luong-handoff.md`
 - Thay đổi theo mốc: `CHANGELOG.md`
 
 ## 14. Quy trình phát triển

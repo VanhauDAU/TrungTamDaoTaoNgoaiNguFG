@@ -17,7 +17,17 @@ class EnsureStudentEmailIsVerified
             return $next($request);
         }
 
-        if ($user->role !== TaiKhoan::ROLE_HOC_VIEN || $user->hasVerifiedEmail()) {
+        if ((int) $user->role !== TaiKhoan::ROLE_HOC_VIEN) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Chỉ học viên mới được truy cập khu vực này.',
+                ], 403);
+            }
+
+            abort(403, 'Chỉ học viên mới được truy cập khu vực này.');
+        }
+
+        if ($user->hasVerifiedEmail()) {
             return $next($request);
         }
 

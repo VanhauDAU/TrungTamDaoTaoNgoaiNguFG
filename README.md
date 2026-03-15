@@ -19,7 +19,7 @@ Tai lieu:
 - [6. Chay du an](#6-chay-du-an)
 - [7. Bien moi truong quan trong](#7-bien-moi-truong-quan-trong)
 - [8. Mo hinh hoc phi hien tai](#8-mo-hinh-hoc-phi-hien-tai)
-- [9. Tai lieu Auth](#9-tai-lieu-auth)
+- [9. Tai lieu Auth va Nhan su](#9-tai-lieu-auth-va-nhan-su)
 - [10. Lenh huu ich](#10-lenh-huu-ich)
 - [11. Test va chat luong ma nguon](#11-test-va-chat-luong-ma-nguon)
 - [12. Luu y du lieu va migration](#12-luu-y-du-lieu-va-migration)
@@ -51,8 +51,10 @@ Tai lieu:
 ### Admin
 - Dashboard thong ke tong quan.
 - Quan ly hoc vien, giao vien, nhan vien.
+- Ho so nhan su chi tiet, ban giao tai khoan, tai lieu nhan su private.
 - Quan ly dao tao: danh muc khoa hoc, khoa hoc, lop hoc, buoi hoc, ca hoc, chinh sach gia lop.
 - Quan ly tai chinh: hoa don, phieu thu, cap nhat trang thai.
+- Goi luong nhan su va tai lieu handoff payroll/Figma.
 - Quan ly noi dung: bai viet, danh muc bai viet, tag.
 - Quan ly thong bao noi bo.
 - Quan ly lien he/lead (co ho tro thung rac va thao tac loat).
@@ -161,7 +163,7 @@ Neu dung XAMPP/Apache:
 - Bang `lophoc_dotthu` duoc dung de luu ke hoach thu theo dot; runtime hien tai van tao 1 hoa don tong cho moi dang ky va de san nen cho billing tach dot ve sau.
 - Huong dan van hanh tong hop: `docs/05-huong-dan/huong-dan.md`.
 
-## 9. Tai lieu Auth
+## 9. Tai lieu Auth va Nhan su
 - Portal dang nhap hien tai:
   - Hoc vien: `/login`
   - Giang vien: `/teacher/login`
@@ -172,6 +174,9 @@ Neu dung XAMPP/Apache:
 - Cau hinh va trien khai: `docs/05-huong-dan/auth-cau-hinh-va-trien-khai.md`
 - Van hanh va kiem thu: `docs/05-huong-dan/auth-van-hanh-va-kiem-thu.md`
 - Joi validation phia client: `docs/05-huong-dan/auth-joi-validation.md`
+- Ho so nhan su, ban giao tai khoan, CV, PDF: `docs/05-huong-dan/nhan-su-ho-so-va-ban-giao-tai-khoan.md`
+- Luong nhan su va payroll: `docs/05-huong-dan/luong-nhan-su-va-payroll.md`
+- Figma handoff payroll: `docs/05-huong-dan/figma-luong-handoff.md`
 - Thay doi theo moc: `CHANGELOG.md`
 
 ## 10. Lenh huu ich
@@ -208,6 +213,12 @@ Thu muc test hien co:
 - Thu muc migration trong repo chu yeu la migration bo sung/cap nhat.
 - Neu khoi tao moi tren may sach, can dam bao da co schema nen tu team (hoac bo migration day du) truoc khi chay du an toan phan.
 - Migration `2026_03_14_150000_refactor_class_pricing_to_lophoc_chinhsachgia.php` chuyen hoc phi tu mo hinh cu (`hocphi`, `lophoc.hocPhiId`) sang mo hinh moi theo lop hoc.
+- Migration `2026_03_15_200000` -> `2026_03_15_200400` bo sung ho so nhan su, goi luong, tai lieu nhan su va backfill du lieu cu.
+
+Luu y import dump SQL:
+- Khong nen phuc hoi du lieu bang cach tat `FOREIGN_KEY_CHECKS` roi bo qua orphan record.
+- Cac bang nhu `lophoc`, `lophoc_chinhsachgia`, `buoihoc`, `chat_rooms` phai dong bo khoa ngoai truoc khi them constraint.
+- Neu gap loi `#1452`, can soat lai dump de dam bao ban ghi cha ton tai truoc ban ghi con.
 
 Lenh migrate co ban:
 ```bash
