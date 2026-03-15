@@ -273,242 +273,289 @@
         </div>
 
         <div class="kf-tab-panel" id="tab-hoc-phi">
-            <div class="kf-card">
-                <div class="pricing-shell">
-                    <div class="pricing-note">
-                        Học phí chính dùng để xác định quyền học. Các khoản bổ sung như tài liệu hoặc thi thử được quản lý riêng, không cộng vào học phí niêm yết.
-                    </div>
-                    <div class="kf-form-row">
-                        <div class="kf-form-group">
-                            <label>Học phí niêm yết (VNĐ)</label>
-                            <input type="number" name="hocPhiNiemYet" id="hocPhiNiemYetInput"
-                                value="{{ old('hocPhiNiemYet', $existingPolicy?->hocPhiNiemYet) }}" min="0" step="1000" oninput="previewPricing()">
-                        </div>
-                        <div class="kf-form-group">
-                            <label>Số buổi cam kết</label>
-                            <input type="number" name="soBuoiCamKet" id="soBuoiCamKetInput"
-                                value="{{ old('soBuoiCamKet', $existingPolicy?->soBuoiCamKet) }}" min="1" oninput="previewPricing()">
-                            <span class="form-hint">Để trống nếu giống số buổi dự kiến của lớp.</span>
-                        </div>
-                        <div class="kf-form-group">
-                            <label>Cách thu học phí</label>
-                            <select name="loaiThu" id="loaiThuInput" onchange="previewPricing()">
-                                @foreach ($loaiThuOptions as $value => $label)
-                                    <option value="{{ $value }}" {{ (string) old('loaiThu', $existingPolicy?->loaiThu ?? 0) === (string) $value ? 'selected' : '' }}>
-                                        {{ $label }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="kf-form-group">
-                            <label>Trạng thái chính sách giá</label>
-                            <select name="trangThaiChinhSachGia">
-                                <option value="1" {{ (string) old('trangThaiChinhSachGia', (string) ($existingPolicy?->trangThai ?? 1)) === '1' ? 'selected' : '' }}>Đang áp dụng</option>
-                                <option value="0" {{ (string) old('trangThaiChinhSachGia', (string) ($existingPolicy?->trangThai ?? 1)) === '0' ? 'selected' : '' }}>Tạm ngưng</option>
-                            </select>
+            <div class="pricing-stage">
+
+                <div class="pricing-workbench">
+                    <div class="pricing-column pricing-column--main">
+                        <div class="kf-card pricing-card pricing-card--tuition">
+                            <div class="pricing-card-head">
+                                <div>
+                                    <div class="pricing-card-kicker">Học phí chính</div>
+                                    <div class="pricing-card-heading">Cấu hình khoản thu bắt buộc của lớp</div>
+                                </div>
+                                <div class="pricing-card-aside">Chỉ phần này ảnh hưởng quyền học</div>
+                            </div>
+
+                            <div class="pricing-note">
+                                Học phí chính dùng để xác định quyền học. Các khoản bổ sung như tài liệu hoặc thi thử được quản lý riêng, không cộng vào học phí niêm yết.
+                            </div>
+
+                            <div class="pricing-field-grid">
+                                <div class="kf-form-group">
+                                    <label>Học phí niêm yết (VNĐ)</label>
+                                    <input type="number" name="hocPhiNiemYet" id="hocPhiNiemYetInput"
+                                        value="{{ old('hocPhiNiemYet', $existingPolicy?->hocPhiNiemYet) }}" min="0" step="1000" oninput="previewPricing()"
+                                        class="form-control">
+                                </div>
+                                <div class="kf-form-group">
+                                    <label>Số buổi cam kết</label>
+                                    <input type="number" name="soBuoiCamKet" id="soBuoiCamKetInput"
+                                        value="{{ old('soBuoiCamKet', $existingPolicy?->soBuoiCamKet) }}" min="1" oninput="previewPricing()"
+                                        class="form-control">
+                                    <span class="form-hint">Để trống nếu giống số buổi dự kiến của lớp.</span>
+                                </div>
+                                <div class="kf-form-group">
+                                    <label>Cách thu học phí</label>
+                                    <select name="loaiThu" id="loaiThuInput" onchange="previewPricing()"
+                                        class="form-select">
+                                        @foreach ($loaiThuOptions as $value => $label)
+                                            <option value="{{ $value }}" {{ (string) old('loaiThu', $existingPolicy?->loaiThu ?? 0) === (string) $value ? 'selected' : '' }}>
+                                                {{ $label }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="kf-form-group">
+                                    <label>Trạng thái chính sách giá</label>
+                                    <select name="trangThaiChinhSachGia" class="form-select">
+                                        <option value="1" {{ (string) old('trangThaiChinhSachGia', (string) ($existingPolicy?->trangThai ?? 1)) === '1' ? 'selected' : '' }}>Đang áp dụng</option>
+                                        <option value="0" {{ (string) old('trangThaiChinhSachGia', (string) ($existingPolicy?->trangThai ?? 1)) === '0' ? 'selected' : '' }}>Tạm ngưng</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="pricing-inline-grid">
+                                <div class="kf-form-group" id="mainDueGroup">
+                                    <label>Hạn thanh toán học phí</label>
+                                    <input type="date" name="hanThanhToanHocPhi" id="hanThanhToanHocPhiInput"
+                                        value="{{ old('hanThanhToanHocPhi', optional($existingPolicy?->hanThanhToanHocPhi)->format('Y-m-d')) }}" oninput="previewPricing()"
+                                        class="form-control">
+                                    <span class="form-hint">Dùng khi thu học phí một lần.</span>
+                                </div>
+                                <div class="kf-form-group pricing-note-field">
+                                    <label>Ghi chú chính sách</label>
+                                    <textarea name="ghiChuChinhSach" rows="3"
+                                        placeholder="Ví dụ: học phí chưa bao gồm tài liệu hoặc phí thi thử."
+                                        class="form-control">{{ old('ghiChuChinhSach', $existingPolicy?->ghiChuChinhSach) }}</textarea>
+                                </div>
+                            </div>
+
+                            <div class="pricing-subsection dot-thu-section" id="dotThuSection">
+                                <div class="pricing-subsection-head">
+                                    <div>
+                                        <div class="pricing-card-kicker">Kế hoạch thu học phí</div>
+                                        <div class="pricing-subsection-title">Chia học phí chính thành nhiều mốc thu</div>
+                                    </div>
+                                    <button type="button" class="kf-btn kf-btn-secondary" id="addDotThuBtn" onclick="addDotThuRow()">
+                                        <i class="fas fa-plus"></i> Thêm đợt thu
+                                    </button>
+                                </div>
+
+                                <div class="dot-thu-toolbar">
+                                    <p class="dot-thu-mode-hint" id="dotThuModeHint">
+                                        Chọn “Chia đợt học phí” để mở cấu hình kế hoạch thu.
+                                    </p>
+                                </div>
+
+                                <div class="dot-thu-summary" id="dotThuSummary">
+                                    <div class="dot-thu-summary-card">
+                                        <div class="dot-thu-summary-label">Tổng đợt thu</div>
+                                        <div class="dot-thu-summary-value" id="dotThuTotalValue">0 đ</div>
+                                    </div>
+                                    <div class="dot-thu-summary-card">
+                                        <div class="dot-thu-summary-label">Chênh lệch với học phí</div>
+                                        <div class="dot-thu-summary-value" id="dotThuDeltaValue">0 đ</div>
+                                    </div>
+                                    <div class="dot-thu-summary-status" id="dotThuStatusCard">
+                                        <div class="dot-thu-summary-label">Trạng thái kiểm tra</div>
+                                        <div class="dot-thu-summary-value" id="dotThuStatusValue">Chưa áp dụng</div>
+                                        <div class="dot-thu-summary-note" id="dotThuStatusNote">Mỗi đợt phải có hạn thanh toán tăng dần và tổng tiền phải bằng học phí niêm yết.</div>
+                                    </div>
+                                </div>
+                                <div id="dotThuRows" class="dot-thu-list">
+                                    @forelse ($oldDotThus as $index => $dotThu)
+                                        <div class="dot-thu-row">
+                                            <div class="dot-thu-field dot-thu-field--name">
+                                                <label>Tên đợt thu</label>
+                                                <input type="text" name="dotThu[{{ $index }}][tenDotThu]"
+                                                    value="{{ $dotThu['tenDotThu'] ?? '' }}" placeholder="VD: Đợt cọc giữ chỗ"
+                                                    class="form-control">
+                                            </div>
+                                            <div class="dot-thu-field">
+                                                <label>Số tiền</label>
+                                                <input type="number" name="dotThu[{{ $index }}][soTien]"
+                                                    value="{{ $dotThu['soTien'] ?? '' }}" min="0" step="1000"
+                                                    oninput="previewPricing()" class="form-control">
+                                            </div>
+                                            <div class="dot-thu-field">
+                                                <label>Hạn thanh toán</label>
+                                                <input type="date" name="dotThu[{{ $index }}][hanThanhToan]"
+                                                    value="{{ $dotThu['hanThanhToan'] ?? '' }}" class="form-control">
+                                            </div>
+                                            <div class="dot-thu-meta">
+                                                <button type="button" class="kf-btn kf-btn-secondary dot-thu-remove"
+                                                    onclick="removeDotThuRow(this)" aria-label="Xóa đợt thu">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    @empty
+                                        <div class="form-hint dot-thu-empty" id="dotThuEmptyHint">Chưa cấu hình đợt thu học phí nào.</div>
+                                    @endforelse
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="kf-form-row">
-                        <div class="kf-form-group" id="mainDueGroup">
-                            <label>Hạn thanh toán học phí</label>
-                            <input type="date" name="hanThanhToanHocPhi" id="hanThanhToanHocPhiInput"
-                                value="{{ old('hanThanhToanHocPhi', optional($existingPolicy?->hanThanhToanHocPhi)->format('Y-m-d')) }}" oninput="previewPricing()">
-                            <span class="form-hint">Dùng khi thu học phí một lần.</span>
-                        </div>
-                        <div class="kf-form-group" style="grid-column:1/-1">
-                            <label>Ghi chú chính sách</label>
-                            <textarea name="ghiChuChinhSach" rows="3"
-                                placeholder="Ví dụ: học phí chưa bao gồm tài liệu hoặc phí thi thử.">{{ old('ghiChuChinhSach', $existingPolicy?->ghiChuChinhSach) }}</textarea>
-                        </div>
-                    </div>
+                    <div class="pricing-column pricing-column--side">
+                        <div class="kf-card pricing-card pricing-card--summary">
+                            <div class="pricing-card-head">
+                                <div>
+                                    <div class="pricing-card-kicker">Tổng quan</div>
+                                    <div class="pricing-card-heading">Xem nhanh công nợ sẽ sinh</div>
+                                </div>
+                                <div class="pricing-card-aside">Cập nhật theo thời gian thực</div>
+                            </div>
 
-                    <div id="pricingPreview" style="display:none">
-                        <div class="pricing-preview-grid">
-                            <div class="pricing-preview-card pricing-preview-card--primary">
-                                <div class="pricing-preview-label">Học phí chính</div>
-                                <div class="pricing-preview-value" id="prev-hocphi">—</div>
-                                <div class="pricing-preview-note" id="prev-loaithu">—</div>
+                            <div id="pricingPreview" class="pricing-preview-stack" style="display:none">
+                                <div class="pricing-preview-grid">
+                                    <div class="pricing-preview-card pricing-preview-card--primary">
+                                        <div class="pricing-preview-label">Học phí chính</div>
+                                        <div class="pricing-preview-value" id="prev-hocphi">—</div>
+                                        <div class="pricing-preview-note" id="prev-loaithu">—</div>
+                                    </div>
+                                    <div class="pricing-preview-card">
+                                        <div class="pricing-preview-label">Khoản bổ sung mặc định</div>
+                                        <div class="pricing-preview-value" id="prev-phuphi">0 đ</div>
+                                        <div class="pricing-preview-note">Chỉ tính các khoản áp dụng cho mọi học viên</div>
+                                    </div>
+                                    <div class="pricing-preview-card">
+                                        <div class="pricing-preview-label">Tổng công nợ dự kiến</div>
+                                        <div class="pricing-preview-value" id="prev-total">0 đ</div>
+                                        <div class="pricing-preview-note" id="prev-camket">Theo số buổi dự kiến</div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="pricing-preview-card">
-                                <div class="pricing-preview-label">Khoản bổ sung mặc định</div>
-                                <div class="pricing-preview-value" id="prev-phuphi">0 đ</div>
-                                <div class="pricing-preview-note">Chỉ tính các khoản áp dụng cho mọi học viên</div>
+                            <div id="pricingPreviewEmpty" class="pricing-empty-state">
+                                Nhập học phí hoặc thêm khoản bổ sung để xem trước tổng công nợ của học viên.
                             </div>
-                            <div class="pricing-preview-card">
-                                <div class="pricing-preview-label">Tổng công nợ dự kiến</div>
-                                <div class="pricing-preview-value" id="prev-total">0 đ</div>
-                                <div class="pricing-preview-note" id="prev-camket">Theo số buổi dự kiến</div>
+                        </div>
+
+                        <div class="kf-card pricing-card pricing-card--supplemental" id="phuPhiSection">
+                            <div class="pricing-card-head">
+                                <div>
+                                    <div class="pricing-card-kicker">Khoản bổ sung</div>
+                                    <div class="pricing-card-heading">Phí tài liệu, thi thử và khoản thu thêm</div>
+                                </div>
+                                <button type="button" class="kf-btn kf-btn-secondary" onclick="addPhuPhiRow()">
+                                    <i class="fas fa-plus"></i> Thêm khoản bổ sung
+                                </button>
+                            </div>
+
+                            <div class="pricing-note">
+                                Khoản bổ sung không tính vào học phí niêm yết. Chúng có thể làm tổng công nợ lớn hơn học phí chính nhưng không khóa học viên khi chưa thanh toán.
+                            </div>
+
+                            <div class="phu-phi-summary">
+                                <div class="dot-thu-summary-card">
+                                    <div class="dot-thu-summary-label">Tổng phụ phí</div>
+                                    <div class="dot-thu-summary-value" id="phuPhiTotalValue">0 đ</div>
+                                </div>
+                                <div class="dot-thu-summary-card">
+                                    <div class="dot-thu-summary-label">Phụ phí mặc định</div>
+                                    <div class="dot-thu-summary-value" id="phuPhiDefaultValue">0 đ</div>
+                                </div>
+                                <div class="dot-thu-summary-status" id="phuPhiStatusCard">
+                                    <div class="dot-thu-summary-label">Ghi chú</div>
+                                    <div class="dot-thu-summary-value" id="phuPhiStatusValue">Độc lập với học phí</div>
+                                    <div class="phu-phi-summary-note" id="phuPhiStatusNote">Các khoản bổ sung chỉ là công nợ riêng, không ảnh hưởng trạng thái học.</div>
+                                </div>
+                            </div>
+                            <div id="phuPhiRows" class="phu-phi-list">
+                                @forelse ($oldPhuPhis as $index => $phuPhi)
+                                    <div class="phu-phi-row">
+                                        <div class="phu-phi-field phu-phi-field--name">
+                                            <label>Tên khoản thu</label>
+                                            <input type="text" name="phuPhi[{{ $index }}][tenKhoanThu]"
+                                                value="{{ $phuPhi['tenKhoanThu'] ?? '' }}" placeholder="VD: Phí tài liệu"
+                                                class="form-control">
+                                        </div>
+                                        <div class="phu-phi-field phu-phi-field--group">
+                                            <label>Nhóm phí</label>
+                                            <select name="phuPhi[{{ $index }}][nhomPhi]" class="form-select">
+                                                @foreach ($nhomPhiOptions as $value => $label)
+                                                    <option value="{{ $value }}" {{ ($phuPhi['nhomPhi'] ?? \App\Models\Education\LopHocPhuPhi::NHOM_PHI_KHAC) === $value ? 'selected' : '' }}>
+                                                        {{ $label }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="phu-phi-field phu-phi-field--amount">
+                                            <label>Số tiền</label>
+                                            <input type="number" name="phuPhi[{{ $index }}][soTien]"
+                                                value="{{ $phuPhi['soTien'] ?? '' }}" min="0" step="1000" oninput="previewPricing()"
+                                                class="form-control">
+                                        </div>
+                                        <div class="phu-phi-field phu-phi-field--due">
+                                            <label>Hạn thanh toán</label>
+                                            <input type="date" name="phuPhi[{{ $index }}][hanThanhToanMau]"
+                                                value="{{ $phuPhi['hanThanhToanMau'] ?? '' }}" class="form-control">
+                                        </div>
+                                        <div class="phu-phi-meta">
+                                            <label class="phu-phi-check">
+                                                <input type="checkbox" name="phuPhi[{{ $index }}][apDungMacDinh]" value="1"
+                                                    {{ !empty($phuPhi['apDungMacDinh']) ? 'checked' : '' }}
+                                                    class="form-check-input">
+                                                <span>Áp dụng cho mọi học viên</span>
+                                            </label>
+                                            <button type="button" class="kf-btn kf-btn-secondary phu-phi-remove"
+                                                onclick="removePhuPhiRow(this)" aria-label="Xóa khoản bổ sung">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                @empty
+                                    <div class="form-hint phu-phi-empty" id="phuPhiEmptyHint">Chưa có khoản bổ sung nào.</div>
+                                @endforelse
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="kf-card dot-thu-section" id="dotThuSection">
-                <div class="kf-card-title" style="justify-content:space-between">
-                    <span><i class="fas fa-layer-group"></i> Kế hoạch thu học phí</span>
-                    <button type="button" class="kf-btn kf-btn-secondary" id="addDotThuBtn" onclick="addDotThuRow()">
-                        <i class="fas fa-plus"></i> Thêm đợt thu
-                    </button>
-                </div>
-                <p class="pricing-note" style="margin-top:0">
-                    Chỉ dùng khi muốn chia học phí chính thành nhiều đợt. Tổng các đợt phải bằng đúng học phí niêm yết.
-                </p>
-                <div class="dot-thu-toolbar">
-                    <p class="dot-thu-mode-hint" id="dotThuModeHint">
-                        Chọn “Chia đợt học phí” để mở cấu hình kế hoạch thu.
+            <div class="pricing-secondary-grid">
+                <div class="kf-card">
+                    <div class="kf-card-title"><i class="fas fa-chalkboard-teacher"></i> Chi phí giáo viên</div>
+                    <p class="form-hint" style="margin:0 0 14px">
+                        Đây là chi phí của trung tâm, tách biệt khỏi học phí học viên ở trên.
                     </p>
-                </div>
-                <div class="dot-thu-summary" id="dotThuSummary">
-                    <div class="dot-thu-summary-card">
-                        <div class="dot-thu-summary-label">Tổng đợt thu</div>
-                        <div class="dot-thu-summary-value" id="dotThuTotalValue">0 đ</div>
-                    </div>
-                    <div class="dot-thu-summary-card">
-                        <div class="dot-thu-summary-label">Chênh lệch với học phí</div>
-                        <div class="dot-thu-summary-value" id="dotThuDeltaValue">0 đ</div>
-                    </div>
-                    <div class="dot-thu-summary-status" id="dotThuStatusCard">
-                        <div class="dot-thu-summary-label">Trạng thái kiểm tra</div>
-                        <div class="dot-thu-summary-value" id="dotThuStatusValue">Chưa áp dụng</div>
-                        <div class="dot-thu-summary-note" id="dotThuStatusNote">Mỗi đợt phải có hạn thanh toán tăng dần và tổng tiền phải bằng học phí niêm yết.</div>
-                    </div>
-                </div>
-                <div id="dotThuRows" class="dot-thu-list">
-                    @forelse ($oldDotThus as $index => $dotThu)
-                        <div class="dot-thu-row">
-                            <div class="dot-thu-field dot-thu-field--name">
-                                <label>Tên đợt thu</label>
-                                <input type="text" name="dotThu[{{ $index }}][tenDotThu]"
-                                    value="{{ $dotThu['tenDotThu'] ?? '' }}" placeholder="VD: Đợt cọc giữ chỗ">
-                            </div>
-                            <div class="dot-thu-field">
-                                <label>Số tiền</label>
-                                <input type="number" name="dotThu[{{ $index }}][soTien]"
-                                    value="{{ $dotThu['soTien'] ?? '' }}" min="0" step="1000"
-                                    oninput="previewPricing()">
-                            </div>
-                            <div class="dot-thu-field">
-                                <label>Hạn thanh toán</label>
-                                <input type="date" name="dotThu[{{ $index }}][hanThanhToan]"
-                                    value="{{ $dotThu['hanThanhToan'] ?? '' }}">
-                            </div>
-                            <div class="dot-thu-meta">
-                                <button type="button" class="kf-btn kf-btn-secondary dot-thu-remove"
-                                    onclick="removeDotThuRow(this)" aria-label="Xóa đợt thu">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
+                    <div class="kf-form-row">
+                        <div class="kf-form-group">
+                            <label>Đơn giá dạy (VNĐ/buổi)</label>
+                            <input type="number" name="donGiaDay" value="{{ old('donGiaDay', $lopHoc->donGiaDay) }}"
+                                min="0" step="1000">
                         </div>
-                    @empty
-                        <div class="form-hint dot-thu-empty" id="dotThuEmptyHint">Chưa cấu hình đợt thu học phí nào.</div>
-                    @endforelse
-                </div>
-            </div>
-
-            <div class="kf-card" id="phuPhiSection">
-                <div class="kf-card-title" style="justify-content:space-between">
-                    <span><i class="fas fa-box-open"></i> Khoản bổ sung</span>
-                    <button type="button" class="kf-btn kf-btn-secondary" onclick="addPhuPhiRow()">
-                        <i class="fas fa-plus"></i> Thêm khoản bổ sung
-                    </button>
-                </div>
-                <p class="pricing-note" style="margin-top:0">
-                    Khoản bổ sung không tính vào học phí niêm yết, có thể làm tổng công nợ của học viên lớn hơn học phí chính nhưng không khóa học viên khi chưa thanh toán.
-                </p>
-                <div class="phu-phi-summary">
-                    <div class="dot-thu-summary-card">
-                        <div class="dot-thu-summary-label">Tổng phụ phí</div>
-                        <div class="dot-thu-summary-value" id="phuPhiTotalValue">0 đ</div>
-                    </div>
-                    <div class="dot-thu-summary-card">
-                        <div class="dot-thu-summary-label">Phụ phí mặc định</div>
-                        <div class="dot-thu-summary-value" id="phuPhiDefaultValue">0 đ</div>
-                    </div>
-                    <div class="dot-thu-summary-status" id="phuPhiStatusCard">
-                        <div class="dot-thu-summary-label">Ghi chú</div>
-                        <div class="dot-thu-summary-value" id="phuPhiStatusValue">Độc lập với học phí</div>
-                        <div class="phu-phi-summary-note" id="phuPhiStatusNote">Các khoản bổ sung chỉ là công nợ riêng, không ảnh hưởng trạng thái học.</div>
-                    </div>
-                </div>
-                <div id="phuPhiRows" class="phu-phi-list">
-                    @forelse ($oldPhuPhis as $index => $phuPhi)
-                        <div class="phu-phi-row">
-                            <div class="phu-phi-field">
-                                <label>Tên khoản thu</label>
-                                <input type="text" name="phuPhi[{{ $index }}][tenKhoanThu]"
-                                    value="{{ $phuPhi['tenKhoanThu'] ?? '' }}" placeholder="VD: Phí tài liệu">
-                            </div>
-                            <div class="phu-phi-field">
-                                <label>Nhóm phí</label>
-                                <select name="phuPhi[{{ $index }}][nhomPhi]">
-                                    @foreach ($nhomPhiOptions as $value => $label)
-                                        <option value="{{ $value }}" {{ ($phuPhi['nhomPhi'] ?? \App\Models\Education\LopHocPhuPhi::NHOM_PHI_KHAC) === $value ? 'selected' : '' }}>
-                                            {{ $label }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="phu-phi-field">
-                                <label>Số tiền</label>
-                                <input type="number" name="phuPhi[{{ $index }}][soTien]"
-                                    value="{{ $phuPhi['soTien'] ?? '' }}" min="0" step="1000" oninput="previewPricing()">
-                            </div>
-                            <div class="phu-phi-field">
-                                <label>Hạn thanh toán</label>
-                                <input type="date" name="phuPhi[{{ $index }}][hanThanhToanMau]"
-                                    value="{{ $phuPhi['hanThanhToanMau'] ?? '' }}">
-                            </div>
-                            <div class="phu-phi-meta">
-                                <label class="phu-phi-check">
-                                    <input type="checkbox" name="phuPhi[{{ $index }}][apDungMacDinh]" value="1"
-                                        {{ !empty($phuPhi['apDungMacDinh']) ? 'checked' : '' }}>
-                                    <span>Áp dụng cho mọi học viên</span>
-                                </label>
-                                <button type="button" class="kf-btn kf-btn-secondary phu-phi-remove"
-                                    onclick="removePhuPhiRow(this)" aria-label="Xóa khoản bổ sung">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
+                        <div class="kf-form-group">
+                            <label>Sĩ số học viên tối đa</label>
+                            <input type="number" name="soHocVienToiDa"
+                                value="{{ old('soHocVienToiDa', $lopHoc->soHocVienToiDa) }}" min="1">
                         </div>
-                    @empty
-                        <div class="form-hint phu-phi-empty" id="phuPhiEmptyHint">Chưa có khoản bổ sung nào.</div>
-                    @endforelse
-                </div>
-            </div>
-
-            <div class="kf-card">
-                <div class="kf-card-title"><i class="fas fa-chalkboard-teacher"></i> Chi phí giáo viên</div>
-                <p class="form-hint" style="margin:0 0 14px">
-                    Đây là chi phí của trung tâm, tách biệt khỏi học phí học viên ở trên.
-                </p>
-                <div class="kf-form-row">
-                    <div class="kf-form-group">
-                        <label>Đơn giá dạy (VNĐ/buổi)</label>
-                        <input type="number" name="donGiaDay" value="{{ old('donGiaDay', $lopHoc->donGiaDay) }}"
-                            min="0" step="1000">
-                    </div>
-                    <div class="kf-form-group">
-                        <label>Sĩ số học viên tối đa</label>
-                        <input type="number" name="soHocVienToiDa"
-                            value="{{ old('soHocVienToiDa', $lopHoc->soHocVienToiDa) }}" min="1">
                     </div>
                 </div>
-            </div>
 
-            <div class="kf-card">
-                <div class="kf-card-title"><i class="fas fa-sliders-h"></i> Trạng thái lớp</div>
-                <div class="kf-form-group">
-                    <label>Trạng thái <span class="req">*</span></label>
-                    <select name="trangThai">
-                        @php $cur = (string) old('trangThai', $lopHoc->trangThai); @endphp
-                        @foreach (\App\Models\Education\LopHoc::trangThaiOptions() as $value => $label)
-                            <option value="{{ $value }}" {{ $cur === (string) $value ? 'selected' : '' }}>
-                                {{ $label }}
-                            </option>
-                        @endforeach
-                    </select>
+                <div class="kf-card">
+                    <div class="kf-card-title"><i class="fas fa-sliders-h"></i> Trạng thái lớp</div>
+                    <div class="kf-form-group">
+                        <label>Trạng thái <span class="req">*</span></label>
+                        <select name="trangThai">
+                            @php $cur = (string) old('trangThai', $lopHoc->trangThai); @endphp
+                            @foreach (\App\Models\Education\LopHoc::trangThaiOptions() as $value => $label)
+                                <option value="{{ $value }}" {{ $cur === (string) $value ? 'selected' : '' }}>
+                                    {{ $label }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
             </div>
         </div>
@@ -942,12 +989,16 @@
             } = getPricingInputs();
             const loaiThuSelect = document.getElementById('loaiThuInput');
             const preview = document.getElementById('pricingPreview');
+            const previewEmpty = document.getElementById('pricingPreviewEmpty');
             const {
                 defaultTotal
             } = getPhuPhiTotals();
 
             if (!hasPricingConfiguration() && getPhuPhiRows().length === 0) {
                 preview.style.display = 'none';
+                if (previewEmpty) {
+                    previewEmpty.style.display = 'block';
+                }
                 toggleCollectionMode();
                 updateDotThuConstraints();
                 updateDotThuSummary();
@@ -963,6 +1014,9 @@
             document.getElementById('prev-loaithu').textContent = loaiThuSelect?.options[loaiThuSelect.selectedIndex]
                 ?.text || '—';
             preview.style.display = 'block';
+            if (previewEmpty) {
+                previewEmpty.style.display = 'none';
+            }
 
             toggleCollectionMode();
             updateDotThuConstraints();
@@ -1026,15 +1080,15 @@
             row.innerHTML = `
                 <div class="dot-thu-field dot-thu-field--name">
                     <label>Tên đợt thu</label>
-                    <input type="text" name="dotThu[${dotThuIndex}][tenDotThu]" placeholder="VD: Đợt 1 giữ chỗ">
+                    <input type="text" name="dotThu[${dotThuIndex}][tenDotThu]" placeholder="VD: Đợt 1 giữ chỗ" class="form-control">
                 </div>
                 <div class="dot-thu-field">
                     <label>Số tiền</label>
-                    <input type="number" name="dotThu[${dotThuIndex}][soTien]" min="0" step="1000" oninput="previewPricing()">
+                    <input type="number" name="dotThu[${dotThuIndex}][soTien]" min="0" step="1000" oninput="previewPricing()" class="form-control">
                 </div>
                 <div class="dot-thu-field">
                     <label>Hạn thanh toán</label>
-                    <input type="date" name="dotThu[${dotThuIndex}][hanThanhToan]">
+                    <input type="date" name="dotThu[${dotThuIndex}][hanThanhToan]" class="form-control">
                 </div>
                 <div class="dot-thu-meta">
                     <button type="button" class="kf-btn kf-btn-secondary dot-thu-remove" onclick="removeDotThuRow(this)" aria-label="Xóa đợt thu">
@@ -1067,27 +1121,27 @@
             const row = document.createElement('div');
             row.className = 'phu-phi-row';
             row.innerHTML = `
-                <div class="phu-phi-field">
+                <div class="phu-phi-field phu-phi-field--name">
                     <label>Tên khoản thu</label>
-                    <input type="text" name="phuPhi[${phuPhiIndex}][tenKhoanThu]" placeholder="VD: Phí tài liệu">
+                    <input type="text" name="phuPhi[${phuPhiIndex}][tenKhoanThu]" placeholder="VD: Phí tài liệu" class="form-control">
                 </div>
-                <div class="phu-phi-field">
+                <div class="phu-phi-field phu-phi-field--group">
                     <label>Nhóm phí</label>
-                    <select name="phuPhi[${phuPhiIndex}][nhomPhi]">
+                    <select name="phuPhi[${phuPhiIndex}][nhomPhi]" class="form-select">
                         ${buildNhomPhiOptions('{{ \App\Models\Education\LopHocPhuPhi::NHOM_PHI_KHAC }}')}
                     </select>
                 </div>
-                <div class="phu-phi-field">
+                <div class="phu-phi-field phu-phi-field--amount">
                     <label>Số tiền</label>
-                    <input type="number" name="phuPhi[${phuPhiIndex}][soTien]" min="0" step="1000" oninput="previewPricing()">
+                    <input type="number" name="phuPhi[${phuPhiIndex}][soTien]" min="0" step="1000" oninput="previewPricing()" class="form-control">
                 </div>
-                <div class="phu-phi-field">
+                <div class="phu-phi-field phu-phi-field--due">
                     <label>Hạn thanh toán</label>
-                    <input type="date" name="phuPhi[${phuPhiIndex}][hanThanhToanMau]">
+                    <input type="date" name="phuPhi[${phuPhiIndex}][hanThanhToanMau]" class="form-control">
                 </div>
                 <div class="phu-phi-meta">
                     <label class="phu-phi-check">
-                        <input type="checkbox" name="phuPhi[${phuPhiIndex}][apDungMacDinh]" value="1">
+                        <input type="checkbox" name="phuPhi[${phuPhiIndex}][apDungMacDinh]" value="1" class="form-check-input">
                         <span>Áp dụng cho mọi học viên</span>
                     </label>
                     <button type="button" class="kf-btn kf-btn-secondary phu-phi-remove" onclick="removePhuPhiRow(this)" aria-label="Xóa khoản bổ sung">
