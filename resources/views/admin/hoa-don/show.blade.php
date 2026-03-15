@@ -267,7 +267,7 @@
                                                 <p>
                                                     {{ \Carbon\Carbon::parse($phieuThu->ngayThu)->format('d/m/Y') }}
                                                     · {{ $phieuThu->phuongThucLabel }}
-                                                    · Thu bởi {{ $phieuThu->taiKhoan?->hoSoNguoiDung?->hoTen ?? ($phieuThu->taiKhoan?->taiKhoan ?? '—') }}
+                                                    · Thu bởi {{ $phieuThu->nguoiDuyet?->hoSoNguoiDung?->hoTen ?? ($phieuThu->nguoiDuyet?->taiKhoan ?? '—') }}
                                                 </p>
                                             </div>
                                             <div class="receipt-item__amount {{ $hopLe ? '' : 'is-cancelled' }}">

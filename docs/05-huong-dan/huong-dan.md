@@ -142,19 +142,41 @@ Luồng chuẩn:
    - `ngày kết thúc` không nhập tay; hệ thống cập nhật theo buổi học cuối cùng
 4. Chỉ chuyển lớp sang `Đang tuyển sinh` khi đã có chính sách giá hợp lệ.
 5. Khi học viên đăng ký, hệ thống tự chụp snapshot giá vào `dangkylophoc` và tạo hóa đơn từ snapshot đó.
+6. `Theo tháng` không còn được hỗ trợ trong runtime hiện tại.
+7. Đăng ký `Chờ thanh toán` có `ngày hết hạn giữ chỗ`; job hệ thống sẽ tự hủy giữ chỗ quá hạn nếu chưa thu được tiền.
+8. Hóa đơn quá hạn khi lớp đang học sẽ được job hệ thống xử lý để chuyển đăng ký sang `Tạm dừng do nợ học phí`.
 
 Tài liệu chi tiết xem thêm:
 
 - `docs/05-huong-dan/hoc-phi-lop-hoc.md`
+- `docs/05-huong-dan/dang-ky-thanh-toan-va-phieu-thu.md`
 
-### 3.4 Quản lý Danh mục Khóa học (Cây đa cấp)
+### 3.4 Quản lý đăng ký học ở admin
+
+Module `/admin/dang-ky` hiện hỗ trợ:
+
+- tạo đăng ký tại quầy
+- xác nhận đăng ký
+- hủy đăng ký
+- bảo lưu
+- khôi phục
+- chuyển lớp
+
+Quy tắc vận hành:
+
+- không hủy hoặc chuyển lớp nếu đã phát sinh thu tiền
+- khôi phục phải kiểm tra lại sĩ số và trùng lịch
+- điều chuyển sẽ hủy đăng ký cũ và tạo đăng ký mới ở lớp đích
+- mọi thay đổi hóa đơn từ admin đều phải tự recalculate hóa đơn và trạng thái đăng ký liên quan
+
+### 3.5 Quản lý Danh mục Khóa học (Cây đa cấp)
 
 - Tạo danh mục gốc: không chọn danh mục cha
 - Tạo danh mục con: chọn danh mục cha từ dropdown (hiển thị cây với thụt lề)
 - Không giới hạn độ sâu của cây
 - Không được chọn chính mình hoặc cấp con/cháu làm cha (tránh vòng lặp)
 
-### 3.5 Gửi thông báo
+### 3.6 Gửi thông báo
 
 1. Vào `/admin/thong-bao/tao-moi`
 2. Điền tiêu đề, nội dung
@@ -177,13 +199,15 @@ Tài liệu chi tiết xem thêm:
 3. Click **Đăng ký** → Xác nhận thông tin
 4. Submit → Hệ thống chụp snapshot giá của lớp tại thời điểm đăng ký
 5. Hóa đơn được tạo tự động từ snapshot đó
-6. Thanh toán tại cơ sở hoặc chuyển khoản
+6. Hệ thống đặt `ngày hết hạn giữ chỗ` cho đăng ký chờ thanh toán
+7. Thanh toán tại cơ sở hoặc chuyển khoản
 
 Ghi chú hiện tại:
 
-- `Hiệu lực từ` và `Hiệu lực đến` nằm ở `chính sách giá lớp`, không phải ở bản thân lớp học.
-- Hai trường này thể hiện khoảng thời gian mức giá đó được phép áp dụng cho đăng ký mới.
-- Runtime hiện tại vẫn tạo 1 hóa đơn tổng cho mỗi đăng ký; cấu hình `đợt thu` đang được dùng cho validation, hiển thị và mở rộng billing về sau.
+- hệ thống chỉ hỗ trợ `một lần` hoặc `theo đợt`
+- không còn hỗ trợ `theo tháng`
+- đăng ký quá hạn giữ chỗ có thể bị hệ thống tự hủy nếu chưa phát sinh thu tiền
+- khi trung tâm ghi nhận thanh toán, `phiếu thu` sẽ cập nhật ngược trở lại `hóa đơn` và `trạng thái đăng ký`
 
 ### 4.3 Xem lịch học
 

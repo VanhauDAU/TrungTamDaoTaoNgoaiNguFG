@@ -2,6 +2,41 @@
 
 Tất cả thay đổi đáng chú ý của dự án sẽ được ghi tại đây.
 
+## [2026-03-15] - Củng cố đăng ký học, giữ chỗ, hóa đơn và phiếu thu
+
+### Added
+
+- Thêm unique index `uq_dangkylophoc_student_class` để chặn trùng đăng ký theo cặp `taiKhoanId + lopHocId`.
+- Thêm cột `ngayHetHanGiuCho` cho `dangkylophoc`.
+- Thêm command `registration:expire-holds` để tự động hủy giữ chỗ quá hạn chưa phát sinh thu tiền.
+- Thêm scheduler:
+  - `invoice:check-overdue` chạy hằng ngày
+  - `registration:expire-holds` chạy mỗi giờ
+- Thêm module admin `/admin/dang-ky` để quản lý đăng ký học:
+  - tạo tại quầy
+  - xác nhận
+  - hủy
+  - bảo lưu
+  - khôi phục
+  - chuyển lớp
+- Thêm tài liệu vận hành mới cho luồng đăng ký, thanh toán, hóa đơn và phiếu thu.
+
+### Changed
+
+- Luồng đăng ký lớp của học viên được đưa vào transaction có `lockForUpdate()` để giảm race condition.
+- Hệ thống tự đặt `ngayHetHanGiuCho` theo hạn thanh toán học phí gần nhất khi tạo đăng ký.
+- `Theo tháng` bị loại khỏi cấu hình runtime mới; hệ thống chỉ còn hỗ trợ `Một lần` và `Theo đợt`.
+- Admin sửa hóa đơn giờ luôn `recalculate()` lại hóa đơn và đồng bộ trạng thái đăng ký liên quan.
+- `phieuthu.taiKhoanId` được chuẩn hóa theo nghĩa `học viên / người nộp tiền`; `nguoiDuyetId` là nhân sự ghi nhận thu tiền.
+- Màn `Phiếu thu tổng hợp` của học viên đổi sang đọc đúng ownership của phiếu thu và hiển thị người ghi nhận.
+
+### Fixed
+
+- Sửa lỗ hổng có thể tạo trùng đăng ký hoặc vượt sĩ số khi nhiều request đăng ký chạy đồng thời.
+- Sửa dữ liệu phiếu thu cũ bị gắn sai chủ sở hữu bằng migration backfill từ `hoadon.taiKhoanId`.
+- Loại các hóa đơn của đăng ký đã bị hủy giữ chỗ ra khỏi màn công nợ học viên khi chưa phát sinh thu tiền.
+- Ghi log rõ hơn cho batch xử lý hóa đơn quá hạn để dễ vận hành.
+
 ## [2026-03-15] - Củng cố lớp học, học phí theo lớp và tài liệu vận hành
 
 ### Added

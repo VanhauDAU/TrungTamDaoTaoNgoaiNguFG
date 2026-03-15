@@ -39,9 +39,14 @@ class PhieuThu extends Model
         return $this->belongsTo(HoaDon::class, 'hoaDonId', 'hoaDonId');
     }
 
-    public function taiKhoan()
+    public function nguoiNop()
     {
         return $this->belongsTo(TaiKhoan::class, 'taiKhoanId', 'taiKhoanId');
+    }
+
+    public function taiKhoan()
+    {
+        return $this->nguoiNop();
     }
 
     public function nguoiDuyet()

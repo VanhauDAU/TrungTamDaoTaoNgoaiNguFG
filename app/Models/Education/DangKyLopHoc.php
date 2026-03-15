@@ -31,6 +31,7 @@ class DangKyLopHoc extends Model
         'soBuoiCamKetSnapshot',
         'ghiChuGiaSnapshot',
         'ngayDangKy',
+        'ngayHetHanGiuCho',
         'trangThai',
     ];
     public $timestamps = false;
@@ -42,6 +43,7 @@ class DangKyLopHoc extends Model
         'giamGiaSnapshot' => 'decimal:2',
         'hocPhiPhaiThuSnapshot' => 'decimal:2',
         'soBuoiCamKetSnapshot' => 'integer',
+        'ngayHetHanGiuCho' => 'datetime',
     ];
 
     /* ── Relationships ──────────────────────────────────────────────── */
@@ -97,6 +99,19 @@ class DangKyLopHoc extends Model
         };
     }
 
+    public static function trangThaiOptions(): array
+    {
+        return [
+            self::TRANG_THAI_CHO_THANH_TOAN => 'Chờ thanh toán',
+            self::TRANG_THAI_DA_XAC_NHAN => 'Đã xác nhận',
+            self::TRANG_THAI_DANG_HOC => 'Đang học',
+            self::TRANG_THAI_TAM_DUNG_NO_HOC_PHI => 'Tạm dừng do nợ học phí',
+            self::TRANG_THAI_BAO_LUU => 'Bảo lưu',
+            self::TRANG_THAI_HOAN_THANH => 'Hoàn thành',
+            self::TRANG_THAI_HUY => 'Đã hủy',
+        ];
+    }
+
     public function getIsNoHocPhiAttribute(): bool
     {
         return (int) $this->trangThai === self::TRANG_THAI_TAM_DUNG_NO_HOC_PHI;
@@ -127,6 +142,13 @@ class DangKyLopHoc extends Model
     public function isPendingPayment(): bool
     {
         return (int) $this->trangThai === self::TRANG_THAI_CHO_THANH_TOAN;
+    }
+
+    public function isHoldExpired(): bool
+    {
+        return $this->isPendingPayment()
+            && $this->ngayHetHanGiuCho !== null
+            && now()->greaterThan($this->ngayHetHanGiuCho);
     }
 
     public function isConfirmed(): bool
@@ -297,7 +319,15 @@ class DangKyLopHoc extends Model
         }
 
         if ((int) $this->trangThai !== $newStatus) {
-            $this->update(['trangThai' => $newStatus]);
+            $payload = ['trangThai' => $newStatus];
+
+            if ($newStatus !== self::TRANG_THAI_CHO_THANH_TOAN) {
+                $payload['ngayHetHanGiuCho'] = null;
+            }
+
+            $this->update($payload);
+        } elseif ($newStatus !== self::TRANG_THAI_CHO_THANH_TOAN && $this->ngayHetHanGiuCho !== null) {
+            $this->update(['ngayHetHanGiuCho' => null]);
         }
     }
 

@@ -8,6 +8,7 @@ use App\Models\Education\BuoiHoc;
 use App\Models\Education\DangKyLopHoc;
 use App\Models\Education\DiemDanh;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Xử lý hóa đơn quá hạn thanh toán hàng ngày.
@@ -39,6 +40,10 @@ class CheckOverdueInvoices extends Command
 
         if ($overdueInvoices->isEmpty()) {
             $this->info('✅ Không có hóa đơn nào quá hạn.');
+            Log::info('invoice:check-overdue completed with no overdue invoices', [
+                'dry_run' => $isDryRun,
+                'date' => $today->toDateString(),
+            ]);
             return self::SUCCESS;
         }
 
@@ -119,6 +124,14 @@ class CheckOverdueInvoices extends Command
         $this->info("✅ Hoàn tất:");
         $this->line("   • Tạm dừng đăng ký lớp : {$countSuspended}");
         $this->line("   • Buổi học tương lai bị khóa : {$countDiemDanhAdded}");
+
+        Log::info('invoice:check-overdue completed', [
+            'dry_run' => $isDryRun,
+            'date' => $today->toDateString(),
+            'overdue_invoice_count' => $overdueInvoices->count(),
+            'suspended_registration_count' => $countSuspended,
+            'attendance_locked_count' => $countDiemDanhAdded,
+        ]);
 
         return self::SUCCESS;
     }

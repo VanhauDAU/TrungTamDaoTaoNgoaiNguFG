@@ -174,9 +174,14 @@ Nếu dùng XAMPP/Apache:
 - `Lớp học` có thể được tạo trước khi nhập học phí, nhưng phải có chính sách giá hợp lệ trước khi chuyển sang trạng thái tuyển sinh hoặc đang học.
 - `ngày kết thúc` của lớp không nhập tay trong flow mới; hệ thống đồng bộ theo buổi học cuối cùng.
 - Khi học viên đăng ký, hệ thống chụp `snapshot` học phí vào `dangkylophoc` để không bị ảnh hưởng khi lớp thay đổi giá sau này.
-- `hiệu lực từ` / `hiệu lực đến` là khoảng thời gian chính sách giá được phép áp dụng cho đăng ký mới, không phải ngày học của lớp.
-- `lophoc_dotthu` dùng để lưu kế hoạch thu theo đợt; runtime hiện tại vẫn tạo 1 hóa đơn tổng cho mỗi đăng ký và giữ schema này để mở rộng billing theo đợt về sau.
+- Hệ thống hiện chỉ hỗ trợ `một lần` hoặc `theo đợt`; `theo tháng` đã bị loại khỏi runtime mới.
+- `lophoc_dotthu` dùng để lưu kế hoạch thu theo đợt; runtime hiện tại đã sinh nhiều hóa đơn học phí khi lớp cấu hình thu theo đợt.
+- Đăng ký `Chờ thanh toán` có `ngày hết hạn giữ chỗ`; job hệ thống sẽ tự hủy giữ chỗ quá hạn nếu chưa phát sinh thu tiền.
+- Hóa đơn quá hạn khi lớp đang học sẽ được job hệ thống xử lý để chuyển đăng ký sang trạng thái nợ học phí.
 - Hướng dẫn vận hành tổng hợp: `docs/05-huong-dan/huong-dan.md`.
+- Hướng dẫn chi tiết:
+  - `docs/05-huong-dan/hoc-phi-lop-hoc.md`
+  - `docs/05-huong-dan/dang-ky-thanh-toan-va-phieu-thu.md`
 
 ## 10. Lệnh hữu ích
 ```bash
@@ -192,6 +197,10 @@ php artisan storage:link
 # Kiểm tra hóa đơn quá hạn (thủ công)
 php artisan invoice:check-overdue
 php artisan invoice:check-overdue --dry-run
+
+# Kiểm tra và hủy giữ chỗ quá hạn (thủ công)
+php artisan registration:expire-holds
+php artisan registration:expire-holds --dry-run
 ```
 
 ## 11. Test và chất lượng mã nguồn

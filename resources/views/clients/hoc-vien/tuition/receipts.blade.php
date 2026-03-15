@@ -61,6 +61,9 @@
                                             <div class="tuition-row__cell">
                                                 <span class="tuition-row__label">Ngày thu</span>
                                                 <div class="tuition-row__title">{{ $receipt->ngayThu ? \Carbon\Carbon::parse($receipt->ngayThu)->format('d/m/Y') : '—' }}</div>
+                                                <div class="tuition-row__meta">
+                                                    Ghi nhận bởi {{ $receipt->nguoiDuyet?->hoSoNguoiDung?->hoTen ?? ($receipt->nguoiDuyet?->taiKhoan ?? 'Trung tâm') }}
+                                                </div>
                                             </div>
 
                                             <div class="tuition-row__cell">

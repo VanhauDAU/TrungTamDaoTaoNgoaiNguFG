@@ -58,7 +58,10 @@ class LopHocChinhSachGia extends Model
 
     public static function loaiThuOptions(): array
     {
-        return self::loaiThuLabels();
+        return [
+            self::LOAI_THU_TRON_GOI => self::loaiThuLabels()[self::LOAI_THU_TRON_GOI],
+            self::LOAI_THU_THEO_DOT => self::loaiThuLabels()[self::LOAI_THU_THEO_DOT],
+        ];
     }
 
     public function getLoaiThuLabelAttribute(): string
