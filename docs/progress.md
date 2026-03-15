@@ -1,6 +1,6 @@
 # TIEN DO DU AN - Trung Tam Dao Tao Ngoai Ngu Five Genius
 
-> Cap nhat lan cuoi: 2026-03-15
+> Cap nhat lan cuoi: 2026-03-15 22:10
 
 ## ✅ Đã hoàn thành
 
@@ -47,8 +47,23 @@
 ### Người dùng
 
 - [x] Quản lý Học viên (CRUD, thùng rác, khôi phục)
-- [x] Quản lý Giáo viên (profile, cơ sở)
-- [x] Quản lý Nhân viên
+- [x] Quản lý Giáo viên (create, edit, show, profile, cơ sở)
+- [x] Quản lý Nhân viên (create, edit, show)
+- [x] Hồ sơ nhân sự chi tiết sau khi tạo tài khoản
+- [x] Phiếu bàn giao tài khoản với username thật + mật khẩu tạm một lần
+- [x] Xuất PDF hồ sơ nhân sự và PDF bàn giao tài khoản
+- [x] Mẫu quy định nhân sự + snapshot quy định theo hồ sơ
+- [x] Quản lý CV / tài liệu nhân sự private + versioning
+- [x] Phân quyền mở rộng cho nhóm `nhan_su`
+
+### Lương & Hồ sơ nhân sự
+
+- [x] Gói lương hiện hành cho giáo viên / nhân viên
+- [x] Chi tiết gói lương: phụ cấp, khấu trừ tham chiếu, thưởng cố định
+- [x] Lịch sử hiệu lực gói lương
+- [x] Đồng bộ `luongCoBan` cũ sang mô hình gói lương bằng migration backfill
+- [x] Tài liệu đặc tả vận hành lương và payroll
+- [x] Handoff Figma cho luồng lương, payroll, phiếu lương
 
 ### Tai chinh
 
@@ -91,6 +106,13 @@
 - [x] Module chat client cho học viên và giáo viên
 - [x] Short-poll realtime, direct chat, reaction, reply, recall
 
+### Docs & Quality
+
+- [x] Changelog được cập nhật theo mốc auth, lớp học, tài chính, hồ sơ nhân sự
+- [x] Hướng dẫn vận hành tổng hợp cho auth, học phí lớp, đăng ký và hồ sơ nhân sự
+- [x] Tài liệu database được cập nhật thêm mô hình nhân sự mở rộng
+- [x] Feature test `NhanSuWorkflowTest` cho luồng hồ sơ nhân sự
+
 ---
 
 ## Dang phat trien
@@ -100,6 +122,8 @@
 - [ ] Bao cao doanh thu chi tiet (admin)
 - [ ] Dashboard thong ke nang cao
 - [ ] Quy trinh hoan tien / dieu chinh cong no / credit note
+- [ ] Bang luong ky / payroll thuc te theo ky
+- [ ] Phieu luong va xac nhan chi tra
 
 ---
 

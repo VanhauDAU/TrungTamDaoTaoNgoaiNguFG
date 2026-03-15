@@ -55,6 +55,11 @@ ChatRoom >──< ChatRoomMember >── TaiKhoan
 | `users`         | Tài khoản đăng nhập             | id, name, email, password, role (1=hv,2=gv,3=admin,4=nv) |
 | `hosonguoidung` | Thông tin chi tiết cá nhân      | taiKhoanId, hoTen, soDienThoai, ngaySinh, anhDaiDien     |
 | `nhansu`        | Nhân sự (giáo viên / nhân viên) | taiKhoanId, coSoId, chuyenMon, moTa                      |
+| `nhansu_hoso`   | Hồ sơ nhân sự mở rộng           | nhanSuHoSoId, taiKhoanId, maHoSo, nhanSuMauQuyDinhId, trangThaiHoSo |
+| `nhansu_mau_quydinh` | Mẫu quy định nhân sự      | nhanSuMauQuyDinhId, maMau, tieuDe, phamViApDung, phienBan, trangThai |
+| `nhansu_goi_luong` | Gói lương hiện hành / lịch sử | nhanSuGoiLuongId, taiKhoanId, loaiLuong, luongChinh, hieuLucTu, hieuLucDen, trangThai |
+| `nhansu_goi_luong_chi_tiet` | Các dòng cấu phần lương | nhanSuGoiLuongChiTietId, nhanSuGoiLuongId, loai, tenKhoan, soTien |
+| `nhansu_tai_lieu` | Tài liệu hồ sơ nhân sự private | nhanSuTaiLieuId, taiKhoanId, loaiTaiLieu, duongDan, mime, kichThuoc, phienBan, trangThai |
 | `nhomquyen`     | Nhóm quyền (role group)         | nhomQuyenId, tenNhom                                     |
 | `phanquyen`     | Ánh xạ tài khoản – nhóm quyền   | taiKhoanId, nhomQuyenId                                  |
 
@@ -93,8 +98,14 @@ ChatRoom >──< ChatRoomMember >── TaiKhoan
 | -------------- | -------------------------- | ---------------------------------------------------------- |
 | `hoadon` | Hóa đơn | hoaDonId, dangKyLopHocId, lopHocDotThuId, tongTien, daTra, trangThai, ghiChu |
 | `phieuthu`     | Phiếu thu (lần thu tiền)   | phieuThuId, hoaDonId, soTien, ngayThu, hinhThucTT, ghiChu  |
-| `luong`        | Bảng lương nhân sự         | luongId, nhanSuId, thangNam, luongCoBan, tongLuong         |
+| `luong`        | Bảng lương cũ / legacy     | luongId, nhanSuId, thangNam, luongCoBan, tongLuong         |
 | `luongchitiet` | Chi tiết phụ cấp, khấu trừ | luongChiTietId, luongId, loai, soTien, moTa                |
+
+Ghi chú:
+
+- Mô hình lương mới của hệ thống hiện đang ổn định ở lớp `gói lương` cho nhân sự.
+- Payroll kỳ lương thực tế vẫn là phase tiếp theo, chưa thay thế hoàn toàn bảng `luong` legacy.
+- Tài liệu nghiệp vụ xem `docs/05-huong-dan/luong-nhan-su-va-payroll.md`.
 
 ### Nội dung
 
@@ -154,6 +165,7 @@ ChatRoom >──< ChatRoomMember >── TaiKhoan
 | `2026_03_05_134900`                    | Thêm `parent_id` vào `danhmuckhoahoc` |
 | `2026_03_07_120000`                    | Tạo toàn bộ bảng chat client          |
 | `2026_03_14_150000`                    | Refactor học phí sang mô hình theo lớp |
+| `2026_03_15_200000` -> `200400`        | Mở rộng hồ sơ nhân sự, gói lương, tài liệu, backfill dữ liệu |
 
 ---
 
@@ -214,3 +226,19 @@ CREATE INDEX idx_chat_messages_room_message ON chat_messages(chatRoomId, chatMes
 -- Reaction theo người dùng
 CREATE INDEX idx_chat_message_reactions_user ON chat_message_reactions(taiKhoanId);
 ```
+
+---
+
+## 6. Lưu ý import dump SQL
+
+- Dump SQL phải giữ tính nhất quán giữa bảng cha và bảng con trước khi chạy block `ALTER TABLE ... ADD CONSTRAINT`.
+- Các nhóm quan hệ dễ lỗi nhất khi import thủ công:
+  - `lophoc` -> `lophoc_chinhsachgia`
+  - `lophoc` -> `buoihoc`
+  - `lophoc` -> `chat_rooms`
+  - `lophoc_chinhsachgia` -> `lophoc_dotthu`
+- Nếu gặp lỗi `#1452 Cannot add or update a child row`, cần kiểm tra orphan record trong dump thay vì chỉ tắt `FOREIGN_KEY_CHECKS`.
+- Khuyến nghị:
+  - export từ nguồn dữ liệu nhất quán
+  - không xóa tay record cha trong dump mà quên xóa record con liên quan
+  - sau khi import dữ liệu lớp học ngoài hệ thống, chạy đồng bộ room chat lớp nếu cần
