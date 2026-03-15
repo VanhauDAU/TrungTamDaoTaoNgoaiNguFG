@@ -123,11 +123,39 @@ class StudentController extends Controller
 
     public function invoices()
     {
+        return redirect()->route('home.student.tuition.debts');
+    }
+
+    public function tuitionIndex()
+    {
+        return redirect()->route('home.student.tuition.debts');
+    }
+
+    public function tuitionDebts()
+    {
         /** @var TaiKhoan $user */
         $user = Auth::user();
         if (!$user instanceof TaiKhoan)
             abort(403);
-        return view('clients.hoc-vien.invoices.index', $this->studentService->getInvoices($user));
+        return view('clients.hoc-vien.tuition.debts', $this->studentService->getTuitionDebtLookup($user));
+    }
+
+    public function tuitionReceipts()
+    {
+        /** @var TaiKhoan $user */
+        $user = Auth::user();
+        if (!$user instanceof TaiKhoan)
+            abort(403);
+        return view('clients.hoc-vien.tuition.receipts', $this->studentService->getReceiptSummary($user));
+    }
+
+    public function tuitionPayments()
+    {
+        /** @var TaiKhoan $user */
+        $user = Auth::user();
+        if (!$user instanceof TaiKhoan)
+            abort(403);
+        return view('clients.hoc-vien.tuition.payments', $this->studentService->getOnlinePayments($user));
     }
 
     public function invoiceDetail(int $id)

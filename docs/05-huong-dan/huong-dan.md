@@ -139,6 +139,7 @@ Luồng chuẩn:
    - `loại thu`
    - `ghi chú chính sách`
    - danh sách đợt thu nếu thu theo đợt
+   - `ngày kết thúc` không nhập tay; hệ thống cập nhật theo buổi học cuối cùng
 4. Chỉ chuyển lớp sang `Đang tuyển sinh` khi đã có chính sách giá hợp lệ.
 5. Khi học viên đăng ký, hệ thống tự chụp snapshot giá vào `dangkylophoc` và tạo hóa đơn từ snapshot đó.
 
@@ -177,6 +178,12 @@ Tài liệu chi tiết xem thêm:
 4. Submit → Hệ thống chụp snapshot giá của lớp tại thời điểm đăng ký
 5. Hóa đơn được tạo tự động từ snapshot đó
 6. Thanh toán tại cơ sở hoặc chuyển khoản
+
+Ghi chú hiện tại:
+
+- `Hiệu lực từ` và `Hiệu lực đến` nằm ở `chính sách giá lớp`, không phải ở bản thân lớp học.
+- Hai trường này thể hiện khoảng thời gian mức giá đó được phép áp dụng cho đăng ký mới.
+- Runtime hiện tại vẫn tạo 1 hóa đơn tổng cho mỗi đăng ký; cấu hình `đợt thu` đang được dùng cho validation, hiển thị và mở rộng billing về sau.
 
 ### 4.3 Xem lịch học
 

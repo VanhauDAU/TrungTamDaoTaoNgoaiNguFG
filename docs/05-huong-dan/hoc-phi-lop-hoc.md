@@ -33,6 +33,17 @@ Muc tieu cua mo hinh nay:
   - `hieuLucTu`, `hieuLucDen`
   - `trangThai`
 
+Y nghia `hieuLucTu` / `hieuLucDen`:
+
+- Day la khoang thoi gian chinh sach gia duoc phep ap dung cho dang ky moi.
+- Day khong phai la `ngayBatDau` hoac `ngayKetThuc` cua lop hoc.
+- Vi du:
+  - `hieuLucTu = 2026-03-15 00:00:00`
+  - `hieuLucDen = 2026-05-15 23:59:59`
+  - nghia la muc gia nay duoc ban trong khoang tren
+- Neu de `null`, he thong hieu la khong gioi han o dau do.
+- Phase hien tai moi dung 1 chinh sach gia cho 1 lop; hai cot nay duoc luu de phuc vu quan tri va mo rong policy theo thoi gian.
+
 Y nghia toi uu:
 
 - `soBuoiDuKien` tren `lophoc` la so buoi van hanh de xep lich, sinh buoi hoc, theo doi tien do.
@@ -54,7 +65,8 @@ Hai loai con lai duoc de san de mo rong:
 - Luu cau hinh thu theo dot cua 1 chinh sach gia.
 - Dung cho cac dot nhu: coc, khai giang, giua khoa.
 - Tong `soTien` cac dot phai bang `hocPhiNiemYet`.
-- Neu lop thu theo dot, moi dot thu se sinh 1 hoa don rieng khi hoc vien dang ky.
+- UI va validation da cho phep cau hinh chi tiet tung dot thu.
+- Runtime billing hien tai van tao 1 hoa don tong khi hoc vien dang ky; `lophoc_dotthu` dang duoc giu san o schema va giao dien de mo rong thanh nhieu hoa don ve sau.
 - `phieuthu` khong phai la "dot tra gop", ma la giao dich thu tien vao 1 hoa don cu the.
 
 ### 2.4 `dangkylophoc`
@@ -86,6 +98,8 @@ Hai loai con lai duoc de san de mo rong:
 
 - Tao `lophoc` voi giao vien, phong, co so, ca hoc, lich hoc, ngay bat dau.
 - Lop o trang thai nhap co the chua co gia.
+- `ngayKetThuc` khong nhap tay trong flow moi.
+- `ngayKetThuc` duoc dong bo tu buoi hoc cuoi cung sau khi them/sua/xoa/tu dong sinh `buoihoc`.
 
 ### 3.3 Cau hinh chinh sach gia cho lop
 
@@ -100,6 +114,9 @@ Tai form tao/sua lop:
 Quy tac:
 
 - Neu co dot thu, tong tien cac dot phai bang `hocPhiNiemYet`.
+- Han thanh toan cua cac dot phai tang dan.
+- Neu co `hieuLucTu` / `hieuLucDen`, han thanh toan tung dot phai nam trong khoang nay.
+- Neu `loaiThu` khong phai `THEO_DOT`, he thong khong ap dung du lieu `dot thu`.
 - Neu lop da co hoc vien dang ky, khong duoc xoa trang chinh sach gia.
 
 ### 3.4 Mo tuyen sinh
@@ -121,8 +138,8 @@ Khi hoc vien dang ky lop:
 2. He thong kiem tra lop co `lophoc_chinhsachgia` hop le khong.
 3. He thong chup snapshot gia vao `dangkylophoc`.
 4. He thong tao nghia vu thu:
-   - 1 hoa don tong neu lop thu mot hoa don,
-   - hoac nhieu hoa don con neu lop thu theo dot.
+   - hien tai: 1 hoa don tong tu snapshot gia
+   - mo rong ve sau: co the tach theo `lophoc_dotthu`
 
 He qua nghiep vu:
 
@@ -137,6 +154,7 @@ Neu phat sinh them/bot buoi:
 
 - Khong cap nhat lai `hocPhiPhaiThuSnapshot` cua dang ky cu.
 - Khong sua tong tien cua `hoadon` da tao.
+- `ngayKetThuc` cua lop se thay doi theo buoi hoc cuoi cung, nhung khong duoc dung de tu dong tinh lai hoc phi.
 - Neu can thu them:
   - tao dot thu bo sung, hoac
   - tao hoa don dieu chinh theo nghiep vu tai chinh.
@@ -175,5 +193,6 @@ Migration `2026_03_14_150000_refactor_class_pricing_to_lophoc_chinhsachgia.php` 
 - Tao `lophoc`
 - Cau hinh `lophoc_chinhsachgia`
 - Kiem tra tong dot thu neu co
+- Kiem tra thu tu han thanh toan neu thu theo dot
 - Chuyen lop sang `DANG_TUYEN_SINH`
 - Theo doi dang ky va hoa don phat sinh tu snapshot

@@ -1,6 +1,6 @@
 # TIEN DO DU AN - Trung Tam Dao Tao Ngoai Ngu Five Genius
 
-> Cap nhat lan cuoi: 2026-03-14
+> Cap nhat lan cuoi: 2026-03-15
 
 ## ✅ Đã hoàn thành
 
@@ -33,6 +33,9 @@
 - [x] Chinh sach gia theo lop hoc, khong con goi hoc phi theo khoa hoc
 - [x] Snapshot hoc phi khi hoc vien dang ky lop
 - [x] Quan ly Buoi hoc (tu dong sinh theo ca hoc)
+- [x] Dong bo ngay ket thuc lop theo buoi hoc cuoi cung
+- [x] Chuyen trang thai lop hoc nhanh bang AJAX tai trang index
+- [x] Ma tran chuyen trang thai lop hoc + validation server
 - [x] Ca hoc (CRUD, toggle active)
 - [x] Diem danh hoc vien tung buoi hoc
 
@@ -48,6 +51,7 @@
 - [x] Phieu thu (ghi nhan thanh toan)
 - [x] Thong ke trang thai thanh toan
 - [x] Ho tro cau hinh dot thu o cap schema va giao dien lop hoc
+- [x] Validation nghiep vu cho thu theo dot o form lop hoc
 
 ### CRM — Liên hệ
 

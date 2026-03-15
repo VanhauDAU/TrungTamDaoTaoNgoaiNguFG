@@ -2,6 +2,35 @@
 
 Tất cả thay đổi đáng chú ý của dự án sẽ được ghi tại đây.
 
+## [2026-03-15] - Củng cố lớp học, học phí theo lớp và tài liệu vận hành
+
+### Added
+
+- Thêm đổi nhanh trạng thái lớp học bằng AJAX ngay trên trang danh sách lớp.
+- Bổ sung ma trận chuyển trạng thái lớp học ở tầng domain để chặn các bước lùi/nhảy trạng thái sai luồng.
+- Thêm đồng bộ `ngayKetThuc` của lớp theo buổi học cuối cùng còn hiệu lực.
+
+### Changed
+
+- Form cấu hình chính sách giá lớp được siết lại theo đúng nghiệp vụ:
+  - chỉ `Theo đợt` mới được cấu hình `đợt thu`
+  - tổng tiền các đợt phải khớp `hocPhiNiemYet`
+  - hạn thanh toán phải tăng dần và nằm trong khoảng hiệu lực nếu có
+- Trường `ngayKetThuc` của lớp không còn nhập tay trong form tạo/sửa; ngày này được cập nhật từ dữ liệu `buoihoc`.
+- Luồng tự sinh buổi học được đổi sang chạy theo `ngayBatDau + lichHoc + soBuoiDuKien`, không phụ thuộc `ngayKetThuc` nhập tay.
+- Rà soát và cập nhật tài liệu vận hành để phản ánh đúng:
+  - học phí theo lớp
+  - snapshot giá khi đăng ký
+  - ý nghĩa `hieuLucTu` / `hieuLucDen`
+  - giới hạn runtime hiện tại của `lophoc_dotthu`
+
+### Fixed
+
+- Sửa migration `2026_03_14_150000_refactor_class_pricing_to_lophoc_chinhsachgia.php` để kiểu khóa ngoại `lopHocId` khớp schema thực tế của bảng `lophoc`.
+- Sửa sinh `maLopHoc` để không đụng unique key khi trong hệ thống đã có lớp bị soft delete.
+- Sửa lỗi validation phía client của input hạn thanh toán trong block `đợt thu` không tự clear sau khi người dùng chọn ngày.
+- Sửa layout/CSS của khu vực `Kế hoạch thu theo đợt` để khoảng cách, nhóm trường và trạng thái lỗi nhất quán hơn.
+
 ## [2026-03-13] - Sửa lỗi sau khi tách service
 
 ### Fixed

@@ -1,5 +1,9 @@
 <div class="col-lg-3">
     <div class="account-sidebar">
+        @php
+            $isTuitionActive = request()->routeIs('home.student.tuition.*') || request()->routeIs('home.student.invoices*');
+        @endphp
+
         <div class="sidebar-user-info">
             <div class="user-avatar-wrapper">
                 <img src="{{ Auth::user()->getAvatarUrl() }}" alt="Avatar" class="sidebar-avatar">
@@ -17,12 +21,33 @@
                     <span>Thông tin cá nhân</span>
                 </a>
             </li>
-            <li class="menu-item">
-                <a href="{{ route('home.student.invoices') }}"
-                    class="menu-link {{ request()->routeIs('home.student.invoices*') ? 'active' : '' }}">
-                    <i class="fas fa-file-invoice"></i>
-                    <span>Hóa đơn thanh toán</span>
-                </a>
+            <li class="menu-item menu-group">
+                <details class="menu-accordion" @if ($isTuitionActive) open @endif>
+                    <summary class="menu-link menu-link--toggle {{ $isTuitionActive ? 'active' : '' }}">
+                        <span class="menu-link__main">
+                            <i class="fas fa-wallet"></i>
+                            <span>Học phí</span>
+                        </span>
+                        <i class="fas fa-chevron-down menu-link__caret"></i>
+                    </summary>
+                    <div class="menu-submenu">
+                        <a href="{{ route('home.student.tuition.debts') }}"
+                            class="menu-sublink {{ request()->routeIs('home.student.tuition.debts') || request()->routeIs('home.student.invoices*') ? 'active' : '' }}">
+                            <i class="fas fa-search-dollar"></i>
+                            <span>Tra cứu công nợ</span>
+                        </a>
+                        <a href="{{ route('home.student.tuition.receipts') }}"
+                            class="menu-sublink {{ request()->routeIs('home.student.tuition.receipts') ? 'active' : '' }}">
+                            <i class="fas fa-receipt"></i>
+                            <span>Phiếu thu tổng hợp</span>
+                        </a>
+                        <a href="{{ route('home.student.tuition.payments') }}"
+                            class="menu-sublink {{ request()->routeIs('home.student.tuition.payments') ? 'active' : '' }}">
+                            <i class="fas fa-credit-card"></i>
+                            <span>Thanh toán trực tuyến</span>
+                        </a>
+                    </div>
+                </details>
             </li>
             <li class="menu-item">
                 <a href="{{ route('home.student.classes') }}"

@@ -172,8 +172,10 @@ Nếu dùng XAMPP/Apache:
 - Học phí được quản lý ở cấp `lớp học`, không còn ở cấp `khóa học`.
 - `Khóa học` chỉ mô tả chương trình đào tạo; giá bán và cách thu tiền nằm ở `lophoc_chinhsachgia`.
 - `Lớp học` có thể được tạo trước khi nhập học phí, nhưng phải có chính sách giá hợp lệ trước khi chuyển sang trạng thái tuyển sinh hoặc đang học.
+- `ngày kết thúc` của lớp không nhập tay trong flow mới; hệ thống đồng bộ theo buổi học cuối cùng.
 - Khi học viên đăng ký, hệ thống chụp `snapshot` học phí vào `dangkylophoc` để không bị ảnh hưởng khi lớp thay đổi giá sau này.
-- `lophoc_dotthu` dùng để lưu kế hoạch thu theo đợt cho các pha mở rộng; tài liệu vận hành: `docs/05-huong-dan/hoc-phi-lop-hoc.md`.
+- `hiệu lực từ` / `hiệu lực đến` là khoảng thời gian chính sách giá được phép áp dụng cho đăng ký mới, không phải ngày học của lớp.
+- `lophoc_dotthu` dùng để lưu kế hoạch thu theo đợt; runtime hiện tại vẫn tạo 1 hóa đơn tổng cho mỗi đăng ký và giữ schema này để mở rộng billing theo đợt về sau.
 - Hướng dẫn vận hành tổng hợp: `docs/05-huong-dan/huong-dan.md`.
 
 ## 10. Lệnh hữu ích

@@ -177,7 +177,7 @@
                                             </a>
 
                                             @if ($registration->isPendingPayment() || $registration->isSuspendedForDebt())
-                                                <a href="{{ route('home.student.invoices') }}" class="btn btn-pay">
+                                                <a href="{{ route('home.student.tuition.payments') }}" class="btn btn-pay">
                                                     <i class="fas fa-credit-card"></i> Thanh toán
                                                 </a>
                                             @endif
