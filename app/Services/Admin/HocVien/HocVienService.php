@@ -175,11 +175,16 @@ class HocVienService implements HocVienServiceInterface
         ]);
 
         DB::transaction(function () use ($request, $hocVien) {
+            $oldStatus = (int) $hocVien->trangThai;
             $tkData = ['email' => $request->email, 'trangThai' => $request->trangThai];
             if ($request->filled('matKhau')) {
                 $tkData['matKhau'] = Hash::make($request->matKhau);
             }
             $hocVien->update($tkData);
+
+            if ($oldStatus === 1 && (int) $request->trangThai === 0) {
+                $hocVien->rotateRememberToken('account_locked');
+            }
 
             $hocVien->hoSoNguoiDung()->updateOrCreate(
             ['taiKhoanId' => $hocVien->taiKhoanId],

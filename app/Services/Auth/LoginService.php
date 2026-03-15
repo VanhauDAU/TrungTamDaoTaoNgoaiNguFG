@@ -100,7 +100,18 @@ class LoginService implements LoginServiceInterface
         }
 
         $field = filter_var($loginInput, FILTER_VALIDATE_EMAIL) ? 'email' : 'taiKhoan';
-        $credentials = [$field => $loginInput, 'password' => $request->input('password')];
+        $user = TaiKhoan::query()->where($field, $loginInput)->first();
+
+        if ($user instanceof TaiKhoan
+            && (int) $user->trangThai !== 1
+            && Hash::check((string) $request->input('password'), (string) $user->matKhau)
+        ) {
+            throw ValidationException::withMessages([
+                'taiKhoan' => ['Tài khoản của bạn đã bị khóa. Vui lòng liên hệ trung tâm để được hỗ trợ.'],
+            ]);
+        }
+
+        $credentials = [$field => $loginInput, 'password' => $request->input('password'), 'trangThai' => 1];
 
         if (!Auth::guard()->attempt($credentials, $request->boolean('remember'))) {
             return false;

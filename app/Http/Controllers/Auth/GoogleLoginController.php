@@ -46,6 +46,11 @@ class GoogleLoginController extends Controller
                 ->withErrors(['google' => $e->getMessage()]);
         }
 
+        if ((int) $taiKhoan->trangThai !== 1) {
+            return redirect()->route('login')
+                ->withErrors(['google' => 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ trung tâm để được hỗ trợ.']);
+        }
+
         Auth::login($taiKhoan, true);
         $request->session()->regenerate();
         $request->session()->put([

@@ -248,6 +248,7 @@ class TaiKhoan extends Authenticatable implements MustVerifyEmail
             'force_password_change' => 'Xoay remember token sau khi đổi mật khẩu bắt buộc.',
             'password_reset' => 'Xoay remember token sau khi đặt lại mật khẩu qua email.',
             'admin_password_reset' => 'Xoay remember token do quản trị viên reset mật khẩu.',
+            'account_locked' => 'Xoay remember token khi tài khoản bị khóa.',
             'logout_all_devices' => 'Xoay remember token khi đăng xuất khỏi tất cả thiết bị.',
             'device_revoke' => 'Xoay remember token khi thu hồi một thiết bị đã đăng nhập.',
             default => 'Xoay remember token.',
