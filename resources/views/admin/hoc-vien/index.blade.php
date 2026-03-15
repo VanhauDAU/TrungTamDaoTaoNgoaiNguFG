@@ -236,7 +236,7 @@
                                         @endif
                                         @if (auth()->user()->canDo('hoc_vien', 'xoa'))
                                             <button type="button" class="btn-action btn-action-del" title="Xóa"
-                                                onclick="confirmDelete({{ $hv->taiKhoanId }}, '{{ addslashes($hoTen) }}')">
+                                                onclick="confirmDelete('{{ addslashes($hv->taiKhoan) }}', '{{ addslashes($hoTen) }}')">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         @endif
@@ -270,7 +270,7 @@
 
 @section('script')
     <script>
-        function confirmDelete(id, name) {
+        function confirmDelete(username, name) {
             Swal.fire({
                 title: 'Xóa học viên?',
                 html: `Bạn có chắc muốn xóa học viên <strong>${name}</strong>?<br>
@@ -286,7 +286,7 @@
             }).then(result => {
                 if (result.isConfirmed) {
                     const form = document.getElementById('delete-form');
-                    form.action = `/admin/hoc-vien/${id}`;
+                    form.action = `{{ url('/admin/hoc-vien') }}/${encodeURIComponent(username)}`;
                     form.submit();
                 }
             });
