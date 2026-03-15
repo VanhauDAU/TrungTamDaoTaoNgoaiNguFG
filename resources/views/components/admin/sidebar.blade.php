@@ -99,7 +99,8 @@
                         </a>
                     @endif
                     @if (auth()->user()->canDo('dang_ky', 'xem'))
-                        <a href="{{ route('admin.dang-ky.index') }}" class="nav-sub-item {{ Request::is('admin/dang-ky*') ? 'active' : '' }}">
+                        <a href="{{ route('admin.dang-ky.index') }}"
+                            class="nav-sub-item {{ Request::is('admin/dang-ky*') ? 'active' : '' }}">
                             Đăng Ký Học
                         </a>
                     @endif
@@ -127,8 +128,9 @@
                         Nhân Viên
                     </a>
                 @endif
-                <a href="#" class="nav-sub-item {{ Request::is('admin/ho-so*') ? 'active' : '' }}">
-                    Chỉnh Sửa Hồ Sơ
+                <a href="{{ route('admin.nhan-su.mau-quy-dinh.index') }}"
+                    class="nav-sub-item {{ Request::is('admin/nhan-su/mau-quydinh*') ? 'active' : '' }}">
+                    Mẫu quy định
                 </a>
             </div>
         </div>
