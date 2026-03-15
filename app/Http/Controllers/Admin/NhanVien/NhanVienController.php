@@ -6,6 +6,8 @@ use App\Contracts\Admin\NhanVien\NhanSuServiceInterface;
 use App\Http\Controllers\Controller;
 use App\Models\Auth\TaiKhoan;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\Response;
 
 class NhanVienController extends Controller
 {
@@ -13,6 +15,12 @@ class NhanVienController extends Controller
         protected NhanSuServiceInterface $nhanSuService
         )
     {
+        $this->middleware('permission:nhan_vien,xem')->only('index', 'trash', 'show');
+        $this->middleware('permission:nhan_vien,them')->only('create', 'store', 'restore');
+        $this->middleware('permission:nhan_vien,sua')->only('edit', 'update');
+        $this->middleware('permission:nhan_vien,xoa')->only('destroy');
+        $this->middleware('permission:nhan_su,sua')->only('storeDocument', 'storeSalaryPackage', 'archiveDocument');
+        $this->middleware('permission:nhan_su,xem')->only('downloadDocument', 'downloadProfilePdf', 'downloadHandoverPdf');
     }
 
     public function index(Request $request)
@@ -29,51 +37,42 @@ class NhanVienController extends Controller
 
     public function create()
     {
-        return view('admin.nhan-vien.create', $this->nhanSuService->getCreateFormData());
+        return view('admin.nhan-vien.create', $this->nhanSuService->getCreateFormData(TaiKhoan::ROLE_NHAN_VIEN));
     }
 
     public function store(Request $request)
     {
-        $request->validate([
-            'email' => 'required|email|max:100|unique:taikhoan,email',
-            'matKhau' => 'required|string|min:8|confirmed',
-            'hoTen' => 'required|string|max:100',
-            'soDienThoai' => 'nullable|string|max:20',
-            'zalo' => 'nullable|string|max:20',
-            'ngaySinh' => 'nullable|date',
-            'gioiTinh' => 'nullable|in:0,1,2',
-            'diaChi' => 'nullable|string|max:255',
-            'cccd' => 'nullable|string|max:20|unique:hosonguoidung,cccd',
-            'chucVu' => 'nullable|string|max:50',
-            'chuyenMon' => 'nullable|string|max:50',
-            'bangCap' => 'nullable|string|max:50',
-            'hocVi' => 'nullable|string|max:50',
-            'loaiHopDong' => 'nullable|string|max:50',
-            'ngayVaoLam' => 'nullable|date',
-            'coSoId' => 'required|exists:cosodaotao,coSoId',
-            'ghiChu' => 'nullable|string',
-        ], [
-            'email.required' => 'Vui lòng nhập email.',
-            'email.unique' => 'Email đã được sử dụng.',
-            'matKhau.required' => 'Vui lòng nhập mật khẩu.',
-            'matKhau.min' => 'Mật khẩu phải ít nhất 8 ký tự.',
-            'matKhau.confirmed' => 'Xác nhận mật khẩu không khớp.',
-            'hoTen.required' => 'Vui lòng nhập họ và tên.',
-            'cccd.unique' => 'CCCD/CMND này đã được đăng ký.',
-            'coSoId.required' => 'Vui lòng chọn cơ sở làm việc.',
-            'coSoId.exists' => 'Cơ sở làm việc không hợp lệ.',
-        ]);
+        $result = $this->nhanSuService->store($request, TaiKhoan::ROLE_NHAN_VIEN);
 
-        $this->nhanSuService->store($request, TaiKhoan::ROLE_NHAN_VIEN);
+        return redirect()->route('admin.nhan-vien.show', [
+            'taiKhoan' => $result->taiKhoan->taiKhoan,
+            'handover' => $result->oneTimeToken,
+        ])->with('success', 'Đã tạo nhân viên «' . $request->hoTen . '» thành công.');
+    }
 
-        return redirect()->route('admin.nhan-vien.index')
-            ->with('success', 'Đã tạo nhân viên «' . $request->hoTen . '» thành công.');
+    public function show(Request $request, string $taiKhoan)
+    {
+        $nhanVien = $this->nhanSuService->findByUsername($taiKhoan, TaiKhoan::ROLE_NHAN_VIEN);
+        $handoverToken = $request->query('handover');
+        $sessionKey = $handoverToken ? 'handover_seen:' . $handoverToken : null;
+
+        if ($sessionKey && $request->session()->has($sessionKey)) {
+            $handoverToken = null;
+        } elseif ($sessionKey) {
+            $request->session()->put($sessionKey, now()->toIso8601String());
+        }
+
+        return view('admin.nhan-vien.show', $this->nhanSuService->getProfileData(
+            $nhanVien,
+            TaiKhoan::ROLE_NHAN_VIEN,
+            $handoverToken
+        ));
     }
 
     public function edit(string $taiKhoan)
     {
         $nhanVien = $this->nhanSuService->findByUsername($taiKhoan, TaiKhoan::ROLE_NHAN_VIEN);
-        return view('admin.nhan-vien.edit', compact('nhanVien'));
+        return view('admin.nhan-vien.edit', $this->nhanSuService->getEditFormData($nhanVien, TaiKhoan::ROLE_NHAN_VIEN));
     }
 
     public function update(Request $request, string $taiKhoan)
@@ -109,5 +108,57 @@ class NhanVienController extends Controller
 
         return redirect()->route('admin.nhan-vien.trash')
             ->with('success', "Đã khôi phục nhân viên «{$hoTen}» thành công.");
+    }
+
+    public function storeDocument(Request $request, string $taiKhoan)
+    {
+        $nhanVien = $this->nhanSuService->findByUsername($taiKhoan, TaiKhoan::ROLE_NHAN_VIEN);
+        $this->nhanSuService->uploadDocument($request, $nhanVien);
+
+        return redirect()->route('admin.nhan-vien.show', $nhanVien->taiKhoan)
+            ->with('success', 'Đã tải tài liệu nhân sự lên thành công.');
+    }
+
+    public function downloadDocument(string $taiKhoan, int $documentId): BinaryFileResponse
+    {
+        $nhanVien = $this->nhanSuService->findByUsername($taiKhoan, TaiKhoan::ROLE_NHAN_VIEN);
+
+        return $this->nhanSuService->downloadDocument($nhanVien, $documentId);
+    }
+
+    public function archiveDocument(string $taiKhoan, int $documentId)
+    {
+        $nhanVien = $this->nhanSuService->findByUsername($taiKhoan, TaiKhoan::ROLE_NHAN_VIEN);
+        $this->nhanSuService->archiveDocument($nhanVien, $documentId);
+
+        return redirect()->route('admin.nhan-vien.show', $nhanVien->taiKhoan)
+            ->with('success', 'Đã lưu trữ tài liệu cũ.');
+    }
+
+    public function storeSalaryPackage(Request $request, string $taiKhoan)
+    {
+        $nhanVien = $this->nhanSuService->findByUsername($taiKhoan, TaiKhoan::ROLE_NHAN_VIEN);
+        $this->nhanSuService->saveSalaryPackage($request, $nhanVien);
+
+        return redirect()->route('admin.nhan-vien.show', $nhanVien->taiKhoan)
+            ->with('success', 'Đã cập nhật gói lương hiện hành.');
+    }
+
+    public function downloadProfilePdf(string $taiKhoan): Response
+    {
+        $nhanVien = $this->nhanSuService->findByUsername($taiKhoan, TaiKhoan::ROLE_NHAN_VIEN);
+
+        return $this->nhanSuService->downloadProfilePdf($nhanVien, TaiKhoan::ROLE_NHAN_VIEN);
+    }
+
+    public function downloadHandoverPdf(string $taiKhoan, Request $request): Response
+    {
+        $nhanVien = $this->nhanSuService->findByUsername($taiKhoan, TaiKhoan::ROLE_NHAN_VIEN);
+
+        return $this->nhanSuService->downloadHandoverPdf(
+            $nhanVien,
+            TaiKhoan::ROLE_NHAN_VIEN,
+            (string) $request->query('token')
+        );
     }
 }

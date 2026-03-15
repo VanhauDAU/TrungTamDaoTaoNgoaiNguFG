@@ -14,6 +14,7 @@ use App\Models\Facility\CoSoDaoTao;
 use App\Models\Interaction\ThongBao;
 use App\Models\Interaction\ThongBaoNguoiDung;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class TaiKhoan extends Authenticatable implements MustVerifyEmail
 {
@@ -174,6 +175,21 @@ class TaiKhoan extends Authenticatable implements MustVerifyEmail
     public function nhanSu()
     {
         return $this->hasOne(NhanSu::class, 'taiKhoanId', 'taiKhoanId');
+    }
+
+    public function nhanSuHoSo(): HasOne
+    {
+        return $this->hasOne(NhanSuHoSo::class, 'taiKhoanId', 'taiKhoanId');
+    }
+
+    public function nhanSuGoiLuongs(): HasMany
+    {
+        return $this->hasMany(NhanSuGoiLuong::class, 'taiKhoanId', 'taiKhoanId');
+    }
+
+    public function nhanSuTaiLieus(): HasMany
+    {
+        return $this->hasMany(NhanSuTaiLieu::class, 'taiKhoanId', 'taiKhoanId');
     }
     public function dangKyLopHocs()
     {

@@ -1,19 +1,20 @@
 @extends('layouts.admin')
 
-@section('title', 'Tạo giáo viên')
-@section('page-title', 'Tạo hồ sơ giáo viên')
-@section('breadcrumb', 'Quản lý giáo viên · Tạo hồ sơ')
+@section('title', 'Sửa giáo viên')
+@section('page-title', 'Cập nhật giáo viên')
+@section('breadcrumb', 'Quản lý giáo viên · Cập nhật hồ sơ')
 
 @section('stylesheet')
     @include('admin.nhan-su.partials.form-styles')
 @endsection
 
 @section('content')
-    <form action="{{ route('admin.giao-vien.store') }}" method="POST" enctype="multipart/form-data" autocomplete="off">
+    <form action="{{ route('admin.giao-vien.update', $record->taiKhoan) }}" method="POST" autocomplete="off">
         @csrf
+        @method('PUT')
 
         @include('admin.nhan-su.partials.form', [
-            'formMode' => 'create',
+            'formMode' => 'edit',
             'routePrefix' => 'admin.giao-vien',
         ])
     </form>
