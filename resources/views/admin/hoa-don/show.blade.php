@@ -24,55 +24,67 @@
 @endphp
 
 @section('content')
+    @php
+        $initials = mb_strtoupper(mb_substr(trim($hoTen), 0, 1));
+    @endphp
+
     <div class="invoice-detail-shell">
         <section
             class="invoice-detail-hero {{ $hoaDon->isQuaHan ? 'is-overdue' : ($hoaDon->trangThai == 2 ? 'is-paid' : '') }}">
-            <div class="invoice-detail-hero__main">
-                <div class="invoice-detail-hero__eyebrow">Chi tiết hóa đơn</div>
-                <div class="invoice-detail-hero__title-row">
-                    <h1>{{ $maHD }}</h1>
-                    <div class="invoice-detail-hero__badges">
-                        <span
-                            class="invoice-detail-badge invoice-detail-badge--{{ $hoaDon->nguonThu === \App\Models\Finance\HoaDon::NGUON_THU_PHU_PHI ? 'supplemental' : 'tuition' }}">
-                            {{ $hoaDon->nguonThuLabel }}
-                        </span>
-                        @if ($hoaDon->trangThai == 2)
-                            <span class="invoice-detail-badge invoice-detail-badge--paid">Đã thanh toán đủ</span>
-                        @elseif ($hoaDon->trangThai == 1)
-                            <span class="invoice-detail-badge invoice-detail-badge--partial">Thanh toán một phần</span>
-                        @else
-                            <span class="invoice-detail-badge invoice-detail-badge--unpaid">Chưa thanh toán</span>
-                        @endif
-                        @if ($hoaDon->isQuaHan)
-                            <span class="invoice-detail-badge invoice-detail-badge--danger">{{ $hoaDon->tinhTrangHanLabel }}</span>
-                        @elseif ($hoaDon->isSapHetHan)
-                            <span class="invoice-detail-badge invoice-detail-badge--warning">{{ $hoaDon->tinhTrangHanLabel }}</span>
-                        @endif
-                    </div>
-                </div>
-                <p class="invoice-detail-hero__subtitle">
-                    {{ $hoaDon->dangKyLopHoc?->lopHoc?->tenLopHoc ?? 'Không gắn lớp học' }}
-                    @if ($hoaDon->dangKyLopHoc?->lopHoc?->khoaHoc?->tenKhoaHoc)
-                        · {{ $hoaDon->dangKyLopHoc->lopHoc->khoaHoc->tenKhoaHoc }}
-                    @endif
-                    @if ($hoaDon->lopHocDotThu?->tenDotThu)
-                        · {{ $hoaDon->lopHocDotThu->tenDotThu }}
-                    @endif
-                    @if ($hoaDon->dangKyLopHocPhuPhi?->tenKhoanThuSnapshot)
-                        · {{ $hoaDon->dangKyLopHocPhuPhi->tenKhoanThuSnapshot }}
-                    @endif
-                </p>
-            </div>
-            <div class="invoice-detail-hero__actions">
-                <a href="{{ route('admin.hoa-don.index') }}" class="btn btn-light">
-                    <i class="fas fa-arrow-left"></i> Quay lại danh sách
+
+            {{-- Row: back + actions --}}
+            <div class="invoice-detail-hero__topbar">
+                <a href="{{ route('admin.hoa-don.index') }}" class="invoice-back-link">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Quay lại danh sách</span>
                 </a>
-                @if ($coTheThuTien)
-                    <button type="button" class="btn btn-primary" data-panel-trigger="receipt">
-                        <i class="fas fa-plus"></i> Lập phiếu thu
-                    </button>
-                @endif
+                <div class="invoice-detail-hero__action-btns">
+                    @if ($coTheThuTien)
+                        <button type="button" class="btn btn-primary btn-sm" data-panel-trigger="receipt">
+                            <i class="fas fa-plus me-1"></i> Lập phiếu thu
+                        </button>
+                    @endif
+                </div>
             </div>
+
+            {{-- Row: student avatar + title info --}}
+            <div class="invoice-detail-hero__identity">
+                <div class="invoice-hero-avatar">{{ $initials }}</div>
+                <div class="invoice-detail-hero__main">
+                    <div class="invoice-detail-hero__eyebrow">Chi tiết hóa đơn · {{ $hoTen }}</div>
+                    <div class="invoice-detail-hero__title-row">
+                        <h1>{{ $maHD }}</h1>
+                        <div class="invoice-detail-hero__badges">
+                            <span
+                                class="invoice-detail-badge invoice-detail-badge--{{ $hoaDon->nguonThu === \App\Models\Finance\HoaDon::NGUON_THU_PHU_PHI ? 'supplemental' : 'tuition' }}">
+                                {{ $hoaDon->nguonThuLabel }}
+                            </span>
+                            @if ($hoaDon->trangThai == 2)
+                                <span class="invoice-detail-badge invoice-detail-badge--paid">Đã thanh toán đủ</span>
+                            @elseif ($hoaDon->trangThai == 1)
+                                <span class="invoice-detail-badge invoice-detail-badge--partial">Thanh toán một phần</span>
+                            @else
+                                <span class="invoice-detail-badge invoice-detail-badge--unpaid">Chưa thanh toán</span>
+                            @endif
+                            @if ($hoaDon->isQuaHan)
+                                <span class="invoice-detail-badge invoice-detail-badge--danger">{{ $hoaDon->tinhTrangHanLabel }}</span>
+                            @elseif ($hoaDon->isSapHetHan)
+                                <span class="invoice-detail-badge invoice-detail-badge--warning">{{ $hoaDon->tinhTrangHanLabel }}</span>
+                            @endif
+                        </div>
+                    </div>
+                    <p class="invoice-detail-hero__subtitle">
+                        {{ $hoaDon->taiKhoan?->email ?? '' }}
+                        @if ($profile?->soDienThoai) · {{ $profile->soDienThoai }} @endif
+                        @if ($hoaDon->dangKyLopHoc?->lopHoc?->tenLopHoc) · {{ $hoaDon->dangKyLopHoc->lopHoc->tenLopHoc }} @endif
+                        @if ($hoaDon->dangKyLopHoc?->lopHoc?->khoaHoc?->tenKhoaHoc) · {{ $hoaDon->dangKyLopHoc->lopHoc->khoaHoc->tenKhoaHoc }} @endif
+                        @if ($hoaDon->lopHocDotThu?->tenDotThu) · {{ $hoaDon->lopHocDotThu->tenDotThu }} @endif
+                        @if ($hoaDon->dangKyLopHocPhuPhi?->tenKhoanThuSnapshot) · {{ $hoaDon->dangKyLopHocPhuPhi->tenKhoanThuSnapshot }} @endif
+                    </p>
+                </div>
+            </div>
+
+            {{-- Metrics row --}}
             <div class="invoice-detail-metrics">
                 <article class="invoice-detail-metric">
                     <span>Tổng phải thu</span>

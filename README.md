@@ -155,8 +155,10 @@ Neu dung XAMPP/Apache:
 - Hoc phi duoc quan ly o cap `lop hoc`, khong con o cap `khoa hoc`.
 - `khoahoc` chi mo ta san pham dao tao; gia ban va cach thu tien nam o `lophoc_chinhsachgia`.
 - `lophoc` co the tao truoc khi nhap hoc phi, nhung phai co chinh sach gia hop le truoc khi chuyen sang trang thai tuyen sinh/van hanh.
+- `ngayKetThuc` cua lop khong nhap tay trong flow moi; he thong dong bo theo buoi hoc cuoi cung.
 - Khi hoc vien dang ky, he thong chup `snapshot` hoc phi vao `dangkylophoc` de khoa gia tai thoi diem dang ky.
-- Bang `lophoc_dotthu` duoc dung de luu ke hoach thu theo dot cho mo rong nghiep vu; xem huong dan van hanh tai `docs/05-huong-dan/hoc-phi-lop-hoc.md`.
+- `hieuLucTu` / `hieuLucDen` la khoang thoi gian chinh sach gia duoc phep ap dung cho dang ky moi, khong phai ngay hoc cua lop.
+- Bang `lophoc_dotthu` duoc dung de luu ke hoach thu theo dot; runtime hien tai van tao 1 hoa don tong cho moi dang ky va de san nen cho billing tach dot ve sau.
 - Huong dan van hanh tong hop: `docs/05-huong-dan/huong-dan.md`.
 
 ## 9. Tai lieu Auth

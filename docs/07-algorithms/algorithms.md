@@ -80,25 +80,41 @@ if (in_array($currentId, $descendantIds)) {
 
 ### Input
 
-- `LopHoc`: ngày bắt đầu, ngày kết thúc
-- `CaHoc`: thứ trong tuần (1–7), giờ bắt đầu/kết thúc
+- `LopHoc`: `ngayBatDau`, `lichHoc`, `soBuoiDuKien`
+- `CaHoc`: giờ bắt đầu/kết thúc
 
 ### Thuật toán
 
 ```php
 // Pseudo-code
-$current = $ngayBatDau;
-while ($current <= $ngayKetThuc) {
-    if ($current->dayOfWeek === $caHoc->thu) {
+$current = $ngayBatDau->copy();
+$targets = explode(',', $lichHoc); // vd: 2,4,6
+$created = 0;
+
+while ($created < $soBuoiDuKien) {
+    $thu = mapCarbonDayToBusinessDay($current);
+
+    if (in_array($thu, $targets, true)) {
         BuoiHoc::create([
             'lopHocId' => $lopId,
-            'ngayHoc'  => $current,
+            'ngayHoc' => $current->toDateString(),
             'trangThai' => 'cho_hoc',
         ]);
+        $created++;
     }
+
     $current->addDay();
 }
+
+// Sau moi lan them/sua/xoa buoi hoc:
+$lopHoc->ngayKetThuc = ngayHocLonNhatCuaBuoiHocConHieuLuc;
 ```
+
+### Quy tắc
+
+- `ngayKetThuc` cua lop khong nhap tay trong flow moi.
+- `ngayKetThuc` chi la ket qua van hanh duoc suy ra tu buoi hoc cuoi cung.
+- Thay doi `ngayKetThuc` khong duoc phep tac dong nguoc lai den hoc phi.
 
 ---
 
@@ -118,7 +134,7 @@ DangKyLopHoc::create()
   → HoaDon::create([
         'dangKyLopHocId' => $dangKyId,
         'tongTien'       => $snapshot->hocPhiPhaiThuSnapshot,
-        'trangThai'   => 'chua_thanh_toan',
+        'trangThai'      => 'chua_thanh_toan',
     ])
 ```
 
@@ -127,6 +143,7 @@ DangKyLopHoc::create()
 - Không đọc lại học phí từ lớp sau khi học viên đã đăng ký.
 - Thay đổi `LopHocChinhSachGia` chỉ áp dụng cho đăng ký mới.
 - `soBuoiThucTe` và `buoihoc` không tự tính lại hóa đơn.
+- Runtime hiện tại tạo 1 hóa đơn tổng cho mỗi đăng ký; `lophoc_dotthu` mới ở mức cấu hình/validation và là nền cho billing nhiều hóa đơn sau này.
 
 ---
 

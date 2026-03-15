@@ -15,11 +15,70 @@
 
 .invoice-detail-hero {
     border-radius: 26px;
-    padding: 28px 30px;
+    padding: 24px 28px 28px;
     background:
         radial-gradient(circle at top right, rgba(20, 184, 166, 0.18), transparent 30%),
         linear-gradient(140deg, #0f172a, #134e4a 74%);
     color: #fff;
+}
+
+/* Topbar: back link + action buttons */
+.invoice-detail-hero__topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.invoice-back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: rgba(255, 255, 255, 0.75);
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 7px 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.06);
+    transition: all 0.2s;
+}
+
+.invoice-back-link:hover {
+    background: rgba(255, 255, 255, 0.14);
+    color: #fff;
+}
+
+.invoice-detail-hero__action-btns {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* Identity row: avatar + text */
+.invoice-detail-hero__identity {
+    display: flex;
+    align-items: flex-start;
+    gap: 18px;
+    flex-wrap: wrap;
+}
+
+.invoice-hero-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.14);
+    border: 2px solid rgba(255, 255, 255, 0.22);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #fff;
+    flex-shrink: 0;
 }
 
 .invoice-detail-hero.is-overdue {
@@ -35,22 +94,23 @@
 }
 
 .invoice-detail-hero__main {
-    max-width: 900px;
+    flex: 1;
+    min-width: 0;
 }
 
 .invoice-detail-hero__eyebrow {
     font-size: 0.78rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.12em;
-    color: rgba(255, 255, 255, 0.68);
+    letter-spacing: 0.1em;
+    color: rgba(255, 255, 255, 0.65);
+    margin-bottom: 6px;
 }
 
 .invoice-detail-hero__title-row {
-    margin-top: 8px;
+    margin-top: 4px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: 16px;
     flex-wrap: wrap;
 }
@@ -676,11 +736,18 @@
 
 @media (max-width: 768px) {
     .invoice-detail-hero {
-        padding: 22px 20px;
+        padding: 18px 16px 22px;
     }
 
     .invoice-detail-hero h1 {
-        font-size: 1.65rem;
+        font-size: 1.5rem;
+    }
+
+    .invoice-hero-avatar {
+        width: 44px;
+        height: 44px;
+        font-size: 1.1rem;
+        border-radius: 12px;
     }
 
     .invoice-detail-metrics,

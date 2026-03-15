@@ -117,6 +117,12 @@ Ghi chú:
 - Endpoint `/admin/api/hoc-phi/{khoaHocId}` đã bị loại bỏ.
 - Chính sách giá hiện được nhập trực tiếp trong form `lớp học`, không còn AJAX lấy gói học phí theo khóa.
 
+### Lớp học admin
+
+| Method | Endpoint                            | Mô tả                                      |
+| ------ | ----------------------------------- | ------------------------------------------ |
+| PATCH  | `/admin/lop-hoc/{slug}/trang-thai`  | Đổi nhanh trạng thái lớp học ở trang index |
+
 ### Thông báo Admin
 
 | Method | Endpoint                             | Mô tả                     |
@@ -149,7 +155,7 @@ Ghi chú:
 | Phòng học   | `/admin/phong-hoc`         | store, update, destroy (AJAX)                                       |
 | Danh mục KH | `/admin/danh-muc-khoa-hoc` | index, create, store, edit, update, destroy                         |
 | Khóa học    | `/admin/khoa-hoc`          | index, create, store, show, edit, update, destroy, restore          |
-| Lớp học     | `/admin/lop-hoc`           | index, create, store, show, edit, update, destroy                   |
+| Lớp học     | `/admin/lop-hoc`           | index, create, store, show, edit, update, destroy, update-status    |
 | Buổi học    | `/admin/buoi-hoc`          | store, update, destroy, auto-generate                               |
 | Ca học      | `/admin/ca-hoc`            | index, store, update, destroy, toggle-status                        |
 | Hóa đơn     | `/admin/hoa-don`           | index, show, update, phieu-thu.store, phieu-thu.destroy             |
