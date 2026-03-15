@@ -2,8 +2,11 @@
 
 namespace App\Contracts\Admin\NhanVien;
 
+use App\Data\Admin\NhanVien\CreatedStaffAccountResult;
 use App\Models\Auth\TaiKhoan;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\Response;
 
 interface NhanSuServiceInterface
 {
@@ -21,12 +24,17 @@ interface NhanSuServiceInterface
     /**
      * Lấy dữ liệu form tạo mới (cơ sở, tỉnh thành…).
      */
-    public function getCreateFormData(): array;
+    public function getCreateFormData(string $role): array;
+
+    /**
+     * Lấy dữ liệu form chỉnh sửa.
+     */
+    public function getEditFormData(TaiKhoan $taiKhoan, string $role): array;
 
     /**
      * Tạo tài khoản nhân sự (TaiKhoan + HoSoNguoiDung + NhanSu) trong transaction.
      */
-    public function store(Request $request, string $role): TaiKhoan;
+    public function store(Request $request, string $role): CreatedStaffAccountResult;
 
     /**
      * Lấy thông tin chi tiết nhân sự theo tên đăng nhập và role.
@@ -34,9 +42,44 @@ interface NhanSuServiceInterface
     public function findByUsername(string $taiKhoan, string $role): TaiKhoan;
 
     /**
+     * Lấy dữ liệu hồ sơ nhân sự chi tiết.
+     */
+    public function getProfileData(TaiKhoan $taiKhoan, string $role, ?string $handoverToken = null): array;
+
+    /**
      * Cập nhật thông tin nhân sự.
      */
     public function update(Request $request, TaiKhoan $nhanSu): void;
+
+    /**
+     * Upload tài liệu nhân sự.
+     */
+    public function uploadDocument(Request $request, TaiKhoan $taiKhoan): void;
+
+    /**
+     * Tải tài liệu nhân sự private.
+     */
+    public function downloadDocument(TaiKhoan $taiKhoan, int $documentId): BinaryFileResponse;
+
+    /**
+     * Lưu trữ phiên bản tài liệu cũ.
+     */
+    public function archiveDocument(TaiKhoan $taiKhoan, int $documentId): void;
+
+    /**
+     * Lưu gói lương hoặc thay gói lương active.
+     */
+    public function saveSalaryPackage(Request $request, TaiKhoan $taiKhoan): void;
+
+    /**
+     * Tải phiếu bàn giao tài khoản từ token ngắn hạn.
+     */
+    public function downloadHandoverPdf(TaiKhoan $taiKhoan, string $role, string $token): Response;
+
+    /**
+     * Tải hồ sơ nhân sự đã chuẩn hóa.
+     */
+    public function downloadProfilePdf(TaiKhoan $taiKhoan, string $role): Response;
 
     /**
      * Xóa mềm nhân sự.

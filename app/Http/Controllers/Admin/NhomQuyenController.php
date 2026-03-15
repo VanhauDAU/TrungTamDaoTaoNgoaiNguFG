@@ -16,6 +16,7 @@ class NhomQuyenController extends Controller
         'hoc_vien'  => 'Học viên',
         'giao_vien' => 'Giáo viên',
         'nhan_vien' => 'Nhân viên',
+        'nhan_su'   => 'Hồ sơ nhân sự',
         'tai_chinh' => 'Tài chính',
         'dang_ky'   => 'Đăng ký học',
         'tai_khoan' => 'Tài khoản',

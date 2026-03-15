@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\HocVien\HocVienController as AdminHocVienControll
 use App\Http\Controllers\Admin\HocVien\DangKyHocController as AdminDangKyHocController;
 use App\Http\Controllers\Admin\GiaoVien\GiaoVienController as AdminGiaoVienController;
 use App\Http\Controllers\Admin\NhanVien\NhanVienController as AdminNhanVienController;
+use App\Http\Controllers\Admin\NhanVien\NhanSuMauQuyDinhController;
 use App\Http\Controllers\Admin\Auth\TaiKhoanController;
 use App\Http\Controllers\Admin\LienHe\LienHeController as AdminLienHeController;
 use App\Http\Controllers\Admin\CoSo\CoSoController;
@@ -180,6 +181,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
         Route::post('/', [AdminGiaoVienController::class, 'store'])->name('store');
         Route::get('/thung-rac', [AdminGiaoVienController::class, 'trash'])->name('trash');
         Route::patch('/{id}/khoi-phuc', [AdminGiaoVienController::class, 'restore'])->name('restore');
+        Route::get('/{taiKhoan}', [AdminGiaoVienController::class, 'show'])->name('show');
+        Route::post('/{taiKhoan}/tai-lieu', [AdminGiaoVienController::class, 'storeDocument'])->name('documents.store');
+        Route::get('/{taiKhoan}/tai-lieu/{documentId}/tai-xuong', [AdminGiaoVienController::class, 'downloadDocument'])->name('documents.download');
+        Route::patch('/{taiKhoan}/tai-lieu/{documentId}/luu-tru', [AdminGiaoVienController::class, 'archiveDocument'])->name('documents.archive');
+        Route::post('/{taiKhoan}/goi-luong', [AdminGiaoVienController::class, 'storeSalaryPackage'])->name('salary.store');
+        Route::get('/{taiKhoan}/ho-so.pdf', [AdminGiaoVienController::class, 'downloadProfilePdf'])->name('profile.pdf');
+        Route::get('/{taiKhoan}/ban-giao-tai-khoan.pdf', [AdminGiaoVienController::class, 'downloadHandoverPdf'])->name('handover.pdf');
         Route::get('/{taiKhoan}/sua', [AdminGiaoVienController::class, 'edit'])->name('edit');
         Route::put('/{taiKhoan}', [AdminGiaoVienController::class, 'update'])->name('update');
         Route::delete('/{taiKhoan}', [AdminGiaoVienController::class, 'destroy'])->name('destroy');
@@ -192,9 +200,25 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
         Route::post('/', [AdminNhanVienController::class, 'store'])->name('store');
         Route::get('/thung-rac', [AdminNhanVienController::class, 'trash'])->name('trash');
         Route::patch('/{id}/khoi-phuc', [AdminNhanVienController::class, 'restore'])->name('restore');
+        Route::get('/{taiKhoan}', [AdminNhanVienController::class, 'show'])->name('show');
+        Route::post('/{taiKhoan}/tai-lieu', [AdminNhanVienController::class, 'storeDocument'])->name('documents.store');
+        Route::get('/{taiKhoan}/tai-lieu/{documentId}/tai-xuong', [AdminNhanVienController::class, 'downloadDocument'])->name('documents.download');
+        Route::patch('/{taiKhoan}/tai-lieu/{documentId}/luu-tru', [AdminNhanVienController::class, 'archiveDocument'])->name('documents.archive');
+        Route::post('/{taiKhoan}/goi-luong', [AdminNhanVienController::class, 'storeSalaryPackage'])->name('salary.store');
+        Route::get('/{taiKhoan}/ho-so.pdf', [AdminNhanVienController::class, 'downloadProfilePdf'])->name('profile.pdf');
+        Route::get('/{taiKhoan}/ban-giao-tai-khoan.pdf', [AdminNhanVienController::class, 'downloadHandoverPdf'])->name('handover.pdf');
         Route::get('/{taiKhoan}/sua', [AdminNhanVienController::class, 'edit'])->name('edit');
         Route::put('/{taiKhoan}', [AdminNhanVienController::class, 'update'])->name('update');
         Route::delete('/{taiKhoan}', [AdminNhanVienController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::prefix('nhan-su/mau-quy-dinh')->name('nhan-su.mau-quy-dinh.')->group(function () {
+        Route::get('/', [NhanSuMauQuyDinhController::class, 'index'])->name('index');
+        Route::get('/tao-moi', [NhanSuMauQuyDinhController::class, 'create'])->name('create');
+        Route::post('/', [NhanSuMauQuyDinhController::class, 'store'])->name('store');
+        Route::get('/{id}/sua', [NhanSuMauQuyDinhController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [NhanSuMauQuyDinhController::class, 'update'])->name('update');
+        Route::delete('/{id}', [NhanSuMauQuyDinhController::class, 'destroy'])->name('destroy');
     });
 
 
