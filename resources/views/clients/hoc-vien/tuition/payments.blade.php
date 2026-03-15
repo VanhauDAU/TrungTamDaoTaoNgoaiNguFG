@@ -20,35 +20,6 @@
                             ['label' => 'Tài khoản', 'url' => route('home.student.index')],
                             ['label' => 'Thanh toán trực tuyến'],
                         ]" />
-
-                        <div class="tuition-hero tuition-hero--payments">
-                            <div>
-                                <span class="tuition-hero__eyebrow">Thanh toan</span>
-                                <h2 class="tuition-hero__title">Thanh toán trực tuyến</h2>
-                                <p class="tuition-hero__sub">Tập trung các khoản cần thanh toán, thông tin chuyển khoản và kênh thanh toán đang được hỗ trợ cho học viên.</p>
-                            </div>
-                            <div class="tuition-hero__stats">
-                                <div class="tuition-stat tuition-stat--warn">
-                                    <span class="tuition-stat__num">{{ $summary['count'] }}</span>
-                                    <span class="tuition-stat__label">Khoản cần thanh toán</span>
-                                </div>
-                                <div class="tuition-stat tuition-stat--danger">
-                                    <span class="tuition-stat__num">{{ number_format($summary['outstandingTotal'], 0, ',', '.') }}đ</span>
-                                    <span class="tuition-stat__label">Tổng còn nợ</span>
-                                </div>
-                                <div class="tuition-stat tuition-stat--danger">
-                                    <span class="tuition-stat__num">{{ $summary['overdueCount'] }}</span>
-                                    <span class="tuition-stat__label">Quá hạn</span>
-                                </div>
-                                <div class="tuition-stat">
-                                    <span class="tuition-stat__num">{{ $summary['dueSoonCount'] }}</span>
-                                    <span class="tuition-stat__label">Sắp đến hạn</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        @include('clients.hoc-vien.tuition.partials.nav', ['active' => 'payments'])
-
                         <div class="tuition-method-grid">
                             <section class="tuition-method-card is-primary">
                                 <div class="tuition-method-card__icon"><i class="fas fa-university"></i></div>

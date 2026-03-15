@@ -20,35 +20,6 @@
                             ['label' => 'Tài khoản', 'url' => route('home.student.index')],
                             ['label' => 'Phiếu thu tổng hợp'],
                         ]" />
-
-                        <div class="tuition-hero tuition-hero--receipts">
-                            <div>
-                                <span class="tuition-hero__eyebrow">Thu tien</span>
-                                <h2 class="tuition-hero__title">Phiếu thu tổng hợp</h2>
-                                <p class="tuition-hero__sub">Tập trung toàn bộ giao dịch đã thu hợp lệ để học viên dễ đối soát theo ngày thu, phương thức và hóa đơn liên quan.</p>
-                            </div>
-                            <div class="tuition-hero__stats">
-                                <div class="tuition-stat">
-                                    <span class="tuition-stat__num">{{ $summary['count'] }}</span>
-                                    <span class="tuition-stat__label">Phiếu thu hợp lệ</span>
-                                </div>
-                                <div class="tuition-stat">
-                                    <span class="tuition-stat__num">{{ number_format($summary['totalCollected'], 0, ',', '.') }}đ</span>
-                                    <span class="tuition-stat__label">Tổng đã thu</span>
-                                </div>
-                                <div class="tuition-stat">
-                                    <span class="tuition-stat__num">{{ $summary['bankTransferCount'] }}</span>
-                                    <span class="tuition-stat__label">Chuyển khoản</span>
-                                </div>
-                                <div class="tuition-stat">
-                                    <span class="tuition-stat__num">{{ $summary['onlineCount'] }}</span>
-                                    <span class="tuition-stat__label">VNPay</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        @include('clients.hoc-vien.tuition.partials.nav', ['active' => 'receipts'])
-
                         @if ($receipts->count() > 0)
                             <div class="tuition-ledger">
                                 <div class="tuition-ledger__head tuition-ledger__head--receipts">
