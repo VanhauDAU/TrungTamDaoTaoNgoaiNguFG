@@ -30,9 +30,10 @@ class CheckOverdueInvoices extends Command
         $this->newLine();
 
         // ── Tìm hóa đơn quá hạn chưa thanh toán đủ ─────────────────
-        $overdueInvoices = HoaDon::with(['dangKyLopHoc.lopHoc.buoiHocs', 'taiKhoan.hoSoNguoiDung'])
+        $overdueInvoices = HoaDon::with(['dangKyLopHoc.lopHoc.buoiHocs', 'dangKyLopHoc.hoaDons.lopHocDotThu', 'lopHocDotThu', 'taiKhoan.hoSoNguoiDung'])
             ->whereNotNull('ngayHetHan')
             ->whereDate('ngayHetHan', '<', $today)
+            ->where('nguonThu', HoaDon::NGUON_THU_HOC_PHI)
             ->where('trangThai', '!=', HoaDon::TRANG_THAI_DA_TT)
             ->get();
 
@@ -62,50 +63,53 @@ class CheckOverdueInvoices extends Command
         // ── Xử lý từng hóa đơn ──────────────────────────────────────
         $countSuspended     = 0;
         $countDiemDanhAdded = 0;
+        $processedRegistrations = [];
 
         foreach ($overdueInvoices as $hoaDon) {
             if (! $hoaDon->dangKyLopHocId) {
                 continue;
             }
 
-            $dangKy = DangKyLopHoc::find($hoaDon->dangKyLopHocId);
+            if (in_array($hoaDon->dangKyLopHocId, $processedRegistrations, true)) {
+                continue;
+            }
+
+            $dangKy = $hoaDon->dangKyLopHoc;
             if (! $dangKy) {
                 continue;
             }
 
-            // 1. Tạm dừng đăng ký lớp học
-            if ($dangKy->trangThai === DangKyLopHoc::TRANG_THAI_DANG_HOC) {
-                $dangKy->update(['trangThai' => DangKyLopHoc::TRANG_THAI_TAM_DUNG_NO_HOC_PHI]);
+            $processedRegistrations[] = $hoaDon->dangKyLopHocId;
+
+            $dangKy->recalculatePaymentStatus();
+
+            if ($dangKy->fresh()->trangThai === DangKyLopHoc::TRANG_THAI_TAM_DUNG_NO_HOC_PHI) {
                 $countSuspended++;
                 $this->line("  ⏸  Tạm dừng ĐK lớp ID {$dangKy->dangKyLopHocId} ({$dangKy->lopHoc?->tenLopHoc})");
-            }
 
-            // 2. Tạo bản ghi DiemDanh = BI_KHOA_NO_HP cho các buổi học TƯƠNG LAI
-            if ($dangKy->lopHoc) {
-                $buoiHocsTuongLai = $dangKy->lopHoc->buoiHocs()
-                    ->whereDate('ngayHoc', '>=', $today)
-                    ->openForAttendance()
-                    ->get();
+                if ($dangKy->lopHoc) {
+                    $buoiHocsTuongLai = $dangKy->lopHoc->buoiHocs()
+                        ->whereDate('ngayHoc', '>=', $today)
+                        ->openForAttendance()
+                        ->get();
 
-                foreach ($buoiHocsTuongLai as $buoi) {
-                    $existing = DiemDanh::where('buoiHocId', $buoi->buoiHocId)
-                        ->where('taiKhoanId', $hoaDon->taiKhoanId)
-                        ->first();
+                    foreach ($buoiHocsTuongLai as $buoi) {
+                        $existing = DiemDanh::where('buoiHocId', $buoi->buoiHocId)
+                            ->where('taiKhoanId', $hoaDon->taiKhoanId)
+                            ->first();
 
-                    if (! $existing) {
-                        DiemDanh::create([
-                            'buoiHocId'       => $buoi->buoiHocId,
-                            'taiKhoanId'      => $hoaDon->taiKhoanId,
-                            'dangKyLopHocId'  => $dangKy->dangKyLopHocId,
-                            'trangThai'       => DiemDanh::BI_KHOA_NO_HP,
-                            'coMat'           => 0,
-                            'lyDo'            => 'Nợ học phí – tự động hệ thống',
-                            'thoiGianDiemDanh'=> now(),
-                        ]);
-                        $countDiemDanhAdded++;
-                    } elseif ($existing->trangThai !== DiemDanh::BI_KHOA_NO_HP) {
-                        // Nếu đã có bản ghi (Có mặt/Vắng) → cập nhật lý do (tùy chính sách)
-                        // Giữ nguyên để không ghi đè điểm danh đã ghi
+                        if (! $existing) {
+                            DiemDanh::create([
+                                'buoiHocId'       => $buoi->buoiHocId,
+                                'taiKhoanId'      => $hoaDon->taiKhoanId,
+                                'dangKyLopHocId'  => $dangKy->dangKyLopHocId,
+                                'trangThai'       => DiemDanh::BI_KHOA_NO_HP,
+                                'coMat'           => 0,
+                                'lyDo'            => 'Nợ học phí – tự động hệ thống',
+                                'thoiGianDiemDanh'=> now(),
+                            ]);
+                            $countDiemDanhAdded++;
+                        }
                     }
                 }
             }

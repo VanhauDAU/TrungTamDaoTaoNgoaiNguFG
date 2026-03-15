@@ -148,7 +148,7 @@ class HocVienService implements HocVienServiceInterface
     public function update(Request $request, TaiKhoan $hocVien): void
     {
         $request->validate([
-            'email' => ['required', 'email', 'max:100', Rule::unique('taikhoan', 'email')->ignore($hocVien->taiKhoan, 'taiKhoan')],
+            'email' => ['required', 'email', 'max:100', Rule::unique('taikhoan', 'email')->ignore($hocVien->taiKhoanId, 'taiKhoanId')],
             'hoTen' => 'required|string|max:100',
             'trangThai' => 'required|in:0,1',
             'matKhau' => 'nullable|string|min:8|confirmed',
@@ -157,7 +157,7 @@ class HocVienService implements HocVienServiceInterface
             'ngaySinh' => 'nullable|date',
             'gioiTinh' => 'nullable|in:0,1,2',
             'diaChi' => 'nullable|string|max:255',
-            'cccd' => ['nullable', 'string', 'max:20', Rule::unique('hosonguoidung', 'cccd')->ignore($hocVien->taiKhoan, 'taiKhoan')],
+            'cccd' => ['nullable', 'string', 'max:20', Rule::unique('hosonguoidung', 'cccd')->ignore($hocVien->taiKhoanId, 'taiKhoanId')],
             'nguoiGiamHo' => 'nullable|string|max:100',
             'sdtGuardian' => 'nullable|string|max:20',
             'moiQuanHe' => 'nullable|string|max:50',
@@ -175,11 +175,16 @@ class HocVienService implements HocVienServiceInterface
         ]);
 
         DB::transaction(function () use ($request, $hocVien) {
+            $oldStatus = (int) $hocVien->trangThai;
             $tkData = ['email' => $request->email, 'trangThai' => $request->trangThai];
             if ($request->filled('matKhau')) {
                 $tkData['matKhau'] = Hash::make($request->matKhau);
             }
             $hocVien->update($tkData);
+
+            if ($oldStatus === 1 && (int) $request->trangThai === 0) {
+                $hocVien->rotateRememberToken('account_locked');
+            }
 
             $hocVien->hoSoNguoiDung()->updateOrCreate(
             ['taiKhoanId' => $hocVien->taiKhoanId],

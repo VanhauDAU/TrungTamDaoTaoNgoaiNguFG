@@ -105,6 +105,20 @@
                     <span class="hd-info-value">{{ $hoaDon->loai_hoa_don_label }}</span>
                 </div>
                 <div class="hd-info-row">
+                    <span class="hd-info-label">Nguồn thu:</span>
+                    <span class="hd-info-value">{{ $hoaDon->nguonThuLabel }}</span>
+                </div>
+                @if ($hoaDon->nguonThu === \App\Models\Finance\HoaDon::NGUON_THU_PHU_PHI && $hoaDon->dangKyLopHocPhuPhi)
+                    <div class="hd-info-row">
+                        <span class="hd-info-label">Khoản bổ sung:</span>
+                        <span class="hd-info-value">{{ $hoaDon->dangKyLopHocPhuPhi->tenKhoanThuSnapshot }}</span>
+                    </div>
+                    <div class="hd-info-row">
+                        <span class="hd-info-label">Nhóm phí:</span>
+                        <span class="hd-info-value">{{ $hoaDon->dangKyLopHocPhuPhi->nhomPhiLabel }}</span>
+                    </div>
+                @endif
+                <div class="hd-info-row">
                     <span class="hd-info-label">PT Thanh toán:</span>
                     <span class="hd-info-value">
                         @if ($hoaDon->phuongThucThanhToan == 1)
@@ -174,7 +188,7 @@
                 <div class="hd-summary-row hd-summary-total">
                     <span>Còn nợ:</span>
                     <span class="{{ $conNo > 0 ? 'text-danger' : 'text-success' }} fw-bold">
-                        {{ number_format($conNo, 0, ',', '.') }}đ
+                        {{ number_format($hoaDon->conNo, 0, ',', '.') }}đ
                     </span>
                 </div>
             </div>

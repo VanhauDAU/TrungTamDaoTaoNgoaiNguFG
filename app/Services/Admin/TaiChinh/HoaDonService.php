@@ -17,6 +17,7 @@ class HoaDonService implements HoaDonServiceInterface
         $query = HoaDon::with([
             'taiKhoan.hoSoNguoiDung',
             'dangKyLopHoc.lopHoc.khoaHoc',
+            'dangKyLopHocPhuPhi',
             'coSo',
             'nguoiLap.hoSoNguoiDung',
         ]);
@@ -73,6 +74,7 @@ class HoaDonService implements HoaDonServiceInterface
             'hoaDon' => HoaDon::with([
                 'taiKhoan.hoSoNguoiDung',
                 'dangKyLopHoc.lopHoc.khoaHoc',
+                'dangKyLopHocPhuPhi',
                 'coSo.tinhThanh',
                 'nguoiLap.hoSoNguoiDung',
                 'phieuThus.taiKhoan.hoSoNguoiDung',

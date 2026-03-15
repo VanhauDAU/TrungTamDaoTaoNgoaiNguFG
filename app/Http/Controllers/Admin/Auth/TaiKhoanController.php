@@ -106,13 +106,19 @@ class TaiKhoanController extends Controller
             ], 403);
         }
 
+        $newStatus = (int) $taiKhoan->trangThai === 1 ? 0 : 1;
+
         $taiKhoan->update([
-            'trangThai' => $taiKhoan->trangThai == 1 ? 0 : 1
+            'trangThai' => $newStatus
         ]);
+
+        if ($newStatus === 0) {
+            $taiKhoan->rotateRememberToken('account_locked');
+        }
 
         return response()->json([
             'success' => true,
-            'message' => $taiKhoan->trangThai == 1 ? 'Đã mở khóa tài khoản.' : 'Đã khóa tài khoản thành công.'
+            'message' => $newStatus === 1 ? 'Đã mở khóa tài khoản.' : 'Đã khóa tài khoản thành công.'
         ]);
     }
 

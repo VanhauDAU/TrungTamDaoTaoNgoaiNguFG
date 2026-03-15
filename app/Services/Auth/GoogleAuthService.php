@@ -117,6 +117,10 @@ class GoogleAuthService implements GoogleAuthServiceInterface
             throw new RuntimeException('Đăng nhập Google chỉ áp dụng cho tài khoản học viên.');
         }
 
+        if ($existing && (int) $existing->trangThai !== 1) {
+            throw new RuntimeException('Tài khoản của bạn đã bị khóa. Vui lòng liên hệ trung tâm để được hỗ trợ.');
+        }
+
         return DB::transaction(function () use ($googleUser, $existing) {
             if ($existing instanceof TaiKhoan) {
                 $existing->loadMissing('hoSoNguoiDung');

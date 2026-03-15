@@ -164,6 +164,7 @@ ChatRoom >──< ChatRoomMember >── TaiKhoan
 - `Khóa học` không còn sở hữu bảng giá.
 - `Lớp học` có thể được tạo trước, sau đó mới gắn `lophoc_chinhsachgia`.
 - `Buổi học` và `số buổi thực tế` chỉ là dữ liệu vận hành; không tự động đổi số tiền phải thu.
+- `soBuoiDuKien` là dữ liệu vận hành; `soBuoiCamKet` chỉ lưu khi cần override hợp đồng.
 - Khi học viên đăng ký, hệ thống chụp `snapshot` học phí vào `dangkylophoc`.
 - `HoaDon` mới phải đọc từ snapshot này, không đọc lại từ giá hiện tại của lớp.
 
@@ -172,7 +173,8 @@ ChatRoom >──< ChatRoomMember >── TaiKhoan
 - Lớp ở trạng thái `Sắp mở` có thể chưa có học phí.
 - Trước khi chuyển sang `Đang tuyển sinh`, `Chốt danh sách`, `Đang học`, hoặc `Đã kết thúc`, lớp phải có chính sách giá hợp lệ.
 - Thay đổi học phí lớp chỉ áp dụng cho đăng ký mới.
-- Nếu cần kế hoạch thu theo đợt, dùng `lophoc_dotthu` để lưu cấu hình từng đợt.
+- Không cần `lophoc_dotthu` nếu chỉ muốn cho phép đóng nhiều lần; lúc đó dùng 1 `hoadon` và nhiều `phieuthu`.
+- Nếu cần kế hoạch thu theo đợt, dùng `lophoc_dotthu`; mỗi đợt sẽ sinh 1 `hoadon` riêng cho đăng ký đó.
 
 ---
 

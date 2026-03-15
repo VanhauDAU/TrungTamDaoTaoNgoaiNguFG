@@ -215,7 +215,17 @@
     display: flex;
     gap: 12px;
     justify-content: flex-end;
-    padding-top: 8px;
+    align-items: center;
+    margin-top: 24px;
+    padding: 12px 16px;
+    position: sticky;
+    bottom: 12px;
+    z-index: 40;
+    border: 1px solid rgba(226, 232, 240, .96);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, .94);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 16px 32px rgba(15, 23, 42, .10);
 }
 .kf-btn {
     padding: 10px 22px;
@@ -257,7 +267,7 @@
     gap: 14px;
 }
 .dot-thu-section.is-disabled {
-    opacity: .62;
+    display: none;
 }
 .dot-thu-toolbar {
     display: flex;
@@ -413,7 +423,369 @@
     color: #64748b;
 }
 
+.pricing-shell {
+    display: grid;
+    gap: 18px;
+}
+
+.pricing-stage {
+    display: grid;
+    gap: 18px;
+}
+
+.pricing-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 34px;
+    padding: 0 12px;
+    border-radius: 999px;
+    background: #ecfeff;
+    color: #0f766e;
+    border: 1px solid #bce7e3;
+    font-size: .78rem;
+    font-weight: 700;
+}
+
+.pricing-workbench {
+    display: grid;
+    grid-template-columns: minmax(0, 1.45fr) minmax(360px, .95fr);
+    gap: 20px;
+    align-items: start;
+}
+
+.pricing-column {
+    display: grid;
+    gap: 18px;
+}
+
+.pricing-card {
+    margin-bottom: 0;
+}
+
+.pricing-card-head,
+.pricing-subsection-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.pricing-card-head {
+    margin-bottom: 18px;
+}
+
+.pricing-card-kicker {
+    font-size: .74rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #0f766e;
+}
+
+.pricing-card-heading,
+.pricing-subsection-title {
+    margin-top: 4px;
+    font-size: 1rem;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.pricing-card-aside {
+    padding: 7px 10px;
+    border-radius: 10px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #64748b;
+    font-size: .76rem;
+    font-weight: 700;
+    text-align: right;
+}
+
+.pricing-field-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.pricing-inline-grid {
+    display: grid;
+    grid-template-columns: minmax(220px, .9fr) minmax(0, 1.4fr);
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.pricing-note-field textarea {
+    min-height: 96px;
+}
+
+.pricing-subsection {
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px dashed #dbe4ee;
+}
+
+.pricing-preview-stack {
+    display: grid;
+    gap: 12px;
+}
+
+.pricing-empty-state {
+    padding: 16px 18px;
+    border-radius: 14px;
+    border: 1px dashed #cbd5e1;
+    background: #f8fafc;
+    color: #64748b;
+    font-size: .84rem;
+    line-height: 1.5;
+}
+
+.pricing-secondary-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.pricing-note {
+    margin: -6px 0 14px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #475569;
+    font-size: .82rem;
+}
+
+.pricing-card .form-control,
+.pricing-card .form-select {
+    min-height: 44px;
+    border-radius: 10px;
+    border-color: #cbd5e1;
+    box-shadow: none;
+    font-size: .92rem;
+    color: #0f172a;
+    background-color: #fff;
+}
+
+.pricing-card textarea.form-control {
+    min-height: 96px;
+}
+
+.pricing-card .form-control::placeholder {
+    color: #94a3b8;
+}
+
+.pricing-card .form-control:focus,
+.pricing-card .form-select:focus {
+    border-color: #14b8a6;
+    box-shadow: 0 0 0 .2rem rgba(20, 184, 166, .12);
+}
+
+.pricing-card .form-check-input {
+    width: 1.05rem;
+    height: 1.05rem;
+    margin-top: 0;
+    border-color: #94a3b8;
+    box-shadow: none;
+}
+
+.pricing-card .form-check-input:focus {
+    box-shadow: 0 0 0 .2rem rgba(20, 184, 166, .14);
+    border-color: #14b8a6;
+}
+
+.pricing-card .form-check-input:checked {
+    background-color: #0f766e;
+    border-color: #0f766e;
+}
+
+.pricing-subtitle {
+    font-size: .78rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 10px;
+}
+
+.pricing-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+}
+
+.pricing-preview-card {
+    padding: 14px 16px;
+    border: 1px solid #dbe4ee;
+    border-radius: 12px;
+    background: #f8fafc;
+}
+
+.pricing-preview-card--primary {
+    background: linear-gradient(135deg, #0f766e, #14b8a6);
+    color: #fff;
+    border: none;
+}
+
+.pricing-preview-label {
+    font-size: .76rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    opacity: .82;
+}
+
+.pricing-preview-value {
+    margin-top: 4px;
+    font-size: 1.18rem;
+    font-weight: 700;
+}
+
+.pricing-preview-note {
+    margin-top: 4px;
+    font-size: .78rem;
+    color: #64748b;
+}
+
+.pricing-preview-card--primary .pricing-preview-note,
+.pricing-preview-card--primary .pricing-preview-label {
+    color: rgba(255, 255, 255, .85);
+}
+
+.dot-thu-summary-note,
+.phu-phi-summary-note {
+    margin-top: 4px;
+    font-size: .78rem;
+    color: #64748b;
+}
+
+.phu-phi-list {
+    display: grid;
+    gap: 14px;
+}
+
+.phu-phi-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.phu-phi-row {
+    display: grid;
+    grid-template-columns: minmax(220px, 2fr) minmax(160px, 1.1fr) minmax(150px, 1fr) minmax(180px, 1fr) auto;
+    gap: 14px;
+    align-items: end;
+    padding: 18px;
+    border: 1px solid #dbe4ee;
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(248,250,252,.98));
+    box-shadow: 0 10px 24px rgba(15, 23, 42, .05);
+}
+
+.pricing-card--supplemental .phu-phi-row {
+    grid-template-columns: minmax(0, 1.5fr) minmax(120px, .9fr) minmax(120px, .8fr);
+    grid-template-areas:
+        "name group amount"
+        "due meta meta";
+    align-items: start;
+}
+
+.pricing-card--supplemental .phu-phi-field--name { grid-area: name; }
+.pricing-card--supplemental .phu-phi-field--group { grid-area: group; }
+.pricing-card--supplemental .phu-phi-field--amount { grid-area: amount; }
+.pricing-card--supplemental .phu-phi-field--due { grid-area: due; }
+.pricing-card--supplemental .phu-phi-meta {
+    grid-area: meta;
+    justify-content: flex-end;
+    align-self: end;
+}
+
+.phu-phi-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.phu-phi-field label {
+    font-size: .78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: #475569;
+}
+
+.phu-phi-field input,
+.phu-phi-field select {
+    width: 100%;
+}
+
+.phu-phi-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.phu-phi-check {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 0 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    background: #fff;
+    color: #334155;
+    font-size: .84rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.phu-phi-check input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+}
+
+.phu-phi-remove {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    justify-content: center;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #fff;
+    color: #64748b;
+}
+
+.phu-phi-remove:hover {
+    background: #fff1f2;
+    border-color: #fecdd3;
+    color: #dc2626;
+}
+
+.phu-phi-empty {
+    padding: 16px 18px;
+    border: 1px dashed #cbd5e1;
+    border-radius: 12px;
+    background: #f8fafc;
+    font-size: .84rem;
+    color: #64748b;
+}
+
 @media (max-width: 1100px) {
+    .pricing-workbench,
+    .pricing-field-grid,
+    .pricing-inline-grid,
+    .pricing-secondary-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .pricing-card-aside {
+        text-align: left;
+    }
+
     .dot-thu-row {
         grid-template-columns: minmax(220px, 1fr) minmax(160px, 1fr);
     }
@@ -424,9 +796,37 @@
         grid-column: 1 / -1;
         justify-content: space-between;
     }
+    .phu-phi-row {
+        grid-template-columns: repeat(2, minmax(200px, 1fr));
+    }
+    .phu-phi-meta {
+        grid-column: 1 / -1;
+        justify-content: space-between;
+    }
+
+    .pricing-card--supplemental .phu-phi-row {
+        grid-template-columns: 1fr 1fr;
+        grid-template-areas:
+            "name name"
+            "group amount"
+            "due due"
+            "meta meta";
+    }
 }
 
 @media (max-width: 640px) {
+    .kf-action-bar {
+        bottom: 8px;
+        padding: 10px;
+        flex-direction: column-reverse;
+        align-items: stretch;
+    }
+
+    .kf-action-bar .kf-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
     .dot-thu-toolbar {
         flex-direction: column;
         align-items: stretch;
@@ -438,5 +838,33 @@
     }
     .dot-thu-meta {
         justify-content: space-between;
+    }
+    .pricing-card-head,
+    .pricing-subsection-head {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .pricing-preview-grid,
+    .phu-phi-summary {
+        grid-template-columns: 1fr;
+    }
+    .phu-phi-row {
+        grid-template-columns: 1fr;
+        padding: 16px;
+        gap: 12px;
+    }
+    .phu-phi-meta {
+        justify-content: space-between;
+        flex-wrap: wrap;
+    }
+
+    .pricing-card--supplemental .phu-phi-row {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "name"
+            "group"
+            "amount"
+            "due"
+            "meta";
     }
 }

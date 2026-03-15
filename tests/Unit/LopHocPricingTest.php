@@ -18,9 +18,24 @@ class LopHocPricingTest extends TestCase
             'trangThai' => 1,
         ]);
 
-        $this->assertSame('Trọn gói', $pricing->loaiThuLabel);
+        $this->assertSame('Một lần', $pricing->loaiThuLabel);
         $this->assertSame(4500000.0, $pricing->tongHocPhi);
         $this->assertSame('4.500.000 đ', $pricing->tongHocPhiFormat);
+    }
+
+    public function test_effective_committed_sessions_falls_back_to_expected_sessions_when_override_is_empty(): void
+    {
+        $pricing = new LopHocChinhSachGia([
+            'loaiThu' => LopHocChinhSachGia::LOAI_THU_TRON_GOI,
+            'hocPhiNiemYet' => 4500000,
+            'soBuoiCamKet' => null,
+        ]);
+
+        $pricing->setRelation('lopHoc', new LopHoc([
+            'soBuoiDuKien' => 24,
+        ]));
+
+        $this->assertSame(24, $pricing->soBuoiCamKetHieuDung);
     }
 
     public function test_class_detects_valid_pricing_policy_from_loaded_relation(): void

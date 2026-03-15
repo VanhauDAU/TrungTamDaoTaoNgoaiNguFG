@@ -18,9 +18,8 @@ class LopHocChinhSachGia extends Model
         'loaiThu',
         'hocPhiNiemYet',
         'soBuoiCamKet',
+        'hanThanhToanHocPhi',
         'ghiChuChinhSach',
-        'hieuLucTu',
-        'hieuLucDen',
         'trangThai',
     ];
 
@@ -28,9 +27,8 @@ class LopHocChinhSachGia extends Model
         'loaiThu' => 'integer',
         'hocPhiNiemYet' => 'decimal:2',
         'soBuoiCamKet' => 'integer',
+        'hanThanhToanHocPhi' => 'date',
         'trangThai' => 'integer',
-        'hieuLucTu' => 'datetime',
-        'hieuLucDen' => 'datetime',
     ];
 
     public function lopHoc()
@@ -52,9 +50,9 @@ class LopHocChinhSachGia extends Model
     public static function loaiThuLabels(): array
     {
         return [
-            self::LOAI_THU_TRON_GOI => 'Trọn gói',
+            self::LOAI_THU_TRON_GOI => 'Một lần',
             self::LOAI_THU_THEO_THANG => 'Theo tháng',
-            self::LOAI_THU_THEO_DOT => 'Theo đợt',
+            self::LOAI_THU_THEO_DOT => 'Chia đợt học phí',
         ];
     }
 
@@ -86,5 +84,24 @@ class LopHocChinhSachGia extends Model
     public function isActive(): bool
     {
         return (int) $this->trangThai === 1;
+    }
+
+    public function getSoBuoiCamKetHieuDungAttribute(): ?int
+    {
+        $camKet = $this->soBuoiCamKet !== null ? (int) $this->soBuoiCamKet : null;
+
+        if ($camKet !== null) {
+            return $camKet;
+        }
+
+        if ($this->relationLoaded('lopHoc') && $this->lopHoc) {
+            return $this->lopHoc->soBuoiDuKien !== null ? (int) $this->lopHoc->soBuoiDuKien : null;
+        }
+
+        $soBuoiDuKien = $this->lopHoc()
+            ->withoutGlobalScopes()
+            ->value('soBuoiDuKien');
+
+        return $soBuoiDuKien !== null ? (int) $soBuoiDuKien : null;
     }
 }

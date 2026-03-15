@@ -221,6 +221,15 @@
                                     <span class="hd-class-name">
                                         {{ $hd->dangKyLopHoc?->lopHoc?->tenLopHoc ?? '—' }}
                                     </span>
+                                    <div style="margin-top:6px;font-size:0.78rem;color:#64748b">
+                                        <span
+                                            style="display:inline-flex;align-items:center;padding:3px 8px;border-radius:999px;background:#eef2ff;color:#4338ca;font-weight:600;">
+                                            {{ $hd->nguonThuLabel }}
+                                        </span>
+                                        @if ($hd->nguonThu === \App\Models\Finance\HoaDon::NGUON_THU_PHU_PHI)
+                                            <div style="margin-top:4px">{{ $hd->dangKyLopHocPhuPhi?->tenKhoanThuSnapshot ?? 'Khoản bổ sung' }}</div>
+                                        @endif
+                                    </div>
                                 </td>
 
                                 <td>{{ $hd->coSo?->tenCoSo ?? '—' }}</td>

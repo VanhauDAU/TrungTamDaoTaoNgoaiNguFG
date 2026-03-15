@@ -7,8 +7,10 @@ use App\Models\Course\DanhMucKhoaHoc;
 use App\Models\Course\KhoaHoc;
 use App\Models\Education\BuoiHoc;
 use App\Models\Education\DangKyLopHoc;
+use App\Models\Education\DangKyLopHocPhuPhi;
 use App\Models\Education\LopHoc;
 use App\Models\Education\LopHocChinhSachGia;
+use App\Models\Education\LopHocPhuPhi;
 use App\Models\Finance\HoaDon;
 use App\Models\Auth\TaiKhoan;
 use Carbon\Carbon;
@@ -110,7 +112,7 @@ class CourseService implements CourseServiceInterface
     {
         $class = LopHoc::where('slug', $slugLopHoc)->with([
             'khoaHoc.danhMuc', 'coSo.tinhThanh', 'phongHoc',
-            'taiKhoan.hoSoNguoiDung', 'chinhSachGia.dotThus', 'dangKyLopHocs',
+            'taiKhoan.hoSoNguoiDung', 'chinhSachGia.dotThus', 'phuPhis', 'dangKyLopHocs',
         ])->firstOrFail();
 
         if ($class->khoaHoc->slug !== $slug) {
@@ -126,7 +128,7 @@ class CourseService implements CourseServiceInterface
         if (!$user instanceof TaiKhoan) {
             throw new \RuntimeException('Vui lòng đăng nhập để đăng ký lớp học.');
         }
-        $class = LopHoc::where('slug', $slugLopHoc)->with(['buoiHocs.caHoc', 'dangKyLopHocs', 'chinhSachGia.dotThus', 'khoaHoc'])->firstOrFail();
+        $class = LopHoc::where('slug', $slugLopHoc)->with(['buoiHocs.caHoc', 'dangKyLopHocs', 'chinhSachGia.dotThus', 'phuPhis', 'khoaHoc'])->firstOrFail();
 
         $validation = $this->validateClassRegistration($user, $class);
         if ($validation !== true) {
@@ -146,7 +148,7 @@ class CourseService implements CourseServiceInterface
         if (!$user instanceof TaiKhoan) {
             throw new \RuntimeException('Vui lòng đăng nhập để đăng ký lớp học.');
         }
-        $class = LopHoc::where('slug', $slugLopHoc)->with(['chinhSachGia.dotThus', 'khoaHoc', 'dangKyLopHocs', 'buoiHocs.caHoc', 'coSo'])->firstOrFail();
+        $class = LopHoc::where('slug', $slugLopHoc)->with(['chinhSachGia.dotThus', 'phuPhis', 'khoaHoc', 'dangKyLopHocs', 'buoiHocs.caHoc', 'coSo'])->firstOrFail();
 
         $validation = $this->validateClassRegistration($user, $class);
         if ($validation !== true) {
@@ -157,6 +159,7 @@ class CourseService implements CourseServiceInterface
 
         DB::transaction(function () use ($user, $class, $request) {
             $pricingPolicy = $class->chinhSachGia;
+            $registrationDate = now();
 
             if (!$pricingPolicy || !$pricingPolicy->isActive() || (float) $pricingPolicy->hocPhiNiemYet <= 0) {
                 throw new \Exception('Lớp học chưa có thông tin học phí. Không thể tạo hóa đơn.');
@@ -171,30 +174,99 @@ class CourseService implements CourseServiceInterface
                 'hocPhiNiemYetSnapshot' => $tongTien,
                 'giamGiaSnapshot' => 0,
                 'hocPhiPhaiThuSnapshot' => $tongTien,
-                'soBuoiCamKetSnapshot' => $pricingPolicy->soBuoiCamKet,
+                'soBuoiCamKetSnapshot' => $pricingPolicy->soBuoiCamKetHieuDung,
                 'ghiChuGiaSnapshot' => $pricingPolicy->ghiChuChinhSach,
-                'ngayDangKy' => now(),
+                'ngayDangKy' => $registrationDate,
                 'trangThai' => DangKyLopHoc::TRANG_THAI_CHO_THANH_TOAN,
             ]);
 
-            HoaDon::create([
-                'maHoaDon' => HoaDon::generateMaHoaDon(),
-                'ngayLap' => now(),
-                'ngayHetHan' => now()->addDays(30),
-                'tongTien' => $tongTien,
-                'giamGia' => 0,
-                'thue' => 0,
-                'tongTienSauThue' => $tongTien,
-                'daTra' => 0,
-                'taiKhoanId' => $user->taiKhoanId,
-                'nguoiLapId' => null,
-                'dangKyLopHocId' => $registration->dangKyLopHocId,
-                'phuongThucThanhToan' => $request->payment_method,
-                'loaiHoaDon' => HoaDon::LOAI_DANG_KY_MOI,
-                'coSoId' => $class->coSoId,
-                'trangThai' => HoaDon::TRANG_THAI_CHUA_TT,
-                'ghiChu' => 'Đăng ký lớp ' . $class->tenLopHoc . ' - Khóa ' . ($class->khoaHoc->tenKhoaHoc ?? ''),
-            ]);
+            $dotThus = $pricingPolicy->dotThus
+                ->where('trangThai', 1)
+                ->sortBy('thuTu')
+                ->values();
+
+            if ((int) $pricingPolicy->loaiThu === LopHocChinhSachGia::LOAI_THU_THEO_DOT && $dotThus->isNotEmpty()) {
+                foreach ($dotThus as $dotThu) {
+                    HoaDon::create([
+                        'maHoaDon' => HoaDon::generateMaHoaDon(),
+                        'ngayLap' => $registrationDate,
+                        'ngayHetHan' => $this->resolveActualDueDate($dotThu->hanThanhToan, $registrationDate),
+                        'tongTien' => (float) $dotThu->soTien,
+                        'giamGia' => 0,
+                        'thue' => 0,
+                        'tongTienSauThue' => (float) $dotThu->soTien,
+                        'daTra' => 0,
+                        'taiKhoanId' => $user->taiKhoanId,
+                        'nguoiLapId' => null,
+                        'dangKyLopHocId' => $registration->dangKyLopHocId,
+                        'lopHocDotThuId' => $dotThu->lopHocDotThuId,
+                        'nguonThu' => HoaDon::NGUON_THU_HOC_PHI,
+                        'phuongThucThanhToan' => $request->payment_method,
+                        'loaiHoaDon' => HoaDon::LOAI_DANG_KY_MOI,
+                        'coSoId' => $class->coSoId,
+                        'trangThai' => HoaDon::TRANG_THAI_CHUA_TT,
+                        'ghiChu' => 'Đăng ký lớp ' . $class->tenLopHoc . ' - ' . $dotThu->tenDotThu,
+                    ]);
+                }
+            } else {
+                HoaDon::create([
+                    'maHoaDon' => HoaDon::generateMaHoaDon(),
+                    'ngayLap' => $registrationDate,
+                    'ngayHetHan' => $this->resolveActualDueDate($pricingPolicy->hanThanhToanHocPhi, $registrationDate),
+                    'tongTien' => $tongTien,
+                    'giamGia' => 0,
+                    'thue' => 0,
+                    'tongTienSauThue' => $tongTien,
+                    'daTra' => 0,
+                    'taiKhoanId' => $user->taiKhoanId,
+                    'nguoiLapId' => null,
+                    'dangKyLopHocId' => $registration->dangKyLopHocId,
+                    'nguonThu' => HoaDon::NGUON_THU_HOC_PHI,
+                    'phuongThucThanhToan' => $request->payment_method,
+                    'loaiHoaDon' => HoaDon::LOAI_DANG_KY_MOI,
+                    'coSoId' => $class->coSoId,
+                    'trangThai' => HoaDon::TRANG_THAI_CHUA_TT,
+                    'ghiChu' => 'Đăng ký lớp ' . $class->tenLopHoc . ' - Khóa ' . ($class->khoaHoc->tenKhoaHoc ?? ''),
+                ]);
+            }
+
+            $defaultSupplementalFees = $class->phuPhis
+                ->filter(fn (LopHocPhuPhi $phuPhi) => $phuPhi->isActive() && $phuPhi->isDefaultApplied())
+                ->values();
+
+            foreach ($defaultSupplementalFees as $phuPhi) {
+                $snapshot = DangKyLopHocPhuPhi::create([
+                    'dangKyLopHocId' => $registration->dangKyLopHocId,
+                    'lopHocPhuPhiId' => $phuPhi->lopHocPhuPhiId,
+                    'tenKhoanThuSnapshot' => $phuPhi->tenKhoanThu,
+                    'nhomPhiSnapshot' => $phuPhi->nhomPhi,
+                    'soTienSnapshot' => $phuPhi->soTien,
+                    'hanThanhToan' => $this->resolveActualDueDate($phuPhi->hanThanhToanMau, $registrationDate),
+                    'trangThai' => DangKyLopHocPhuPhi::TRANG_THAI_HIEU_LUC,
+                    'ngayApDung' => $registrationDate,
+                ]);
+
+                HoaDon::create([
+                    'maHoaDon' => HoaDon::generateMaHoaDon(),
+                    'ngayLap' => $registrationDate,
+                    'ngayHetHan' => $snapshot->hanThanhToan,
+                    'tongTien' => (float) $snapshot->soTienSnapshot,
+                    'giamGia' => 0,
+                    'thue' => 0,
+                    'tongTienSauThue' => (float) $snapshot->soTienSnapshot,
+                    'daTra' => 0,
+                    'taiKhoanId' => $user->taiKhoanId,
+                    'nguoiLapId' => null,
+                    'dangKyLopHocId' => $registration->dangKyLopHocId,
+                    'dangKyLopHocPhuPhiId' => $snapshot->dangKyLopHocPhuPhiId,
+                    'nguonThu' => HoaDon::NGUON_THU_PHU_PHI,
+                    'phuongThucThanhToan' => $request->payment_method,
+                    'loaiHoaDon' => HoaDon::LOAI_KHAC,
+                    'coSoId' => $class->coSoId,
+                    'trangThai' => HoaDon::TRANG_THAI_CHUA_TT,
+                    'ghiChu' => 'Khoản bổ sung: ' . $snapshot->tenKhoanThuSnapshot . ' - Lớp ' . $class->tenLopHoc,
+                ]);
+            }
         });
     }
 
@@ -282,5 +354,17 @@ class CourseService implements CourseServiceInterface
         }
 
         return true;
+    }
+
+    private function resolveActualDueDate($templateDate, Carbon $registrationDate): ?string
+    {
+        if (empty($templateDate)) {
+            return null;
+        }
+
+        $template = Carbon::parse($templateDate)->startOfDay();
+        $registered = $registrationDate->copy()->startOfDay();
+
+        return ($template->lt($registered) ? $registered : $template)->toDateString();
     }
 }
