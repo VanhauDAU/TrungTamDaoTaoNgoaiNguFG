@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Admin\KhoaHoc;
 
 use App\Contracts\Admin\KhoaHoc\LopHocServiceInterface;
 use App\Http\Controllers\Controller;
+use App\Models\Education\LopHoc;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class LopHocController extends Controller
 {
@@ -51,6 +53,35 @@ class LopHocController extends Controller
 
         return redirect()->route('admin.lop-hoc.show', $lopHoc->slug)
             ->with('success', 'Đã cập nhật lớp học «' . $lopHoc->tenLopHoc . '» thành công.');
+    }
+
+    public function updateStatus(Request $request, string $slug)
+    {
+        $payload = $request->validate([
+            'trangThai' => 'required|integer',
+        ]);
+
+        try {
+            $lopHoc = $this->lopHocService->updateStatus($slug, (int) $payload['trangThai']);
+            $allowedTransitions = LopHoc::allowedStatusTransitions()[(int) $lopHoc->trangThai] ?? [];
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Đã cập nhật trạng thái lớp học.',
+                'data' => [
+                    'trangThai' => (int) $lopHoc->trangThai,
+                    'trangThaiLabel' => $lopHoc->trangThaiLabel,
+                    'allowedTransitions' => array_values($allowedTransitions),
+                    'trangThaiOptions' => LopHoc::trangThaiOptions(),
+                ],
+            ]);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => collect($e->errors())->flatten()->first() ?: 'Không thể cập nhật trạng thái lớp học.',
+                'errors' => $e->errors(),
+            ], 422);
+        }
     }
 
     public function destroy(string $slug)

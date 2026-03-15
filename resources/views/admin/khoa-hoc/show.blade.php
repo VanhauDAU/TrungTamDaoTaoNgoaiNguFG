@@ -337,17 +337,6 @@
         </div>
     @endif
 
-    {{-- ── Chính Sách Giá ────────────────────────────────────────── --}}
-    <div class="kf-card" style="margin-bottom:22px">
-        <div class="kf-card-title">
-            <span><i class="fas fa-file-invoice-dollar"></i> Chính sách giá</span>
-        </div>
-        <p style="font-size:.84rem;color:#475569;margin:0">
-            Học phí không còn được cấu hình ở cấp khóa học. Mỗi lớp học sẽ có chính sách giá riêng, cho phép trung tâm mở
-            lớp trước rồi bổ sung học phí trước khi tuyển sinh.
-        </p>
-    </div>
-
     {{-- ── Danh sách lớp học ────────────────────────────────── --}}
 
     <div class="kf-card">

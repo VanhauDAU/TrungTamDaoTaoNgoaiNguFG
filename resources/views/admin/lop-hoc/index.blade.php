@@ -78,6 +78,41 @@
             flex-wrap: wrap;
         }
 
+        .lh-status-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-width: 170px;
+        }
+
+        .lh-status-select {
+            width: 100%;
+            min-height: 36px;
+            padding: 6px 10px;
+            border: 1px solid #dbe4ee;
+            border-radius: 8px;
+            background: #fff;
+            color: #1e293b;
+            font-size: .82rem;
+            outline: none;
+            transition: border-color .15s, box-shadow .15s, opacity .15s;
+        }
+
+        .lh-status-select:focus {
+            border-color: #a78bfa;
+            box-shadow: 0 0 0 3px rgba(167, 139, 250, .14);
+        }
+
+        .lh-status-select.is-loading {
+            opacity: .65;
+            pointer-events: none;
+        }
+
+        .lh-status-hint {
+            font-size: .72rem;
+            color: #94a3b8;
+        }
+
         @media (max-width: 768px) {
             .lh-filter-field[style] {
                 grid-column: auto !important;
@@ -297,6 +332,7 @@
                             @php
                                 $soHV = $lop->dangKyLopHocs->count();
                                 $soDangKyHieuLuc = $lop->dangKyLopHocs->filter(fn($dangKy) => $dangKy->preventsClassDeletion())->count();
+                                $allowedTransitions = \App\Models\Education\LopHoc::allowedStatusTransitions()[(int) $lop->trangThai] ?? [];
                             @endphp
                             <tr>
                                 <td style="color:#94a3b8;font-size:.78rem">{{ $lopHocs->firstItem() + $loop->index }}</td>
@@ -368,7 +404,22 @@
                                     {{ $lop->ngayBatDau ? \Carbon\Carbon::parse($lop->ngayBatDau)->format('d/m/Y') : '—' }}
                                 </td>
                                 <td>
-                                    <span class="lh-tt lh-tt-{{ $lop->trangThai }}">{{ $lop->trangThaiLabel }}</span>
+                                    <div class="lh-status-stack">
+                                        <span class="lh-tt lh-tt-{{ $lop->trangThai }} js-status-badge">{{ $lop->trangThaiLabel }}</span>
+                                        <select class="lh-status-select js-status-select"
+                                            data-update-url="{{ route('admin.lop-hoc.update-status', $lop->slug) }}"
+                                            data-current-status="{{ (int) $lop->trangThai }}"
+                                            {{ count($allowedTransitions) <= 1 ? 'disabled' : '' }}>
+                                            @foreach (\App\Models\Education\LopHoc::trangThaiOptions() as $value => $label)
+                                                <option value="{{ $value }}"
+                                                    {{ (int) $lop->trangThai === (int) $value ? 'selected' : '' }}
+                                                    {{ !in_array((int) $value, $allowedTransitions, true) ? 'disabled' : '' }}>
+                                                    {{ $label }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        <div class="lh-status-hint">Đổi nhanh ngay trên danh sách</div>
+                                    </div>
                                 </td>
                                 <td>
                                     <div class="lh-actions">
@@ -458,6 +509,110 @@
 
         document.querySelector('.search-input')?.addEventListener('keydown', e => {
             if (e.key === 'Enter') document.getElementById('lh-filter-form').submit();
+        });
+
+        function rebuildStatusOptions(select, currentStatus, options, allowedTransitions) {
+            const allowed = new Set((allowedTransitions || []).map(Number));
+            select.innerHTML = Object.entries(options).map(([value, label]) => {
+                const numericValue = Number(value);
+                const selected = numericValue === Number(currentStatus) ? 'selected' : '';
+                const disabled = allowed.has(numericValue) ? '' : 'disabled';
+                return `<option value="${numericValue}" ${selected} ${disabled}>${label}</option>`;
+            }).join('');
+            select.dataset.currentStatus = String(currentStatus);
+            select.disabled = allowed.size <= 1;
+        }
+
+        function updateStatusBadge(select, status, label) {
+            const badge = select.closest('.lh-status-stack')?.querySelector('.js-status-badge');
+            if (!badge) {
+                return;
+            }
+
+            badge.className = `lh-tt lh-tt-${status} js-status-badge`;
+            badge.textContent = label;
+        }
+
+        document.querySelectorAll('.js-status-select').forEach(select => {
+            select.addEventListener('change', async () => {
+                const previousStatus = Number(select.dataset.currentStatus || select.value);
+                const nextStatus = Number(select.value);
+
+                if (previousStatus === nextStatus) {
+                    return;
+                }
+
+                const selectedText = select.options[select.selectedIndex]?.text || 'trạng thái mới';
+                const rowName = select.closest('tr')?.querySelector('td:nth-child(2) a')?.textContent?.trim() || 'lớp học này';
+
+                const confirmation = await Swal.fire({
+                    title: 'Đổi trạng thái lớp?',
+                    html: `Cập nhật <strong>${rowName}</strong> sang <strong>${selectedText}</strong>.`,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Cập nhật',
+                    cancelButtonText: 'Hủy',
+                    confirmButtonColor: '#7c3aed',
+                    cancelButtonColor: '#64748b',
+                    reverseButtons: true,
+                });
+
+                if (!confirmation.isConfirmed) {
+                    select.value = String(previousStatus);
+                    return;
+                }
+
+                select.classList.add('is-loading');
+
+                try {
+                    const response = await fetch(select.dataset.updateUrl, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                        },
+                        body: JSON.stringify({
+                            trangThai: nextStatus,
+                        }),
+                    });
+
+                    const result = await response.json();
+
+                    if (!response.ok || !result.success) {
+                        throw new Error(result.message || 'Không thể cập nhật trạng thái lớp học.');
+                    }
+
+                    updateStatusBadge(select, result.data.trangThai, result.data.trangThaiLabel);
+                    rebuildStatusOptions(
+                        select,
+                        result.data.trangThai,
+                        result.data.trangThaiOptions,
+                        result.data.allowedTransitions
+                    );
+
+                    await Swal.fire({
+                        title: 'Đã cập nhật',
+                        text: result.message,
+                        icon: 'success',
+                        confirmButtonText: 'OK',
+                        confirmButtonColor: '#7c3aed',
+                        timer: 1800,
+                        timerProgressBar: true,
+                    });
+                } catch (error) {
+                    select.value = String(previousStatus);
+                    await Swal.fire({
+                        title: 'Không thể cập nhật',
+                        text: error.message,
+                        icon: 'error',
+                        confirmButtonText: 'Đã hiểu',
+                        confirmButtonColor: '#dc2626',
+                    });
+                } finally {
+                    select.classList.remove('is-loading');
+                }
+            });
         });
     </script>
 @endsection

@@ -192,6 +192,38 @@ class LopHocService implements LopHocServiceInterface
         return $lopHoc->fresh(['chinhSachGia.dotThus']);
     }
 
+    public function updateStatus(string $slug, int $trangThai): LopHoc
+    {
+        $lopHoc = LopHoc::with(['chinhSachGia', 'dangKyLopHocs'])->where('slug', $slug)->firstOrFail();
+
+        if (!array_key_exists($trangThai, LopHoc::trangThaiOptions())) {
+            throw ValidationException::withMessages([
+                'trangThai' => 'Trạng thái lớp học không hợp lệ.',
+            ]);
+        }
+
+        if ((int) $lopHoc->trangThai === $trangThai) {
+            return $lopHoc;
+        }
+
+        $this->ensurePricingBusinessRules($lopHoc, [
+            'trangThai' => $trangThai,
+            'ngayBatDau' => $lopHoc->ngayBatDau,
+        ], $lopHoc->hasValidPricingPolicy()
+            ? [
+                'hocPhiNiemYet' => (float) $lopHoc->chinhSachGia?->hocPhiNiemYet,
+                'loaiThu' => (int) ($lopHoc->chinhSachGia?->loaiThu ?? LopHocChinhSachGia::LOAI_THU_TRON_GOI),
+                'hieuLucTu' => $lopHoc->chinhSachGia?->hieuLucTu,
+                'hieuLucDen' => $lopHoc->chinhSachGia?->hieuLucDen,
+            ]
+            : []);
+
+        $lopHoc->update(['trangThai' => $trangThai]);
+        $this->syncRegistrationStatuses($lopHoc->fresh());
+
+        return $lopHoc->fresh(['chinhSachGia', 'dangKyLopHocs']);
+    }
+
     public function destroy(string $slug): string
     {
         $lopHoc = LopHoc::where('slug', $slug)->firstOrFail();
@@ -270,7 +302,6 @@ class LopHocService implements LopHocServiceInterface
             'taiKhoanId' => 'nullable|exists:taikhoan,taiKhoanId',
             'phongHocId' => 'nullable|exists:phonghoc,phongHocId',
             'ngayBatDau' => 'required|date',
-            'ngayKetThuc' => 'required|date|after:ngayBatDau',
             'soBuoiDuKien' => 'nullable|integer|min:1',
             'soHocVienToiDa' => 'nullable|integer|min:1',
             'donGiaDay' => 'nullable|numeric|min:0',
@@ -290,8 +321,6 @@ class LopHocService implements LopHocServiceInterface
             'coSoId.required' => 'Vui lòng chọn cơ sở.',
             'caHocId.required' => 'Vui lòng chọn ca học.',
             'ngayBatDau.required' => 'Vui lòng chọn ngày bắt đầu.',
-            'ngayKetThuc.required' => 'Vui lòng chọn ngày kết thúc.',
-            'ngayKetThuc.after' => 'Ngày kết thúc phải sau ngày bắt đầu.',
             'hocPhiNiemYet.min' => 'Học phí niêm yết không được âm.',
             'soBuoiCamKet.min' => 'Số buổi cam kết phải tối thiểu là 1.',
         ]);
@@ -307,7 +336,6 @@ class LopHocService implements LopHocServiceInterface
             'taiKhoanId',
             'phongHocId',
             'ngayBatDau',
-            'ngayKetThuc',
             'soBuoiDuKien',
             'soHocVienToiDa',
             'donGiaDay',
@@ -327,7 +355,7 @@ class LopHocService implements LopHocServiceInterface
         $hieuLucTu = $validatedData['hieuLucTu'] ?? null;
         $hieuLucDen = $validatedData['hieuLucDen'] ?? null;
         $trangThai = (int) ($validatedData['trangThaiChinhSachGia'] ?? 1);
-        $dotThus = $this->normalizeDotThuRows($request->input('dotThu', []));
+        $dotThus = $this->normalizeDotThuRows($request->input('dotThu', []), $loaiThu, $hieuLucTu, $hieuLucDen);
 
         $hasAnyPricingInput = $hocPhiNiemYet !== null
             || $soBuoiCamKet !== null
@@ -345,6 +373,16 @@ class LopHocService implements LopHocServiceInterface
             throw ValidationException::withMessages([
                 'hocPhiNiemYet' => 'Vui lòng nhập học phí niêm yết lớn hơn 0 khi cấu hình chính sách giá.',
             ]);
+        }
+
+        if ($loaiThu === LopHocChinhSachGia::LOAI_THU_THEO_DOT && empty($dotThus)) {
+            throw ValidationException::withMessages([
+                'dotThu' => 'Loại thu theo đợt phải có ít nhất một đợt thu.',
+            ]);
+        }
+
+        if ($loaiThu !== LopHocChinhSachGia::LOAI_THU_THEO_DOT) {
+            $dotThus = [];
         }
 
         if (!empty($dotThus)) {
@@ -368,9 +406,16 @@ class LopHocService implements LopHocServiceInterface
         ];
     }
 
-    private function normalizeDotThuRows(array $rows): array
+    private function normalizeDotThuRows(array $rows, int $loaiThu, $hieuLucTu, $hieuLucDen): array
     {
+        if ($loaiThu !== LopHocChinhSachGia::LOAI_THU_THEO_DOT) {
+            return [];
+        }
+
         $normalizedRows = [];
+        $previousDueDate = null;
+        $effectiveFromDate = $hieuLucTu ? Carbon::parse($hieuLucTu)->startOfDay() : null;
+        $effectiveToDate = $hieuLucDen ? Carbon::parse($hieuLucDen)->endOfDay() : null;
 
         foreach ($rows as $index => $row) {
             $tenDotThu = trim((string) ($row['tenDotThu'] ?? ''));
@@ -395,14 +440,42 @@ class LopHocService implements LopHocServiceInterface
                 ]);
             }
 
+            if (empty($hanThanhToan)) {
+                throw ValidationException::withMessages([
+                    "dotThu.{$index}.hanThanhToan" => 'Mỗi đợt thu phải có hạn thanh toán.',
+                ]);
+            }
+
+            $dueDate = Carbon::parse($hanThanhToan)->startOfDay();
+
+            if ($effectiveFromDate && $dueDate->lt($effectiveFromDate)) {
+                throw ValidationException::withMessages([
+                    "dotThu.{$index}.hanThanhToan" => 'Hạn thanh toán không được sớm hơn hiệu lực từ của chính sách giá.',
+                ]);
+            }
+
+            if ($effectiveToDate && $dueDate->gt($effectiveToDate)) {
+                throw ValidationException::withMessages([
+                    "dotThu.{$index}.hanThanhToan" => 'Hạn thanh toán không được muộn hơn hiệu lực đến của chính sách giá.',
+                ]);
+            }
+
+            if ($previousDueDate && $dueDate->lt($previousDueDate)) {
+                throw ValidationException::withMessages([
+                    "dotThu.{$index}.hanThanhToan" => 'Hạn thanh toán các đợt phải tăng dần theo thứ tự đợt thu.',
+                ]);
+            }
+
             $normalizedRows[] = [
                 'tenDotThu' => $tenDotThu,
                 'thuTu' => count($normalizedRows) + 1,
                 'soTien' => (float) $soTien,
-                'hanThanhToan' => $hanThanhToan ?: null,
+                'hanThanhToan' => $dueDate->toDateString(),
                 'batBuoc' => $batBuoc,
                 'trangThai' => 1,
             ];
+
+            $previousDueDate = $dueDate;
         }
 
         return $normalizedRows;
@@ -429,6 +502,61 @@ class LopHocService implements LopHocServiceInterface
         if ($existingClass && $existingClass->dangKyLopHocs()->count() > 0 && !$hasPricing) {
             throw ValidationException::withMessages([
                 'hocPhiNiemYet' => 'Không thể gỡ chính sách giá của lớp khi đã có học viên đăng ký.',
+            ]);
+        }
+
+        $this->ensureStatusTransitionRules($existingClass, $lopHocData);
+
+        if (!empty($pricingPayload) && (int) $pricingPayload['loaiThu'] === LopHocChinhSachGia::LOAI_THU_THEO_DOT) {
+            $effectiveFrom = $pricingPayload['hieuLucTu'] ? Carbon::parse($pricingPayload['hieuLucTu']) : null;
+            $effectiveTo = $pricingPayload['hieuLucDen'] ? Carbon::parse($pricingPayload['hieuLucDen']) : null;
+
+            if ($effectiveFrom && $effectiveTo && $effectiveTo->lt($effectiveFrom)) {
+                throw ValidationException::withMessages([
+                    'hieuLucDen' => 'Hiệu lực đến phải sau hoặc bằng hiệu lực từ.',
+                ]);
+            }
+        }
+    }
+
+    private function ensureStatusTransitionRules(?LopHoc $existingClass, array $lopHocData): void
+    {
+        if (!$existingClass) {
+            $this->ensureStatusDateRules(null, (int) $lopHocData['trangThai'], $lopHocData);
+            return;
+        }
+
+        $targetStatus = (int) $lopHocData['trangThai'];
+
+        if (!$existingClass->canTransitionTo($targetStatus)) {
+            throw ValidationException::withMessages([
+                'trangThai' => 'Không thể chuyển lớp học từ trạng thái "' . $existingClass->trangThaiLabel . '" sang "' . (LopHoc::trangThaiLabels()[$targetStatus] ?? 'không xác định') . '".',
+            ]);
+        }
+
+        if ($existingClass->isCancelled() && $targetStatus !== LopHoc::TRANG_THAI_DA_HUY && $existingClass->dangKyLopHocs()->count() > 0) {
+            throw ValidationException::withMessages([
+                'trangThai' => 'Không thể mở lại lớp đã hủy khi lớp này đã có đăng ký học viên. Hãy tạo lớp mới nếu cần mở lại.',
+            ]);
+        }
+
+        $this->ensureStatusDateRules($existingClass, $targetStatus, $lopHocData);
+    }
+
+    private function ensureStatusDateRules(?LopHoc $existingClass, int $targetStatus, array $lopHocData): void
+    {
+        $today = Carbon::today();
+        $ngayBatDau = !empty($lopHocData['ngayBatDau']) ? Carbon::parse($lopHocData['ngayBatDau'])->startOfDay() : null;
+
+        if ($targetStatus === LopHoc::TRANG_THAI_DANG_HOC && $ngayBatDau && $ngayBatDau->gt($today)) {
+            throw ValidationException::withMessages([
+                'trangThai' => 'Không thể chuyển lớp sang trạng thái đang học trước ngày bắt đầu.',
+            ]);
+        }
+
+        if ($targetStatus === LopHoc::TRANG_THAI_DA_KET_THUC && $existingClass && !$existingClass->isInProgress()) {
+            throw ValidationException::withMessages([
+                'trangThai' => 'Chỉ có thể kết thúc lớp khi lớp đang ở trạng thái đang học.',
             ]);
         }
     }

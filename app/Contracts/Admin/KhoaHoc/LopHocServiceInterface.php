@@ -44,6 +44,11 @@ interface LopHocServiceInterface
     public function update(Request $request, string $slug): LopHoc;
 
     /**
+     * Cập nhật nhanh trạng thái lớp học bằng AJAX.
+     */
+    public function updateStatus(string $slug, int $trangThai): LopHoc;
+
+    /**
      * Xóa mềm lớp học (soft delete).
      */
     public function destroy(string $slug): string;

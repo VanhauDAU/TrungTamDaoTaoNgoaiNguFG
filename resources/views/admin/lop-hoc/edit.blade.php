@@ -242,19 +242,20 @@
                         <label>Ngày bắt đầu <span class="req">*</span></label>
                         <input type="date" name="ngayBatDau"
                             value="{{ old('ngayBatDau', $lopHoc->ngayBatDau ? \Carbon\Carbon::parse($lopHoc->ngayBatDau)->format('Y-m-d') : '') }}"
-                            onchange="calcBuoi()">
+                            >
                     </div>
                     <div class="kf-form-group">
-                        <label>Ngày kết thúc <span class="req">*</span></label>
-                        <input type="date" name="ngayKetThuc"
-                            value="{{ old('ngayKetThuc', $lopHoc->ngayKetThuc ? \Carbon\Carbon::parse($lopHoc->ngayKetThuc)->format('Y-m-d') : '') }}"
-                            onchange="calcBuoi()">
+                        <label>Ngày kết thúc</label>
+                        <input type="text"
+                            value="{{ $lopHoc->ngayKetThuc ? \Carbon\Carbon::parse($lopHoc->ngayKetThuc)->format('d/m/Y') : 'Tự cập nhật theo buổi học cuối cùng' }}"
+                            readonly>
+                        <div class="form-hint">Trường này được đồng bộ từ buổi học cuối cùng còn hiệu lực của lớp.</div>
                     </div>
                     <div class="kf-form-group">
                         <label>Số buổi dự kiến</label>
                         <input type="number" name="soBuoiDuKien" id="soBuoiInput"
                             value="{{ old('soBuoiDuKien', $lopHoc->soBuoiDuKien) }}" min="1">
-                        <div class="form-hint" id="calcHint"></div>
+                        <div class="form-hint">Dùng cho kế hoạch đào tạo và tính năng tự động sinh buổi học.</div>
                     </div>
                 </div>
             </div>
@@ -344,47 +345,69 @@
                 </div>
             </div>
 
-            <div class="kf-card">
+            <div class="kf-card dot-thu-section" id="dotThuSection">
                 <div class="kf-card-title" style="justify-content:space-between">
                     <span><i class="fas fa-layer-group"></i> Kế hoạch thu theo đợt</span>
-                    <button type="button" class="kf-btn kf-btn-secondary" onclick="addDotThuRow()">
+                    <button type="button" class="kf-btn kf-btn-secondary" id="addDotThuBtn" onclick="addDotThuRow()">
                         <i class="fas fa-plus"></i> Thêm đợt thu
                     </button>
                 </div>
-                <p class="form-hint" style="margin:0 0 14px">
+                <p class="form-hint" style="margin:0 0 10px">
                     Có thể để trống nếu lớp thu một lần. Nếu cấu hình đợt thu, tổng số tiền các đợt phải bằng học phí niêm yết.
                 </p>
-                <div id="dotThuRows">
+                <div class="dot-thu-toolbar">
+                    <p class="dot-thu-mode-hint" id="dotThuModeHint">
+                        Chọn loại thu "Theo đợt" để mở cấu hình kế hoạch thu.
+                    </p>
+                </div>
+                <div class="dot-thu-summary" id="dotThuSummary">
+                    <div class="dot-thu-summary-card">
+                        <div class="dot-thu-summary-label">Tong dot thu</div>
+                        <div class="dot-thu-summary-value" id="dotThuTotalValue">0 đ</div>
+                    </div>
+                    <div class="dot-thu-summary-card">
+                        <div class="dot-thu-summary-label">Chenhlech voi hoc phi</div>
+                        <div class="dot-thu-summary-value" id="dotThuDeltaValue">0 đ</div>
+                    </div>
+                    <div class="dot-thu-summary-status" id="dotThuStatusCard">
+                        <div class="dot-thu-summary-label">Trang thai kiem tra</div>
+                        <div class="dot-thu-summary-value" id="dotThuStatusValue">Chua ap dung</div>
+                        <div class="dot-thu-summary-note" id="dotThuStatusNote">Khi chon Theo đợt, tổng các đợt thu phải khớp học phí niêm yết và hạn thanh toán phải tăng dần.</div>
+                    </div>
+                </div>
+                <div id="dotThuRows" class="dot-thu-list">
                     @forelse ($oldDotThus as $index => $dotThu)
-                        <div class="dot-thu-row"
-                            style="display:grid;grid-template-columns:2fr 1fr 1fr auto auto;gap:10px;align-items:end;margin-bottom:10px">
-                            <div>
+                        <div class="dot-thu-row">
+                            <div class="dot-thu-field dot-thu-field--name">
                                 <label>Tên đợt thu</label>
                                 <input type="text" name="dotThu[{{ $index }}][tenDotThu]"
                                     value="{{ $dotThu['tenDotThu'] ?? '' }}" placeholder="VD: Đợt cọc giữ chỗ">
                             </div>
-                            <div>
+                            <div class="dot-thu-field">
                                 <label>Số tiền</label>
                                 <input type="number" name="dotThu[{{ $index }}][soTien]"
                                     value="{{ $dotThu['soTien'] ?? '' }}" min="0" step="1000"
                                     oninput="previewPricing()">
                             </div>
-                            <div>
+                            <div class="dot-thu-field">
                                 <label>Hạn thanh toán</label>
                                 <input type="date" name="dotThu[{{ $index }}][hanThanhToan]"
                                     value="{{ $dotThu['hanThanhToan'] ?? '' }}">
                             </div>
-                            <label style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
-                                <input type="checkbox" name="dotThu[{{ $index }}][batBuoc]" value="1"
-                                    {{ !empty($dotThu['batBuoc']) ? 'checked' : '' }}>
-                                Bắt buộc
-                            </label>
-                            <button type="button" class="kf-btn kf-btn-secondary" onclick="removeDotThuRow(this)">
-                                <i class="fas fa-trash"></i>
-                            </button>
+                            <div class="dot-thu-meta">
+                                <label class="dot-thu-check">
+                                    <input type="checkbox" name="dotThu[{{ $index }}][batBuoc]" value="1"
+                                        {{ !empty($dotThu['batBuoc']) ? 'checked' : '' }}>
+                                    <span>Bắt buộc</span>
+                                </label>
+                                <button type="button" class="kf-btn kf-btn-secondary dot-thu-remove"
+                                    onclick="removeDotThuRow(this)" aria-label="Xóa đợt thu">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
                         </div>
                     @empty
-                        <div class="form-hint" id="dotThuEmptyHint">Chưa cấu hình đợt thu nào.</div>
+                        <div class="form-hint dot-thu-empty" id="dotThuEmptyHint">Chưa cấu hình đợt thu nào.</div>
                     @endforelse
                 </div>
             </div>
@@ -439,6 +462,7 @@
 @section('script')
     <script>
         let dotThuIndex = {{ count($oldDotThus) }};
+        const LOAI_THU_THEO_DOT = {{ \App\Models\Education\LopHocChinhSachGia::LOAI_THU_THEO_DOT }};
 
         document.querySelectorAll('.kf-tab-btn').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -458,33 +482,6 @@
                 lbl.style.borderColor = cb.checked ? '#7c3aed' : '';
                 lbl.style.color = cb.checked ? '#fff' : '';
             });
-            calcBuoi();
-        }
-
-        function calcBuoi() {
-            const start = document.querySelector('[name=ngayBatDau]').value;
-            const end = document.querySelector('[name=ngayKetThuc]').value;
-            const lich = document.getElementById('lichHocInput').value;
-            if (!start || !end || !lich) return;
-            const thuMap = {
-                '2': 1,
-                '3': 2,
-                '4': 3,
-                '5': 4,
-                '6': 5,
-                '7': 6,
-                'CN': 0
-            };
-            const days = lich.split(',').map(t => thuMap[t.trim()]).filter(x => x !== undefined);
-            let d = new Date(start),
-                dEnd = new Date(end),
-                cnt = 0;
-            while (d <= dEnd) {
-                if (days.includes(d.getDay())) cnt++;
-                d.setDate(d.getDate() + 1);
-            }
-            document.getElementById('soBuoiInput').value = cnt;
-            document.getElementById('calcHint').textContent = `Tính tự động: ${cnt} buổi`;
         }
 
         async function loadPhuongXa(tinhThanhId) {
@@ -633,8 +630,214 @@
             return Number(n || 0).toLocaleString('vi-VN') + ' đ';
         }
 
+        function parseMoneyInputValue(value) {
+            const normalized = String(value || '').trim().replace(',', '.');
+            const parsed = Number.parseFloat(normalized);
+            return Number.isFinite(parsed) ? parsed : 0;
+        }
+
+        function getDotThuRows() {
+            return [...document.querySelectorAll('.dot-thu-row')];
+        }
+
+        function isTheoDotSelected() {
+            return String(document.getElementById('loaiThuInput')?.value || '') === String(LOAI_THU_THEO_DOT);
+        }
+
+        function getDateOnlyValue(value) {
+            return value ? String(value).slice(0, 10) : '';
+        }
+
+        function getMaxDateValue(dateA, dateB) {
+            if (!dateA) return dateB;
+            if (!dateB) return dateA;
+            return dateA > dateB ? dateA : dateB;
+        }
+
+        function markRowError(row, hasError) {
+            row.classList.toggle('has-error', hasError);
+        }
+
+        function toggleDotThuMode() {
+            const isTheoDot = isTheoDotSelected();
+            const section = document.getElementById('dotThuSection');
+            const addBtn = document.getElementById('addDotThuBtn');
+            const modeHint = document.getElementById('dotThuModeHint');
+
+            section?.classList.toggle('is-disabled', !isTheoDot);
+
+            if (addBtn) {
+                addBtn.disabled = !isTheoDot;
+            }
+
+            if (modeHint) {
+                if (isTheoDot) {
+                    modeHint.textContent = 'Loai thu dang la Theo đợt. Moi đợt thu phai co han thanh toan tang dan va tong tien phai bang hoc phi niem yet.';
+                    modeHint.classList.remove('is-warning');
+                } else {
+                    modeHint.textContent = 'Loai thu hien tai khong dung ke hoach thu theo dot. Chuyen sang "Theo đợt" neu muon cau hinh cac dot thu.';
+                    modeHint.classList.add('is-warning');
+                }
+            }
+
+            getDotThuRows().forEach((row) => {
+                row.querySelectorAll('input, button').forEach((element) => {
+                    if (element.classList.contains('dot-thu-remove')) {
+                        element.disabled = !isTheoDot;
+                        return;
+                    }
+
+                    element.disabled = !isTheoDot;
+                });
+            });
+        }
+
+        function updateDotThuConstraints() {
+            const isTheoDot = isTheoDotSelected();
+            const effectiveFrom = getDateOnlyValue(document.querySelector('[name="hieuLucTu"]')?.value || '');
+            const effectiveTo = getDateOnlyValue(document.querySelector('[name="hieuLucDen"]')?.value || '');
+            let previousDueDate = '';
+
+            getDotThuRows().forEach((row, index) => {
+                const amountInput = row.querySelector('input[name*="[soTien]"]');
+                const dateInput = row.querySelector('input[name*="[hanThanhToan]"]');
+                let hasError = false;
+
+                if (amountInput) {
+                    amountInput.setCustomValidity('');
+                    if (isTheoDot && parseMoneyInputValue(amountInput.value) <= 0) {
+                        amountInput.setCustomValidity('Số tiền đợt thu phải lớn hơn 0.');
+                        hasError = true;
+                    }
+                }
+
+                if (dateInput) {
+                    const minDate = getMaxDateValue(effectiveFrom, previousDueDate);
+                    dateInput.min = minDate || '';
+                    dateInput.max = effectiveTo || '';
+                    dateInput.setCustomValidity('');
+
+                    if (isTheoDot && !dateInput.value) {
+                        dateInput.setCustomValidity('Vui lòng chọn hạn thanh toán cho đợt thu này.');
+                        hasError = true;
+                    }
+
+                    if (isTheoDot && dateInput.value) {
+                        if (minDate && dateInput.value < minDate) {
+                            dateInput.setCustomValidity(index === 0
+                                ? 'Hạn thanh toán không được sớm hơn hiệu lực từ của chính sách giá.'
+                                : 'Hạn thanh toán các đợt phải tăng dần theo thứ tự.');
+                            hasError = true;
+                        } else if (effectiveTo && dateInput.value > effectiveTo) {
+                            dateInput.setCustomValidity('Hạn thanh toán không được muộn hơn hiệu lực đến của chính sách giá.');
+                            hasError = true;
+                        }
+                    }
+
+                    if (dateInput.value) {
+                        previousDueDate = dateInput.value;
+                    }
+                }
+
+                markRowError(row, isTheoDot && hasError);
+            });
+        }
+
+        function updateDotThuSummary() {
+            const hocPhi = parseMoneyInputValue(document.getElementById('hocPhiNiemYetInput')?.value || 0);
+            const isTheoDot = isTheoDotSelected();
+            const total = getDotThuRows().reduce((sum, row) => {
+                const amountInput = row.querySelector('input[name*="[soTien]"]');
+                return sum + parseMoneyInputValue(amountInput?.value || 0);
+            }, 0);
+            const delta = hocPhi - total;
+            const hasRows = getDotThuRows().length > 0;
+            const hasConstraintError = getDotThuRows().some((row) =>
+                row.querySelector('input[name*="[soTien]"]')?.validationMessage
+                || row.querySelector('input[name*="[hanThanhToan]"]')?.validationMessage
+            );
+
+            const totalValue = document.getElementById('dotThuTotalValue');
+            const deltaValue = document.getElementById('dotThuDeltaValue');
+            const statusCard = document.getElementById('dotThuStatusCard');
+            const statusValue = document.getElementById('dotThuStatusValue');
+            const statusNote = document.getElementById('dotThuStatusNote');
+
+            if (totalValue) totalValue.textContent = fmtMoney(total);
+            if (deltaValue) deltaValue.textContent = fmtMoney(delta);
+
+            statusCard?.classList.remove('is-valid', 'is-invalid');
+
+            if (!isTheoDot) {
+                statusValue.textContent = 'Khong ap dung';
+                statusNote.textContent = 'Loai thu hien tai khong su dung cac dot thu. Neu luu o che do nay, du lieu dot thu se khong duoc ap dung.';
+                return;
+            }
+
+            if (!hasRows) {
+                statusCard?.classList.add('is-invalid');
+                statusValue.textContent = 'Thieu dot thu';
+                statusNote.textContent = 'Loai thu Theo đợt bat buoc phai co it nhat mot dot thu.';
+                return;
+            }
+
+            if (hasConstraintError) {
+                statusCard?.classList.add('is-invalid');
+                statusValue.textContent = 'Can sua lich thu';
+                statusNote.textContent = 'Kiem tra lai han thanh toan va so tien cua tung dot. Han cua dot sau khong duoc som hon dot truoc.';
+                return;
+            }
+
+            if (Math.abs(delta) > 0.009) {
+                statusCard?.classList.add('is-invalid');
+                statusValue.textContent = delta > 0 ? 'Chua du tong tien' : 'Vuot hoc phi';
+                statusNote.textContent = 'Tong cac dot thu phai bang dung hoc phi niem yet cua lop.';
+                return;
+            }
+
+            statusCard?.classList.add('is-valid');
+            statusValue.textContent = 'Hop le';
+            statusNote.textContent = 'Tong tien va thu tu han thanh toan cua cac dot thu da hop le.';
+        }
+
+        function validateDotThuBeforeSubmit() {
+            const isTheoDot = isTheoDotSelected();
+
+            if (!isTheoDot) {
+                return true;
+            }
+
+            const rows = getDotThuRows();
+            if (!rows.length) {
+                alert('Loại thu Theo đợt phải có ít nhất một đợt thu.');
+                return false;
+            }
+
+            for (const row of rows) {
+                const amountInput = row.querySelector('input[name*="[soTien]"]');
+                const dateInput = row.querySelector('input[name*="[hanThanhToan]"]');
+
+                if ((amountInput && !amountInput.reportValidity()) || (dateInput && !dateInput.reportValidity())) {
+                    return false;
+                }
+            }
+
+            const hocPhi = parseMoneyInputValue(document.getElementById('hocPhiNiemYetInput')?.value || 0);
+            const total = rows.reduce((sum, row) => {
+                const amountInput = row.querySelector('input[name*="[soTien]"]');
+                return sum + parseMoneyInputValue(amountInput?.value || 0);
+            }, 0);
+
+            if (Math.abs(hocPhi - total) > 0.009) {
+                alert('Tổng các đợt thu phải bằng đúng học phí niêm yết của lớp.');
+                return false;
+            }
+
+            return true;
+        }
+
         function previewPricing() {
-            const hocPhi = parseFloat(document.getElementById('hocPhiNiemYetInput')?.value || 0);
+            const hocPhi = parseMoneyInputValue(document.getElementById('hocPhiNiemYetInput')?.value || 0);
             const soBuoiCamKet = document.getElementById('soBuoiCamKetInput')?.value || '';
             const loaiThuSelect = document.getElementById('loaiThuInput');
             const preview = document.getElementById('pricingPreview');
@@ -647,6 +850,9 @@
 
             if (hocPhi <= 0 && !soBuoiCamKet) {
                 preview.style.display = 'none';
+                toggleDotThuMode();
+                updateDotThuConstraints();
+                updateDotThuSummary();
                 return;
             }
 
@@ -654,6 +860,9 @@
             document.getElementById('prev-camket').textContent = soBuoiCamKet ? `${soBuoiCamKet} buổi` : 'Không ràng buộc';
             document.getElementById('prev-loaithu').textContent = loaiThuSelect?.options[loaiThuSelect.selectedIndex]?.text || '—';
             preview.style.display = 'block';
+            toggleDotThuMode();
+            updateDotThuConstraints();
+            updateDotThuSummary();
         }
 
         function addDotThuRow() {
@@ -664,27 +873,28 @@
             }
             const row = document.createElement('div');
             row.className = 'dot-thu-row';
-            row.style.cssText = 'display:grid;grid-template-columns:2fr 1fr 1fr auto auto;gap:10px;align-items:end;margin-bottom:10px';
             row.innerHTML = `
-                <div>
+                <div class="dot-thu-field dot-thu-field--name">
                     <label>Tên đợt thu</label>
                     <input type="text" name="dotThu[${dotThuIndex}][tenDotThu]" placeholder="VD: Đợt 1 giữ chỗ">
                 </div>
-                <div>
+                <div class="dot-thu-field">
                     <label>Số tiền</label>
                     <input type="number" name="dotThu[${dotThuIndex}][soTien]" min="0" step="1000" oninput="previewPricing()">
                 </div>
-                <div>
+                <div class="dot-thu-field">
                     <label>Hạn thanh toán</label>
                     <input type="date" name="dotThu[${dotThuIndex}][hanThanhToan]">
                 </div>
-                <label style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
-                    <input type="checkbox" name="dotThu[${dotThuIndex}][batBuoc]" value="1" checked>
-                    Bắt buộc
-                </label>
-                <button type="button" class="kf-btn kf-btn-secondary" onclick="removeDotThuRow(this)">
-                    <i class="fas fa-trash"></i>
-                </button>
+                <div class="dot-thu-meta">
+                    <label class="dot-thu-check">
+                        <input type="checkbox" name="dotThu[${dotThuIndex}][batBuoc]" value="1" checked>
+                        <span>Bắt buộc</span>
+                    </label>
+                    <button type="button" class="kf-btn kf-btn-secondary dot-thu-remove" onclick="removeDotThuRow(this)" aria-label="Xóa đợt thu">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
             `;
             container.appendChild(row);
             dotThuIndex += 1;
@@ -695,5 +905,29 @@
             button.closest('.dot-thu-row')?.remove();
             previewPricing();
         }
+
+        document.getElementById('dotThuRows')?.addEventListener('input', function(event) {
+            if (event.target.matches('input[name*="[soTien]"], input[name*="[hanThanhToan]"], input[name*="[batBuoc]"]')) {
+                previewPricing();
+            }
+        });
+
+        document.getElementById('dotThuRows')?.addEventListener('change', function(event) {
+            if (event.target.matches('input[name*="[soTien]"], input[name*="[hanThanhToan]"], input[name*="[batBuoc]"]')) {
+                previewPricing();
+            }
+        });
+
+        document.querySelector('[name="hieuLucTu"]')?.addEventListener('input', previewPricing);
+        document.querySelector('[name="hieuLucDen"]')?.addEventListener('input', previewPricing);
+
+        document.querySelector('form')?.addEventListener('submit', function(e) {
+            updateDotThuConstraints();
+            updateDotThuSummary();
+
+            if (!validateDotThuBeforeSubmit()) {
+                e.preventDefault();
+            }
+        });
     </script>
 @endsection
