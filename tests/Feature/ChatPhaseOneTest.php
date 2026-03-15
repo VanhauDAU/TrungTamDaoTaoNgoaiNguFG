@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Http\Middleware\TrackAuthenticatedDeviceSession;
 use App\Models\Auth\HoSoNguoiDung;
 use App\Models\Auth\TaiKhoan;
 use App\Models\Interaction\Chat\ChatMessage;
@@ -20,6 +21,7 @@ class ChatPhaseOneTest extends TestCase
     {
         parent::setUp();
 
+        $this->withoutMiddleware(TrackAuthenticatedDeviceSession::class);
         $this->createMinimalChatDependencies();
     }
 
@@ -263,6 +265,8 @@ class ChatPhaseOneTest extends TestCase
             $table->integer('role')->default(TaiKhoan::ROLE_HOC_VIEN);
             $table->integer('nhomQuyenId')->nullable();
             $table->integer('trangThai')->default(1);
+            $table->integer('phaiDoiMatKhau')->default(0);
+            $table->timestamp('email_verified_at')->nullable();
             $table->rememberToken();
             $table->timestamp('lastLogin')->nullable();
             $table->softDeletes();
@@ -386,6 +390,8 @@ class ChatPhaseOneTest extends TestCase
             'matKhau' => bcrypt('secret'),
             'role' => TaiKhoan::ROLE_HOC_VIEN,
             'trangThai' => 1,
+            'phaiDoiMatKhau' => 0,
+            'email_verified_at' => now(),
         ]);
 
         HoSoNguoiDung::query()->create([

@@ -391,6 +391,8 @@ class NhanSuService implements NhanSuServiceInterface
 
     private function validateStoreRequest(Request $request, string $role): array
     {
+        $this->ensureDefaultPolicyTemplates();
+
         return Validator::make(
             $request->all(),
             [
