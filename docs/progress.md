@@ -31,13 +31,18 @@
 - [x] Quan ly Khoa hoc (CRUD, anh, soft delete)
 - [x] Quan ly Lop hoc (gan giao vien, phong, ca, co so)
 - [x] Chinh sach gia theo lop hoc, khong con goi hoc phi theo khoa hoc
+- [x] Loai bo `thu theo thang` khoi runtime billing moi
 - [x] Snapshot hoc phi khi hoc vien dang ky lop
+- [x] Chong race condition dang ky lop bang unique index + transaction lock
+- [x] Them `ngayHetHanGiuCho` cho dang ky cho thanh toan
+- [x] Job tu dong huy giu cho qua han
 - [x] Quan ly Buoi hoc (tu dong sinh theo ca hoc)
 - [x] Dong bo ngay ket thuc lop theo buoi hoc cuoi cung
 - [x] Chuyen trang thai lop hoc nhanh bang AJAX tai trang index
 - [x] Ma tran chuyen trang thai lop hoc + validation server
 - [x] Ca hoc (CRUD, toggle active)
 - [x] Diem danh hoc vien tung buoi hoc
+- [x] Module admin quan ly dang ky hoc: tao tai quay, xac nhan, huy, bao luu, khoi phuc, chuyen lop
 
 ### Người dùng
 
@@ -52,6 +57,10 @@
 - [x] Thong ke trang thai thanh toan
 - [x] Ho tro cau hinh dot thu o cap schema va giao dien lop hoc
 - [x] Validation nghiep vu cho thu theo dot o form lop hoc
+- [x] Scheduler chay `invoice:check-overdue` hang ngay
+- [x] Ghi log ket qua xu ly hoa don qua han
+- [x] Chuan hoa ownership cua `phieuthu`: hoc vien nop tien va nhan su ghi nhan tach rieng
+- [x] Moi thay doi hoa don tu admin deu recalculate hoa don va dang ky lien quan
 
 ### CRM — Liên hệ
 
@@ -90,7 +99,7 @@
 - [ ] Danh gia giao vien sau khoa hoc
 - [ ] Bao cao doanh thu chi tiet (admin)
 - [ ] Dashboard thong ke nang cao
-- [ ] Tach nhieu hoa don theo tung dot thu trong runtime billing
+- [ ] Quy trinh hoan tien / dieu chinh cong no / credit note
 
 ---
 

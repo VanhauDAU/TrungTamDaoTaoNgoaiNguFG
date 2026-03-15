@@ -139,6 +139,15 @@ class HoaDon extends Model
         };
     }
 
+    public static function paymentMethodLabels(): array
+    {
+        return [
+            1 => 'Tiền mặt',
+            2 => 'Chuyển khoản',
+            3 => 'VNPay',
+        ];
+    }
+
     /** Nhãn trạng thái */
     public function getTrangThaiLabelAttribute()
     {

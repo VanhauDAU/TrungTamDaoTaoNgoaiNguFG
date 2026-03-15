@@ -117,8 +117,13 @@ class HoaDonService implements HoaDonServiceInterface
             'giamGia'     => 'nullable|numeric|min:0|max:' . (float) $hoaDon->tongTien,
             'loaiHoaDon'  => 'nullable|in:0,1,2',
         ]);
-        $hoaDon->update($data);
-        return $hoaDon;
+
+        DB::transaction(function () use ($hoaDon, $data) {
+            $hoaDon->update($data);
+            $hoaDon->recalculate();
+        });
+
+        return $hoaDon->fresh();
     }
 
     public function storePhieuThu(Request $request, int $hoaDonId): void

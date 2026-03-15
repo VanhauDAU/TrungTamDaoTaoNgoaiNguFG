@@ -10,6 +10,7 @@ use App\Http\Controllers\Client\Chat\ClientChatController;
 use App\Http\Controllers\Admin\HomeController as AdminHomeController;
 use App\Http\Controllers\Admin\NhomQuyenController;
 use App\Http\Controllers\Admin\HocVien\HocVienController as AdminHocVienController;
+use App\Http\Controllers\Admin\HocVien\DangKyHocController as AdminDangKyHocController;
 use App\Http\Controllers\Admin\GiaoVien\GiaoVienController as AdminGiaoVienController;
 use App\Http\Controllers\Admin\NhanVien\NhanVienController as AdminNhanVienController;
 use App\Http\Controllers\Admin\Auth\TaiKhoanController;
@@ -159,6 +160,17 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
         Route::get('/{taiKhoan}/sua', [AdminHocVienController::class, 'edit'])->name('edit');
         Route::put('/{taiKhoan}', [AdminHocVienController::class, 'update'])->name('update');
         Route::delete('/{taiKhoan}', [AdminHocVienController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::prefix('dang-ky')->name('dang-ky.')->group(function () {
+        Route::get('/', [AdminDangKyHocController::class, 'index'])->name('index');
+        Route::get('/tao-moi', [AdminDangKyHocController::class, 'create'])->name('create');
+        Route::post('/', [AdminDangKyHocController::class, 'store'])->name('store');
+        Route::patch('/{id}/xac-nhan', [AdminDangKyHocController::class, 'confirm'])->name('confirm');
+        Route::patch('/{id}/huy', [AdminDangKyHocController::class, 'cancel'])->name('cancel');
+        Route::patch('/{id}/bao-luu', [AdminDangKyHocController::class, 'hold'])->name('hold');
+        Route::patch('/{id}/khoi-phuc', [AdminDangKyHocController::class, 'restore'])->name('restore');
+        Route::patch('/{id}/chuyen-lop', [AdminDangKyHocController::class, 'transfer'])->name('transfer');
     });
 
     // ── Giáo viên ────────────────────────────────────────────────────────────

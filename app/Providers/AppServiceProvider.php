@@ -26,6 +26,7 @@ use App\Contracts\Admin\KhoaHoc\LopHocServiceInterface;
 use App\Contracts\Admin\KhoaHoc\KhoaHocServiceInterface;
 use App\Contracts\Admin\NhanVien\NhanSuServiceInterface;
 use App\Contracts\Admin\HocVien\HocVienServiceInterface;
+use App\Contracts\Admin\HocVien\DangKyHocServiceInterface;
 use App\Contracts\Admin\CoSo\CoSoServiceInterface;
 use App\Contracts\Admin\CoSo\PhongHocServiceInterface;
 use App\Contracts\Admin\TaiChinh\HoaDonServiceInterface;
@@ -38,6 +39,7 @@ use App\Services\Admin\KhoaHoc\LopHocService;
 use App\Services\Admin\KhoaHoc\KhoaHocService;
 use App\Services\Admin\NhanVien\NhanSuService;
 use App\Services\Admin\HocVien\HocVienService;
+use App\Services\Admin\HocVien\DangKyHocService;
 use App\Services\Admin\CoSo\CoSoService;
 use App\Services\Admin\CoSo\PhongHocService;
 use App\Services\Admin\TaiChinh\HoaDonService;
@@ -83,6 +85,7 @@ class AppServiceProvider extends ServiceProvider
         // ── Phase 3: Admin/User ─────────────────────────────────────────
         $this->app->bind(NhanSuServiceInterface::class , NhanSuService::class);
         $this->app->bind(HocVienServiceInterface::class , HocVienService::class);
+        $this->app->bind(DangKyHocServiceInterface::class , DangKyHocService::class);
 
         // ── Phase 4: Admin/CoSo, TaiChinh ──────────────────────────────────
         $this->app->bind(CoSoServiceInterface::class , CoSoService::class);

@@ -99,6 +99,19 @@ class DangKyLopHoc extends Model
         };
     }
 
+    public static function trangThaiOptions(): array
+    {
+        return [
+            self::TRANG_THAI_CHO_THANH_TOAN => 'Chờ thanh toán',
+            self::TRANG_THAI_DA_XAC_NHAN => 'Đã xác nhận',
+            self::TRANG_THAI_DANG_HOC => 'Đang học',
+            self::TRANG_THAI_TAM_DUNG_NO_HOC_PHI => 'Tạm dừng do nợ học phí',
+            self::TRANG_THAI_BAO_LUU => 'Bảo lưu',
+            self::TRANG_THAI_HOAN_THANH => 'Hoàn thành',
+            self::TRANG_THAI_HUY => 'Đã hủy',
+        ];
+    }
+
     public function getIsNoHocPhiAttribute(): bool
     {
         return (int) $this->trangThai === self::TRANG_THAI_TAM_DUNG_NO_HOC_PHI;

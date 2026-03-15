@@ -1,26 +1,32 @@
-# 05A - Van hanh hoc phi theo lop hoc
+# 05A - Van hanh hoc phi, dang ky, hoa don va phieu thu
 
-## 1. Tong quan
+## 1. Tong quan mo hinh hien tai
 
-He thong da chuyen tu mo hinh `hocphi` theo `khoahoc` sang mo hinh gia ban theo `lop hoc`.
+He thong hien tai van hanh theo nguyen tac:
 
 - `khoahoc` chi mo ta chuong trinh dao tao.
 - `lophoc` la don vi van hanh va la noi gan chinh sach gia.
-- `dangkylophoc` luu `snapshot` gia tai thoi diem dang ky.
-- `hoadon` doc tu snapshot cua dang ky, khong doc lai gia hien tai cua lop.
+- `lophoc_chinhsachgia` quan ly gia ban cua lop.
+- `dangkylophoc` luu snapshot gia tai thoi diem dang ky.
+- `hoadon` la cong no phai thu.
+- `phieuthu` la giao dich thu tien thuc te.
 
-Muc tieu cua mo hinh nay:
+Muc tieu:
 
-- Cho phep tao lop hoc truoc khi chot hoc phi.
-- Khong de so buoi thuc te tu dong lam thay doi cong no da chot.
-- Cho phep doi gia cho hoc vien moi ma khong anh huong hoc vien da dang ky.
+- Lop hoc co the duoc tao truoc khi cau hinh gia.
+- Gia cua lop khong bi tinh lai theo so buoi thuc te.
+- Hien tai khong ho tro billing theo thang.
+- Chinh sach gia cua lop chi ho tro:
+  - `TRON_GOI`
+  - `THEO_DOT`
 
 ## 2. Bang du lieu chinh
 
 ### 2.1 `lophoc`
 
-- Quan ly van hanh lop: giao vien, co so, phong hoc, ca hoc, lich hoc, trang thai.
-- Co the tao khi chua co hoc phi.
+- Quan ly van hanh lop: giao vien, phong hoc, co so, ca hoc, lich hoc, ngay bat dau, so buoi du kien, trang thai.
+- `ngayKetThuc` khong nhap tay trong form.
+- `ngayKetThuc` duoc dong bo theo buoi hoc cuoi cung con hieu luc.
 
 ### 2.2 `lophoc_chinhsachgia`
 
@@ -29,50 +35,36 @@ Muc tieu cua mo hinh nay:
   - `loaiThu`
   - `hocPhiNiemYet`
   - `soBuoiCamKet`
+  - `hanThanhToanHocPhi`
   - `ghiChuChinhSach`
-  - `hieuLucTu`, `hieuLucDen`
   - `trangThai`
 
-Y nghia `hieuLucTu` / `hieuLucDen`:
+Luu y:
 
-- Day la khoang thoi gian chinh sach gia duoc phep ap dung cho dang ky moi.
-- Day khong phai la `ngayBatDau` hoac `ngayKetThuc` cua lop hoc.
-- Vi du:
-  - `hieuLucTu = 2026-03-15 00:00:00`
-  - `hieuLucDen = 2026-05-15 23:59:59`
-  - nghia la muc gia nay duoc ban trong khoang tren
-- Neu de `null`, he thong hieu la khong gioi han o dau do.
-- Phase hien tai moi dung 1 chinh sach gia cho 1 lop; hai cot nay duoc luu de phuc vu quan tri va mo rong policy theo thoi gian.
-
-Y nghia toi uu:
-
-- `soBuoiDuKien` tren `lophoc` la so buoi van hanh de xep lich, sinh buoi hoc, theo doi tien do.
-- `soBuoiCamKet` chi la cot override hop dong.
-- Neu `soBuoiCamKet` de trong, he thong mac dinh hieu la bang `soBuoiDuKien`.
-- Vi vay hai cot nay khong con la du lieu trung lap 1-1 trong van hanh moi.
-
-Phase hien tai van hanh theo mo hinh chinh:
-
-- `TRON_GOI`: 1 hoa don tong, cho phep thu nhieu lan bang nhieu phieu thu
-
-Hai loai con lai duoc de san de mo rong:
-
-- `THEO_THANG`
-- `THEO_DOT`
+- Khong con dung `hieuLucTu` va `hieuLucDen`.
+- `hanThanhToanHocPhi` la han thanh toan mau cho hoc phi chinh neu lop thu mot lan.
+- `LOAI_THU_THEO_THANG` da bi loai khoi UI va khong duoc phep dung o runtime moi.
 
 ### 2.3 `lophoc_dotthu`
 
-- Luu cau hinh thu theo dot cua 1 chinh sach gia.
-- Dung cho cac dot nhu: coc, khai giang, giua khoa.
-- Tong `soTien` cac dot phai bang `hocPhiNiemYet`.
-- UI va validation da cho phep cau hinh chi tiet tung dot thu.
-- Runtime billing hien tai van tao 1 hoa don tong khi hoc vien dang ky; `lophoc_dotthu` dang duoc giu san o schema va giao dien de mo rong thanh nhieu hoa don ve sau.
-- `phieuthu` khong phai la "dot tra gop", ma la giao dich thu tien vao 1 hoa don cu the.
+- Dung cho mo hinh thu theo dot.
+- Moi dot co:
+  - `tenDotThu`
+  - `thuTu`
+  - `soTien`
+  - `hanThanhToan`
+  - `trangThai`
+
+Quy tac:
+
+- Tong tien cac dot phai bang `hocPhiNiemYet`.
+- Han thanh toan phai tang dan.
+- Runtime dang ky hien tai se tao nhieu hoa don hoc phi neu `loaiThu = THEO_DOT`.
 
 ### 2.4 `dangkylophoc`
 
 - Luu dang ky hoc vien vao lop.
-- Chup snapshot gia tai thoi diem dang ky:
+- Snapshot gia tai thoi diem dang ky:
   - `lopHocChinhSachGiaId`
   - `loaiThuSnapshot`
   - `hocPhiNiemYetSnapshot`
@@ -80,119 +72,260 @@ Hai loai con lai duoc de san de mo rong:
   - `hocPhiPhaiThuSnapshot`
   - `soBuoiCamKetSnapshot`
   - `ghiChuGiaSnapshot`
+- Cot moi:
+  - `ngayHetHanGiuCho`
+
+Y nghia `ngayHetHanGiuCho`:
+
+- Day la han giu cho cua mot dang ky `Cho thanh toan`.
+- He thong se dat gia tri nay theo han thanh toan hoc phi som nhat.
+- Qua han ma chua thu duoc tien thi dang ky co the bi job he thong huy giu cho.
 
 ### 2.5 `hoadon`
 
-- Moi hoa don moi phai doc tong tien tu snapshot cua `dangkylophoc`.
-- `lopHocDotThuId` dung de map hoa don voi dot thu neu lop van hanh theo ky.
-- Neu lop khong co dot thu: tao 1 hoa don tong va cho phep thu nhieu lan bang `phieuthu`.
+- Moi hoa don hoc phi doc gia tri tien tu snapshot dang ky.
+- Neu thu theo dot:
+  - moi dot thu tao 1 hoa don hoc phi rieng
+- Neu thu mot lan:
+  - tao 1 hoa don tong
+- `nguonThu` hien co:
+  - `hoc_phi`
+  - `phu_phi`
 
-## 3. Luong van hanh admin
+### 2.6 `phieuthu`
 
-### 3.1 Tao khoa hoc
+- `phieuthu` la giao dich thu tien thuc te.
+- `taiKhoanId` tren `phieuthu` la hoc vien/nguoi nop tien.
+- `nguoiDuyetId` la nhan su ghi nhan thu tien.
 
-- Tao `khoahoc` de mo ta san pham dao tao, noi dung, slug, danh muc.
-- Khong can tao hoc phi o buoc nay.
+## 3. Mo hinh loai thu dang ho tro
 
-### 3.2 Tao lop hoc
+### 3.1 Thu mot lan
 
-- Tao `lophoc` voi giao vien, phong, co so, ca hoc, lich hoc, ngay bat dau.
-- Lop o trang thai nhap co the chua co gia.
-- `ngayKetThuc` khong nhap tay trong flow moi.
-- `ngayKetThuc` duoc dong bo tu buoi hoc cuoi cung sau khi them/sua/xoa/tu dong sinh `buoihoc`.
+- `loaiThu = TRON_GOI`
+- Bat buoc co `hanThanhToanHocPhi`
+- Tao 1 hoa don hoc phi chinh
+- Hoc vien co the thanh toan nhieu lan bang nhieu phieu thu vao cung hoa don nay
 
-### 3.3 Cau hinh chinh sach gia cho lop
+### 3.2 Thu theo dot
+
+- `loaiThu = THEO_DOT`
+- Bat buoc co it nhat 1 dot thu
+- Moi dot thu sinh 1 hoa don hoc phi rieng
+- Trang thai dang ky duoc tinh theo tong cac hoa don hoc phi chinh
+
+### 3.3 Khong ho tro thu theo thang
+
+- `LOAI_THU_THEO_THANG` khong con duoc cau hinh o UI admin
+- Neu du lieu cu van con gia tri nay, he thong se chan dang ky moi va bao loi nghiep vu
+
+## 4. Luong van hanh admin
+
+### 4.1 Tao khoa hoc
+
+- Tao `khoahoc` de mo ta noi dung dao tao
+- Khong cau hinh hoc phi o cap khoa hoc
+
+### 4.2 Tao lop hoc
+
+- Tao `lophoc` voi giao vien, phong, co so, ca hoc, lich hoc, ngay bat dau
+- Lop o trang thai nhap co the chua co gia
+
+### 4.3 Cau hinh chinh sach gia
 
 Tai form tao/sua lop:
 
-- Nhap `hocPhiNiemYet`.
-- `soBuoiCamKet` chi nhap khi hop dong khac `soBuoiDuKien`.
-- Chon `loaiThu`.
-- Them `ghiChuChinhSach` neu can.
-- Neu thu theo dot, khai bao danh sach `lophoc_dotthu`.
+- Nhap `hocPhiNiemYet`
+- Nhap `soBuoiCamKet` neu can
+- Chon:
+  - `Mot lan`
+  - `Chia dot hoc phi`
+- Neu `Mot lan`:
+  - phai co `hanThanhToanHocPhi`
+- Neu `Chia dot hoc phi`:
+  - phai co danh sach dot thu hop le
+
+### 4.4 Mo tuyen sinh
+
+Chi duoc chuyen lop sang cac trang thai van hanh neu da co chinh sach gia hop le:
+
+- `Dang tuyen sinh`
+- `Chot danh sach`
+- `Dang hoc`
+- `Da ket thuc`
+
+## 5. Luong dang ky hoc vien
+
+Dang ky co 2 diem vao:
+
+- Client tu dang ky
+- Admin tao dang ky tai quay
+
+Ca hai luong deu dung chung quy tac:
+
+1. Kiem tra lop dang mo tuyen sinh
+2. Kiem tra chinh sach gia hop le
+3. Kiem tra si so
+4. Kiem tra trung lich hoc
+5. Kiem tra hoc vien chua co dang ky hieu luc trong lop do
+6. Tao `dangkylophoc`
+7. Snapshot gia
+8. Tao hoa don hoc phi
+9. Tao hoa don phu phi mac dinh neu co
+10. Dat `ngayHetHanGiuCho`
+
+### 5.1 Chong race condition
+
+Luot dang ky duoc bao ve boi 2 lop:
+
+- unique index DB: `dangkylophoc(taiKhoanId, lopHocId)`
+- transaction co `lockForUpdate()` tren lop hoc khi tao dang ky
+
+## 6. Trang thai dang ky va y nghia
+
+- `Cho thanh toan`
+  - da tao dang ky va hoa don
+  - dang chiem cho
+  - co `ngayHetHanGiuCho`
+- `Da xac nhan`
+  - da thanh toan du hoc phi chinh
+  - lop chua vao hoc
+- `Dang hoc`
+  - da thanh toan du hoc phi chinh
+  - lop da vao hoc
+- `Tam dung no hoc phi`
+  - hoa don hoc phi chinh qua han trong khi lop dang hoc
+- `Bao luu`
+  - tam ngung tham gia theo nghiep vu admin
+- `Hoan thanh`
+  - lop da ket thuc
+- `Huy`
+  - dang ky da bi huy, khong con chiem cho
+
+## 7. Job he thong tu dong
+
+### 7.1 `invoice:check-overdue`
+
+Chay hang ngay luc `01:00`.
+
+Chuc nang:
+
+- Tim hoa don hoc phi qua han
+- Recalculate trang thai dang ky
+- Neu lop dang hoc va hoc phi qua han:
+  - chuyen dang ky sang `Tam dung no hoc phi`
+  - khoa diem danh tuong lai
+- Ghi log ket qua vao file va application log
+
+### 7.2 `registration:expire-holds`
+
+Chay moi gio.
+
+Chuc nang:
+
+- Tim dang ky `Cho thanh toan` co `ngayHetHanGiuCho` da qua
+- Neu chua thu duoc tien:
+  - chuyen dang ky sang `Huy`
+  - bo giu cho
+  - them ghi chu he thong vao hoa don lien quan
+- Neu da thu duoc tien:
+  - bo qua, khong huy tu dong
+
+## 8. Luong quan ly dang ky tu admin
+
+Module admin moi o `/admin/dang-ky` ho tro:
+
+- Tao dang ky tai quay
+- Xac nhan
+- Huy
+- Bao luu
+- Khoi phuc
+- Chuyen lop
 
 Quy tac:
 
-- Neu co dot thu, tong tien cac dot phai bang `hocPhiNiemYet`.
-- Han thanh toan cua cac dot phai tang dan.
-- Neu co `hieuLucTu` / `hieuLucDen`, han thanh toan tung dot phai nam trong khoang nay.
-- Neu `loaiThu` khong phai `THEO_DOT`, he thong khong ap dung du lieu `dot thu`.
-- Neu lop da co hoc vien dang ky, khong duoc xoa trang chinh sach gia.
+- Khong duoc huy neu da phat sinh thu tien
+- Khong duoc chuyen lop neu da phat sinh thu tien
+- Khoi phuc se kiem tra lai si so, trung lich va trang thai lop
+- Chuyen lop se:
+  - huy dang ky cu
+  - tao dang ky moi o lop dich
+  - tao hoa don moi theo chinh sach gia cua lop dich
 
-### 3.4 Mo tuyen sinh
+## 9. Luong hoa don va phieu thu
 
-He thong chi cho phep lop chuyen sang cac trang thai van hanh neu da co chinh sach gia hop le:
+### 9.1 Sua hoa don tu admin
 
-- `DANG_TUYEN_SINH`
-- `CHOT_DANH_SACH`
-- `DANG_HOC`
-- `DA_KET_THUC`
+Khi admin sua hoa don:
 
-Trang thai `SAP_MO` co the chua co hoc phi.
+- he thong cap nhat du lieu
+- bat buoc goi `recalculate()` hoa don
+- tu do dong bo:
+  - `daTra`
+  - `trangThai` hoa don
+  - `trangThai` dang ky lien quan
 
-## 4. Luong dang ky hoc vien
+### 9.2 Tao phiếu thu
 
-Khi hoc vien dang ky lop:
+Khi admin tao phiếu thu:
 
-1. He thong kiem tra lop co dang cho phep dang ky khong.
-2. He thong kiem tra lop co `lophoc_chinhsachgia` hop le khong.
-3. He thong chup snapshot gia vao `dangkylophoc`.
-4. He thong tao nghia vu thu:
-   - hien tai: 1 hoa don tong tu snapshot gia
-   - mo rong ve sau: co the tach theo `lophoc_dotthu`
+- `taiKhoanId` cua `phieuthu` = hoc vien cua hoa don
+- `nguoiDuyetId` = nhan su thao tac
+- sau khi tao:
+  - `hoadon->recalculate()`
+  - dang ky lien quan duoc tinh lai trang thai
 
-He qua nghiep vu:
+## 10. Hien thi cho hoc vien
 
-- Sua gia lop sau nay khong doi du lieu dang ky cu.
-- Cong no da phat sinh khong bi anh huong boi thay doi so buoi hoc.
+Khu vuc hoc vien hien tach module `Hoc phi` thanh 3 muc:
 
-## 5. Cach xu ly khi thay doi so buoi day
+- `Tra cuu cong no`
+- `Phieu thu tong hop`
+- `Thanh toan truc tuyen`
 
-So buoi hoc la du lieu van hanh, khong phai cong thuc tai chinh runtime.
+Quy tac hien thi:
 
-Neu phat sinh them/bot buoi:
+- Hoa don cua dang ky da bi huy giu cho se khong con hien o cong no neu chua thu tien
+- Phieu thu tong hop hien theo hoc vien nop tien
+- Man hinh hien nguoi ghi nhan thu tien la `nguoiDuyet`
 
-- Khong cap nhat lai `hocPhiPhaiThuSnapshot` cua dang ky cu.
-- Khong sua tong tien cua `hoadon` da tao.
-- `ngayKetThuc` cua lop se thay doi theo buoi hoc cuoi cung, nhung khong duoc dung de tu dong tinh lai hoc phi.
-- Neu can thu them:
-  - tao dot thu bo sung, hoac
-  - tao hoa don dieu chinh theo nghiep vu tai chinh.
-- Neu can giam tru:
-  - tao phieu dieu chinh, hoan tien, hoac cap nhat cong no theo quy trinh tai chinh noi bo.
+## 11. Checklist van hanh
 
-## 6. Quy tac quan trong
+- Tao khoa hoc
+- Tao lop hoc
+- Cau hinh chinh sach gia
+- Mo tuyen sinh
+- Dang ky hoc vien
+- Theo doi han giu cho
+- Theo doi hoa don qua han
+- Ghi nhan phieu thu
+- Reconcile cong no va trang thai dang ky
 
-- Khong quan ly hoc phi o cap `khoahoc`.
-- Khong tinh tien truc tiep tu `soBuoiDuKien` hoac `soBuoiThucTe`.
-- Khong update hoi to snapshot gia cua dang ky cu.
-- Khong dung lai bang `hocphi` cu cho code moi.
+## 12. Bieu do luong tong quat
 
-## 7. Quy tac nghiep vu da chot
-
-- Khong can tao `dot thu` neu trung tam chi muon hoc vien dong nhieu lan cho 1 cong no tong.
-- Chi tao `dot thu` khi trung tam can moc han thanh toan ro rang theo tung ky.
-- `phieuthu` luon la lan thu tien thuc te, khong thay the `dot thu`.
-- Trang thai dang ky hoc vien phai duoc tinh tu tong cac hoa don bat buoc cua dang ky, khong doc tu 1 hoa don don le.
-
-## 8. Migration tu mo hinh cu
-
-Migration `2026_03_14_150000_refactor_class_pricing_to_lophoc_chinhsachgia.php` thuc hien:
-
-- Tao `lophoc_chinhsachgia`
-- Tao `lophoc_dotthu`
-- Backfill du lieu tu `hocphi` cu vao chinh sach gia cua lop
-- Backfill snapshot gia vao `dangkylophoc`
-- Them `lopHocDotThuId` vao `hoadon`
-- Xoa `lophoc.hocPhiId`
-- Xoa bang `hocphi`
-
-## 9. Checklist van hanh
-
-- Tao `khoahoc`
-- Tao `lophoc`
-- Cau hinh `lophoc_chinhsachgia`
-- Kiem tra tong dot thu neu co
-- Kiem tra thu tu han thanh toan neu thu theo dot
-- Chuyen lop sang `DANG_TUYEN_SINH`
-- Theo doi dang ky va hoa don phat sinh tu snapshot
+```mermaid
+flowchart LR
+    A["Tao/Khoi tao lop hoc"] --> B["Cau hinh chinh sach gia lop"]
+    B --> C{"Loai thu"}
+    C -->|"Mot lan"| D["Tao 1 hoa don hoc phi"]
+    C -->|"Theo dot"| E["Tao nhieu hoa don hoc phi theo dot"]
+    B --> F["Cau hinh phu phi mac dinh neu co"]
+    D --> G["Dang ky hoc vien"]
+    E --> G
+    F --> G
+    G --> H["Snapshot gia vao dangkylophoc"]
+    H --> I["Dat ngayHetHanGiuCho"]
+    I --> J{"Hoc vien thanh toan?"}
+    J -->|"Co"| K["Admin lap phieu thu"]
+    K --> L["Hoa don recalculate()"]
+    L --> M["Dang ky recalculatePaymentStatus()"]
+    M --> N{"Da thu du hoc phi chinh?"}
+    N -->|"Co"| O["Da xac nhan / Dang hoc"]
+    N -->|"Chua"| P["Van Cho thanh toan"]
+    J -->|"Khong"| Q{"Qua ngayHetHanGiuCho?"}
+    Q -->|"Co"| R["Job registration:expire-holds huy giu cho"]
+    Q -->|"Khong"| P
+    O --> S{"Hoa don qua han khi lop dang hoc?"}
+    S -->|"Co"| T["Job invoice:check-overdue tam dung do no hoc phi"]
+    S -->|"Khong"| U["Hoc vien tiep tuc hoc / hoan thanh"]
+```

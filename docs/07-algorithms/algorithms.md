@@ -131,11 +131,10 @@ DangKyLopHoc::create()
         - giamGiaSnapshot
         - hocPhiPhaiThuSnapshot
         - soBuoiCamKetSnapshot
-  → HoaDon::create([
-        'dangKyLopHocId' => $dangKyId,
-        'tongTien'       => $snapshot->hocPhiPhaiThuSnapshot,
-        'trangThai'      => 'chua_thanh_toan',
-    ])
+        - ngayHetHanGiuCho
+  → Nếu `TRON_GOI`: tạo 1 hóa đơn học phí
+  → Nếu `THEO_DOT`: tạo nhiều hóa đơn học phí theo `lophoc_dotthu`
+  → Nếu có phụ phí mặc định: tạo thêm hóa đơn phụ phí
 ```
 
 ### Quy tắc
@@ -143,11 +142,53 @@ DangKyLopHoc::create()
 - Không đọc lại học phí từ lớp sau khi học viên đã đăng ký.
 - Thay đổi `LopHocChinhSachGia` chỉ áp dụng cho đăng ký mới.
 - `soBuoiThucTe` và `buoihoc` không tự tính lại hóa đơn.
-- Runtime hiện tại tạo 1 hóa đơn tổng cho mỗi đăng ký; `lophoc_dotthu` mới ở mức cấu hình/validation và là nền cho billing nhiều hóa đơn sau này.
+- `LOAI_THU_THEO_THANG` không còn được hỗ trợ trong runtime mới.
+- Đăng ký được bảo vệ bằng:
+  - unique index `taiKhoanId + lopHocId`
+  - transaction + `lockForUpdate()` trên lớp học
 
 ---
 
-## 4. Rule mở tuyển sinh
+## 4. Tự động hủy giữ chỗ quá hạn
+
+### Dữ liệu dùng
+
+- `dangkylophoc.trangThai = CHO_THANH_TOAN`
+- `dangkylophoc.ngayHetHanGiuCho`
+- Tổng số tiền đã thu từ các `phieuthu` hợp lệ của các hóa đơn thuộc đăng ký
+
+### Thuật toán
+
+```php
+// Pseudo-code
+$dangKys = DangKyLopHoc::where('trangThai', CHO_THANH_TOAN)
+    ->whereNotNull('ngayHetHanGiuCho')
+    ->where('ngayHetHanGiuCho', '<', now())
+    ->get();
+
+foreach ($dangKys as $dangKy) {
+    lock registration row;
+    recalculatePaymentStatus();
+
+    if ($dangKy->tongDaThu > 0) {
+        skip;
+    }
+
+    $dangKy->trangThai = HUY;
+    $dangKy->ngayHetHanGiuCho = null;
+    append system note to invoices;
+}
+```
+
+### Quy tắc
+
+- Chỉ tự hủy nếu chưa thu được tiền.
+- Nếu đã có tiền vào, job bỏ qua để tránh hủy sai nghiệp vụ.
+- Sau khi hủy, đăng ký không còn chiếm chỗ.
+
+---
+
+## 5. Rule mở tuyển sinh
 
 Trước khi lớp được chuyển sang các trạng thái vận hành, hệ thống phải kiểm tra:
 
@@ -168,7 +209,36 @@ if ($requiresPricing && ! $lopHoc->hasValidPricingPolicy()) {
 
 ---
 
-## 5. Real-time Thông báo (Server-Sent Events / Polling)
+## 6. Recalculate hóa đơn và đăng ký
+
+### Khi tạo hoặc hủy phiếu thu
+
+```php
+PhieuThu::create(...)
+    → HoaDon::recalculate()
+        → cập nhật daTra
+        → cập nhật trangThai hóa đơn
+        → DangKyLopHoc::recalculatePaymentStatus()
+```
+
+### Khi admin sửa hóa đơn
+
+```php
+$hoaDon->update($data);
+$hoaDon->recalculate();
+```
+
+### Quy tắc
+
+- Không cho phép thay đổi dữ liệu hóa đơn mà không recalculate lại.
+- `recalculate()` là điểm trung tâm để đồng bộ:
+  - tiền đã thu
+  - trạng thái hóa đơn
+  - trạng thái đăng ký
+
+---
+
+## 7. Real-time Thông báo (Server-Sent Events / Polling)
 
 ### Cơ chế
 
@@ -194,7 +264,7 @@ fetch("/api/thong-bao/dropdown")
 
 ---
 
-## 6. Slug Generation (SEO-friendly URL)
+## 8. Slug Generation (SEO-friendly URL)
 
 ```php
 // Tạo slug duy nhất, tránh trùng lặp
@@ -216,7 +286,7 @@ private function generateUniqueSlug(string $name, ?int $existingId = null): stri
 
 ---
 
-## 7. Cascade Delete Logic
+## 9. Cascade Delete Logic
 
 Soft delete được áp dụng cho: `khoahoc`, `baiviet`, `lienhe`, `hocvien`.
 

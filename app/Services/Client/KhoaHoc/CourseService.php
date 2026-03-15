@@ -175,6 +175,10 @@ class CourseService implements CourseServiceInterface
                     throw new \RuntimeException('Lớp học chưa có thông tin học phí. Không thể tạo hóa đơn.');
                 }
 
+                if ((int) $pricingPolicy->loaiThu === LopHocChinhSachGia::LOAI_THU_THEO_THANG) {
+                    throw new \RuntimeException('Hệ thống hiện chưa hỗ trợ billing theo tháng cho lớp học này.');
+                }
+
                 $tongTien = (float) $pricingPolicy->hocPhiNiemYet;
                 $registration = DangKyLopHoc::create([
                     'taiKhoanId' => $user->taiKhoanId,
@@ -316,6 +320,10 @@ class CourseService implements CourseServiceInterface
         $pricingPolicy = $class->chinhSachGia;
         if (!$pricingPolicy || !$pricingPolicy->isActive() || (float) $pricingPolicy->hocPhiNiemYet <= 0) {
             return 'Lớp học chưa được cấu hình học phí hợp lệ.';
+        }
+
+        if ((int) $pricingPolicy->loaiThu === LopHocChinhSachGia::LOAI_THU_THEO_THANG) {
+            return 'Lớp học đang dùng chính sách thu theo tháng, hiện chưa được hỗ trợ trên hệ thống.';
         }
 
         if ($class->soHocVienToiDa !== null) {
