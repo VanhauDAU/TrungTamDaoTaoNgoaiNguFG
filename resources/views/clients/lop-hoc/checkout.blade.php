@@ -197,6 +197,10 @@
                     </div>
 
                     <div class="col-lg-4">
+                        @php
+                            $phuPhiMacDinh = $class->phuPhis->where('trangThai', 1)->where('apDungMacDinh', 1);
+                            $tongPhuPhiMacDinh = (float) $phuPhiMacDinh->sum('soTien');
+                        @endphp
                         <div class="checkout-card sticky-top" style="top: 100px; z-index: 10;">
                             <div class="section-header-checkout">
                                 <h3 class="section-title">Thông tin lớp học</h3>
@@ -230,23 +234,40 @@
                                     <span class="text-muted small">
                                         <i class="fas fa-info-circle me-1"></i>
                                         {{ $class->chinhSachGia->loaiThuLabel }}
-                                        @if ($class->chinhSachGia->soBuoiCamKet)
-                                            · {{ $class->chinhSachGia->soBuoiCamKet }} buổi cam kết
+                                        @if ($class->chinhSachGia->soBuoiCamKetHieuDung)
+                                            · {{ $class->chinhSachGia->soBuoiCamKetHieuDung }} buổi cam kết
                                         @endif
                                     </span>
                                     <span></span>
                                 </div>
                             @endif
+                            @if ($phuPhiMacDinh->isNotEmpty())
+                                @foreach ($phuPhiMacDinh as $phuPhi)
+                                    <div class="summary-row">
+                                        <span>{{ $phuPhi->tenKhoanThu }}</span>
+                                        <span>{{ number_format($phuPhi->soTien, 0, ',', '.') }}đ</span>
+                                    </div>
+                                @endforeach
+                                <div class="summary-row">
+                                    <span class="text-muted small">Phụ phí mặc định</span>
+                                    <span>{{ number_format($tongPhuPhiMacDinh, 0, ',', '.') }}đ</span>
+                                </div>
+                            @endif
                             <div class="summary-row total">
-                                <span>Tổng thanh toán</span>
+                                <span>Tổng công nợ dự kiến</span>
                                 <span class="text-danger">
                                     @if ($class->chinhSachGia)
-                                        {{ number_format($class->chinhSachGia->hocPhiNiemYet, 0, ',', '.') }}đ
+                                        {{ number_format($class->chinhSachGia->hocPhiNiemYet + $tongPhuPhiMacDinh, 0, ',', '.') }}đ
                                     @else
                                         Liên hệ
                                     @endif
                                 </span>
                             </div>
+                            @if ($phuPhiMacDinh->isNotEmpty())
+                                <div class="alert alert-light border mt-3 mb-0 small">
+                                    Khoản bổ sung được đánh dấu áp dụng cho mọi học viên sẽ được tạo hóa đơn riêng khi bạn đăng ký lớp.
+                                </div>
+                            @endif
                             {{-- errors --}}
                             @if ($errors->any())
                                 <div class="alert alert-danger">

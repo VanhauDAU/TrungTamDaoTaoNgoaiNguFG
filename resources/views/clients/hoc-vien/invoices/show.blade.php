@@ -83,7 +83,12 @@
                                     <strong>Hóa đơn đã quá hạn thanh toán!</strong>
                                     <span>Hạn thanh toán:
                                         <strong>{{ \Carbon\Carbon::parse($invoice->ngayHetHan)->format('d/m/Y') }}</strong>.
-                                        Việc đăng ký lớp học có thể bị tạm dừng cho đến khi bạn thanh toán đủ.</span>
+                                        @if ($invoice->nguonThu === \App\Models\Finance\HoaDon::NGUON_THU_HOC_PHI)
+                                            Việc đăng ký lớp học có thể bị tạm dừng cho đến khi bạn thanh toán đủ.
+                                        @else
+                                            Đây là khoản bổ sung riêng, không làm khóa trạng thái học của bạn.
+                                        @endif
+                                    </span>
                                 </div>
                             </div>
                         @elseif ($isSapHHan && $invoice->trangThai != 2)
@@ -226,6 +231,20 @@
                                         <span
                                             class="inv-info-row__val">{{ $invoice->loaiHoaDonLabel ?? 'Đăng ký mới' }}</span>
                                     </div>
+                                    <div class="inv-info-row">
+                                        <span class="inv-info-row__label">Nguồn thu</span>
+                                        <span class="inv-info-row__val">{{ $invoice->nguonThuLabel }}</span>
+                                    </div>
+                                    @if ($invoice->nguonThu === \App\Models\Finance\HoaDon::NGUON_THU_PHU_PHI && $invoice->dangKyLopHocPhuPhi)
+                                        <div class="inv-info-row">
+                                            <span class="inv-info-row__label">Khoản bổ sung</span>
+                                            <span class="inv-info-row__val">{{ $invoice->dangKyLopHocPhuPhi->tenKhoanThuSnapshot }}</span>
+                                        </div>
+                                        <div class="inv-info-row">
+                                            <span class="inv-info-row__label">Nhóm phí</span>
+                                            <span class="inv-info-row__val">{{ $invoice->dangKyLopHocPhuPhi->nhomPhiLabel }}</span>
+                                        </div>
+                                    @endif
                                     <div class="inv-info-row">
                                         <span class="inv-info-row__label">Ngày lập</span>
                                         <span class="inv-info-row__val">

@@ -5,6 +5,7 @@ namespace App\Models\Finance;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Auth\TaiKhoan;
 use App\Models\Education\DangKyLopHoc;
+use App\Models\Education\DangKyLopHocPhuPhi;
 use App\Models\Education\DiemDanh;
 use App\Models\Education\LopHocDotThu;
 use App\Models\Facility\CoSoDaoTao;
@@ -21,6 +22,9 @@ class HoaDon extends Model
     const TRANG_THAI_CHUA_TT = 0;
     const TRANG_THAI_MOT_PHAN = 1;
     const TRANG_THAI_DA_TT = 2;
+
+    public const NGUON_THU_HOC_PHI = 'hoc_phi';
+    public const NGUON_THU_PHU_PHI = 'phu_phi';
 
     // Số ngày cảnh báo trước khi hết hạn
     const NGAY_CANH_BAO = 7;
@@ -41,7 +45,9 @@ class HoaDon extends Model
         'taiKhoanId',
         'nguoiLapId',
         'dangKyLopHocId',
+        'dangKyLopHocPhuPhiId',
         'lopHocDotThuId',
+        'nguonThu',
         'phuongThucThanhToan',
         'loaiHoaDon',
         'coSoId',
@@ -58,6 +64,7 @@ class HoaDon extends Model
         'trangThai' => 'integer',
         'loaiHoaDon' => 'integer',
         'phuongThucThanhToan' => 'integer',
+        'nguonThu' => 'string',
     ];
 
     /* ── Relationships ─────────────────────────────────────── */
@@ -82,6 +89,11 @@ class HoaDon extends Model
         return $this->belongsTo(CoSoDaoTao::class, 'coSoId', 'coSoId');
     }
 
+    public function dangKyLopHocPhuPhi()
+    {
+        return $this->belongsTo(DangKyLopHocPhuPhi::class, 'dangKyLopHocPhuPhiId', 'dangKyLopHocPhuPhiId');
+    }
+
     public function lopHocDotThu()
     {
         return $this->belongsTo(LopHocDotThu::class, 'lopHocDotThuId', 'lopHocDotThuId');
@@ -104,7 +116,7 @@ class HoaDon extends Model
     /** Số tiền còn nợ (đã trừ giảm giá) */
     public function getConNoAttribute()
     {
-        $thucThu = $this->tongTien - $this->giamGia;
+        $thucThu = ($this->tongTienSauThue > 0 ? $this->tongTienSauThue : $this->tongTien) - $this->giamGia;
         return max(0, $thucThu - $this->daTra);
     }
 
@@ -116,6 +128,14 @@ class HoaDon extends Model
             self::LOAI_GIA_HAN => 'Gia hạn',
             self::LOAI_KHAC => 'Khác',
             default => 'Không xác định',
+        };
+    }
+
+    public function getNguonThuLabelAttribute(): string
+    {
+        return match ($this->nguonThu) {
+            self::NGUON_THU_PHU_PHI => 'Phụ phí',
+            default => 'Học phí chính',
         };
     }
 
@@ -197,7 +217,7 @@ class HoaDon extends Model
         $totalPaid = $this->phieuThusHopLe()->sum('soTien');
         $this->daTra = $totalPaid;
 
-        $thucThu = $this->tongTien - $this->giamGia;
+        $thucThu = (($this->tongTienSauThue ?? 0) > 0 ? $this->tongTienSauThue : $this->tongTien) - $this->giamGia;
 
         if ($totalPaid <= 0) {
             $this->trangThai = self::TRANG_THAI_CHUA_TT;
@@ -209,23 +229,25 @@ class HoaDon extends Model
 
         $this->save();
 
-        // ── Phục hồi đăng ký lớp khi thanh toán đủ ──────────────────
-        if ($this->trangThai === self::TRANG_THAI_DA_TT && $this->dangKyLopHocId) {
-            $dangKy = DangKyLopHoc::with('lopHoc')->find($this->dangKyLopHocId);
-            if ($dangKy && in_array((int) $dangKy->trangThai, [
-                DangKyLopHoc::TRANG_THAI_CHO_THANH_TOAN,
-                DangKyLopHoc::TRANG_THAI_TAM_DUNG_NO_HOC_PHI,
-            ], true)) {
-                $nextStatus = $dangKy->lopHoc && $dangKy->lopHoc->isInProgress()
-                    ? DangKyLopHoc::TRANG_THAI_DANG_HOC
-                    : DangKyLopHoc::TRANG_THAI_DA_XAC_NHAN;
+        if ($this->dangKyLopHocId) {
+            $dangKy = DangKyLopHoc::with(['lopHoc', 'hoaDons.lopHocDotThu'])->find($this->dangKyLopHocId);
+            if ($dangKy) {
+                $oldStatus = (int) $dangKy->trangThai;
 
-                $dangKy->update(['trangThai' => $nextStatus]);
+                $dangKy->recalculatePaymentStatus();
+                $dangKy->refresh();
 
-                // Xóa các bản ghi DiemDanh tương lai đã bị khóa (nợ HP)
-                DiemDanh::where('dangKyLopHocId', $dangKy->dangKyLopHocId)
-                    ->where('trangThai', DiemDanh::BI_KHOA_NO_HP)
-                    ->delete();
+                if (
+                    $oldStatus === DangKyLopHoc::TRANG_THAI_TAM_DUNG_NO_HOC_PHI
+                    && in_array((int) $dangKy->trangThai, [
+                        DangKyLopHoc::TRANG_THAI_DA_XAC_NHAN,
+                        DangKyLopHoc::TRANG_THAI_DANG_HOC,
+                    ], true)
+                ) {
+                    DiemDanh::where('dangKyLopHocId', $dangKy->dangKyLopHocId)
+                        ->where('trangThai', DiemDanh::BI_KHOA_NO_HP)
+                        ->delete();
+                }
             }
         }
     }

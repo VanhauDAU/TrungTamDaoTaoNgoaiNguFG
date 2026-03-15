@@ -113,6 +113,11 @@ class LopHoc extends Model
     public function dangKyLopHocs(){
         return $this->hasMany(DangKyLopHoc::class, 'lopHocId', 'lopHocId');
     }
+    public function phuPhis()
+    {
+        return $this->hasMany(LopHocPhuPhi::class, 'lopHocId', 'lopHocId')
+            ->orderBy('lopHocPhuPhiId');
+    }
 
     public function hasValidPricingPolicy(): bool
     {

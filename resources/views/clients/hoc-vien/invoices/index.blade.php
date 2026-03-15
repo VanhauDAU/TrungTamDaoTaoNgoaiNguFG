@@ -107,6 +107,13 @@
                                                     <i class="fas fa-book-open"></i>
                                                     {{ $invoice->dangKyLopHoc?->lopHoc?->khoaHoc?->tenKhoaHoc ?? '—' }}
                                                 </div>
+                                                <div class="inv-card__course-name">
+                                                    <i class="fas fa-tag"></i>
+                                                    {{ $invoice->nguonThuLabel }}
+                                                    @if ($invoice->nguonThu === \App\Models\Finance\HoaDon::NGUON_THU_PHU_PHI)
+                                                        · {{ $invoice->dangKyLopHocPhuPhi?->tenKhoanThuSnapshot ?? 'Khoản bổ sung' }}
+                                                    @endif
+                                                </div>
                                             </div>
 
                                             <div class="inv-card__meta">

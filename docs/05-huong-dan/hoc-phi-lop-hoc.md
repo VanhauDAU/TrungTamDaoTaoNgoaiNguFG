@@ -33,9 +33,16 @@ Muc tieu cua mo hinh nay:
   - `hieuLucTu`, `hieuLucDen`
   - `trangThai`
 
+Y nghia toi uu:
+
+- `soBuoiDuKien` tren `lophoc` la so buoi van hanh de xep lich, sinh buoi hoc, theo doi tien do.
+- `soBuoiCamKet` chi la cot override hop dong.
+- Neu `soBuoiCamKet` de trong, he thong mac dinh hieu la bang `soBuoiDuKien`.
+- Vi vay hai cot nay khong con la du lieu trung lap 1-1 trong van hanh moi.
+
 Phase hien tai van hanh theo mo hinh chinh:
 
-- `TRON_GOI`: gia tron lop
+- `TRON_GOI`: 1 hoa don tong, cho phep thu nhieu lan bang nhieu phieu thu
 
 Hai loai con lai duoc de san de mo rong:
 
@@ -47,6 +54,8 @@ Hai loai con lai duoc de san de mo rong:
 - Luu cau hinh thu theo dot cua 1 chinh sach gia.
 - Dung cho cac dot nhu: coc, khai giang, giua khoa.
 - Tong `soTien` cac dot phai bang `hocPhiNiemYet`.
+- Neu lop thu theo dot, moi dot thu se sinh 1 hoa don rieng khi hoc vien dang ky.
+- `phieuthu` khong phai la "dot tra gop", ma la giao dich thu tien vao 1 hoa don cu the.
 
 ### 2.4 `dangkylophoc`
 
@@ -63,7 +72,8 @@ Hai loai con lai duoc de san de mo rong:
 ### 2.5 `hoadon`
 
 - Moi hoa don moi phai doc tong tien tu snapshot cua `dangkylophoc`.
-- `lopHocDotThuId` duoc de san de map hoa don voi tung dot thu khi mo rong nghiep vu thu nhieu dot.
+- `lopHocDotThuId` dung de map hoa don voi dot thu neu lop van hanh theo ky.
+- Neu lop khong co dot thu: tao 1 hoa don tong va cho phep thu nhieu lan bang `phieuthu`.
 
 ## 3. Luong van hanh admin
 
@@ -82,7 +92,7 @@ Hai loai con lai duoc de san de mo rong:
 Tai form tao/sua lop:
 
 - Nhap `hocPhiNiemYet`.
-- Nhap `soBuoiCamKet` neu can tham chieu hop dong.
+- `soBuoiCamKet` chi nhap khi hop dong khac `soBuoiDuKien`.
 - Chon `loaiThu`.
 - Them `ghiChuChinhSach` neu can.
 - Neu thu theo dot, khai bao danh sach `lophoc_dotthu`.
@@ -110,7 +120,9 @@ Khi hoc vien dang ky lop:
 1. He thong kiem tra lop co dang cho phep dang ky khong.
 2. He thong kiem tra lop co `lophoc_chinhsachgia` hop le khong.
 3. He thong chup snapshot gia vao `dangkylophoc`.
-4. He thong tao `hoadon` tu `hocPhiPhaiThuSnapshot`.
+4. He thong tao nghia vu thu:
+   - 1 hoa don tong neu lop thu mot hoa don,
+   - hoac nhieu hoa don con neu lop thu theo dot.
 
 He qua nghiep vu:
 
@@ -138,18 +150,12 @@ Neu phat sinh them/bot buoi:
 - Khong update hoi to snapshot gia cua dang ky cu.
 - Khong dung lai bang `hocphi` cu cho code moi.
 
-## 7. Gioi han phase hien tai
+## 7. Quy tac nghiep vu da chot
 
-He thong da co schema va giao dien cho `lophoc_dotthu`, nhung runtime billing hien tai van:
-
-- tao 1 hoa don tong tien theo snapshot,
-- chua tach thanh nhieu hoa don theo tung dot thu.
-
-Neu can mo rong phase sau:
-
-- moi `lophoc_dotthu` sinh 1 `hoadon`,
-- cong no dang ky duoc tong hop tu nhieu hoa don con,
-- trang thai thanh toan lop hoc doc tu tong cong no da thu.
+- Khong can tao `dot thu` neu trung tam chi muon hoc vien dong nhieu lan cho 1 cong no tong.
+- Chi tao `dot thu` khi trung tam can moc han thanh toan ro rang theo tung ky.
+- `phieuthu` luon la lan thu tien thuc te, khong thay the `dot thu`.
+- Trang thai dang ky hoc vien phai duoc tinh tu tong cac hoa don bat buoc cua dang ky, khong doc tu 1 hoa don don le.
 
 ## 8. Migration tu mo hinh cu
 

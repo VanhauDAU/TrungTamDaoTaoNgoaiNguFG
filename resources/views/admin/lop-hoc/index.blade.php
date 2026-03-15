@@ -108,11 +108,6 @@
             pointer-events: none;
         }
 
-        .lh-status-hint {
-            font-size: .72rem;
-            color: #94a3b8;
-        }
-
         @media (max-width: 768px) {
             .lh-filter-field[style] {
                 grid-column: auto !important;
@@ -127,7 +122,6 @@
                 justify-content: center;
             }
         }
-
     </style>
 @endsection
 
@@ -145,7 +139,8 @@
                 style="background:linear-gradient(135deg,#b91c1c,#ef4444)">
                 <i class="fas fa-trash-can"></i> Thùng rác
                 @if (($tongDaXoa ?? 0) > 0)
-                    <span style="margin-left:6px;background:rgba(255,255,255,.18);padding:2px 8px;border-radius:999px;font-size:.78rem">
+                    <span
+                        style="margin-left:6px;background:rgba(255,255,255,.18);padding:2px 8px;border-radius:999px;font-size:.78rem">
                         {{ $tongDaXoa }}
                     </span>
                 @endif
@@ -206,8 +201,8 @@
                     <label>Tìm kiếm</label>
                     <div class="search-wrap">
                         <i class="fas fa-search"></i>
-                        <input type="text" name="q" class="search-input" placeholder="Tìm tên lớp, mã lớp, khóa học..."
-                            value="{{ request('q') }}" autocomplete="off">
+                        <input type="text" name="q" class="search-input"
+                            placeholder="Tìm tên lớp, mã lớp, khóa học..." value="{{ request('q') }}" autocomplete="off">
                     </div>
                 </div>
 
@@ -216,7 +211,8 @@
                     <select name="namBatDau" onchange="this.form.submit()">
                         <option value="">Tất cả năm</option>
                         @foreach ($namBatDauOptions as $namBatDau)
-                            <option value="{{ $namBatDau }}" {{ request('namBatDau') === (string) $namBatDau ? 'selected' : '' }}>
+                            <option value="{{ $namBatDau }}"
+                                {{ request('namBatDau') === (string) $namBatDau ? 'selected' : '' }}>
                                 {{ $namBatDau }}
                             </option>
                         @endforeach
@@ -228,7 +224,8 @@
                     <select name="thangBatDau" onchange="this.form.submit()">
                         <option value="">Tất cả tháng</option>
                         @foreach ($thangBatDauOptions as $thangBatDau)
-                            <option value="{{ $thangBatDau }}" {{ request('thangBatDau') === (string) $thangBatDau ? 'selected' : '' }}>
+                            <option value="{{ $thangBatDau }}"
+                                {{ request('thangBatDau') === (string) $thangBatDau ? 'selected' : '' }}>
                                 Tháng {{ $thangBatDau }}
                             </option>
                         @endforeach
@@ -239,7 +236,8 @@
                     <select name="khoaHocId" onchange="this.form.submit()">
                         <option value="">Tất cả khóa học</option>
                         @foreach ($khoaHocs as $kh)
-                            <option value="{{ $kh->khoaHocId }}" {{ request('khoaHocId') == $kh->khoaHocId ? 'selected' : '' }}>
+                            <option value="{{ $kh->khoaHocId }}"
+                                {{ request('khoaHocId') == $kh->khoaHocId ? 'selected' : '' }}>
                                 {{ $kh->tenKhoaHoc }}
                             </option>
                         @endforeach
@@ -263,7 +261,8 @@
                     <select name="trangThai" onchange="this.form.submit()">
                         <option value="">Tất cả trạng thái</option>
                         @foreach (\App\Models\Education\LopHoc::trangThaiOptions() as $value => $label)
-                            <option value="{{ $value }}" {{ request('trangThai') === (string) $value ? 'selected' : '' }}>
+                            <option value="{{ $value }}"
+                                {{ request('trangThai') === (string) $value ? 'selected' : '' }}>
                                 {{ $label }}
                             </option>
                         @endforeach
@@ -273,9 +272,12 @@
                 <div class="lh-filter-field">
                     <label>Sắp xếp theo</label>
                     <select name="orderBy" onchange="this.form.submit()">
-                        <option value="lopHocId" {{ request('orderBy', 'lopHocId') === 'lopHocId' ? 'selected' : '' }}>Mới nhất</option>
-                        <option value="tenLopHoc" {{ request('orderBy') === 'tenLopHoc' ? 'selected' : '' }}>Tên A-Z</option>
-                        <option value="ngayBatDau" {{ request('orderBy') === 'ngayBatDau' ? 'selected' : '' }}>Ngày bắt đầu</option>
+                        <option value="lopHocId" {{ request('orderBy', 'lopHocId') === 'lopHocId' ? 'selected' : '' }}>Mới
+                            nhất</option>
+                        <option value="tenLopHoc" {{ request('orderBy') === 'tenLopHoc' ? 'selected' : '' }}>Tên A-Z
+                        </option>
+                        <option value="ngayBatDau" {{ request('orderBy') === 'ngayBatDau' ? 'selected' : '' }}>Ngày bắt đầu
+                        </option>
                     </select>
                 </div>
 
@@ -331,8 +333,12 @@
                         @foreach ($lopHocs as $lop)
                             @php
                                 $soHV = $lop->dangKyLopHocs->count();
-                                $soDangKyHieuLuc = $lop->dangKyLopHocs->filter(fn($dangKy) => $dangKy->preventsClassDeletion())->count();
-                                $allowedTransitions = \App\Models\Education\LopHoc::allowedStatusTransitions()[(int) $lop->trangThai] ?? [];
+                                $soDangKyHieuLuc = $lop->dangKyLopHocs
+                                    ->filter(fn($dangKy) => $dangKy->preventsClassDeletion())
+                                    ->count();
+                                $allowedTransitions =
+                                    \App\Models\Education\LopHoc::allowedStatusTransitions()[(int) $lop->trangThai] ??
+                                    [];
                             @endphp
                             <tr>
                                 <td style="color:#94a3b8;font-size:.78rem">{{ $lopHocs->firstItem() + $loop->index }}</td>
@@ -405,7 +411,8 @@
                                 </td>
                                 <td>
                                     <div class="lh-status-stack">
-                                        <span class="lh-tt lh-tt-{{ $lop->trangThai }} js-status-badge">{{ $lop->trangThaiLabel }}</span>
+                                        <span
+                                            class="lh-tt lh-tt-{{ $lop->trangThai }} js-status-badge">{{ $lop->trangThaiLabel }}</span>
                                         <select class="lh-status-select js-status-select"
                                             data-update-url="{{ route('admin.lop-hoc.update-status', $lop->slug) }}"
                                             data-current-status="{{ (int) $lop->trangThai }}"
@@ -418,7 +425,6 @@
                                                 </option>
                                             @endforeach
                                         </select>
-                                        <div class="lh-status-hint">Đổi nhanh ngay trên danh sách</div>
                                     </div>
                                 </td>
                                 <td>
@@ -431,8 +437,7 @@
                                             class="lh-btn-action lh-btn-edit" title="Chỉnh sửa">
                                             <i class="fas fa-pen"></i>
                                         </a>
-                                        <button type="button"
-                                            class="lh-btn-action lh-btn-del js-delete-lh"
+                                        <button type="button" class="lh-btn-action lh-btn-del js-delete-lh"
                                             title="Xóa"
                                             data-delete-url="{{ route('admin.lop-hoc.destroy', $lop->slug) }}"
                                             data-name="{{ e($lop->tenLopHoc) }}"
@@ -543,7 +548,8 @@
                 }
 
                 const selectedText = select.options[select.selectedIndex]?.text || 'trạng thái mới';
-                const rowName = select.closest('tr')?.querySelector('td:nth-child(2) a')?.textContent?.trim() || 'lớp học này';
+                const rowName = select.closest('tr')?.querySelector('td:nth-child(2) a')?.textContent
+                    ?.trim() || 'lớp học này';
 
                 const confirmation = await Swal.fire({
                     title: 'Đổi trạng thái lớp?',
@@ -570,7 +576,8 @@
                         headers: {
                             'Content-Type': 'application/json',
                             'Accept': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')
+                                ?.content || '',
                         },
                         body: JSON.stringify({
                             trangThai: nextStatus,

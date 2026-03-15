@@ -613,7 +613,7 @@
                     <div style="font-size:.7rem;font-weight:700;opacity:.8;text-transform:uppercase">Chính sách giá</div>
                     <div style="font-size:1.1rem;font-weight:700;margin-top:4px">{{ $hp->loaiThuLabel }}</div>
                     <div style="font-size:.78rem;opacity:.8">
-                        {{ $hp->soBuoiCamKet ? $hp->soBuoiCamKet . ' buổi cam kết' : 'Không ràng buộc số buổi' }}
+                        {{ $hp->soBuoiCamKetHieuDung ? $hp->soBuoiCamKetHieuDung . ' buổi cam kết' : 'Không ràng buộc số buổi' }}
                     </div>
                 </div>
                 <div>

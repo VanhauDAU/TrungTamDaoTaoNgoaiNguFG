@@ -16,7 +16,6 @@ class LopHocDotThu extends Model
         'thuTu',
         'soTien',
         'hanThanhToan',
-        'batBuoc',
         'trangThai',
     ];
 
@@ -24,7 +23,6 @@ class LopHocDotThu extends Model
         'thuTu' => 'integer',
         'soTien' => 'decimal:2',
         'hanThanhToan' => 'date',
-        'batBuoc' => 'integer',
         'trangThai' => 'integer',
     ];
 

@@ -228,6 +228,10 @@
 
                 {{-- RIGHT COLUMN (SIDEBAR) --}}
                 <div class="col-lg-4">
+                    @php
+                        $phuPhiMacDinh = $class->phuPhis->where('trangThai', 1)->where('apDungMacDinh', 1);
+                        $tongPhuPhiMacDinh = (float) $phuPhiMacDinh->sum('soTien');
+                    @endphp
                     <div class="sidebar-sticky" style="top: 100px">
                         {{-- HỌC PHÍ CARD --}}
                         <div class="sidebar-card p-4 text-center mb-4">
@@ -239,9 +243,28 @@
                                 <p class="text-muted small mb-3">
                                     <i class="fas fa-info-circle me-1"></i>
                                     {{ $class->chinhSachGia->loaiThuLabel }}
-                                    @if ($class->chinhSachGia->soBuoiCamKet)
-                                        · {{ $class->chinhSachGia->soBuoiCamKet }} buổi cam kết
+                                    @if ($class->chinhSachGia->soBuoiCamKetHieuDung)
+                                        · {{ $class->chinhSachGia->soBuoiCamKetHieuDung }} buổi cam kết
                                     @endif
+                                </p>
+                                @if ($phuPhiMacDinh->isNotEmpty())
+                                    <div class="text-start small mb-3" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:12px 14px;">
+                                        <div class="fw-bold text-dark mb-2">Khoản bổ sung mặc định</div>
+                                        @foreach ($phuPhiMacDinh as $phuPhi)
+                                            <div class="d-flex justify-content-between gap-2 mb-1">
+                                                <span>{{ $phuPhi->tenKhoanThu }}</span>
+                                                <span>{{ number_format($phuPhi->soTien, 0, ',', '.') }}đ</span>
+                                            </div>
+                                        @endforeach
+                                        <div class="d-flex justify-content-between gap-2 pt-2 mt-2" style="border-top:1px dashed #cbd5e1;">
+                                            <span class="fw-semibold">Tổng phụ phí mặc định</span>
+                                            <span class="fw-bold">{{ number_format($tongPhuPhiMacDinh, 0, ',', '.') }}đ</span>
+                                        </div>
+                                    </div>
+                                @endif
+                                <p class="text-muted small mb-3">
+                                    Tổng công nợ dự kiến:
+                                    <strong>{{ number_format($class->chinhSachGia->hocPhiNiemYet + $tongPhuPhiMacDinh, 0, ',', '.') }}đ</strong>
                                 </p>
                             @else
                                 <h2 class="text-muted fw-bold mb-3">Liên hệ</h2>

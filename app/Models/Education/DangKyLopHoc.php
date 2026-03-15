@@ -5,6 +5,7 @@ namespace App\Models\Education;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Auth\TaiKhoan;
 use App\Models\Finance\HoaDon;
+use Illuminate\Support\Collection;
 
 class DangKyLopHoc extends Model
 {
@@ -75,6 +76,11 @@ class DangKyLopHoc extends Model
         return $this->hasMany(DiemDanh::class, 'dangKyLopHocId', 'dangKyLopHocId');
     }
 
+    public function phuPhiSnapshots()
+    {
+        return $this->hasMany(DangKyLopHocPhuPhi::class, 'dangKyLopHocId', 'dangKyLopHocId');
+    }
+
     /* ── Accessors ──────────────────────────────────────────────────── */
 
     public function getTrangThaiLabelAttribute(): string
@@ -99,6 +105,23 @@ class DangKyLopHoc extends Model
     public function getHocPhiTongTienAttribute(): float
     {
         return (float) ($this->hocPhiPhaiThuSnapshot ?? $this->hocPhiNiemYetSnapshot ?? 0);
+    }
+
+    public function getTongDaThuAttribute(): float
+    {
+        if ($this->relationLoaded('hoaDons')) {
+            return (float) $this->resolveTuitionInvoices($this->hoaDons)
+                ->sum(fn (HoaDon $hoaDon) => (float) $hoaDon->daTra);
+        }
+
+        return (float) $this->hoaDons()
+            ->where('nguonThu', HoaDon::NGUON_THU_HOC_PHI)
+            ->sum('daTra');
+    }
+
+    public function getTongConNoAttribute(): float
+    {
+        return max(0, $this->hocPhiTongTien - $this->tongDaThu);
     }
 
     public function isPendingPayment(): bool
@@ -236,5 +259,52 @@ class DangKyLopHoc extends Model
     public function scopePreventingClassDeletion($query)
     {
         return $query->where('trangThai', '!=', self::TRANG_THAI_HUY);
+    }
+
+    public function recalculatePaymentStatus(): void
+    {
+        if (in_array((int) $this->trangThai, [
+            self::TRANG_THAI_BAO_LUU,
+            self::TRANG_THAI_HOAN_THANH,
+            self::TRANG_THAI_HUY,
+        ], true)) {
+            return;
+        }
+
+        $this->loadMissing(['lopHoc', 'hoaDons.lopHocDotThu']);
+
+        $mandatoryInvoices = $this->resolveTuitionInvoices($this->hoaDons);
+
+        if ($mandatoryInvoices->isEmpty() && $this->hoaDons->isNotEmpty()) {
+            $mandatoryInvoices = $this->hoaDons->where('nguonThu', HoaDon::NGUON_THU_HOC_PHI)->values();
+        }
+
+        $hasOverdueMandatory = $mandatoryInvoices->contains(function (HoaDon $hoaDon) {
+            return $hoaDon->isQuaHan && (int) $hoaDon->trangThai !== HoaDon::TRANG_THAI_DA_TT;
+        });
+
+        $mandatoryPaid = $mandatoryInvoices->isNotEmpty()
+            && $mandatoryInvoices->every(fn (HoaDon $hoaDon) => (int) $hoaDon->trangThai === HoaDon::TRANG_THAI_DA_TT);
+
+        $newStatus = self::TRANG_THAI_CHO_THANH_TOAN;
+
+        if ($hasOverdueMandatory && $this->lopHoc && $this->lopHoc->isInProgress()) {
+            $newStatus = self::TRANG_THAI_TAM_DUNG_NO_HOC_PHI;
+        } elseif ($mandatoryPaid) {
+            $newStatus = $this->lopHoc && $this->lopHoc->isInProgress()
+                ? self::TRANG_THAI_DANG_HOC
+                : self::TRANG_THAI_DA_XAC_NHAN;
+        }
+
+        if ((int) $this->trangThai !== $newStatus) {
+            $this->update(['trangThai' => $newStatus]);
+        }
+    }
+
+    private function resolveTuitionInvoices(Collection $hoaDons): Collection
+    {
+        return $hoaDons->filter(function (HoaDon $hoaDon) {
+            return $hoaDon->nguonThu === HoaDon::NGUON_THU_HOC_PHI;
+        })->values();
     }
 }

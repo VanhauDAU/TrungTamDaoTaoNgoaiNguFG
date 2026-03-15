@@ -113,7 +113,7 @@ class StudentService implements StudentServiceInterface
     {
         return [
             'invoices' => HoaDon::where('taiKhoanId', $user->taiKhoanId)
-            ->with(['dangKyLopHoc.lopHoc.khoaHoc', 'coSo'])
+            ->with(['dangKyLopHoc.lopHoc.khoaHoc', 'dangKyLopHocPhuPhi', 'coSo'])
             ->orderBy('ngayLap', 'desc')->paginate(10),
         ];
     }
@@ -122,7 +122,7 @@ class StudentService implements StudentServiceInterface
     {
         return [
             'invoice' => HoaDon::where('hoaDonId', $id)->where('taiKhoanId', $user->taiKhoanId)
-            ->with(['dangKyLopHoc.lopHoc.khoaHoc', 'coSo.tinhThanh', 'phieuThus'])->firstOrFail(),
+            ->with(['dangKyLopHoc.lopHoc.khoaHoc', 'dangKyLopHocPhuPhi', 'coSo.tinhThanh', 'phieuThus'])->firstOrFail(),
         ];
     }
 
