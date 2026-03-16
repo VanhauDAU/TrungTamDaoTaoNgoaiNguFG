@@ -259,6 +259,16 @@ redis-cli MONITOR
 
 Sau đó mở `/register` và nhập email. Bạn sẽ thấy key dạng `auth:register:email-check:<sha1>` được `GET`/`SETEX`.
 
+Sau khi `git pull` code mới từ team, nên chạy lại tối thiểu:
+```bash
+composer install
+npm install
+php artisan optimize:clear
+php artisan migrate
+```
+
+Nếu pull có thay đổi `.env.example`, hãy cập nhật `.env` thủ công trước khi chạy app.
+
 ## 11. Test và chất lượng mã nguồn
 ```bash
 # Test full
