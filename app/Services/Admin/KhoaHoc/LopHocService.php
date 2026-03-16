@@ -24,6 +24,16 @@ use Illuminate\Validation\ValidationException;
 
 class LopHocService implements LopHocServiceInterface
 {
+    private const THU_MAP = [
+        '2' => Carbon::MONDAY,
+        '3' => Carbon::TUESDAY,
+        '4' => Carbon::WEDNESDAY,
+        '5' => Carbon::THURSDAY,
+        '6' => Carbon::FRIDAY,
+        '7' => Carbon::SATURDAY,
+        'CN' => Carbon::SUNDAY,
+    ];
+
     public function getList(Request $request): array
     {
         $query = LopHoc::with([
@@ -169,6 +179,7 @@ class LopHocService implements LopHocServiceInterface
 
         $this->checkRoomCapacity($lopHocData);
         $this->ensurePricingBusinessRules(null, $lopHocData, $pricingPayload);
+        $this->ensureSchedulingConflicts(null, $lopHocData);
 
         $lopHocData['slug'] = $this->generateUniqueSlug($request->tenLopHoc);
         $lopHocData['maLopHoc'] = LopHoc::generateMaLopHoc($request->khoaHocId);
@@ -191,6 +202,7 @@ class LopHocService implements LopHocServiceInterface
 
         $this->checkRoomCapacity($lopHocData);
         $this->ensurePricingBusinessRules($lopHoc, $lopHocData, $pricingPayload);
+        $this->ensureSchedulingConflicts($lopHoc, $lopHocData);
 
         $lopHoc->update($lopHocData);
         $this->syncPricingPolicy($lopHoc->fresh(), $pricingPayload);
@@ -299,6 +311,104 @@ class LopHocService implements LopHocServiceInterface
         ];
     }
 
+    public function previewSchedulingConflicts(Request $request): array
+    {
+        $payload = $request->validate([
+            'coSoId' => 'nullable|exists:cosodaotao,coSoId',
+            'caHocId' => 'nullable|exists:cahoc,caHocId',
+            'taiKhoanId' => 'nullable|exists:taikhoan,taiKhoanId',
+            'phongHocId' => 'nullable|exists:phonghoc,phongHocId',
+            'ngayBatDau' => 'nullable|date',
+            'soBuoiDuKien' => 'nullable|integer|min:1',
+            'lichHoc' => 'nullable|string|max:20',
+            'excludeSlug' => 'nullable|string',
+        ]);
+
+        $hasTeacher = !empty($payload['taiKhoanId']);
+        $hasRoom = !empty($payload['phongHocId']);
+
+        if (!$hasTeacher && !$hasRoom) {
+            return [
+                'ready' => false,
+                'ok' => true,
+                'message' => 'Chọn giáo viên hoặc phòng học để bắt đầu kiểm tra xung đột.',
+                'fieldStates' => [],
+                'missingFields' => [],
+            ];
+        }
+
+        $missingFields = $this->collectMissingConflictFields($payload);
+        if ($missingFields !== []) {
+            return [
+                'ready' => false,
+                'ok' => true,
+                'message' => 'Cần nhập đủ ' . $this->formatMissingConflictFields($missingFields) . ' để kiểm tra xung đột realtime.',
+                'fieldStates' => [],
+                'missingFields' => $missingFields,
+            ];
+        }
+
+        $existingClass = !empty($payload['excludeSlug'])
+            ? LopHoc::where('slug', $payload['excludeSlug'])->first()
+            : null;
+
+        $fieldStates = [];
+
+        try {
+            $this->ensureSelectedResourcesAreValid($payload);
+
+            $newSchedule = $this->buildScheduleEnvelopeFromPayload($payload);
+            $newCaHoc = CaHoc::findOrFail($payload['caHocId']);
+
+            if ($hasTeacher) {
+                $teacherConflict = $this->findClassConflict(
+                    $existingClass,
+                    $newSchedule,
+                    $newCaHoc,
+                    'taiKhoanId',
+                    (int) $payload['taiKhoanId']
+                );
+
+                $fieldStates['taiKhoanId'] = $teacherConflict
+                    ? ['status' => 'error', 'message' => $teacherConflict]
+                    : ['status' => 'ok', 'message' => 'Giáo viên hiện chưa bị trùng lịch với lớp khác.'];
+            }
+
+            if ($hasRoom) {
+                $roomConflict = $this->findClassConflict(
+                    $existingClass,
+                    $newSchedule,
+                    $newCaHoc,
+                    'phongHocId',
+                    (int) $payload['phongHocId']
+                );
+
+                $fieldStates['phongHocId'] = $roomConflict
+                    ? ['status' => 'error', 'message' => $roomConflict]
+                    : ['status' => 'ok', 'message' => 'Phòng học hiện chưa bị trùng lịch với lớp khác.'];
+            }
+        } catch (ValidationException $e) {
+            foreach ($e->errors() as $field => $messages) {
+                $fieldStates[$field] = [
+                    'status' => 'error',
+                    'message' => $messages[0] ?? 'Dữ liệu không hợp lệ.',
+                ];
+            }
+        }
+
+        $hasErrors = collect($fieldStates)->contains(fn(array $state) => ($state['status'] ?? null) === 'error');
+
+        return [
+            'ready' => true,
+            'ok' => !$hasErrors,
+            'message' => $hasErrors
+                ? 'Đã phát hiện xung đột cần xử lý trước khi lưu lớp.'
+                : 'Chưa phát hiện xung đột giáo viên hoặc phòng học.',
+            'fieldStates' => $fieldStates,
+            'missingFields' => [],
+        ];
+    }
+
     private function validateLopHoc(Request $request): array
     {
         return $request->validate([
@@ -311,7 +421,6 @@ class LopHocService implements LopHocServiceInterface
             'ngayBatDau' => 'required|date',
             'soBuoiDuKien' => 'nullable|integer|min:1',
             'soHocVienToiDa' => 'nullable|integer|min:1',
-            'donGiaDay' => 'nullable|numeric|min:0',
             'lichHoc' => 'nullable|string|max:20',
             'trangThai' => ['required', Rule::in(array_map('strval', array_keys(LopHoc::trangThaiLabels())))],
             'hocPhiNiemYet' => 'nullable|numeric|min:0',
@@ -327,6 +436,7 @@ class LopHocService implements LopHocServiceInterface
             'coSoId.required' => 'Vui lòng chọn cơ sở.',
             'caHocId.required' => 'Vui lòng chọn ca học.',
             'ngayBatDau.required' => 'Vui lòng chọn ngày bắt đầu.',
+            'soBuoiDuKien.min' => 'Số buổi dự kiến phải tối thiểu là 1.',
             'hocPhiNiemYet.min' => 'Học phí niêm yết không được âm.',
             'soBuoiCamKet.min' => 'Số buổi cam kết phải tối thiểu là 1.',
         ]);
@@ -344,7 +454,6 @@ class LopHocService implements LopHocServiceInterface
             'ngayBatDau',
             'soBuoiDuKien',
             'soHocVienToiDa',
-            'donGiaDay',
             'lichHoc',
             'trangThai',
         ]);
@@ -650,6 +759,350 @@ class LopHocService implements LopHocServiceInterface
                 ]);
             }
         }
+    }
+
+    private function ensureSchedulingConflicts(?LopHoc $existingClass, array $lopHocData): void
+    {
+        $this->ensureSelectedResourcesAreValid($lopHocData);
+
+        if (empty($lopHocData['taiKhoanId']) && empty($lopHocData['phongHocId'])) {
+            return;
+        }
+
+        $this->ensureScheduleDataIsCompleteForConflictChecks($lopHocData);
+
+        $newSchedule = $this->buildScheduleEnvelopeFromPayload($lopHocData);
+        $newCaHoc = CaHoc::findOrFail($lopHocData['caHocId']);
+
+        if (!empty($lopHocData['taiKhoanId'])) {
+            $teacherConflict = $this->findClassConflict(
+                $existingClass,
+                $newSchedule,
+                $newCaHoc,
+                'taiKhoanId',
+                (int) $lopHocData['taiKhoanId']
+            );
+
+            if ($teacherConflict !== null) {
+                throw ValidationException::withMessages([
+                    'taiKhoanId' => $teacherConflict,
+                ]);
+            }
+        }
+
+        if (!empty($lopHocData['phongHocId'])) {
+            $roomConflict = $this->findClassConflict(
+                $existingClass,
+                $newSchedule,
+                $newCaHoc,
+                'phongHocId',
+                (int) $lopHocData['phongHocId']
+            );
+
+            if ($roomConflict !== null) {
+                throw ValidationException::withMessages([
+                    'phongHocId' => $roomConflict,
+                ]);
+            }
+        }
+    }
+
+    private function ensureSelectedResourcesAreValid(array $lopHocData): void
+    {
+        if (!empty($lopHocData['phongHocId'])) {
+            $room = PhongHoc::findOrFail($lopHocData['phongHocId']);
+
+            if ((int) $room->coSoId !== (int) $lopHocData['coSoId']) {
+                throw ValidationException::withMessages([
+                    'phongHocId' => 'Phòng học phải thuộc đúng cơ sở đã chọn.',
+                ]);
+            }
+
+            if (! $room->isOperational()) {
+                throw ValidationException::withMessages([
+                    'phongHocId' => 'Phòng học đang bảo trì hoặc không sẵn sàng để xếp lớp.',
+                ]);
+            }
+        }
+
+        if (!empty($lopHocData['taiKhoanId'])) {
+            $teacher = TaiKhoan::findOrFail($lopHocData['taiKhoanId']);
+
+            if ((int) $teacher->role !== TaiKhoan::ROLE_GIAO_VIEN) {
+                throw ValidationException::withMessages([
+                    'taiKhoanId' => 'Tài khoản được chọn không phải là giáo viên.',
+                ]);
+            }
+
+            if ((int) $teacher->trangThai !== 1) {
+                throw ValidationException::withMessages([
+                    'taiKhoanId' => 'Giáo viên đang bị khóa, không thể xếp lớp.',
+                ]);
+            }
+        }
+    }
+
+    private function ensureScheduleDataIsCompleteForConflictChecks(array $lopHocData): void
+    {
+        if (empty($lopHocData['lichHoc'])) {
+            throw ValidationException::withMessages([
+                'lichHoc' => 'Cần chọn lịch học trong tuần để kiểm tra trùng phòng và trùng giáo viên.',
+            ]);
+        }
+
+        if (empty($lopHocData['soBuoiDuKien'])) {
+            throw ValidationException::withMessages([
+                'soBuoiDuKien' => 'Cần nhập số buổi dự kiến để hệ thống kiểm tra xung đột lịch lớp.',
+            ]);
+        }
+    }
+
+    private function collectMissingConflictFields(array $lopHocData): array
+    {
+        $missing = [];
+
+        if (empty($lopHocData['coSoId'])) {
+            $missing[] = 'cơ sở';
+        }
+        if (empty($lopHocData['caHocId'])) {
+            $missing[] = 'ca học';
+        }
+        if (empty($lopHocData['ngayBatDau'])) {
+            $missing[] = 'ngày bắt đầu';
+        }
+        if (empty($lopHocData['lichHoc'])) {
+            $missing[] = 'lịch học';
+        }
+        if (empty($lopHocData['soBuoiDuKien'])) {
+            $missing[] = 'số buổi dự kiến';
+        }
+
+        return $missing;
+    }
+
+    private function formatMissingConflictFields(array $missingFields): string
+    {
+        return implode(', ', $missingFields);
+    }
+
+    private function findClassConflict(
+        ?LopHoc $existingClass,
+        array $newSchedule,
+        CaHoc $newCaHoc,
+        string $resourceColumn,
+        int $resourceId
+    ): ?string {
+        $conflictingClasses = LopHoc::query()
+            ->with(['caHoc', 'buoiHocs'])
+            ->where($resourceColumn, $resourceId)
+            ->where('trangThai', '!=', LopHoc::TRANG_THAI_DA_HUY)
+            ->when($existingClass, fn($query) => $query->where('lopHocId', '!=', $existingClass->lopHocId))
+            ->get();
+
+        foreach ($conflictingClasses as $class) {
+            if (! $class->caHoc || ! $this->caTimesOverlap($newCaHoc, $class->caHoc)) {
+                continue;
+            }
+
+            $existingSchedule = $this->buildScheduleEnvelopeFromClass($class);
+            if (! $this->scheduleWindowsOverlap($newSchedule, $existingSchedule)) {
+                continue;
+            }
+
+            $exactDate = $this->findExactDateOverlap($newSchedule['dates'], $existingSchedule['dates']);
+            $resourceLabel = $resourceColumn === 'taiKhoanId' ? 'Giáo viên' : 'Phòng học';
+            $timeLabel = $this->formatCaHocWindow($newCaHoc);
+
+            if ($exactDate !== null) {
+                return sprintf(
+                    '%s đã được xếp cho lớp "%s" vào ngày %s (%s). Vui lòng chọn lại.',
+                    $resourceLabel,
+                    $class->tenLopHoc,
+                    Carbon::parse($exactDate)->format('d/m/Y'),
+                    $timeLabel
+                );
+            }
+
+            $commonDays = array_intersect($newSchedule['days'], $existingSchedule['days']);
+            if ($commonDays === []) {
+                continue;
+            }
+
+            return sprintf(
+                '%s bị trùng với lớp "%s" vào %s trong khoảng %s đến %s (%s).',
+                $resourceLabel,
+                $class->tenLopHoc,
+                $this->formatBusinessDays($commonDays),
+                $existingSchedule['start']->format('d/m/Y'),
+                $existingSchedule['end']->format('d/m/Y'),
+                $timeLabel
+            );
+        }
+
+        return null;
+    }
+
+    private function buildScheduleEnvelopeFromPayload(array $lopHocData): array
+    {
+        $start = Carbon::parse($lopHocData['ngayBatDau'])->startOfDay();
+        $days = $this->normalizeBusinessDays($lopHocData['lichHoc'] ?? null);
+        $dates = $this->projectSessionDates($start, $days, (int) $lopHocData['soBuoiDuKien']);
+
+        return [
+            'start' => $start,
+            'end' => Carbon::parse(end($dates) ?: $start->toDateString())->startOfDay(),
+            'days' => $days,
+            'dates' => $dates,
+        ];
+    }
+
+    private function buildScheduleEnvelopeFromClass(LopHoc $lopHoc): array
+    {
+        $activeSessions = $lopHoc->buoiHocs
+            ->reject(fn(BuoiHoc $session) => in_array((int) $session->trangThai, [
+                BuoiHoc::TRANG_THAI_DA_HUY,
+                BuoiHoc::TRANG_THAI_DOI_LICH,
+            ], true))
+            ->pluck('ngayHoc')
+            ->filter()
+            ->map(fn($date) => Carbon::parse($date)->toDateString())
+            ->unique()
+            ->values()
+            ->all();
+
+        if ($activeSessions !== []) {
+            $days = collect($activeSessions)
+                ->map(fn(string $date) => $this->carbonDateToBusinessDay(Carbon::parse($date)))
+                ->filter()
+                ->unique()
+                ->values()
+                ->all();
+
+            return [
+                'start' => Carbon::parse($activeSessions[0])->startOfDay(),
+                'end' => Carbon::parse(end($activeSessions))->startOfDay(),
+                'days' => $days,
+                'dates' => $activeSessions,
+            ];
+        }
+
+        $start = $lopHoc->ngayBatDau ? Carbon::parse($lopHoc->ngayBatDau)->startOfDay() : null;
+        $days = $this->normalizeBusinessDays($lopHoc->lichHoc);
+        $projectedDates = ($start && $days !== [] && !empty($lopHoc->soBuoiDuKien))
+            ? $this->projectSessionDates($start, $days, (int) $lopHoc->soBuoiDuKien)
+            : [];
+        $end = $lopHoc->ngayKetThuc
+            ? Carbon::parse($lopHoc->ngayKetThuc)->startOfDay()
+            : ($projectedDates !== [] ? Carbon::parse(end($projectedDates))->startOfDay() : $start);
+
+        return [
+            'start' => $start,
+            'end' => $end,
+            'days' => $days,
+            'dates' => $projectedDates,
+        ];
+    }
+
+    private function scheduleWindowsOverlap(array $newSchedule, array $existingSchedule): bool
+    {
+        if (!$newSchedule['start'] || !$newSchedule['end'] || !$existingSchedule['start'] || !$existingSchedule['end']) {
+            return false;
+        }
+
+        if ($newSchedule['start']->gt($existingSchedule['end']) || $newSchedule['end']->lt($existingSchedule['start'])) {
+            return false;
+        }
+
+        if ($newSchedule['dates'] !== [] && $existingSchedule['dates'] !== []) {
+            return $this->findExactDateOverlap($newSchedule['dates'], $existingSchedule['dates']) !== null;
+        }
+
+        return array_intersect($newSchedule['days'], $existingSchedule['days']) !== [];
+    }
+
+    private function findExactDateOverlap(array $newDates, array $existingDates): ?string
+    {
+        $overlap = array_values(array_intersect($newDates, $existingDates));
+
+        return $overlap[0] ?? null;
+    }
+
+    private function normalizeBusinessDays(?string $lichHoc): array
+    {
+        if (!is_string($lichHoc) || trim($lichHoc) === '') {
+            return [];
+        }
+
+        return collect(explode(',', $lichHoc))
+            ->map(fn(string $day) => trim($day))
+            ->filter(fn(string $day) => array_key_exists($day, self::THU_MAP))
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    private function projectSessionDates(Carbon $start, array $days, int $targetSessions): array
+    {
+        if ($days === [] || $targetSessions < 1) {
+            return [];
+        }
+
+        $targetWeekdays = array_values(array_unique(array_map(fn(string $day) => self::THU_MAP[$day], $days)));
+        $dates = [];
+        $cursor = $start->copy();
+        $safetyLimit = 0;
+
+        while (count($dates) < $targetSessions && $safetyLimit < 3660) {
+            if (in_array($cursor->dayOfWeek, $targetWeekdays, true)) {
+                $dates[] = $cursor->toDateString();
+            }
+
+            $cursor->addDay();
+            $safetyLimit++;
+        }
+
+        return $dates;
+    }
+
+    private function carbonDateToBusinessDay(Carbon $date): ?string
+    {
+        foreach (self::THU_MAP as $businessDay => $carbonDay) {
+            if ($date->dayOfWeek === $carbonDay) {
+                return $businessDay;
+            }
+        }
+
+        return null;
+    }
+
+    private function formatBusinessDays(array $days): string
+    {
+        $labels = [
+            '2' => 'Thứ 2',
+            '3' => 'Thứ 3',
+            '4' => 'Thứ 4',
+            '5' => 'Thứ 5',
+            '6' => 'Thứ 6',
+            '7' => 'Thứ 7',
+            'CN' => 'Chủ nhật',
+        ];
+
+        return implode(', ', array_map(fn(string $day) => $labels[$day] ?? $day, array_values($days)));
+    }
+
+    private function caTimesOverlap(CaHoc $newCaHoc, CaHoc $existingCaHoc): bool
+    {
+        $newStart = strtotime((string) $newCaHoc->gioBatDau);
+        $newEnd = strtotime((string) $newCaHoc->gioKetThuc);
+        $existingStart = strtotime((string) $existingCaHoc->gioBatDau);
+        $existingEnd = strtotime((string) $existingCaHoc->gioKetThuc);
+
+        return $newStart < $existingEnd && $existingStart < $newEnd;
+    }
+
+    private function formatCaHocWindow(CaHoc $caHoc): string
+    {
+        return trim((string) $caHoc->gioBatDau) . '-' . trim((string) $caHoc->gioKetThuc);
     }
 
     private function giaoVienTheoCoSo(int $coSoId, bool $cungCoSo)
