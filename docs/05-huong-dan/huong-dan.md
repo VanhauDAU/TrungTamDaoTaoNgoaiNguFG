@@ -54,6 +54,49 @@ php artisan serve
 
 Truy cập: `http://127.0.0.1:8000`
 
+### Khi pull code mới về máy
+
+Sau mỗi lần `git pull`, không nên chạy app ngay nếu chưa kiểm tra thay đổi môi trường và dependency.
+
+Checklist tối thiểu:
+
+```bash
+# 1. Kéo code mới
+git pull
+
+# 2. Đồng bộ dependency PHP khi composer.* thay đổi
+composer install
+
+# 3. Đồng bộ dependency frontend khi package.* thay đổi
+npm install
+
+# 4. Clear cache cấu hình/router/view sau khi đổi code hoặc .env
+php artisan optimize:clear
+
+# 5. Chạy migration nếu branch mới có migration
+php artisan migrate
+
+# 6. Nếu có thay đổi asset frontend
+npm run dev
+```
+
+Nếu team bật Redis cho local:
+
+```bash
+redis-cli PING
+```
+
+Nếu không thấy `PONG`, khởi động lại Redis:
+
+```bash
+redis-server /opt/homebrew/etc/redis.conf
+```
+
+Lưu ý:
+- Nếu pull về có thay đổi `.env.example`, cần so sánh và cập nhật `.env` thủ công.
+- Project hiện yêu cầu PHP runtime `>= 8.3`; nếu máy còn chạy bằng XAMPP PHP 8.2 thì `artisan` có thể fail ngay từ Composer platform check.
+- Nếu vừa thêm package mới như `predis/predis` mà chưa chạy `composer install`, các tính năng Redis sẽ không hoạt động đúng.
+
 ---
 
 ## Phần 2: Cấu hình .env quan trọng

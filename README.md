@@ -246,6 +246,16 @@ redis-cli MONITOR
 
 Sau do mo `/register` va nhap email. Ban se thay key dang `auth:register:email-check:<sha1>` duoc `GET`/`SETEX`.
 
+Sau khi `git pull` code moi tu team, nen chay lai toi thieu:
+```bash
+composer install
+npm install
+php artisan optimize:clear
+php artisan migrate
+```
+
+Neu pull co thay doi `.env.example`, hay cap nhat `.env` thu cong truoc khi chay app.
+
 ## 11. Test va chat luong ma nguon
 ```bash
 # Test full
