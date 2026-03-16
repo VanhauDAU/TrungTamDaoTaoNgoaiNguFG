@@ -72,4 +72,9 @@ interface LopHocServiceInterface
      * API: Lấy giáo viên theo cơ sở (phân nhóm cùng cơ sở / khác cơ sở).
      */
     public function getGiaoVienByCoso(int $coSoId): array;
+
+    /**
+     * Preview xung đột giáo viên / phòng học theo dữ liệu đang nhập trên form.
+     */
+    public function previewSchedulingConflicts(Request $request): array;
 }

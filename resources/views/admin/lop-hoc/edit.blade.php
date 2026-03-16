@@ -76,6 +76,8 @@
     <form action="{{ route('admin.lop-hoc.update', $lopHoc->slug) }}" method="POST">
         @csrf
         @method('PUT')
+        <input type="hidden" id="conflictPreviewUrl" value="{{ route('admin.lop-hoc.preview-conflicts') }}">
+        <input type="hidden" id="conflictExcludeSlug" value="{{ $lopHoc->slug }}">
 
         <div class="kf-tabs">
             <button type="button" class="kf-tab-btn active" data-tab="tab-co-ban">
@@ -168,47 +170,6 @@
                     </div>
                 </div>
 
-                <div class="kf-form-row">
-                    <div class="kf-form-group">
-                        <label>Phòng học</label>
-                        <select name="phongHocId" id="phongHocSel">
-                            @foreach ($phongHocs as $ph)
-                                <option value="{{ $ph->phongHocId }}"
-                                    data-suc-chua="{{ $ph->sucChua }}"
-                                    {{ old('phongHocId', $lopHoc->phongHocId) == $ph->phongHocId ? 'selected' : '' }}>
-                                    {{ $ph->tenPhong }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="kf-form-group">
-                        <label>Giáo viên <span class="hint-text text-muted" style="font-weight:normal;font-size:12px;">(Ưu
-                                tiên thuộc cơ sở)</span></label>
-                        <select name="taiKhoanId" id="giaoVienSel">
-                            <option value="">-- Không có --</option>
-                            @if ($giaoVienCoSo->isNotEmpty())
-                                <optgroup label="Giáo viên thuộc cơ sở này">
-                                    @foreach ($giaoVienCoSo as $gv)
-                                        <option value="{{ $gv->taiKhoanId }}"
-                                            {{ old('taiKhoanId', $lopHoc->taiKhoanId) == $gv->taiKhoanId ? 'selected' : '' }}>
-                                            {{ $gv->hoSoNguoiDung->hoTen ?? $gv->taiKhoan }}
-                                        </option>
-                                    @endforeach
-                                </optgroup>
-                            @endif
-                            @if ($giaoVienKhac->isNotEmpty())
-                                <optgroup label="Giáo viên cơ sở khác">
-                                    @foreach ($giaoVienKhac as $gv)
-                                        <option value="{{ $gv->taiKhoanId }}"
-                                            {{ old('taiKhoanId', $lopHoc->taiKhoanId) == $gv->taiKhoanId ? 'selected' : '' }}>
-                                            {{ $gv->hoSoNguoiDung->hoTen ?? $gv->taiKhoan }}
-                                        </option>
-                                    @endforeach
-                                </optgroup>
-                            @endif
-                        </select>
-                    </div>
-                </div>
             </div>
         </div>
 
@@ -243,6 +204,9 @@
                     </div>
                     <input type="hidden" name="lichHoc" id="lichHocInput"
                         value="{{ old('lichHoc', $lopHoc->lichHoc) }}">
+                    @error('lichHoc')
+                        <div class="invalid-feedback" style="display:block">{{ $message }}</div>
+                    @enderror
                 </div>
             </div>
 
@@ -256,17 +220,82 @@
                             >
                     </div>
                     <div class="kf-form-group">
-                        <label>Ngày kết thúc</label>
-                        <input type="text"
-                            value="{{ $lopHoc->ngayKetThuc ? \Carbon\Carbon::parse($lopHoc->ngayKetThuc)->format('d/m/Y') : 'Tự cập nhật theo buổi học cuối cùng' }}"
-                            readonly>
-                        <div class="form-hint">Trường này được đồng bộ từ buổi học cuối cùng còn hiệu lực của lớp.</div>
-                    </div>
-                    <div class="kf-form-group">
                         <label>Số buổi dự kiến</label>
                         <input type="number" name="soBuoiDuKien" id="soBuoiInput"
                             value="{{ old('soBuoiDuKien', $lopHoc->soBuoiDuKien) }}" min="1">
+                        @error('soBuoiDuKien')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
                         <div class="form-hint">Dùng cho kế hoạch đào tạo và tính năng tự động sinh buổi học.</div>
+                    </div>
+                </div>
+                <div class="form-hint" style="margin-top:10px">
+                    Ngày kết thúc được tự đồng bộ từ buổi học cuối cùng còn hiệu lực của lớp, không chỉnh trực tiếp ở form này.
+                </div>
+            </div>
+
+            <div class="kf-card">
+                <div class="kf-card-title"><i class="fas fa-door-open"></i> Phân công giáo viên & phòng học</div>
+                <div class="form-hint" style="margin:-10px 0 16px 0">
+                    Điều chỉnh lịch học trước rồi mới đổi giáo viên hoặc phòng để kiểm tra xung đột realtime theo dữ liệu mới nhất.
+                </div>
+
+                <div id="scheduleConflictSummary" class="kf-alert-error" style="display:none;margin-bottom:16px">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <div id="scheduleConflictSummaryText">Đang kiểm tra xung đột lịch...</div>
+                </div>
+
+                <div id="scheduleConflictHint" class="form-hint" style="margin-bottom:16px">
+                    Hoàn tất cơ sở, ca học, lịch học, ngày bắt đầu và số buổi dự kiến để bật kiểm tra xung đột realtime.
+                </div>
+
+                <div class="kf-form-row">
+                    <div class="kf-form-group">
+                        <label>Giáo viên <span class="hint-text text-muted" style="font-weight:normal;font-size:12px;">(Ưu tiên thuộc cơ sở)</span></label>
+                        <select name="taiKhoanId" id="giaoVienSel">
+                            <option value="">-- Không có --</option>
+                            @if ($giaoVienCoSo->isNotEmpty())
+                                <optgroup label="Giáo viên thuộc cơ sở này">
+                                    @foreach ($giaoVienCoSo as $gv)
+                                        <option value="{{ $gv->taiKhoanId }}"
+                                            {{ old('taiKhoanId', $lopHoc->taiKhoanId) == $gv->taiKhoanId ? 'selected' : '' }}>
+                                            {{ $gv->hoSoNguoiDung->hoTen ?? $gv->taiKhoan }}
+                                        </option>
+                                    @endforeach
+                                </optgroup>
+                            @endif
+                            @if ($giaoVienKhac->isNotEmpty())
+                                <optgroup label="Giáo viên cơ sở khác">
+                                    @foreach ($giaoVienKhac as $gv)
+                                        <option value="{{ $gv->taiKhoanId }}"
+                                            {{ old('taiKhoanId', $lopHoc->taiKhoanId) == $gv->taiKhoanId ? 'selected' : '' }}>
+                                            {{ $gv->hoSoNguoiDung->hoTen ?? $gv->taiKhoan }}
+                                        </option>
+                                    @endforeach
+                                </optgroup>
+                            @endif
+                        </select>
+                        <div id="giaoVienConflictFeedback" class="form-hint"></div>
+                        @error('taiKhoanId')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="kf-form-group">
+                        <label>Phòng học</label>
+                        <select name="phongHocId" id="phongHocSel">
+                            @foreach ($phongHocs as $ph)
+                                <option value="{{ $ph->phongHocId }}"
+                                    data-suc-chua="{{ $ph->sucChua }}"
+                                    {{ old('phongHocId', $lopHoc->phongHocId) == $ph->phongHocId ? 'selected' : '' }}>
+                                    {{ $ph->tenPhong }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <div id="phongHocConflictFeedback" class="form-hint"></div>
+                        @error('phongHocId')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
                     </div>
                 </div>
             </div>
@@ -525,16 +554,11 @@
 
             <div class="pricing-secondary-grid">
                 <div class="kf-card">
-                    <div class="kf-card-title"><i class="fas fa-chalkboard-teacher"></i> Chi phí giáo viên</div>
+                    <div class="kf-card-title"><i class="fas fa-users"></i> Vận hành lớp</div>
                     <p class="form-hint" style="margin:0 0 14px">
-                        Đây là chi phí của trung tâm, tách biệt khỏi học phí học viên ở trên.
+                        Lương giáo viên hiện được quản lý ở hồ sơ nhân sự và gói lương, không chỉnh trực tiếp trong form lớp.
                     </p>
                     <div class="kf-form-row">
-                        <div class="kf-form-group">
-                            <label>Đơn giá dạy (VNĐ/buổi)</label>
-                            <input type="number" name="donGiaDay" value="{{ old('donGiaDay', $lopHoc->donGiaDay) }}"
-                                min="0" step="1000">
-                        </div>
                         <div class="kf-form-group">
                             <label>Sĩ số học viên tối đa</label>
                             <input type="number" name="soHocVienToiDa"
@@ -598,6 +622,7 @@
                 lbl.style.borderColor = cb.checked ? '#7c3aed' : '';
                 lbl.style.color = cb.checked ? '#fff' : '';
             });
+            triggerConflictPreview();
         }
 
         async function loadPhuongXa(tinhThanhId) {
@@ -658,17 +683,25 @@
             previewPricing();
             updateLichHoc();
             updateSucChuaHint();
+            triggerConflictPreview();
         });
 
-        const savedPhong = "{{ old('phongHocId', $lopHoc->phongHocId) }}";
-        const savedGV = "{{ old('taiKhoanId', $lopHoc->taiKhoanId) }}";
+        let preferredPhong = "{{ old('phongHocId', $lopHoc->phongHocId) }}";
+        let preferredGV = "{{ old('taiKhoanId', $lopHoc->taiKhoanId) }}";
+        let conflictPreviewTimer = null;
+        let conflictPreviewVersion = 0;
 
         async function loadPhongVaGV(coSoId) {
             const ps = document.getElementById('phongHocSel');
             const gs = document.getElementById('giaoVienSel');
+            const currentPhong = ps.value || preferredPhong;
+            const currentGV = gs.value || preferredGV;
             ps.innerHTML = gs.innerHTML = '<option value="">Đang tải...</option>';
             if (!coSoId) {
                 ps.innerHTML = gs.innerHTML = '<option value="">—</option>';
+                preferredPhong = '';
+                preferredGV = '';
+                clearConflictFeedback();
                 return;
             }
             const [phongs, gvs] = await Promise.all([
@@ -679,7 +712,7 @@
             ps.innerHTML = '<option value="">-- Chọn phòng (tùy chọn) --</option>' +
                 phongs.map(p =>
                     `<option value="${p.phongHocId}" data-suc-chua="${p.sucChua}"
-                        ${String(p.phongHocId) === savedPhong ? 'selected' : ''}>
+                        ${String(p.phongHocId) === String(currentPhong) ? 'selected' : ''}>
                         ${p.tenPhong} (sức chứa: ${p.sucChua} chỗ)
                     </option>`
                 ).join('');
@@ -688,20 +721,117 @@
             if (gvs.cung_co_so && gvs.cung_co_so.length > 0) {
                 gvHtml += '<optgroup label="Giáo viên thuộc cơ sở này">';
                 gvHtml += gvs.cung_co_so.map(g =>
-                    `<option value="${g.taiKhoanId}" ${String(g.taiKhoanId) === savedGV ? 'selected' : ''}>${g.hoTen}</option>`
+                    `<option value="${g.taiKhoanId}" ${String(g.taiKhoanId) === String(currentGV) ? 'selected' : ''}>${g.hoTen}</option>`
                 ).join('');
                 gvHtml += '</optgroup>';
             }
             if (gvs.khac_co_so && gvs.khac_co_so.length > 0) {
                 gvHtml += '<optgroup label="Giáo viên cơ sở khác">';
                 gvHtml += gvs.khac_co_so.map(g =>
-                    `<option value="${g.taiKhoanId}" ${String(g.taiKhoanId) === savedGV ? 'selected' : ''}>${g.hoTen}</option>`
+                    `<option value="${g.taiKhoanId}" ${String(g.taiKhoanId) === String(currentGV) ? 'selected' : ''}>${g.hoTen}</option>`
                 ).join('');
                 gvHtml += '</optgroup>';
             }
             gs.innerHTML = gvHtml;
+            preferredPhong = ps.value || '';
+            preferredGV = gs.value || '';
 
             updateSucChuaHint();
+            triggerConflictPreview();
+        }
+
+        function setConflictSummary(status, message) {
+            const box = document.getElementById('scheduleConflictSummary');
+            const text = document.getElementById('scheduleConflictSummaryText');
+            const hint = document.getElementById('scheduleConflictHint');
+            if (!box || !text || !hint) return;
+
+            if (!message) {
+                box.style.display = 'none';
+                hint.style.display = '';
+                return;
+            }
+
+            text.textContent = message;
+            box.style.display = 'flex';
+            hint.style.display = 'none';
+            box.style.background = status === 'ok' ? '#ecfdf3' : '#fff1f2';
+            box.style.color = status === 'ok' ? '#166534' : '#991b1b';
+            box.style.border = `1px solid ${status === 'ok' ? '#86efac' : '#fecdd3'}`;
+        }
+
+        function setFieldConflictFeedback(fieldId, state) {
+            const feedback = document.getElementById(`${fieldId}ConflictFeedback`);
+            if (!feedback) return;
+
+            if (!state || !state.message) {
+                feedback.textContent = '';
+                feedback.style.color = '#64748b';
+                return;
+            }
+
+            feedback.textContent = state.message;
+            feedback.style.color = state.status === 'error' ? '#b91c1c' : '#166534';
+        }
+
+        function clearConflictFeedback() {
+            setFieldConflictFeedback('giaoVien', null);
+            setFieldConflictFeedback('phongHoc', null);
+            setConflictSummary('', '');
+        }
+
+        function triggerConflictPreview() {
+            window.clearTimeout(conflictPreviewTimer);
+            conflictPreviewTimer = window.setTimeout(previewSchedulingConflicts, 250);
+        }
+
+        async function previewSchedulingConflicts() {
+            const teacherId = document.getElementById('giaoVienSel')?.value || '';
+            const roomId = document.getElementById('phongHocSel')?.value || '';
+
+            if (!teacherId && !roomId) {
+                clearConflictFeedback();
+                setConflictSummary('', '');
+                document.getElementById('scheduleConflictHint').textContent =
+                    'Chọn giáo viên hoặc phòng học để bắt đầu kiểm tra xung đột realtime.';
+                return;
+            }
+
+            const params = new URLSearchParams({
+                coSoId: document.getElementById('coSoSel')?.value || '',
+                caHocId: document.querySelector('[name="caHocId"]')?.value || '',
+                taiKhoanId: teacherId,
+                phongHocId: roomId,
+                ngayBatDau: document.querySelector('[name="ngayBatDau"]')?.value || '',
+                soBuoiDuKien: document.querySelector('[name="soBuoiDuKien"]')?.value || '',
+                lichHoc: document.getElementById('lichHocInput')?.value || '',
+                excludeSlug: document.getElementById('conflictExcludeSlug')?.value || '',
+            });
+
+            const requestVersion = ++conflictPreviewVersion;
+
+            try {
+                const response = await fetch(`${document.getElementById('conflictPreviewUrl').value}?${params.toString()}`);
+                const result = await response.json();
+
+                if (requestVersion !== conflictPreviewVersion) {
+                    return;
+                }
+
+                if (!result.ready) {
+                    clearConflictFeedback();
+                    setConflictSummary('', '');
+                    document.getElementById('scheduleConflictHint').textContent = result.message || '';
+                    return;
+                }
+
+                setFieldConflictFeedback('giaoVien', result.fieldStates?.taiKhoanId || null);
+                setFieldConflictFeedback('phongHoc', result.fieldStates?.phongHocId || null);
+                setConflictSummary(result.ok ? 'ok' : 'error', result.message || '');
+            } catch (error) {
+                clearConflictFeedback();
+                setConflictSummary('error', 'Không thể kiểm tra xung đột lịch lúc này. Vui lòng thử lại.');
+            }
         }
 
         function updateSucChuaHint() {
@@ -727,7 +857,18 @@
             }
         }
 
-        document.getElementById('phongHocSel')?.addEventListener('change', updateSucChuaHint);
+        document.getElementById('phongHocSel')?.addEventListener('change', function() {
+            preferredPhong = this.value || '';
+            updateSucChuaHint();
+            triggerConflictPreview();
+        });
+        document.getElementById('giaoVienSel')?.addEventListener('change', function() {
+            preferredGV = this.value || '';
+            triggerConflictPreview();
+        });
+        document.querySelector('[name="caHocId"]')?.addEventListener('change', triggerConflictPreview);
+        document.querySelector('[name="ngayBatDau"]')?.addEventListener('change', triggerConflictPreview);
+        document.querySelector('[name="soBuoiDuKien"]')?.addEventListener('input', triggerConflictPreview);
 
         document.querySelector('form')?.addEventListener('submit', function(e) {
             const ps = document.getElementById('phongHocSel');

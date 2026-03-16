@@ -113,4 +113,9 @@ class LopHocController extends Controller
     {
         return response()->json($this->lopHocService->getGiaoVienByCoso($coSoId));
     }
+
+    public function previewSchedulingConflicts(Request $request)
+    {
+        return response()->json($this->lopHocService->previewSchedulingConflicts($request));
+    }
 }
