@@ -10,6 +10,10 @@
 @endsection
 
 @section('content')
+    @php
+        $stepTwoErrorFields = ['doiTuongGui', 'doiTuongId'];
+        $initialStep = collect($stepTwoErrorFields)->contains(fn($field) => $errors->has($field)) ? 2 : 1;
+    @endphp
     <div class="container-fluid px-4 py-2" style="max-width:1220px; margin:auto;">
         <div class="nb-editor-hero">
             <div>
@@ -23,6 +27,24 @@
                 <span class="nb-hero-chip"><i class="fas fa-paperclip"></i> Tối đa 5 tệp</span>
             </div>
         </div>
+
+        @if ($errors->any())
+            <div class="alert alert-danger border-0 shadow-sm mb-4" role="alert">
+                <div class="fw-semibold mb-2">
+                    <i class="fas fa-circle-exclamation me-2"></i>Không thể gửi thông báo. Vui lòng kiểm tra lại dữ liệu.
+                </div>
+                <ul class="mb-0 ps-3">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+                @if ($errors->has('tepDinhs') || $errors->has('tepDinhs.*'))
+                    <div class="mt-2 small">
+                        Trình duyệt không tự giữ lại file sau khi form bị trả về. Bạn cần chọn lại file đính kèm.
+                    </div>
+                @endif
+            </div>
+        @endif
 
         <div class="nb-compose-layout">
             <div class="nb-compose-main">
@@ -66,12 +88,18 @@
                                 <label class="nb-form-label">Tiêu đề <span class="req">*</span></label>
                                 <input type="text" name="tieuDe" id="tieuDe" class="nb-input"
                                     placeholder="Nhập tiêu đề thông báo…" value="{{ old('tieuDe') }}" required>
+                                @error('tieuDe')
+                                    <div class="text-danger small mt-2">{{ $message }}</div>
+                                @enderror
                             </div>
 
                             <div class="nb-form-group">
                                 <label class="nb-form-label">Nội dung <span class="req">*</span></label>
                                 <div id="quillEditor" style="background:#fff; border-radius:10px; min-height:180px;"></div>
                                 <textarea name="noiDung" id="noiDungHidden" style="display:none">{{ old('noiDung') }}</textarea>
+                                @error('noiDung')
+                                    <div class="text-danger small mt-2">{{ $message }}</div>
+                                @enderror
                             </div>
 
                             <div class="nb-grid-2">
@@ -84,6 +112,9 @@
                                                 {{ $v }}</option>
                                         @endforeach
                                     </select>
+                                    @error('loaiGui')
+                                        <div class="text-danger small mt-2">{{ $message }}</div>
+                                    @enderror
                                 </div>
                                 <div class="nb-form-group mb-0">
                                     <label class="nb-form-label">Mức ưu tiên <span class="req">*</span></label>
@@ -93,6 +124,9 @@
                                                 {{ $v }}</option>
                                         @endforeach
                                     </select>
+                                    @error('uuTien')
+                                        <div class="text-danger small mt-2">{{ $message }}</div>
+                                    @enderror
                                 </div>
                             </div>
 
@@ -127,6 +161,12 @@
                                     onchange="previewFiles(this.files)">
                                 <div id="nb-file-list" style="margin-top:.75rem;display:flex;flex-wrap:wrap;gap:.5rem;">
                                 </div>
+                                @error('tepDinhs')
+                                    <div class="text-danger small mt-2">{{ $message }}</div>
+                                @enderror
+                                @error('tepDinhs.*')
+                                    <div class="text-danger small mt-2">{{ $message }}</div>
+                                @enderror
                             </div>
 
                         </div>
@@ -175,6 +215,9 @@
                                         </label>
                                     @endforeach
                                 </div>
+                                @error('doiTuongGui')
+                                    <div class="text-danger small mt-2">{{ $message }}</div>
+                                @enderror
                             </div>
 
                             {{-- Sub-selectors (hidden theo default) --}}
@@ -231,6 +274,9 @@
                                     </select>
                                 </div>
                             </div>
+                            @error('doiTuongId')
+                                <div class="text-danger small mt-2">{{ $message }}</div>
+                            @enderror
 
                             {{-- Preview người nhận --}}
                             <div id="recipientPreview" style="display:none;">
@@ -322,6 +368,7 @@
         window.LOAI_LABELS = @json(App\Models\Interaction\ThongBao::loaiLabels());
         window.UU_TIEN_LABELS = @json(App\Models\Interaction\ThongBao::uuTienLabels());
         window.DOI_TUONG_LABELS = @json(App\Models\Interaction\ThongBao::doiTuongLabels());
+        window.INITIAL_WIZARD_STEP = {{ $initialStep }};
     </script>
 
     <script>

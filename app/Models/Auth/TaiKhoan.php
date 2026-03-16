@@ -2,6 +2,8 @@
 
 namespace App\Models\Auth;
 
+use App\Notifications\Auth\QueuedResetPasswordNotification;
+use App\Notifications\Auth\QueuedVerifyEmailNotification;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Auth\MustVerifyEmail as MustVerifyEmailTrait;
@@ -61,6 +63,16 @@ class TaiKhoan extends Authenticatable implements MustVerifyEmail
     public function username()
     {
         return 'taiKhoan';
+    }
+
+    public function sendEmailVerificationNotification(): void
+    {
+        $this->notify(new QueuedVerifyEmailNotification());
+    }
+
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new QueuedResetPasswordNotification($token));
     }
 
     public static function prefixForRole(int $role): string

@@ -39,6 +39,7 @@ class ThongBao extends Model
     const SEND_TRANG_THAI_DA_LEN_LICH = 1;
     const SEND_TRANG_THAI_DA_GUI    = 2;
     const SEND_TRANG_THAI_GUI_LOI   = 3;
+    const SEND_TRANG_THAI_DANG_XU_LY = 4;
 
     public static function doiTuongLabels(): array
     {
@@ -79,6 +80,7 @@ class ThongBao extends Model
             self::SEND_TRANG_THAI_DA_LEN_LICH => 'Đã lên lịch',
             self::SEND_TRANG_THAI_DA_GUI => 'Đã gửi',
             self::SEND_TRANG_THAI_GUI_LOI => 'Gửi lỗi',
+            self::SEND_TRANG_THAI_DANG_XU_LY => 'Đang xử lý',
         ];
     }
 
@@ -230,6 +232,7 @@ class ThongBao extends Model
             self::SEND_TRANG_THAI_DA_LEN_LICH => 'send-scheduled',
             self::SEND_TRANG_THAI_DA_GUI => 'send-sent',
             self::SEND_TRANG_THAI_GUI_LOI => 'send-failed',
+            self::SEND_TRANG_THAI_DANG_XU_LY => 'send-scheduled',
             default => 'send-draft',
         };
     }

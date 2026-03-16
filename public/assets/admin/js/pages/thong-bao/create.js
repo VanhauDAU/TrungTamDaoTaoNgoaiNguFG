@@ -290,4 +290,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     updateScheduleInput();
     updateComposeSummary();
+
+    const initialStep = Number(window.INITIAL_WIZARD_STEP ?? 1);
+    if (initialStep > 1) {
+        goStep(initialStep);
+    }
 });

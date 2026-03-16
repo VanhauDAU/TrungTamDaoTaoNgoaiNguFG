@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Admin\NhanVien;
 
 use App\Contracts\Admin\NhanVien\NhanSuServiceInterface;
 use App\Http\Controllers\Controller;
+use App\Jobs\GenerateNhanSuProfilePdfJob;
 use App\Models\Auth\TaiKhoan;
+use App\Services\Support\QueuedExportService;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -12,7 +14,8 @@ use Symfony\Component\HttpFoundation\Response;
 class NhanVienController extends Controller
 {
     public function __construct(
-        protected NhanSuServiceInterface $nhanSuService
+        protected NhanSuServiceInterface $nhanSuService,
+        protected QueuedExportService $queuedExportService
         )
     {
         $this->middleware('permission:nhan_vien,xem')->only('index', 'trash', 'show');
@@ -147,8 +150,36 @@ class NhanVienController extends Controller
     public function downloadProfilePdf(string $taiKhoan): Response
     {
         $nhanVien = $this->nhanSuService->findByUsername($taiKhoan, TaiKhoan::ROLE_NHAN_VIEN);
+        $context = [
+            'taiKhoanId' => $nhanVien->taiKhoanId,
+            'role' => TaiKhoan::ROLE_NHAN_VIEN,
+        ];
 
-        return $this->nhanSuService->downloadProfilePdf($nhanVien, TaiKhoan::ROLE_NHAN_VIEN);
+        if ($response = $this->queuedExportService->downloadIfReady('nhan-su.profile-pdf', $context)) {
+            return $response;
+        }
+
+        $state = $this->queuedExportService->get('nhan-su.profile-pdf', $context);
+        if (($state['status'] ?? null) === 'queued') {
+            return redirect()
+                ->route('admin.nhan-vien.show', $nhanVien->taiKhoan)
+                ->with('info', 'PDF hồ sơ đang được tạo ở nền. Tải lại sau ít phút để nhận file.');
+        }
+
+        $filename = 'ho-so-nhan-su-' . $nhanVien->taiKhoan . '-' . now()->format('Ymd') . '.pdf';
+        $this->queuedExportService->markQueued('nhan-su.profile-pdf', $context, [
+            'filename' => $filename,
+        ]);
+
+        GenerateNhanSuProfilePdfJob::dispatch(
+            $nhanVien->taiKhoanId,
+            (string) TaiKhoan::ROLE_NHAN_VIEN,
+            $filename
+        )->afterCommit();
+
+        return redirect()
+            ->route('admin.nhan-vien.show', $nhanVien->taiKhoan)
+            ->with('success', 'Đã đưa PDF hồ sơ vào hàng chờ xuất. Worker queue sẽ tạo file ở nền.');
     }
 
     public function downloadHandoverPdf(string $taiKhoan, Request $request): Response

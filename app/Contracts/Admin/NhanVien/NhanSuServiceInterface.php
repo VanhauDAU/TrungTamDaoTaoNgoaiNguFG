@@ -82,6 +82,13 @@ interface NhanSuServiceInterface
     public function downloadProfilePdf(TaiKhoan $taiKhoan, string $role): Response;
 
     /**
+     * Tạo nội dung file hồ sơ nhân sự cho job export nền.
+     *
+     * @return array{content:string,mime:string,filename:string}
+     */
+    public function buildProfilePdfArtifact(TaiKhoan $taiKhoan, string $role): array;
+
+    /**
      * Xóa mềm nhân sự.
      */
     public function destroy(string $taiKhoan, string $role): string;

@@ -51,6 +51,15 @@
                 </div>
             </div>
             <div class="nb-stat-card">
+                <div class="nb-stat-icon" style="background:rgba(59,130,246,.12);color:#2563eb"><i
+                        class="fas fa-spinner"></i>
+                </div>
+                <div>
+                    <div class="nb-stat-num">{{ number_format($stats['dang_xu_ly']) }}</div>
+                    <div class="nb-stat-label">Đang xử lý</div>
+                </div>
+            </div>
+            <div class="nb-stat-card">
                 <div class="nb-stat-icon" style="background:rgba(239,68,68,.12);color:#ef4444"><i
                         class="fas fa-triangle-exclamation"></i>
                 </div>
@@ -271,6 +280,9 @@
                                 </span>
                                 @if ((int) $tb->sendTrangThai === App\Models\Interaction\ThongBao::SEND_TRANG_THAI_NHAP)
                                     <div class="nb-date" style="margin-top:.3rem;">Bản nháp: mở Chỉnh sửa để gửi</div>
+                                @endif
+                                @if ((int) $tb->sendTrangThai === App\Models\Interaction\ThongBao::SEND_TRANG_THAI_DANG_XU_LY)
+                                    <div class="nb-date" style="margin-top:.3rem;">Đã vào queue notifications</div>
                                 @endif
                             </td>
                             <td class="nb-date">

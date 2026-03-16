@@ -47,6 +47,12 @@ return [
         'version_key' => env('PUBLIC_LIST_CACHE_VERSION_KEY', 'public-content:version'),
     ],
 
+    'queued_exports' => [
+        'store' => env('QUEUED_EXPORT_STORE', env('APP_ENV') === 'testing' ? 'array' : 'redis'),
+        'ttl' => (int) env('QUEUED_EXPORT_TTL', 30),
+        'disk' => env('QUEUED_EXPORT_DISK', 'local'),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Cache Stores

@@ -92,6 +92,12 @@ Nếu không thấy `PONG`, khởi động lại Redis:
 redis-server /opt/homebrew/etc/redis.conf
 ```
 
+Nếu máy đó cần chạy mail queue, gửi thông báo hàng loạt hoặc export nền bằng Redis:
+
+```bash
+composer queue:redis
+```
+
 Lưu ý:
 - Nếu pull về có thay đổi `.env.example`, cần so sánh và cập nhật `.env` thủ công.
 - Project hiện yêu cầu PHP runtime `>= 8.3`; nếu máy còn chạy bằng XAMPP PHP 8.2 thì `artisan` có thể fail ngay từ Composer platform check.
@@ -127,6 +133,9 @@ REDIS_CLIENT=predis
 REDIS_HOST=127.0.0.1
 REDIS_PORT=6379
 REDIS_PASSWORD=null
+QUEUE_CONNECTION=redis
+REDIS_QUEUE_CONNECTION=default
+REDIS_QUEUE=default
 RATE_LIMITER_STORE=redis
 PUBLIC_LIST_CACHE_STORE=redis
 PUBLIC_LIST_CACHE_TTL=300
@@ -138,12 +147,24 @@ Redis trong project hiện dùng cho:
 - cache kiểm tra email realtime ở form đăng ký
 - rate limit auth cho `login`, `register`, `check-email`
 - cache danh sách public ở `/khoa-hoc`, `/blog`, trang chủ, footer và `register-advice`
+- queue cho:
+  - mail auth
+  - gửi thông báo hàng loạt
+  - export Excel/PDF
+  - batch `invoice:check-overdue`
+  - batch `registration:expire-holds`
 
 Kiểm nhanh Redis sau khi pull:
 
 ```bash
 redis-cli PING
 redis-cli --scan --pattern '*public-content*'
+```
+
+Kiểm worker Redis:
+
+```bash
+composer queue:redis
 ```
 
 ---
