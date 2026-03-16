@@ -13,7 +13,11 @@
     @php
         $isDraft = (int) $thongBao->sendTrangThai === App\Models\Interaction\ThongBao::SEND_TRANG_THAI_NHAP;
         $isScheduled = (int) $thongBao->sendTrangThai === App\Models\Interaction\ThongBao::SEND_TRANG_THAI_DA_LEN_LICH;
-        $canSendNow = (int) $thongBao->sendTrangThai !== App\Models\Interaction\ThongBao::SEND_TRANG_THAI_DA_GUI;
+        $isProcessing = (int) $thongBao->sendTrangThai === App\Models\Interaction\ThongBao::SEND_TRANG_THAI_DANG_XU_LY;
+        $canSendNow = !in_array((int) $thongBao->sendTrangThai, [
+            App\Models\Interaction\ThongBao::SEND_TRANG_THAI_DA_GUI,
+            App\Models\Interaction\ThongBao::SEND_TRANG_THAI_DANG_XU_LY,
+        ], true);
         $scheduledAtValue = old('scheduled_at', optional($thongBao->scheduled_at)->format('Y-m-d\TH:i'));
         $xoaTepOld = collect(old('xoa_tep', []))
             ->map(fn($id) => (int) $id)
@@ -51,6 +55,11 @@
                 <i class="fas fa-clock" style="color:#2563eb;"></i>
                 Thông báo đang <strong>hẹn gửi lúc {{ optional($thongBao->scheduled_at)->format('d/m/Y H:i') }}</strong>.
                 Bạn có thể đổi thời gian và bấm <strong>"Lên lịch gửi"</strong> để cập nhật.
+            </div>
+        @elseif ($isProcessing)
+            <div class="locked-notice" style="background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8;">
+                <i class="fas fa-spinner" style="color:#2563eb;"></i>
+                Thông báo đang được worker queue xử lý. Trong lúc này hệ thống tạm khóa thao tác gửi lại để tránh phát hành trùng.
             </div>
         @endif
 

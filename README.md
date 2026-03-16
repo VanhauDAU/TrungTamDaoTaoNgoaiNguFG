@@ -161,6 +161,13 @@ composer require predis/predis
 php artisan optimize:clear
 ```
 
+Neu may local can chay mail queue, gui thong bao hang loat hoac export nen bang Redis:
+```env
+QUEUE_CONNECTION=redis
+REDIS_QUEUE_CONNECTION=default
+REDIS_QUEUE=default
+```
+
 ## 6. Chay du an
 ### Cach 1: Chay dong thoi server + queue + vite (khuyen nghi)
 ```bash
@@ -170,7 +177,7 @@ composer dev
 ### Cach 2: Tu chay tung tien trinh
 ```bash
 php artisan serve
-php artisan queue:listen --tries=1 --timeout=0
+composer queue:redis
 npm run dev
 ```
 
@@ -187,7 +194,7 @@ Neu dung XAMPP/Apache:
 ## 7. Bien moi truong quan trong
 - `APP_URL`: URL goc ung dung.
 - `DB_*`: ket noi CSDL.
-- `QUEUE_CONNECTION`: mac dinh `database`.
+- `QUEUE_CONNECTION`: nen de `redis` neu may local can chay mail queue, gui thong bao hang loat hoac export nen.
 - `REDIS_*`: cau hinh ket noi Redis.
 - `RATE_LIMITER_STORE`: cache store dung cho Laravel rate limiter, mac dinh `redis`.
 - `PUBLIC_LIST_CACHE_STORE`: store dung cho cache danh sach public nhu khoa hoc/blog/footer.
@@ -239,6 +246,9 @@ php artisan optimize:clear
 # Kiem tra Redis
 redis-cli PING
 php artisan tinker
+
+# Chay worker Redis cho mail/thong bao/export
+composer queue:redis
 
 # Tao symlink storage
 php artisan storage:link
@@ -304,6 +314,12 @@ php artisan migrate
 ```
 
 Neu pull co thay doi `.env.example`, hay cap nhat `.env` thu cong truoc khi chay app.
+
+Neu may do dung Redis local, chay them:
+```bash
+redis-cli PING
+composer queue:redis
+```
 
 ## 11. Test va chat luong ma nguon
 ```bash

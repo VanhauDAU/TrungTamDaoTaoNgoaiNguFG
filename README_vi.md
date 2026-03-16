@@ -178,6 +178,13 @@ composer require predis/predis
 php artisan optimize:clear
 ```
 
+Nếu máy local cần chạy mail queue, gửi thông báo hàng loạt hoặc export nền bằng Redis:
+```env
+QUEUE_CONNECTION=redis
+REDIS_QUEUE_CONNECTION=default
+REDIS_QUEUE=default
+```
+
 ## 7. Chạy dự án
 ### Cách 1: Chạy đồng thời server + queue + vite (khuyến nghị)
 ```bash
@@ -187,7 +194,7 @@ composer dev
 ### Cách 2: Tự chạy từng tiến trình
 ```bash
 php artisan serve
-php artisan queue:listen --tries=1 --timeout=0
+composer queue:redis
 npm run dev
 ```
 
@@ -204,7 +211,7 @@ Nếu dùng XAMPP/Apache:
 ## 8. Biến môi trường quan trọng
 - `APP_URL`: URL gốc ứng dụng.
 - `DB_*`: kết nối CSDL.
-- `QUEUE_CONNECTION`: mặc định `database`.
+- `QUEUE_CONNECTION`: nên để `redis` nếu máy local cần chạy mail queue, gửi thông báo hàng loạt hoặc export nền.
 - `REDIS_*`: cấu hình kết nối Redis.
 - `RATE_LIMITER_STORE`: cache store dùng cho Laravel rate limiter, mặc định `redis`.
 - `PUBLIC_LIST_CACHE_STORE`: store dùng cho cache danh sách public như khóa học/blog/footer.
@@ -248,6 +255,9 @@ php artisan optimize:clear
 # Kiểm tra Redis
 redis-cli PING
 php artisan tinker
+
+# Chạy worker Redis cho mail/thông báo/export
+composer queue:redis
 
 # Tạo symlink storage
 php artisan storage:link
@@ -317,6 +327,12 @@ php artisan migrate
 ```
 
 Nếu pull có thay đổi `.env.example`, hãy cập nhật `.env` thủ công trước khi chạy app.
+
+Nếu máy đó dùng Redis local, chạy thêm:
+```bash
+redis-cli PING
+composer queue:redis
+```
 
 ## 11. Test và chất lượng mã nguồn
 ```bash

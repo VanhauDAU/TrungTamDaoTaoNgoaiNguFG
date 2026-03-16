@@ -3,15 +3,16 @@
 namespace App\Http\Controllers\Admin\HocVien;
 
 use App\Contracts\Admin\HocVien\HocVienServiceInterface;
-use App\Exports\HocViensExport;
+use App\Jobs\GenerateHocVienExportJob;
 use App\Http\Controllers\Controller;
+use App\Services\Support\QueuedExportService;
 use Illuminate\Http\Request;
-use Maatwebsite\Excel\Facades\Excel;
 
 class HocVienController extends Controller
 {
     public function __construct(
-        protected HocVienServiceInterface $hocVienService
+        protected HocVienServiceInterface $hocVienService,
+        protected QueuedExportService $queuedExportService
         )
     {
         $this->middleware('permission:hoc_vien,xem')->only('index', 'export', 'trash');
@@ -27,8 +28,28 @@ class HocVienController extends Controller
 
     public function export(Request $request)
     {
+        if ($response = $this->queuedExportService->downloadIfReady('hoc-vien.export', $request->query())) {
+            return $response;
+        }
+
+        $state = $this->queuedExportService->get('hoc-vien.export', $request->query());
+        if (($state['status'] ?? null) === 'queued') {
+            return redirect()
+                ->route('admin.hoc-vien.index', $request->query())
+                ->with('info', 'File Excel đang được tạo ở nền. Tải lại sau ít phút để nhận file.');
+        }
+
         $fileName = 'hoc-vien-' . now()->format('Y-m-d_H-i-s') . '.xlsx';
-        return Excel::download(new HocViensExport($this->hocVienService->buildIndexQuery($request)), $fileName);
+
+        $this->queuedExportService->markQueued('hoc-vien.export', $request->query(), [
+            'filename' => $fileName,
+        ]);
+
+        GenerateHocVienExportJob::dispatch($request->query(), $fileName)->afterCommit();
+
+        return redirect()
+            ->route('admin.hoc-vien.index', $request->query())
+            ->with('success', 'Đã đưa file Excel vào hàng chờ xuất. Worker queue sẽ tạo file ở nền.');
     }
 
     public function create()

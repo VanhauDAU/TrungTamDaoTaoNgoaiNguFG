@@ -326,9 +326,19 @@ class NhanSuService implements NhanSuServiceInterface
 
     public function downloadProfilePdf(TaiKhoan $taiKhoan, string $role): Response
     {
+        $artifact = $this->buildProfilePdfArtifact($taiKhoan, $role);
+
+        return response($artifact['content'], 200, [
+            'Content-Type' => $artifact['mime'],
+            'Content-Disposition' => 'attachment; filename="' . $artifact['filename'] . '"',
+        ]);
+    }
+
+    public function buildProfilePdfArtifact(TaiKhoan $taiKhoan, string $role): array
+    {
         $data = $this->getProfileData($taiKhoan, $role);
 
-        return $this->renderPdfResponse(
+        return $this->renderPdfArtifact(
             'admin.nhan-su.pdf.profile',
             $data,
             'ho-so-nhan-su-' . $taiKhoan->taiKhoan . '-' . now()->format('Ymd') . '.pdf',
@@ -815,19 +825,34 @@ class NhanSuService implements NhanSuServiceInterface
 
     private function renderPdfResponse(string $view, array $data, string $filename): Response
     {
+        $artifact = $this->renderPdfArtifact($view, $data, $filename);
+
+        return response($artifact['content'], 200, [
+            'Content-Type' => $artifact['mime'],
+            'Content-Disposition' => 'attachment; filename="' . $artifact['filename'] . '"',
+        ]);
+    }
+
+    private function renderPdfArtifact(string $view, array $data, string $filename): array
+    {
         if (app()->bound('dompdf.wrapper')) {
             $pdf = app('dompdf.wrapper');
             $pdf->loadView($view, $data);
 
-            return $pdf->download($filename);
+            return [
+                'content' => $pdf->output(),
+                'mime' => 'application/pdf',
+                'filename' => $filename,
+            ];
         }
 
         $html = view($view, $data)->render();
         $fallbackName = Str::replaceLast('.pdf', '.html', $filename);
 
-        return response($html, 200, [
-            'Content-Type' => 'text/html; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $fallbackName . '"',
-        ]);
+        return [
+            'content' => $html,
+            'mime' => 'text/html; charset=UTF-8',
+            'filename' => $fallbackName,
+        ];
     }
 }

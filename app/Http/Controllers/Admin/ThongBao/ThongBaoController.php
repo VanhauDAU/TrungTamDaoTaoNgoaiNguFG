@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin\ThongBao;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\ProcessThongBaoDelivery;
 use App\Models\Interaction\ThongBao;
 use App\Models\Interaction\ThongBaoLichSu;
 use App\Models\Interaction\ThongBaoNguoiDung;
@@ -91,6 +92,7 @@ class ThongBaoController extends Controller
             'chua_doc' => ThongBaoNguoiDung::where('daDoc', false)->count(),
             'ghim'     => ThongBao::where('ghim', true)->count(),
             'nhap'     => ThongBao::where('sendTrangThai', ThongBao::SEND_TRANG_THAI_NHAP)->count(),
+            'dang_xu_ly' => ThongBao::where('sendTrangThai', ThongBao::SEND_TRANG_THAI_DANG_XU_LY)->count(),
             'da_gui'   => ThongBao::where('sendTrangThai', ThongBao::SEND_TRANG_THAI_DA_GUI)->count(),
             'gui_loi'  => ThongBao::where('sendTrangThai', ThongBao::SEND_TRANG_THAI_GUI_LOI)->count(),
         ];
@@ -212,11 +214,11 @@ class ThongBaoController extends Controller
             'doiTuongId'  => $validated['doiTuongId'] ?? null,
             'uuTien'      => $validated['uuTien'],
             'nguoiGuiId'  => Auth::id(),
-            'ngayGui'     => $isDraft ? null : Carbon::now(),
+            'ngayGui'     => null,
             'trangThai'   => 1,
             'ghim'        => $request->boolean('ghim'),
-            'sendTrangThai' => $isDraft ? ThongBao::SEND_TRANG_THAI_NHAP : ThongBao::SEND_TRANG_THAI_DA_GUI,
-            'sent_at'     => $isDraft ? null : Carbon::now(),
+            'sendTrangThai' => $isDraft ? ThongBao::SEND_TRANG_THAI_NHAP : ThongBao::SEND_TRANG_THAI_DANG_XU_LY,
+            'sent_at'     => null,
         ]);
 
         // Lưu file đính kèm
@@ -229,20 +231,10 @@ class ThongBaoController extends Controller
                 ->with('success', 'Đã lưu bản nháp. Bạn có thể chỉnh sửa thêm và bấm "Gửi thông báo ngay" để phát hành.');
         }
 
-        // Gửi ngay
-        $soNguoiNhan = $this->guiThongBaoVaCapNhatTrangThai($tb);
-
-        if ($soNguoiNhan === 0) {
-            $this->ghiLichSu($tb->thongBaoId, 'send_failed', 'Gửi thông báo thất bại do không có người nhận phù hợp.');
-            return redirect()
-                ->route('admin.thong-bao.edit', $tb->thongBaoId)
-                ->with('error', 'Không tìm thấy người nhận phù hợp. Thông báo đã được lưu ở trạng thái gửi lỗi.');
-        }
-
-        $this->ghiLichSu($tb->thongBaoId, 'sent', "Đã gửi thông báo đến {$soNguoiNhan} người nhận.");
+        $this->dispatchQueuedDelivery($tb->fresh(), 'admin_create_send');
         return redirect()
             ->route('admin.thong-bao.show', $tb->thongBaoId)
-            ->with('success', "Đã gửi thông báo thành công đến {$soNguoiNhan} người nhận.");
+            ->with('success', 'Đã đưa thông báo vào hàng chờ gửi. Worker queue sẽ xử lý việc phát hành.');
     }
 
     /** Lưu các file đính kèm upload vào storage và DB */
@@ -343,20 +335,24 @@ class ThongBaoController extends Controller
         $hanhDong = $validated['hanhDong'] ?? 'save';
         if ($hanhDong === 'send') {
             $thongBao->nguoiNhans()->delete();
-            $soNguoiNhan = $this->guiThongBaoVaCapNhatTrangThai($thongBao->fresh());
-            if ($soNguoiNhan === 0) {
-                $this->ghiLichSu($thongBao->thongBaoId, 'send_failed', 'Gửi thông báo thất bại từ màn hình chỉnh sửa do không có người nhận phù hợp.');
-                return redirect()
-                    ->route('admin.thong-bao.edit', $thongBao->thongBaoId)
-                    ->with('error', 'Không tìm thấy người nhận phù hợp. Vui lòng kiểm tra đối tượng gửi.');
-            }
-            $this->ghiLichSu($thongBao->thongBaoId, 'sent', "Gửi thông báo từ màn hình chỉnh sửa đến {$soNguoiNhan} người nhận.");
+            $thongBao->update([
+                'sendTrangThai' => ThongBao::SEND_TRANG_THAI_DANG_XU_LY,
+                'failed_at' => null,
+                'failure_reason' => null,
+                'ngayGui' => null,
+                'sent_at' => null,
+                'scheduled_at' => null,
+            ]);
+            $this->dispatchQueuedDelivery($thongBao->fresh(), 'admin_edit_send');
             return redirect()
                 ->route('admin.thong-bao.show', $thongBao->thongBaoId)
-                ->with('success', "Đã gửi thông báo thành công đến {$soNguoiNhan} người nhận.");
+                ->with('success', 'Đã đưa thông báo vào hàng chờ gửi. Worker queue sẽ xử lý việc phát hành.');
         }
 
-        if ((int)$thongBao->sendTrangThai !== ThongBao::SEND_TRANG_THAI_DA_GUI) {
+        if (!in_array((int) $thongBao->sendTrangThai, [
+            ThongBao::SEND_TRANG_THAI_DA_GUI,
+            ThongBao::SEND_TRANG_THAI_DANG_XU_LY,
+        ], true)) {
             $thongBao->update(['sendTrangThai' => ThongBao::SEND_TRANG_THAI_NHAP]);
         }
 
@@ -536,27 +532,22 @@ class ThongBaoController extends Controller
         return response()->json(['success' => true, 'updated' => $count]);
     }
 
-    private function guiThongBaoVaCapNhatTrangThai(ThongBao $tb): int
+    private function dispatchQueuedDelivery(ThongBao $tb, string $source): void
     {
-        $soNguoiNhan = $this->service->guiThongBao($tb);
-        if ($soNguoiNhan > 0) {
-            $tb->update([
-                'sendTrangThai' => ThongBao::SEND_TRANG_THAI_DA_GUI,
-                'failed_at'     => null,
-                'failure_reason' => null,
-                'ngayGui'       => Carbon::now(),
-                'sent_at'       => Carbon::now(),
-                'scheduled_at'  => null,
-            ]);
-            return $soNguoiNhan;
-        }
-
         $tb->update([
-            'sendTrangThai'  => ThongBao::SEND_TRANG_THAI_GUI_LOI,
-            'failed_at'      => Carbon::now(),
-            'failure_reason' => 'Không có người nhận phù hợp.',
+            'sendTrangThai' => ThongBao::SEND_TRANG_THAI_DANG_XU_LY,
+            'failed_at' => null,
+            'failure_reason' => null,
         ]);
-        return 0;
+
+        ProcessThongBaoDelivery::dispatch($tb->thongBaoId, Auth::id(), $source)->afterCommit();
+
+        $this->ghiLichSu(
+            $tb->thongBaoId,
+            'queued',
+            'Đã đưa thông báo vào hàng chờ gửi.',
+            ['source' => $source]
+        );
     }
 
     private function ghiLichSu(?int $thongBaoId, string $hanhDong, string $moTa, array $payload = []): void
