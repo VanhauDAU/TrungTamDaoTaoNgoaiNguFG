@@ -2,10 +2,10 @@
 
 namespace App\Console\Commands;
 
+use App\Jobs\ExpirePendingRegistrationHoldJob;
 use App\Models\Education\DangKyLopHoc;
-use App\Models\Finance\HoaDon;
+use App\Services\Maintenance\BatchMaintenanceService;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class ExpirePendingRegistrationHolds extends Command
@@ -13,21 +13,12 @@ class ExpirePendingRegistrationHolds extends Command
     protected $signature = 'registration:expire-holds {--dry-run : Liệt kê kết quả mà không thay đổi dữ liệu}';
     protected $description = 'Tự động hủy giữ chỗ của đăng ký chờ thanh toán đã quá hạn';
 
-    public function handle(): int
+    public function handle(BatchMaintenanceService $service): int
     {
         $isDryRun = (bool) $this->option('dry-run');
         $now = now();
 
-        $registrations = DangKyLopHoc::with([
-            'taiKhoan.hoSoNguoiDung',
-            'lopHoc',
-            'hoaDons',
-        ])
-            ->where('trangThai', DangKyLopHoc::TRANG_THAI_CHO_THANH_TOAN)
-            ->whereNotNull('ngayHetHanGiuCho')
-            ->where('ngayHetHanGiuCho', '<', $now)
-            ->orderBy('ngayHetHanGiuCho')
-            ->get();
+        $registrations = $service->getExpiredPendingRegistrations($now);
 
         if ($registrations->isEmpty()) {
             $this->info('✅ Không có đăng ký giữ chỗ nào quá hạn.');
@@ -60,67 +51,22 @@ class ExpirePendingRegistrationHolds extends Command
             return self::SUCCESS;
         }
 
-        $cancelledCount = 0;
-        $skippedPaidCount = 0;
+        $registrationIds = $service->getExpiredPendingRegistrationIds($now);
 
-        foreach ($registrations as $registration) {
-            DB::transaction(function () use ($registration, &$cancelledCount, &$skippedPaidCount) {
-                $lockedRegistration = DangKyLopHoc::whereKey($registration->dangKyLopHocId)
-                    ->lockForUpdate()
-                    ->with(['hoaDons'])
-                    ->first();
-
-                if (!$lockedRegistration) {
-                    return;
-                }
-
-                $lockedRegistration->recalculatePaymentStatus();
-                $lockedRegistration->refresh();
-                $lockedRegistration->load('hoaDons');
-
-                if (!$lockedRegistration->isPendingPayment() || !$lockedRegistration->isHoldExpired()) {
-                    return;
-                }
-
-                $totalPaid = (float) $lockedRegistration->hoaDons->sum('daTra');
-
-                if ($totalPaid > 0) {
-                    $skippedPaidCount++;
-                    $this->line("  ↪ Bỏ qua ĐK {$lockedRegistration->dangKyLopHocId} vì đã phát sinh thu tiền.");
-                    return;
-                }
-
-                $lockedRegistration->update([
-                    'trangThai' => DangKyLopHoc::TRANG_THAI_HUY,
-                    'ngayHetHanGiuCho' => null,
-                ]);
-
-                foreach ($lockedRegistration->hoaDons as $invoice) {
-                    $note = trim((string) $invoice->ghiChu);
-                    $systemNote = 'Tự động hủy giữ chỗ do quá hạn thanh toán';
-                    if (!str_contains($note, $systemNote)) {
-                        $invoice->update([
-                            'ghiChu' => trim($note !== '' ? $note . ' | ' . $systemNote : $systemNote),
-                        ]);
-                    }
-                }
-
-                $cancelledCount++;
-                $this->line("  ✖ Đã hủy giữ chỗ ĐK {$lockedRegistration->dangKyLopHocId}");
-            });
+        foreach ($registrationIds as $dangKyLopHocId) {
+            ExpirePendingRegistrationHoldJob::dispatch((int) $dangKyLopHocId)->afterCommit();
         }
 
         $this->newLine();
-        $this->info('✅ Hoàn tất xử lý giữ chỗ quá hạn:');
-        $this->line("   • Đăng ký đã hủy : {$cancelledCount}");
-        $this->line("   • Bỏ qua do đã thu tiền : {$skippedPaidCount}");
+        $this->info('✅ Đã đưa batch giữ chỗ quá hạn vào queue maintenance:');
+        $this->line("   • Đăng ký quá hạn tìm thấy : {$registrations->count()}");
+        $this->line("   • Đăng ký được queue : {$registrationIds->count()}");
 
-        Log::info('registration:expire-holds completed', [
+        Log::info('registration:expire-holds queued', [
             'dry_run' => $isDryRun,
             'checked_at' => $now->toDateTimeString(),
             'expired_hold_count' => $registrations->count(),
-            'cancelled_count' => $cancelledCount,
-            'skipped_paid_count' => $skippedPaidCount,
+            'queued_registration_count' => $registrationIds->count(),
         ]);
 
         return self::SUCCESS;

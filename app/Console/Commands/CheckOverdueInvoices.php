@@ -2,11 +2,9 @@
 
 namespace App\Console\Commands;
 
+use App\Jobs\ProcessOverdueRegistrationJob;
 use Illuminate\Console\Command;
-use App\Models\Finance\HoaDon;
-use App\Models\Education\BuoiHoc;
-use App\Models\Education\DangKyLopHoc;
-use App\Models\Education\DiemDanh;
+use App\Services\Maintenance\BatchMaintenanceService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 
@@ -22,7 +20,7 @@ class CheckOverdueInvoices extends Command
     protected $signature   = 'invoice:check-overdue {--dry-run : Liệt kê kết quả mà không thay đổi dữ liệu}';
     protected $description = 'Kiểm tra hóa đơn quá hạn, tạm dừng đăng ký lớp và đánh dấu buổi học tương lai';
 
-    public function handle(): int
+    public function handle(BatchMaintenanceService $service): int
     {
         $isDryRun = $this->option('dry-run');
         $today    = Carbon::today();
@@ -31,12 +29,7 @@ class CheckOverdueInvoices extends Command
         $this->newLine();
 
         // ── Tìm hóa đơn quá hạn chưa thanh toán đủ ─────────────────
-        $overdueInvoices = HoaDon::with(['dangKyLopHoc.lopHoc.buoiHocs', 'dangKyLopHoc.hoaDons.lopHocDotThu', 'lopHocDotThu', 'taiKhoan.hoSoNguoiDung'])
-            ->whereNotNull('ngayHetHan')
-            ->whereDate('ngayHetHan', '<', $today)
-            ->where('nguonThu', HoaDon::NGUON_THU_HOC_PHI)
-            ->where('trangThai', '!=', HoaDon::TRANG_THAI_DA_TT)
-            ->get();
+        $overdueInvoices = $service->getOverdueInvoices($today);
 
         if ($overdueInvoices->isEmpty()) {
             $this->info('✅ Không có hóa đơn nào quá hạn.');
@@ -65,72 +58,22 @@ class CheckOverdueInvoices extends Command
             return self::SUCCESS;
         }
 
-        // ── Xử lý từng hóa đơn ──────────────────────────────────────
-        $countSuspended     = 0;
-        $countDiemDanhAdded = 0;
-        $processedRegistrations = [];
+        $registrationIds = $service->getUniqueOverdueRegistrationIds($today);
 
-        foreach ($overdueInvoices as $hoaDon) {
-            if (! $hoaDon->dangKyLopHocId) {
-                continue;
-            }
-
-            if (in_array($hoaDon->dangKyLopHocId, $processedRegistrations, true)) {
-                continue;
-            }
-
-            $dangKy = $hoaDon->dangKyLopHoc;
-            if (! $dangKy) {
-                continue;
-            }
-
-            $processedRegistrations[] = $hoaDon->dangKyLopHocId;
-
-            $dangKy->recalculatePaymentStatus();
-
-            if ($dangKy->fresh()->trangThai === DangKyLopHoc::TRANG_THAI_TAM_DUNG_NO_HOC_PHI) {
-                $countSuspended++;
-                $this->line("  ⏸  Tạm dừng ĐK lớp ID {$dangKy->dangKyLopHocId} ({$dangKy->lopHoc?->tenLopHoc})");
-
-                if ($dangKy->lopHoc) {
-                    $buoiHocsTuongLai = $dangKy->lopHoc->buoiHocs()
-                        ->whereDate('ngayHoc', '>=', $today)
-                        ->openForAttendance()
-                        ->get();
-
-                    foreach ($buoiHocsTuongLai as $buoi) {
-                        $existing = DiemDanh::where('buoiHocId', $buoi->buoiHocId)
-                            ->where('taiKhoanId', $hoaDon->taiKhoanId)
-                            ->first();
-
-                        if (! $existing) {
-                            DiemDanh::create([
-                                'buoiHocId'       => $buoi->buoiHocId,
-                                'taiKhoanId'      => $hoaDon->taiKhoanId,
-                                'dangKyLopHocId'  => $dangKy->dangKyLopHocId,
-                                'trangThai'       => DiemDanh::BI_KHOA_NO_HP,
-                                'coMat'           => 0,
-                                'lyDo'            => 'Nợ học phí – tự động hệ thống',
-                                'thoiGianDiemDanh'=> now(),
-                            ]);
-                            $countDiemDanhAdded++;
-                        }
-                    }
-                }
-            }
+        foreach ($registrationIds as $dangKyLopHocId) {
+            ProcessOverdueRegistrationJob::dispatch((int) $dangKyLopHocId, $today->toDateString())->afterCommit();
         }
 
         $this->newLine();
-        $this->info("✅ Hoàn tất:");
-        $this->line("   • Tạm dừng đăng ký lớp : {$countSuspended}");
-        $this->line("   • Buổi học tương lai bị khóa : {$countDiemDanhAdded}");
+        $this->info('✅ Đã đưa batch xử lý vào queue maintenance:');
+        $this->line("   • Hóa đơn quá hạn tìm thấy : {$overdueInvoices->count()}");
+        $this->line("   • Đăng ký lớp được queue : {$registrationIds->count()}");
 
-        Log::info('invoice:check-overdue completed', [
+        Log::info('invoice:check-overdue queued', [
             'dry_run' => $isDryRun,
             'date' => $today->toDateString(),
             'overdue_invoice_count' => $overdueInvoices->count(),
-            'suspended_registration_count' => $countSuspended,
-            'attendance_locked_count' => $countDiemDanhAdded,
+            'queued_registration_count' => $registrationIds->count(),
         ]);
 
         return self::SUCCESS;

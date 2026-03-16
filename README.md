@@ -168,6 +168,11 @@ REDIS_QUEUE_CONNECTION=default
 REDIS_QUEUE=default
 ```
 
+Worker Redis cua project hien can nghe cac queue:
+- `notifications` cho gui thong bao hang loat
+- `exports` cho export Excel/PDF
+- `maintenance` cho batch job hoa don qua han va huy giu cho qua han
+
 ## 6. Chay du an
 ### Cach 1: Chay dong thoi server + queue + vite (khuyen nghi)
 ```bash
@@ -273,6 +278,12 @@ Cache::store('redis')->get('redis_test');
   - `/blog`
   - block public o trang chu
   - footer va `register-advice`
+- Chay queue cho:
+  - mail auth
+  - gui thong bao hang loat
+  - export Excel/PDF
+  - batch `invoice:check-overdue`
+  - batch `registration:expire-holds`
 - Chat typing/presence hien dung Laravel `Cache`; phan nay chi chay tren Redis neu ban cau hinh store cache phu hop cho chat.
 
 Muon quan sat cache public bang Redis:

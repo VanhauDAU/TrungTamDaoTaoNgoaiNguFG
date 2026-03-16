@@ -185,6 +185,11 @@ REDIS_QUEUE_CONNECTION=default
 REDIS_QUEUE=default
 ```
 
+Worker Redis của project hiện cần nghe các queue:
+- `notifications` cho gửi thông báo hàng loạt
+- `exports` cho export Excel/PDF
+- `maintenance` cho batch job hóa đơn quá hạn và hủy giữ chỗ quá hạn
+
 ## 7. Chạy dự án
 ### Cách 1: Chạy đồng thời server + queue + vite (khuyến nghị)
 ```bash
@@ -286,6 +291,12 @@ Cache::store('redis')->get('redis_test');
   - `/blog`
   - block public ở trang chủ
   - footer và `register-advice`
+- Chạy queue cho:
+  - mail auth
+  - gửi thông báo hàng loạt
+  - export Excel/PDF
+  - batch `invoice:check-overdue`
+  - batch `registration:expire-holds`
 - Chat typing/presence hiện dùng Laravel `Cache`; phần này chỉ chạy trên Redis nếu bạn cấu hình store cache phù hợp cho chat.
 
 Muốn quan sát cache public bằng Redis:

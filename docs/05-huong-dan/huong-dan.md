@@ -151,6 +151,8 @@ Redis trong project hiện dùng cho:
   - mail auth
   - gửi thông báo hàng loạt
   - export Excel/PDF
+  - batch `invoice:check-overdue`
+  - batch `registration:expire-holds`
 
 Kiểm nhanh Redis sau khi pull:
 
