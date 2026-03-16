@@ -27,6 +27,7 @@ class LoginController extends Controller
     ) {
         $this->middleware('guest')->except('logout', 'showForceChangePassword', 'processForceChangePassword');
         $this->middleware('auth')->only('logout', 'showForceChangePassword', 'processForceChangePassword');
+        $this->middleware('throttle:auth-login')->only('login', 'adminLogin', 'teacherLogin', 'staffLogin');
     }
 
     // ─────────────────────────────────────────────────────────────────────────

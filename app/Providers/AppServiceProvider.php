@@ -7,6 +7,9 @@ use Illuminate\Support\Facades\View;
 use App\Models\Course\KhoaHoc;
 use App\Models\Facility\CoSoDaoTao;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Cache\RateLimiting\Limit;
 
 // ── Auth Contracts ─────────────────────────────────────────────────────────
 use App\Contracts\Auth\LoginServiceInterface;
@@ -109,6 +112,8 @@ class AppServiceProvider extends ServiceProvider
     {
         Paginator::useBootstrapFive();
 
+        $this->registerAuthRateLimiters();
+
         View::composer(
         ['components.client.footer', 'components.client.register-advice'],
             function ($view) {
@@ -119,5 +124,101 @@ class AppServiceProvider extends ServiceProvider
             $view->with('danhSachCoSo', $branches);
         }
         );
+    }
+
+    private function registerAuthRateLimiters(): void
+    {
+        RateLimiter::for('auth-login', function (Request $request) {
+            $portal = match ($request->route()?->getName()) {
+                'teacher.login.submit' => 'teacher',
+                'staff.login.submit', 'admin.login.submit' => 'staff',
+                default => 'student',
+            };
+
+            $loginInput = mb_strtolower(trim((string) $request->input('taiKhoan', '')));
+            $ip = (string) $request->ip();
+            $limits = config('auth.rate_limiters.login');
+
+            return [
+                Limit::perMinute((int) ($limits['per_minute'] ?? 12))
+                    ->by("auth-login:{$portal}:{$ip}:{$loginInput}")
+                    ->response(fn (Request $request, array $headers) => $this->buildThrottleResponse(
+                        $request,
+                        'taiKhoan',
+                        'Bạn thao tác đăng nhập quá nhanh. Vui lòng chờ một chút rồi thử lại.',
+                        $headers
+                    )),
+                Limit::perMinute((int) ($limits['per_ip_per_minute'] ?? 30))
+                    ->by("auth-login-ip:{$portal}:{$ip}")
+                    ->response(fn (Request $request, array $headers) => $this->buildThrottleResponse(
+                        $request,
+                        'taiKhoan',
+                        'Bạn thao tác đăng nhập quá nhanh. Vui lòng chờ một chút rồi thử lại.',
+                        $headers
+                    )),
+            ];
+        });
+
+        RateLimiter::for('auth-register', function (Request $request) {
+            $email = mb_strtolower(trim((string) $request->input('email', '')));
+            $ip = (string) $request->ip();
+            $limits = config('auth.rate_limiters.register');
+
+            return [
+                Limit::perMinute((int) ($limits['per_minute'] ?? 6))
+                    ->by("auth-register:{$ip}:{$email}")
+                    ->response(fn (Request $request, array $headers) => $this->buildThrottleResponse(
+                        $request,
+                        'email',
+                        'Bạn gửi đăng ký quá nhanh. Vui lòng chờ một chút rồi thử lại.',
+                        $headers
+                    )),
+                Limit::perMinute((int) ($limits['per_ip_per_minute'] ?? 12))
+                    ->by("auth-register-ip:{$ip}")
+                    ->response(fn (Request $request, array $headers) => $this->buildThrottleResponse(
+                        $request,
+                        'email',
+                        'Bạn gửi đăng ký quá nhanh. Vui lòng chờ một chút rồi thử lại.',
+                        $headers
+                    )),
+            ];
+        });
+
+        RateLimiter::for('auth-email-check', function (Request $request) {
+            $email = mb_strtolower(trim((string) $request->query('email', '')));
+            $ip = (string) $request->ip();
+            $limits = config('auth.rate_limiters.email_check');
+
+            return [
+                Limit::perMinute((int) ($limits['per_minute'] ?? 30))
+                    ->by("auth-email-check:{$ip}:{$email}")
+                    ->response(fn (Request $request, array $headers) => response()->json([
+                        'status' => 'throttled',
+                        'message' => 'Bạn kiểm tra email quá nhanh. Vui lòng chờ một chút rồi thử lại.',
+                    ], 429, $headers)),
+                Limit::perMinute((int) ($limits['per_ip_per_minute'] ?? 120))
+                    ->by("auth-email-check-ip:{$ip}")
+                    ->response(fn (Request $request, array $headers) => response()->json([
+                        'status' => 'throttled',
+                        'message' => 'Bạn kiểm tra email quá nhanh. Vui lòng chờ một chút rồi thử lại.',
+                    ], 429, $headers)),
+            ];
+        });
+    }
+
+    private function buildThrottleResponse(Request $request, string $field, string $message, array $headers = [])
+    {
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => $message,
+                'errors' => [$field => [$message]],
+            ], 429, $headers);
+        }
+
+        return redirect()
+            ->back()
+            ->withHeaders($headers)
+            ->withInput($request->except(['password', 'password_confirmation', 'recaptcha_token']))
+            ->withErrors([$field => [$message]]);
     }
 }

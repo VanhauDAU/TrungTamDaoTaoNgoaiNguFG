@@ -151,6 +151,13 @@ REDIS_PORT=6379
 REDIS_PASSWORD=null
 REDIS_DB=0
 REDIS_CACHE_DB=1
+RATE_LIMITER_STORE=redis
+AUTH_LOGIN_RATE_LIMIT_PER_MINUTE=12
+AUTH_LOGIN_RATE_LIMIT_IP_PER_MINUTE=30
+AUTH_REGISTER_RATE_LIMIT_PER_MINUTE=6
+AUTH_REGISTER_RATE_LIMIT_IP_PER_MINUTE=12
+AUTH_EMAIL_CHECK_RATE_LIMIT_PER_MINUTE=30
+AUTH_EMAIL_CHECK_RATE_LIMIT_IP_PER_MINUTE=120
 REGISTER_EMAIL_CHECK_CACHE_STORE=redis
 REGISTER_EMAIL_CHECK_CACHE_TTL=60
 ```
@@ -197,6 +204,10 @@ Nếu dùng XAMPP/Apache:
 - `DB_*`: kết nối CSDL.
 - `QUEUE_CONNECTION`: mặc định `database`.
 - `REDIS_*`: cấu hình kết nối Redis.
+- `RATE_LIMITER_STORE`: cache store dùng cho Laravel rate limiter, mặc định `redis`.
+- `AUTH_LOGIN_RATE_LIMIT_*`: ngưỡng chặn spam cho login theo tài khoản/IP.
+- `AUTH_REGISTER_RATE_LIMIT_*`: ngưỡng chặn spam cho submit đăng ký.
+- `AUTH_EMAIL_CHECK_RATE_LIMIT_*`: ngưỡng chặn spam cho kiểm tra email realtime.
 - `REGISTER_EMAIL_CHECK_CACHE_STORE`: store dùng cho cache kiểm tra email realtime.
 - `REGISTER_EMAIL_CHECK_CACHE_TTL`: thời gian cache kết quả check email, mặc định 60 giây.
 - `MAIL_*`: cấu hình gửi mail.
@@ -258,6 +269,14 @@ redis-cli MONITOR
 ```
 
 Sau đó mở `/register` và nhập email. Bạn sẽ thấy key dạng `auth:register:email-check:<sha1>` được `GET`/`SETEX`.
+
+Muốn quan sát rate limit Redis của Auth:
+- nhập login quá nhanh hoặc gọi lặp `/register/check-email`
+- trên `redis-cli MONITOR` bạn sẽ thấy các key limiter được đọc/ghi trước khi request vào sâu controller
+- các route này hiện có limiter riêng:
+  - `auth-login`
+  - `auth-register`
+  - `auth-email-check`
 
 Sau khi `git pull` code mới từ team, nên chạy lại tối thiểu:
 ```bash

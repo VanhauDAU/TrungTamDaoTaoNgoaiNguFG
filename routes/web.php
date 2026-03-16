@@ -406,7 +406,6 @@ Auth::routes(['verify' => true]);
 
 Route::middleware('guest')->group(function () {
     Route::get('/register/check-email', [RegisterController::class, 'checkEmail'])
-        ->middleware('throttle:20,1')
         ->name('register.check-email');
 
     Route::get('/teacher/login', [LoginController::class, 'showTeacherLoginForm'])->name('teacher.login');

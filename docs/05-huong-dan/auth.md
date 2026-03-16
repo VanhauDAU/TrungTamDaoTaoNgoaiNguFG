@@ -9,6 +9,7 @@ Tài liệu này là điểm vào chính cho module Auth sau đợt nâng cấp.
 Module Auth hiện bao gồm:
 - đăng nhập học viên
 - đăng nhập nhân sự
+- rate limit chống spam cho login/register/check-email
 - ghi nhớ đăng nhập
 - quản lý thiết bị đã đăng nhập
 - logout khỏi tất cả thiết bị
@@ -137,6 +138,7 @@ Ví dụ:
 - Cho phép dùng email hoặc username.
 - Validate đầu vào bằng `Joi` trước khi submit.
 - Có reCAPTCHA nếu đã bật cấu hình.
+- Có rate limit middleware trước controller để chặn request quá nhanh theo tài khoản/IP.
 - Nếu chưa verify email thì sẽ bị chuyển sang trang verify.
 - Nút Google chỉ hiện khi cả `GOOGLE_CLIENT_ID` và `GOOGLE_CLIENT_SECRET` đều đã được cấu hình.
 - Checkbox `Ghi nhớ đăng nhập` dùng cơ chế remember me chuẩn của Laravel.
@@ -151,6 +153,7 @@ Ví dụ:
 - Giảng viên dùng `/teacher/login`.
 - Nhân viên và admin dùng `/staff/login`.
 - Không dùng Google login ở các cổng nội bộ.
+- Có chung rate limit middleware với login học viên nhưng key được tách theo portal.
 - Vẫn hỗ trợ checkbox `Ghi nhớ đăng nhập`.
 - Hiện tại sau đăng nhập vẫn vào khu nội bộ `/admin/*`; sau này có thể tách `teacher.dashboard` và `staff.dashboard` mà không cần đổi core auth.
 
@@ -162,6 +165,7 @@ Ví dụ:
 - Validate client-side bằng `Joi` cho họ tên, email, mật khẩu, xác nhận mật khẩu.
 - Khi người dùng nhập email ở `/register`, frontend debounce và gọi `GET /register/check-email` để kiểm tra realtime.
 - Kết quả check email realtime được cache bằng Redis trong TTL ngắn; nếu Redis không sẵn sàng, backend fallback sang MySQL.
+- `POST /register` và `GET /register/check-email` đều có rate limit riêng để chống spam submit và spam dò email.
 - Nếu Google OAuth đã được cấu hình, trang đăng ký sẽ hiện nút đăng ký / đăng nhập bằng Google.
 
 ### Avatar và provider
@@ -203,11 +207,13 @@ Ví dụ:
 ### Redis trong auth
 
 - Redis hiện được dùng như lớp cache cho kiểm tra email đăng ký realtime.
+- Redis cũng được dùng làm store cho Laravel rate limiter của auth.
 - Redis không tự đọc MySQL; Laravel luôn là thành phần:
   - hỏi Redis trước
   - nếu không có cache thì query bảng `taikhoan`
   - rồi ghi kết quả vào Redis
 - Submit đăng ký thật vẫn phải qua validation backend với unique rule ở database.
+- Với rate limit, Laravel ghi counter theo key limiter trước khi request đi sâu vào controller/service.
 
 ### Ghi nhớ đăng nhập
 
@@ -237,3 +243,4 @@ Khi debug Auth, kiểm tra theo thứ tự:
 6. `APP_URL` có khớp với redirect URI của Google không.
 7. SMTP có gửi mail thật không.
 8. Nếu check email realtime không hoạt động, kiểm tra `REDIS_CLIENT`, `predis/predis` và thử `redis-cli MONITOR`.
+9. Nếu rate limit không hoạt động, kiểm tra thêm `RATE_LIMITER_STORE` và các biến `AUTH_*_RATE_LIMIT_*`.
