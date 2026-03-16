@@ -1,6 +1,6 @@
 # Auth Module Guide
 
-> Cập nhật: 2026-03-12
+> Cập nhật: 2026-03-16
 
 Tài liệu này là điểm vào chính cho module Auth sau đợt nâng cấp.
 
@@ -31,6 +31,7 @@ Module Auth hiện bao gồm:
 - `POST /login`
 - `GET /register`
 - `POST /register`
+- `GET /register/check-email`
 - `GET /email/verify`
 - `GET /email/verify/{id}/{hash}`
 - `POST /email/resend`
@@ -159,6 +160,8 @@ Ví dụ:
 - Hệ thống tự cấp username.
 - Gửi email verification.
 - Validate client-side bằng `Joi` cho họ tên, email, mật khẩu, xác nhận mật khẩu.
+- Khi người dùng nhập email ở `/register`, frontend debounce và gọi `GET /register/check-email` để kiểm tra realtime.
+- Kết quả check email realtime được cache bằng Redis trong TTL ngắn; nếu Redis không sẵn sàng, backend fallback sang MySQL.
 - Nếu Google OAuth đã được cấu hình, trang đăng ký sẽ hiện nút đăng ký / đăng nhập bằng Google.
 
 ### Avatar và provider
@@ -197,6 +200,15 @@ Ví dụ:
   - đổi mật khẩu ở khu học viên
 - `Joi` không thay thế validation của Laravel. Backend vẫn là lớp kiểm tra bắt buộc để bảo mật.
 
+### Redis trong auth
+
+- Redis hiện được dùng như lớp cache cho kiểm tra email đăng ký realtime.
+- Redis không tự đọc MySQL; Laravel luôn là thành phần:
+  - hỏi Redis trước
+  - nếu không có cache thì query bảng `taikhoan`
+  - rồi ghi kết quả vào Redis
+- Submit đăng ký thật vẫn phải qua validation backend với unique rule ở database.
+
 ### Ghi nhớ đăng nhập
 
 - Login bằng form thường chỉ remembered khi người dùng tick checkbox.
@@ -224,3 +236,4 @@ Khi debug Auth, kiểm tra theo thứ tự:
 5. `GOOGLE_*` hoặc `RECAPTCHA_*` có cấu hình chưa.
 6. `APP_URL` có khớp với redirect URI của Google không.
 7. SMTP có gửi mail thật không.
+8. Nếu check email realtime không hoạt động, kiểm tra `REDIS_CLIENT`, `predis/predis` và thử `redis-cli MONITOR`.

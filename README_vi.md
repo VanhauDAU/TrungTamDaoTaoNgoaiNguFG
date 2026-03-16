@@ -1,7 +1,7 @@
 # DACNCNPM - Hệ Thống Quản Lý Trung Tâm Ngoại Ngữ (Bản Tiếng Việt)
 
 [![Laravel](https://img.shields.io/badge/Laravel-12.x-red)](https://laravel.com)
-[![PHP](https://img.shields.io/badge/PHP-8.2%2B-blue)](https://www.php.net/)
+[![PHP](https://img.shields.io/badge/PHP-8.3%2B-blue)](https://www.php.net/)
 [![MySQL](https://img.shields.io/badge/MySQL-8.0-orange)](https://www.mysql.com/)
 [![License](https://img.shields.io/badge/license-MIT-yellow)](https://opensource.org/licenses/MIT)
 
@@ -81,9 +81,10 @@ flowchart LR
   - `/staff/login` cho nhân viên và admin
 
 ## 4. Công nghệ sử dụng
-- Backend: Laravel 12, PHP 8.2+
+- Backend: Laravel 12, PHP 8.3+
 - Frontend: Blade, Bootstrap 5, JavaScript, Vite
 - Database: MySQL 8.x
+- Cache/Redis client: Predis 3.x
 - Build tool: Vite
 - Test: PHPUnit (Laravel test runner)
 
@@ -109,10 +110,11 @@ public/assets/     # Static assets css/js/image
 
 ## 6. Cài đặt môi trường local
 ### 6.1 Yêu cầu
-- PHP 8.2+
+- PHP 8.3+
 - Composer 2+
 - Node.js 18+ và npm
 - MySQL 8.x
+- Redis 7+ nếu muốn bật cache Redis cho các chức năng realtime
 
 ### 6.2 Clone và cài đặt
 ```bash
@@ -123,6 +125,11 @@ npm install
 cp .env.example .env
 php artisan key:generate
 ```
+
+Lưu ý môi trường:
+- Dependency hiện tại yêu cầu runtime PHP `>= 8.3`.
+- Nếu máy đang có cả XAMPP PHP 8.2 và Homebrew PHP 8.5, hãy dùng `php`, `composer`, `artisan` theo PHP Homebrew để chạy local.
+- XAMPP vẫn có thể dùng cho MySQL/Apache nếu phiên bản PHP đi kèm đã được nâng lên phù hợp; nếu không, nên chạy app bằng `php artisan serve`.
 
 ### 6.3 Cấu hình `.env` (MySQL)
 ```env
@@ -137,6 +144,29 @@ DB_PORT=3306
 DB_DATABASE=dacncnpm_trungtamnn
 DB_USERNAME=root
 DB_PASSWORD=
+
+REDIS_CLIENT=predis
+REDIS_HOST=127.0.0.1
+REDIS_PORT=6379
+REDIS_PASSWORD=null
+REDIS_DB=0
+REDIS_CACHE_DB=1
+REGISTER_EMAIL_CHECK_CACHE_STORE=redis
+REGISTER_EMAIL_CHECK_CACHE_TTL=60
+```
+
+Nếu bật Redis local:
+```bash
+brew tap redis/redis
+brew install --cask redis
+redis-server /opt/homebrew/etc/redis.conf
+redis-cli PING
+```
+
+Nếu Redis trả `PONG`, cài client PHP cho Laravel:
+```bash
+composer require predis/predis
+php artisan optimize:clear
 ```
 
 ## 7. Chạy dự án
@@ -160,11 +190,15 @@ npm run build
 Nếu dùng XAMPP/Apache:
 - Đặt project trong `htdocs`.
 - Truy cập qua virtual host hoặc `/public` theo cấu hình Apache.
+- Chỉ dùng XAMPP để chạy web khi PHP của XAMPP đạt `>= 8.3`; nếu XAMPP còn PHP 8.2 thì `artisan` và ứng dụng sẽ bị chặn bởi Composer platform check.
 
 ## 8. Biến môi trường quan trọng
 - `APP_URL`: URL gốc ứng dụng.
 - `DB_*`: kết nối CSDL.
 - `QUEUE_CONNECTION`: mặc định `database`.
+- `REDIS_*`: cấu hình kết nối Redis.
+- `REGISTER_EMAIL_CHECK_CACHE_STORE`: store dùng cho cache kiểm tra email realtime.
+- `REGISTER_EMAIL_CHECK_CACHE_TTL`: thời gian cache kết quả check email, mặc định 60 giây.
 - `MAIL_*`: cấu hình gửi mail.
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`: đăng nhập Google cho học viên.
 - `RECAPTCHA_*`: reCAPTCHA v3 cho login/register/quên mật khẩu public.
@@ -196,6 +230,10 @@ php artisan test
 # Clear cache
 php artisan optimize:clear
 
+# Kiểm tra Redis
+redis-cli PING
+php artisan tinker
+
 # Tạo symlink storage
 php artisan storage:link
 
@@ -207,6 +245,19 @@ php artisan invoice:check-overdue --dry-run
 php artisan registration:expire-holds
 php artisan registration:expire-holds --dry-run
 ```
+
+Trong `tinker` có thể kiểm tra nhanh:
+```php
+Cache::store('redis')->put('redis_test', 'ok', 60);
+Cache::store('redis')->get('redis_test');
+```
+
+Muốn quan sát Redis đang được hit khi nhập email ở form đăng ký:
+```bash
+redis-cli MONITOR
+```
+
+Sau đó mở `/register` và nhập email. Bạn sẽ thấy key dạng `auth:register:email-check:<sha1>` được `GET`/`SETEX`.
 
 ## 11. Test và chất lượng mã nguồn
 ```bash
