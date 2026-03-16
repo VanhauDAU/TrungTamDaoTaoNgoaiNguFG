@@ -50,6 +50,11 @@ class CoSoDaoTao extends Model
         return $this->hasMany(NhanSu::class, 'coSoId', 'coSoId');
     }
 
+    public function nhatKys()
+    {
+        return $this->hasMany(CoSoNhatKy::class, 'coSoId', 'coSoId');
+    }
+
     /**
      * Trả về địa chỉ đầy đủ gồm diaChi + tenPhuongXa + tenTinhThanh
      */

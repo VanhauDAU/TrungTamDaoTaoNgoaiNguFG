@@ -216,10 +216,7 @@
 
             <div class="kf-card">
                 <div class="kf-card-title"><i class="fas fa-door-open"></i> Phân công giáo viên & phòng học</div>
-                <div class="form-hint" style="margin:-10px 0 16px 0">
-                    Chọn lịch học trước rồi mới phân công giáo viên và phòng để hệ thống kiểm tra xung đột realtime chính
-                    xác hơn.
-                </div>
+
 
                 <div id="scheduleConflictSummary" class="kf-alert-error" style="display:none;margin-bottom:16px">
                     <i class="fas fa-exclamation-triangle"></i>

@@ -14,6 +14,8 @@ interface CoSoServiceInterface
 
     public function getDetail(int $id): array;
 
+    public function getOperationalSnapshot(int $id): array;
+
     public function getEditFormData(int $id): array;
 
     public function store(Request $request): CoSoDaoTao;

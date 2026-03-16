@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin\CoSo;
 
 use App\Contracts\Admin\CoSo\PhongHocServiceInterface;
+use App\Exceptions\MaintenanceConflictException;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
@@ -30,7 +31,21 @@ class PhongHocController extends Controller
 
     public function update(Request $request, int $id)
     {
-        $phong = $this->phongHocService->update($request, $id);
+        try {
+            $phong = $this->phongHocService->update($request, $id);
+        } catch (MaintenanceConflictException $e) {
+            return response()->json([
+                'success' => false,
+                'requiresConfirmation' => true,
+                'message' => $e->getMessage(),
+                'impact' => $e->getImpact(),
+            ], 409);
+        } catch (\RuntimeException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json(['success' => true, 'message' => 'Đã cập nhật phòng «' . $phong->tenPhong . '» thành công.', 'room' => $phong]);
@@ -61,11 +76,59 @@ class PhongHocController extends Controller
 
     public function toggleStatus(Request $request, int $id)
     {
-        return response()->json($this->phongHocService->toggleStatus($request, $id));
+        try {
+            return response()->json($this->phongHocService->toggleStatus($request, $id));
+        } catch (MaintenanceConflictException $e) {
+            return response()->json([
+                'success' => false,
+                'requiresConfirmation' => true,
+                'message' => $e->getMessage(),
+                'impact' => $e->getImpact(),
+            ], 409);
+        } catch (\RuntimeException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
     }
 
     public function lichSu(int $id)
     {
         return response()->json($this->phongHocService->lichSu($id));
+    }
+
+    public function qr(int $id)
+    {
+        return response()->json([
+            'success' => true,
+            'data' => $this->phongHocService->getRoomQrData($id),
+        ]);
+    }
+
+    public function listMaintenanceTickets(int $id)
+    {
+        return response()->json([
+            'success' => true,
+            'data' => $this->phongHocService->listMaintenanceTickets($id),
+        ]);
+    }
+
+    public function storeMaintenanceTicket(Request $request, int $id)
+    {
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã tạo phiếu bảo trì mới.',
+            'data' => $this->phongHocService->storeMaintenanceTicket($request, $id),
+        ]);
+    }
+
+    public function updateMaintenanceTicket(Request $request, int $ticketId)
+    {
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã cập nhật phiếu bảo trì.',
+            'data' => $this->phongHocService->updateMaintenanceTicket($request, $ticketId),
+        ]);
     }
 }

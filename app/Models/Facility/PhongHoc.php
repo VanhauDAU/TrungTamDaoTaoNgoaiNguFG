@@ -29,6 +29,8 @@ class PhongHoc extends Model
         'sucChua',
         'trangThietBi',
         'coSoId',
+        'khuBlock',
+        'tang',
         'trangThai',
         'ghiChuBaoTri',
         'ngayBaoTri',
@@ -36,6 +38,7 @@ class PhongHoc extends Model
 
     protected $casts = [
         'sucChua'    => 'integer',
+        'tang'       => 'integer',
         'trangThai'  => 'integer',
         'ngayBaoTri' => 'datetime',
         'deleted_at' => 'datetime',
@@ -73,6 +76,21 @@ class PhongHoc extends Model
     public function getTrangThaiLabelAttribute(): string
     {
         return self::trangThaiLabels()[$this->trangThai] ?? 'Không xác định';
+    }
+
+    public function getViTriLabelAttribute(): string
+    {
+        $parts = [];
+
+        if ($this->khuBlock) {
+            $parts[] = 'Block ' . trim((string) $this->khuBlock);
+        }
+
+        if ($this->tang !== null) {
+            $parts[] = 'Tầng ' . $this->tang;
+        }
+
+        return $parts !== [] ? implode(' · ', $parts) : 'Chưa phân khu';
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
@@ -143,6 +161,16 @@ class PhongHoc extends Model
     public function buoiHocDangDienRa()
     {
         return $this->buoiHocs()->where('trangThai', BuoiHoc::TRANG_THAI_DANG_DIEN_RA);
+    }
+
+    public function nhatKys()
+    {
+        return $this->hasMany(CoSoNhatKy::class, 'phongHocId', 'phongHocId');
+    }
+
+    public function maintenanceTickets()
+    {
+        return $this->hasMany(PhongHocBaoTri::class, 'phongHocId', 'phongHocId');
     }
 
     // ── Scopes ────────────────────────────────────────────────────────────────
