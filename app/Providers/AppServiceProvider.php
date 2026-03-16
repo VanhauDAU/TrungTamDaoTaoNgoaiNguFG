@@ -5,7 +5,12 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
 use App\Models\Course\KhoaHoc;
+use App\Models\Course\DanhMucKhoaHoc;
+use App\Models\Content\BaiViet;
+use App\Models\Content\DanhMucBaiViet;
+use App\Models\Education\LopHoc;
 use App\Models\Facility\CoSoDaoTao;
+use App\Observers\PublicContentCacheObserver;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -54,6 +59,7 @@ use App\Contracts\Client\HocVien\StudentServiceInterface;
 // ── Client Services ──────────────────────────────────────────────
 use App\Services\Client\KhoaHoc\CourseService;
 use App\Services\Client\HocVien\StudentService;
+use App\Services\Client\PublicContentCacheService;
 
 // ── Phase 8 Contracts ─────────────────────────────────────────────
 use App\Contracts\Admin\BaiViet\BaiVietServiceInterface;
@@ -113,17 +119,45 @@ class AppServiceProvider extends ServiceProvider
         Paginator::useBootstrapFive();
 
         $this->registerAuthRateLimiters();
+        $this->registerPublicContentObservers();
 
         View::composer(
-        ['components.client.footer', 'components.client.register-advice'],
+            ['components.client.footer', 'components.client.register-advice'],
             function ($view) {
-            $courses = KhoaHoc::where('trangThai', 1)->get();
-            $branches = CoSoDaoTao::where('trangThai', 1)->get();
-            $view->with('footerCourses', $courses);
-            $view->with('danhSachKhoaHoc', $courses);
-            $view->with('danhSachCoSo', $branches);
-        }
+                $payload = $this->app->make(PublicContentCacheService::class)->remember(
+                    'shared.footer',
+                    [],
+                    function (): array {
+                        $courses = KhoaHoc::query()
+                            ->where('trangThai', 1)
+                            ->orderBy('tenKhoaHoc')
+                            ->get();
+
+                        return [
+                            'footerCourses' => $courses,
+                            'danhSachKhoaHoc' => $courses,
+                            'danhSachCoSo' => CoSoDaoTao::query()
+                                ->where('trangThai', 1)
+                                ->orderBy('tenCoSo')
+                                ->get(),
+                        ];
+                    },
+                    600
+                );
+
+                $view->with($payload);
+            }
         );
+    }
+
+    private function registerPublicContentObservers(): void
+    {
+        KhoaHoc::observe(PublicContentCacheObserver::class);
+        LopHoc::observe(PublicContentCacheObserver::class);
+        BaiViet::observe(PublicContentCacheObserver::class);
+        DanhMucKhoaHoc::observe(PublicContentCacheObserver::class);
+        DanhMucBaiViet::observe(PublicContentCacheObserver::class);
+        CoSoDaoTao::observe(PublicContentCacheObserver::class);
     }
 
     private function registerAuthRateLimiters(): void

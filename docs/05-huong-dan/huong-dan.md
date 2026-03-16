@@ -4,7 +4,7 @@
 
 ### Yêu cầu
 
-- PHP >= 8.2
+- PHP >= 8.3
 - MySQL 8.0
 - Composer 2.x
 - Node.js >= 18 (cho vite/npm)
@@ -96,6 +96,7 @@ Lưu ý:
 - Nếu pull về có thay đổi `.env.example`, cần so sánh và cập nhật `.env` thủ công.
 - Project hiện yêu cầu PHP runtime `>= 8.3`; nếu máy còn chạy bằng XAMPP PHP 8.2 thì `artisan` có thể fail ngay từ Composer platform check.
 - Nếu vừa thêm package mới như `predis/predis` mà chưa chạy `composer install`, các tính năng Redis sẽ không hoạt động đúng.
+- Nếu pull về có thêm cache public Redis, nhớ bổ sung `PUBLIC_LIST_CACHE_STORE` và `PUBLIC_LIST_CACHE_TTL` trong `.env` nếu máy đang dùng Redis local.
 
 ---
 
@@ -122,6 +123,27 @@ MAIL_USERNAME=your@gmail.com
 MAIL_PASSWORD=app_password
 MAIL_FROM_ADDRESS=your@gmail.com
 MAIL_FROM_NAME="Five Genius"
+REDIS_CLIENT=predis
+REDIS_HOST=127.0.0.1
+REDIS_PORT=6379
+REDIS_PASSWORD=null
+RATE_LIMITER_STORE=redis
+PUBLIC_LIST_CACHE_STORE=redis
+PUBLIC_LIST_CACHE_TTL=300
+REGISTER_EMAIL_CHECK_CACHE_STORE=redis
+REGISTER_EMAIL_CHECK_CACHE_TTL=60
+```
+
+Redis trong project hiện dùng cho:
+- cache kiểm tra email realtime ở form đăng ký
+- rate limit auth cho `login`, `register`, `check-email`
+- cache danh sách public ở `/khoa-hoc`, `/blog`, trang chủ, footer và `register-advice`
+
+Kiểm nhanh Redis sau khi pull:
+
+```bash
+redis-cli PING
+redis-cli --scan --pattern '*public-content*'
 ```
 
 ---

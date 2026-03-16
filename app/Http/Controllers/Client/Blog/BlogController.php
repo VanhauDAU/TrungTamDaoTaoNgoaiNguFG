@@ -2,72 +2,28 @@
 
 namespace App\Http\Controllers\Client\Blog;
 
+use App\Http\Controllers\Controller;
 use App\Models\Content\BaiViet;
 use App\Models\Content\DanhMucBaiViet;
+use App\Services\Client\PublicContentCacheService;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
 
 class BlogController extends Controller
 {
+    public function __construct(
+        protected PublicContentCacheService $publicContentCache
+    ) {
+    }
+
     public function index(Request $request)
     {
-        $query = BaiViet::where('trangThai', 1);
+        $payload = $this->publicContentCache->remember(
+            'blog.index',
+            $request->only(['s', 'category', 'tag', 'sort', 'page']),
+            fn (): array => $this->buildIndexPayload($request)
+        );
 
-        // Tìm kiếm theo tiêu đề hoặc tóm tắt
-        if ($request->filled('s')) {
-            $search = $request->input('s');
-            $query->where(function ($q) use ($search) {
-                $q->where('tieuDe', 'like', "%{$search}%")
-                    ->orWhere('tomTat', 'like', "%{$search}%");
-            });
-        }
-
-        // Lọc theo danh mục
-        if ($request->filled('category')) {
-            $categorySlug = $request->input('category');
-            $query->whereHas('danhMucs', function ($q) use ($categorySlug) {
-                $q->where('slug', $categorySlug);
-            });
-        }
-
-        // Lọc theo tag
-        if ($request->filled('tag')) {
-            $tagSlug = $request->input('tag');
-            $query->whereHas('tags', function ($q) use ($tagSlug) {
-                $q->where('slug', $tagSlug);
-            });
-        }
-
-        // Sắp xếp
-        $sort = $request->input('sort', 'latest');
-        switch ($sort) {
-            case 'oldest':
-                $query->oldest();
-                break;
-            case 'popular':
-                $query->orderBy('luotXem', 'desc');
-                break;
-            case 'az':
-                $query->orderBy('tieuDe', 'asc');
-                break;
-            default: // latest
-                $query->latest();
-                break;
-        }
-
-        $blogs = $query->with(['danhMucs', 'tags'])->paginate(9)->withQueryString();
-        $categories = DanhMucBaiViet::where('trangThai', 1)
-            ->withCount([
-                'baiViets' => function ($q) {
-                    $q->where('trangThai', 1);
-                }
-            ])
-            ->having('bai_viets_count', '>', 0)
-            ->orderBy('tenDanhMuc')
-            ->get();
-        $totalPosts = BaiViet::where('trangThai', 1)->count();
-
-        return view('clients.bai-viet.index', compact('blogs', 'categories', 'totalPosts'));
+        return view('clients.bai-viet.index', $payload);
     }
 
     public function show($slug)
@@ -109,5 +65,60 @@ class BlogController extends Controller
             ->get();
 
         return view('clients.bai-viet.show', compact('blog', 'relatedPosts', 'otherPosts', 'categories'));
+    }
+
+    private function buildIndexPayload(Request $request): array
+    {
+        $query = BaiViet::query()->where('trangThai', 1);
+
+        if ($request->filled('s')) {
+            $search = (string) $request->input('s');
+            $query->where(function ($builder) use ($search) {
+                $builder->where('tieuDe', 'like', "%{$search}%")
+                    ->orWhere('tomTat', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('category')) {
+            $categorySlug = (string) $request->input('category');
+            $query->whereHas('danhMucs', function ($builder) use ($categorySlug) {
+                $builder->where('slug', $categorySlug);
+            });
+        }
+
+        if ($request->filled('tag')) {
+            $tagSlug = (string) $request->input('tag');
+            $query->whereHas('tags', function ($builder) use ($tagSlug) {
+                $builder->where('slug', $tagSlug);
+            });
+        }
+
+        switch ($request->input('sort', 'latest')) {
+            case 'oldest':
+                $query->oldest();
+                break;
+            case 'popular':
+                $query->orderByDesc('luotXem');
+                break;
+            case 'az':
+                $query->orderBy('tieuDe');
+                break;
+            default:
+                $query->latest();
+                break;
+        }
+
+        return [
+            'blogs' => $query->with(['danhMucs', 'tags'])->paginate(9)->withQueryString(),
+            'categories' => DanhMucBaiViet::query()
+                ->where('trangThai', 1)
+                ->withCount([
+                    'baiViets' => fn ($builder) => $builder->where('trangThai', 1),
+                ])
+                ->having('bai_viets_count', '>', 0)
+                ->orderBy('tenDanhMuc')
+                ->get(),
+            'totalPosts' => BaiViet::query()->where('trangThai', 1)->count(),
+        ];
     }
 }

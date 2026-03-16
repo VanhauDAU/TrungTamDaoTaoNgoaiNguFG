@@ -152,6 +152,8 @@ REDIS_PASSWORD=null
 REDIS_DB=0
 REDIS_CACHE_DB=1
 RATE_LIMITER_STORE=redis
+PUBLIC_LIST_CACHE_STORE=redis
+PUBLIC_LIST_CACHE_TTL=300
 AUTH_LOGIN_RATE_LIMIT_PER_MINUTE=12
 AUTH_LOGIN_RATE_LIMIT_IP_PER_MINUTE=30
 AUTH_REGISTER_RATE_LIMIT_PER_MINUTE=6
@@ -205,6 +207,8 @@ Nếu dùng XAMPP/Apache:
 - `QUEUE_CONNECTION`: mặc định `database`.
 - `REDIS_*`: cấu hình kết nối Redis.
 - `RATE_LIMITER_STORE`: cache store dùng cho Laravel rate limiter, mặc định `redis`.
+- `PUBLIC_LIST_CACHE_STORE`: store dùng cho cache danh sách public như khóa học/blog/footer.
+- `PUBLIC_LIST_CACHE_TTL`: thời gian cache danh sách public, mặc định 300 giây.
 - `AUTH_LOGIN_RATE_LIMIT_*`: ngưỡng chặn spam cho login theo tài khoản/IP.
 - `AUTH_REGISTER_RATE_LIMIT_*`: ngưỡng chặn spam cho submit đăng ký.
 - `AUTH_EMAIL_CHECK_RATE_LIMIT_*`: ngưỡng chặn spam cho kiểm tra email realtime.
@@ -261,6 +265,32 @@ Trong `tinker` có thể kiểm tra nhanh:
 ```php
 Cache::store('redis')->put('redis_test', 'ok', 60);
 Cache::store('redis')->get('redis_test');
+```
+
+## Redis đang làm gì trong project
+- Cache kết quả `GET /register/check-email` để giảm query MySQL lặp lại khi người dùng gõ email đăng ký.
+- Làm store cho Laravel rate limiter của `login`, `register` và `check-email`.
+- Cache các danh sách public đọc nhiều:
+  - `/khoa-hoc`
+  - danh sách lớp public trong `/khoa-hoc/{slug}`
+  - `/blog`
+  - block public ở trang chủ
+  - footer và `register-advice`
+- Chat typing/presence hiện dùng Laravel `Cache`; phần này chỉ chạy trên Redis nếu bạn cấu hình store cache phù hợp cho chat.
+
+Muốn quan sát cache public bằng Redis:
+```bash
+redis-cli MONITOR
+```
+
+Sau đó mở một trong các trang:
+- `/khoa-hoc`
+- `/blog`
+- `/`
+
+Hoặc scan key:
+```bash
+redis-cli --scan --pattern '*public-content*'
 ```
 
 Muốn quan sát Redis đang được hit khi nhập email ở form đăng ký:
