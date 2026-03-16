@@ -135,6 +135,8 @@ REDIS_PASSWORD=null
 REDIS_DB=0
 REDIS_CACHE_DB=1
 RATE_LIMITER_STORE=redis
+PUBLIC_LIST_CACHE_STORE=redis
+PUBLIC_LIST_CACHE_TTL=300
 AUTH_LOGIN_RATE_LIMIT_PER_MINUTE=12
 AUTH_LOGIN_RATE_LIMIT_IP_PER_MINUTE=30
 AUTH_REGISTER_RATE_LIMIT_PER_MINUTE=6
@@ -188,6 +190,8 @@ Neu dung XAMPP/Apache:
 - `QUEUE_CONNECTION`: mac dinh `database`.
 - `REDIS_*`: cau hinh ket noi Redis.
 - `RATE_LIMITER_STORE`: cache store dung cho Laravel rate limiter, mac dinh `redis`.
+- `PUBLIC_LIST_CACHE_STORE`: store dung cho cache danh sach public nhu khoa hoc/blog/footer.
+- `PUBLIC_LIST_CACHE_TTL`: thoi gian cache danh sach public, mac dinh 300 giay.
 - `AUTH_LOGIN_RATE_LIMIT_*`: nguong chan spam cho login theo tai khoan/IP.
 - `AUTH_REGISTER_RATE_LIMIT_*`: nguong chan spam cho submit dang ky.
 - `AUTH_EMAIL_CHECK_RATE_LIMIT_*`: nguong chan spam cho kiem tra email realtime.
@@ -248,6 +252,32 @@ Trong `tinker` co the kiem tra nhanh:
 ```php
 Cache::store('redis')->put('redis_test', 'ok', 60);
 Cache::store('redis')->get('redis_test');
+```
+
+## Redis dang lam gi trong project
+- Cache ket qua `GET /register/check-email` de giam query MySQL lap lai khi nguoi dung go email dang ky.
+- Lam store cho Laravel rate limiter cua `login`, `register` va `check-email`.
+- Cache cac danh sach public doc nhieu:
+  - `/khoa-hoc`
+  - danh sach lop public trong `/khoa-hoc/{slug}`
+  - `/blog`
+  - block public o trang chu
+  - footer va `register-advice`
+- Chat typing/presence hien dung Laravel `Cache`; phan nay chi chay tren Redis neu ban cau hinh store cache phu hop cho chat.
+
+Muon quan sat cache public bang Redis:
+```bash
+redis-cli MONITOR
+```
+
+Sau do mo mot trong cac trang:
+- `/khoa-hoc`
+- `/blog`
+- `/`
+
+Hoac scan key:
+```bash
+redis-cli --scan --pattern '*public-content*'
 ```
 
 Muon quan sat Redis dang duoc hit khi nhap email o form dang ky:

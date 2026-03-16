@@ -32,6 +32,23 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Public List Cache
+    |--------------------------------------------------------------------------
+    |
+    | Public course, class, and blog listings are good Redis candidates
+    | because they are read frequently and change less often. These options
+    | allow that cache layer to be tuned independently from the default store.
+    |
+    */
+
+    'public_lists' => [
+        'store' => env('PUBLIC_LIST_CACHE_STORE', env('APP_ENV') === 'testing' ? 'array' : 'redis'),
+        'ttl' => (int) env('PUBLIC_LIST_CACHE_TTL', 300),
+        'version_key' => env('PUBLIC_LIST_CACHE_VERSION_KEY', 'public-content:version'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Cache Stores
     |--------------------------------------------------------------------------
     |

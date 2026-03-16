@@ -13,6 +13,7 @@ use App\Models\Education\LopHocChinhSachGia;
 use App\Models\Education\LopHocPhuPhi;
 use App\Models\Finance\HoaDon;
 use App\Models\Auth\TaiKhoan;
+use App\Services\Client\PublicContentCacheService;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -21,7 +22,30 @@ use Illuminate\Support\Facades\DB;
 
 class CourseService implements CourseServiceInterface
 {
+    public function __construct(
+        protected PublicContentCacheService $publicContentCache
+    ) {
+    }
+
     public function getList(Request $request): array
+    {
+        return $this->publicContentCache->remember(
+            'courses.index',
+            $request->only(['category', 'q', 'sort', 'page']),
+            fn (): array => $this->buildListPayload($request)
+        );
+    }
+
+    public function getDetail(string $slug): array
+    {
+        return $this->publicContentCache->remember(
+            'courses.detail',
+            ['slug' => $slug],
+            fn (): array => $this->buildDetailPayload($slug)
+        );
+    }
+
+    private function buildListPayload(Request $request): array
     {
         $visibleStatuses = [
             LopHoc::TRANG_THAI_SAP_MO,
@@ -78,7 +102,7 @@ class CourseService implements CourseServiceInterface
         ];
     }
 
-    public function getDetail(string $slug): array
+    private function buildDetailPayload(string $slug): array
     {
         $visibleStatuses = [
             LopHoc::TRANG_THAI_SAP_MO,
