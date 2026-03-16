@@ -8,11 +8,14 @@ use App\Models\Auth\TaiKhoan;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Str;
+use Throwable;
 
 class RegisterService implements RegisterServiceInterface
 {
@@ -77,6 +80,30 @@ class RegisterService implements RegisterServiceInterface
         });
     }
 
+    public function checkEmailAvailability(?string $email): array
+    {
+        $normalizedEmail = Str::lower(trim((string) $email));
+
+        if ($normalizedEmail === '' || !filter_var($normalizedEmail, FILTER_VALIDATE_EMAIL)) {
+            return [
+                'status' => 'invalid',
+                'message' => 'Vui lòng nhập địa chỉ email hợp lệ.',
+            ];
+        }
+
+        $cacheStore = (string) config('auth.register_email_check_cache_store', env('REGISTER_EMAIL_CHECK_CACHE_STORE', 'redis'));
+        $cacheTtl = max(5, (int) config('auth.register_email_check_cache_ttl', env('REGISTER_EMAIL_CHECK_CACHE_TTL', 60)));
+        $cacheKey = 'auth:register:email-check:' . sha1($normalizedEmail);
+
+        try {
+            return Cache::store($cacheStore)->remember($cacheKey, now()->addSeconds($cacheTtl), function () use ($normalizedEmail) {
+                return $this->resolveEmailAvailabilityPayload($normalizedEmail);
+            });
+        } catch (Throwable) {
+            return $this->resolveEmailAvailabilityPayload($normalizedEmail);
+        }
+    }
+
     public function register(Request $request): RedirectResponse
     {
         $this->validate($request->all());
@@ -94,5 +121,24 @@ class RegisterService implements RegisterServiceInterface
     private function isRecaptchaEnabled(): bool
     {
         return filled(config('services.recaptcha.secret_key'));
+    }
+
+    private function resolveEmailAvailabilityPayload(string $normalizedEmail): array
+    {
+        $exists = TaiKhoan::query()
+            ->whereRaw('LOWER(email) = ?', [$normalizedEmail])
+            ->exists();
+
+        if ($exists) {
+            return [
+                'status' => 'taken',
+                'message' => 'Email này đã được sử dụng.',
+            ];
+        }
+
+        return [
+            'status' => 'available',
+            'message' => 'Email này có thể sử dụng.',
+        ];
     }
 }

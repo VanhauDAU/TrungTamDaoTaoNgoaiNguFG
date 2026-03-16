@@ -2,6 +2,28 @@
 
 Tất cả thay đổi đáng chú ý của dự án sẽ được ghi tại đây.
 
+## [2026-03-16] - Bổ sung Redis cho kiểm tra email đăng ký realtime
+
+### Added
+
+- Thêm endpoint `GET /register/check-email` để kiểm tra email đã được sử dụng hay chưa ngay trên form đăng ký.
+- Thêm debounce và thông báo trạng thái inline trên ô email của trang `/register`.
+- Thêm test `RegisterEmailCheckTest` cho endpoint kiểm tra email.
+- Bổ sung biến môi trường:
+  - `REGISTER_EMAIL_CHECK_CACHE_STORE`
+  - `REGISTER_EMAIL_CHECK_CACHE_TTL`
+- Bổ sung dependency `predis/predis` để hỗ trợ Redis client không phụ thuộc `ext-redis`.
+
+### Changed
+
+- Luồng đăng ký học viên vẫn giữ validation cuối cùng bằng MySQL `unique:taikhoan,email`, nhưng kết quả kiểm tra realtime được cache trong Redis với TTL ngắn để giảm query lặp lại.
+- Tài liệu setup được cập nhật để phản ánh yêu cầu runtime PHP `>= 8.3` của dependency hiện tại và lưu ý môi trường XAMPP PHP 8.2 không còn phù hợp để chạy `artisan`/web app.
+- Hướng dẫn local được cập nhật theo hướng ưu tiên Redis server + `predis` trước, sau đó mới cân nhắc `phpredis`.
+
+### Fixed
+
+- Thêm fallback an toàn: nếu Redis chưa sẵn sàng hoặc cấu hình sai, backend vẫn query trực tiếp MySQL thay vì làm gãy form đăng ký.
+
 ## [2026-03-15] - Hoàn thiện hồ sơ nhân sự, bàn giao tài khoản và tài liệu vận hành
 
 ### Added

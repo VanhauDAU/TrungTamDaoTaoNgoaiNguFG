@@ -333,6 +333,7 @@
                                         <input type="email" id="email" name="email"
                                             class="form-control @error('email') is-invalid @enderror"
                                             value="{{ old('email') }}" required autocomplete="email" placeholder="Email">
+                                        <div id="emailAvailabilityMessage" class="small mt-1" aria-live="polite"></div>
                                         @error('email')
                                             <span class="invalid-feedback" role="alert">
                                                 <strong>{{ $message }}</strong>
@@ -425,6 +426,142 @@
 @endsection
 @section('script')
     <script>
+        (function () {
+            const emailInput = document.getElementById("email");
+            const statusNode = document.getElementById("emailAvailabilityMessage");
+            const submitButton = document.querySelector('#registerform button[type="submit"]');
+            const checkUrl = @json(route('register.check-email'));
+
+            if (!emailInput || !statusNode || !submitButton) {
+                return;
+            }
+
+            const emailCache = new Map();
+            let debounceTimer = null;
+            let activeController = null;
+            let lastRequestedValue = "";
+
+            function resetStatus() {
+                statusNode.textContent = "";
+                statusNode.className = "small mt-1";
+                emailInput.classList.remove("is-valid");
+                emailInput.classList.remove("is-invalid");
+                submitButton.disabled = false;
+            }
+
+            function setStatus(type, message) {
+                statusNode.textContent = message;
+                statusNode.className = "small mt-1";
+                emailInput.classList.remove("is-valid");
+
+                if (type === "checking") {
+                    emailInput.classList.remove("is-invalid");
+                    statusNode.classList.add("text-muted");
+                    submitButton.disabled = true;
+                    return;
+                }
+
+                if (type === "available") {
+                    statusNode.classList.add("text-success");
+                    emailInput.classList.remove("is-invalid");
+                    emailInput.classList.add("is-valid");
+                    submitButton.disabled = false;
+                    return;
+                }
+
+                statusNode.classList.add("text-danger");
+                emailInput.classList.add("is-invalid");
+                submitButton.disabled = true;
+            }
+
+            function isValidEmailFormat(value) {
+                return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+            }
+
+            async function checkEmail(value) {
+                const normalizedValue = value.trim().toLowerCase();
+
+                if (normalizedValue === "") {
+                    resetStatus();
+                    emailInput.classList.remove("is-invalid");
+                    return;
+                }
+
+                if (!isValidEmailFormat(normalizedValue)) {
+                    setStatus("invalid", "Vui lòng nhập địa chỉ email hợp lệ.");
+                    return;
+                }
+
+                if (emailCache.has(normalizedValue)) {
+                    const cached = emailCache.get(normalizedValue);
+                    setStatus(cached.status, cached.message);
+                    return;
+                }
+
+                if (activeController) {
+                    activeController.abort();
+                }
+
+                activeController = new AbortController();
+                lastRequestedValue = normalizedValue;
+                setStatus("checking", "Đang kiểm tra email...");
+
+                try {
+                    const response = await fetch(`${checkUrl}?email=${encodeURIComponent(normalizedValue)}`, {
+                        headers: {
+                            Accept: "application/json",
+                        },
+                        signal: activeController.signal,
+                    });
+
+                    if (!response.ok) {
+                        throw new Error("email-check-failed");
+                    }
+
+                    const payload = await response.json();
+
+                    emailCache.set(normalizedValue, payload);
+
+                    if (lastRequestedValue !== normalizedValue) {
+                        return;
+                    }
+
+                    setStatus(payload.status, payload.message);
+                } catch (error) {
+                    if (error.name === "AbortError") {
+                        return;
+                    }
+
+                    setStatus("error", "Không thể kiểm tra email lúc này. Bạn vẫn có thể gửi form để hệ thống kiểm tra.");
+                    submitButton.disabled = false;
+                }
+            }
+
+            emailInput.addEventListener("input", function () {
+                clearTimeout(debounceTimer);
+                emailInput.value = emailInput.value.trimStart();
+
+                const currentValue = emailInput.value.trim();
+                if (currentValue === "") {
+                    if (activeController) {
+                        activeController.abort();
+                    }
+                    resetStatus();
+                    emailInput.classList.remove("is-invalid");
+                    return;
+                }
+
+                debounceTimer = setTimeout(function () {
+                    checkEmail(currentValue);
+                }, 450);
+            });
+
+            emailInput.addEventListener("blur", function () {
+                clearTimeout(debounceTimer);
+                checkEmail(emailInput.value);
+            });
+        })();
+
         // Toggle password visibility for main password field
         function togglePassword() {
             var x = document.getElementById("password");

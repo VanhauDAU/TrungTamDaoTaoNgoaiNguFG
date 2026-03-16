@@ -1,7 +1,7 @@
 # DACNCNPM - Hệ Thống Quản Lý Trung Tâm Ngoại Ngữ
 
 [![Laravel](https://img.shields.io/badge/Laravel-12.x-red)](https://laravel.com)
-[![PHP](https://img.shields.io/badge/PHP-8.2%2B-blue)](https://www.php.net/)
+[![PHP](https://img.shields.io/badge/PHP-8.3%2B-blue)](https://www.php.net/)
 [![MySQL](https://img.shields.io/badge/MySQL-8.0-orange)](https://www.mysql.com/)
 [![License](https://img.shields.io/badge/license-MIT-yellow)](https://opensource.org/licenses/MIT)
 
@@ -64,9 +64,10 @@ Tai lieu:
   - `/staff/login` cho nhan vien va admin
 
 ## 3. Cong nghe su dung
-- Backend: Laravel 12, PHP 8.2+
+- Backend: Laravel 12, PHP 8.3+
 - Frontend: Blade, Bootstrap 5, JS, Vite
 - Database: MySQL 8.x
+- Cache/Redis client: Predis 3.x
 - Build tool: Vite
 - Test: PHPUnit (Laravel test runner)
 
@@ -92,10 +93,11 @@ public/assets/     # Static assets css/js/image
 
 ## 5. Cai dat moi truong local
 ### 5.1 Yeu cau
-- PHP 8.2+
+- PHP 8.3+
 - Composer 2+
 - Node.js 18+ va npm
 - MySQL 8.x
+- Redis 7+ neu muon bat cache Redis cho cac chuc nang realtime
 
 ### 5.2 Clone va cai dat
 ```bash
@@ -106,6 +108,11 @@ npm install
 cp .env.example .env
 php artisan key:generate
 ```
+
+Luu y moi truong:
+- Dependency hien tai yeu cau runtime PHP `>= 8.3`.
+- Neu may dang co ca XAMPP PHP 8.2 va Homebrew PHP 8.5, hay dung `php`, `composer`, `artisan` theo PHP Homebrew de chay local.
+- XAMPP van co the dung cho MySQL/Apache neu PHP di kem da duoc nang cap; neu khong, nen chay app bang `php artisan serve`.
 
 ### 5.3 Cau hinh `.env` (MySQL)
 ```env
@@ -120,6 +127,29 @@ DB_PORT=3306
 DB_DATABASE=dacncnpm_trungtamnn
 DB_USERNAME=root
 DB_PASSWORD=
+
+REDIS_CLIENT=predis
+REDIS_HOST=127.0.0.1
+REDIS_PORT=6379
+REDIS_PASSWORD=null
+REDIS_DB=0
+REDIS_CACHE_DB=1
+REGISTER_EMAIL_CHECK_CACHE_STORE=redis
+REGISTER_EMAIL_CHECK_CACHE_TTL=60
+```
+
+Neu bat Redis local:
+```bash
+brew tap redis/redis
+brew install --cask redis
+redis-server /opt/homebrew/etc/redis.conf
+redis-cli PING
+```
+
+Neu Redis tra `PONG`, cai client PHP cho Laravel:
+```bash
+composer require predis/predis
+php artisan optimize:clear
 ```
 
 ## 6. Chay du an
@@ -143,11 +173,15 @@ npm run build
 Neu dung XAMPP/Apache:
 - Dat project trong `htdocs`.
 - Truy cap qua virtual host hoac `/public` theo cau hinh Apache.
+- Chi dung XAMPP de chay web khi PHP cua XAMPP dat `>= 8.3`; neu XAMPP con PHP 8.2 thi `artisan` va ung dung se bi chan boi Composer platform check.
 
 ## 7. Bien moi truong quan trong
 - `APP_URL`: URL goc ung dung.
 - `DB_*`: ket noi CSDL.
 - `QUEUE_CONNECTION`: mac dinh `database`.
+- `REDIS_*`: cau hinh ket noi Redis.
+- `REGISTER_EMAIL_CHECK_CACHE_STORE`: store dung cho cache kiem tra email realtime.
+- `REGISTER_EMAIL_CHECK_CACHE_TTL`: thoi gian cache ket qua check email, mac dinh 60 giay.
 - `MAIL_*`: cau hinh gui mail.
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`: dang nhap Google cho hoc vien.
 - `RECAPTCHA_*`: reCAPTCHA v3 cho login/register/quen mat khau public.
@@ -187,6 +221,10 @@ php artisan test
 # Clear cache
 php artisan optimize:clear
 
+# Kiem tra Redis
+redis-cli PING
+php artisan tinker
+
 # Tao symlink storage
 php artisan storage:link
 
@@ -194,6 +232,19 @@ php artisan storage:link
 php artisan invoice:check-overdue
 php artisan invoice:check-overdue --dry-run
 ```
+
+Trong `tinker` co the kiem tra nhanh:
+```php
+Cache::store('redis')->put('redis_test', 'ok', 60);
+Cache::store('redis')->get('redis_test');
+```
+
+Muon quan sat Redis dang duoc hit khi nhap email o form dang ky:
+```bash
+redis-cli MONITOR
+```
+
+Sau do mo `/register` va nhap email. Ban se thay key dang `auth:register:email-check:<sha1>` duoc `GET`/`SETEX`.
 
 ## 11. Test va chat luong ma nguon
 ```bash

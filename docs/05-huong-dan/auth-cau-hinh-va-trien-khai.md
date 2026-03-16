@@ -1,15 +1,21 @@
 # Auth - Cấu Hình Và Triển Khai
 
-> Cập nhật: 2026-03-12
+> Cập nhật: 2026-03-16
 
 ## 1. Điều kiện tiên quyết
 
 Trước khi bật đầy đủ Auth mới, cần có:
+- runtime PHP `>= 8.3`
 - database đã migrate cột auth mới
 - mail server chạy được
 - Google OAuth App nếu muốn bật Google login
 - Google reCAPTCHA v3 keys nếu muốn bật reCAPTCHA
 - `node_modules` đã cài để bundle được `Joi` và asset frontend Auth
+- Redis server + client nếu muốn bật cache Redis cho kiểm tra email realtime ở trang đăng ký
+
+Lưu ý môi trường:
+- nếu máy có cả XAMPP PHP 8.2 và Homebrew PHP 8.5, phải dùng PHP `>= 8.3` cho `composer`, `artisan` và web runtime
+- project hiện có thể fail ngay từ `artisan` nếu chạy bằng PHP 8.2 do Composer platform check
 
 ## 2. Migration bắt buộc
 
@@ -140,6 +146,40 @@ Lưu ý quan trọng:
   - `127.0.0.1`
   - `localhost`
 
+### 3.4 Redis cho kiểm tra email realtime
+
+Project hiện hỗ trợ cache Redis cho endpoint `GET /register/check-email`.
+
+Cấu hình khuyến nghị:
+
+```env
+REDIS_CLIENT=predis
+REDIS_HOST=127.0.0.1
+REDIS_PORT=6379
+REDIS_PASSWORD=null
+REDIS_DB=0
+REDIS_CACHE_DB=1
+
+REGISTER_EMAIL_CHECK_CACHE_STORE=redis
+REGISTER_EMAIL_CHECK_CACHE_TTL=60
+```
+
+Thiết lập local nhanh:
+
+```bash
+brew tap redis/redis
+brew install --cask redis
+redis-server /opt/homebrew/etc/redis.conf
+redis-cli PING
+composer require predis/predis
+php artisan optimize:clear
+```
+
+Lưu ý:
+- ưu tiên `predis` cho local nếu chưa muốn cài `ext-redis`
+- nếu Redis lỗi hoặc chưa sẵn sàng, backend sẽ fallback sang query MySQL trực tiếp
+- Redis chỉ cache kết quả check realtime; validation cuối cùng khi submit vẫn là `unique:taikhoan,email`
+
 ## 4. Cấu hình production
 
 Checklist tối thiểu:
@@ -188,6 +228,8 @@ Ghi chú:
 ### Registration
 
 - tạo học viên mới qua `/register`
+- nhập thử một email đã tồn tại và xác nhận form báo lỗi ngay khi đang gõ
+- nhập lại cùng email trong TTL và có thể kiểm tra `redis-cli MONITOR` để thấy key cache được `GET`
 - xác nhận có email verification
 - xác nhận chưa verify thì không vào được `/hoc-vien`
 
@@ -234,3 +276,15 @@ Nguyên nhân thường gặp:
 - điểm score thấp hơn `RECAPTCHA_MIN_SCORE`
 - bị extension / browser privacy chặn script Google
 - local báo `browser-error` khi trình duyệt không tạo được token
+
+### Lỗi: `Class "Redis" not found`
+
+Nguyên nhân thường gặp:
+- `.env` vẫn đang để `REDIS_CLIENT=phpredis`
+- chưa cài `ext-redis`
+- có 2 block `REDIS_*` trong `.env` và block phía dưới ghi đè block phía trên
+
+Cách xử lý nhanh:
+- đổi sang `REDIS_CLIENT=predis`
+- đảm bảo `composer require predis/predis` đã chạy xong
+- chạy `php artisan optimize:clear`
