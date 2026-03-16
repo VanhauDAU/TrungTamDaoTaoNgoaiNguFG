@@ -31,6 +31,7 @@ use App\Http\Controllers\Admin\TaiChinh\HoaDonController as AdminHoaDonControlle
 use App\Http\Controllers\Client\ThongBao\ClientThongBaoController;
 use App\Http\Controllers\Auth\GoogleLoginController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\RegisterController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
@@ -404,6 +405,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
 Auth::routes(['verify' => true]);
 
 Route::middleware('guest')->group(function () {
+    Route::get('/register/check-email', [RegisterController::class, 'checkEmail'])
+        ->middleware('throttle:20,1')
+        ->name('register.check-email');
+
     Route::get('/teacher/login', [LoginController::class, 'showTeacherLoginForm'])->name('teacher.login');
     Route::post('/teacher/login', [LoginController::class, 'teacherLogin'])->name('teacher.login.submit');
 
