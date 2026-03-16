@@ -112,4 +112,30 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Auth Rate Limiters
+    |--------------------------------------------------------------------------
+    |
+    | These limits are applied before controller logic is executed. The goal
+    | is to block abusive traffic early while keeping the domain-specific
+    | login lockout flow intact for real credential failures.
+    |
+    */
+
+    'rate_limiters' => [
+        'login' => [
+            'per_minute' => env('AUTH_LOGIN_RATE_LIMIT_PER_MINUTE', 12),
+            'per_ip_per_minute' => env('AUTH_LOGIN_RATE_LIMIT_IP_PER_MINUTE', 30),
+        ],
+        'register' => [
+            'per_minute' => env('AUTH_REGISTER_RATE_LIMIT_PER_MINUTE', 6),
+            'per_ip_per_minute' => env('AUTH_REGISTER_RATE_LIMIT_IP_PER_MINUTE', 12),
+        ],
+        'email_check' => [
+            'per_minute' => env('AUTH_EMAIL_CHECK_RATE_LIMIT_PER_MINUTE', 30),
+            'per_ip_per_minute' => env('AUTH_EMAIL_CHECK_RATE_LIMIT_IP_PER_MINUTE', 120),
+        ],
+    ],
+
 ];

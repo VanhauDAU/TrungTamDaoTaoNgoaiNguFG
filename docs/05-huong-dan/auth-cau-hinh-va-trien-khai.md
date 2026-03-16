@@ -146,9 +146,11 @@ Lưu ý quan trọng:
   - `127.0.0.1`
   - `localhost`
 
-### 3.4 Redis cho kiểm tra email realtime
+### 3.4 Redis cho kiểm tra email realtime và rate limit Auth
 
-Project hiện hỗ trợ cache Redis cho endpoint `GET /register/check-email`.
+Project hiện hỗ trợ Redis cho:
+- cache kết quả `GET /register/check-email`
+- rate limit cho `login`, `register` và `check-email`
 
 Cấu hình khuyến nghị:
 
@@ -159,6 +161,13 @@ REDIS_PORT=6379
 REDIS_PASSWORD=null
 REDIS_DB=0
 REDIS_CACHE_DB=1
+RATE_LIMITER_STORE=redis
+AUTH_LOGIN_RATE_LIMIT_PER_MINUTE=12
+AUTH_LOGIN_RATE_LIMIT_IP_PER_MINUTE=30
+AUTH_REGISTER_RATE_LIMIT_PER_MINUTE=6
+AUTH_REGISTER_RATE_LIMIT_IP_PER_MINUTE=12
+AUTH_EMAIL_CHECK_RATE_LIMIT_PER_MINUTE=30
+AUTH_EMAIL_CHECK_RATE_LIMIT_IP_PER_MINUTE=120
 
 REGISTER_EMAIL_CHECK_CACHE_STORE=redis
 REGISTER_EMAIL_CHECK_CACHE_TTL=60
@@ -179,6 +188,7 @@ Lưu ý:
 - ưu tiên `predis` cho local nếu chưa muốn cài `ext-redis`
 - nếu Redis lỗi hoặc chưa sẵn sàng, backend sẽ fallback sang query MySQL trực tiếp
 - Redis chỉ cache kết quả check realtime; validation cuối cùng khi submit vẫn là `unique:taikhoan,email`
+- rate limiter của Laravel mặc định sẽ dùng `RATE_LIMITER_STORE=redis`; trong môi trường `testing` project tự fallback sang `array`
 
 ## 4. Cấu hình production
 
@@ -217,6 +227,7 @@ Ghi chú:
 - thử tài khoản chưa verify
 - thử login có và không tick `Ghi nhớ đăng nhập`
 - vào `/hoc-vien/thiet-bi-dang-nhap` và xác nhận thấy thiết bị hiện tại
+- spam submit nhanh nhiều lần và xác nhận form bị chặn sớm với thông báo rate limit
 
 ### Staff login
 
@@ -230,6 +241,7 @@ Ghi chú:
 - tạo học viên mới qua `/register`
 - nhập thử một email đã tồn tại và xác nhận form báo lỗi ngay khi đang gõ
 - nhập lại cùng email trong TTL và có thể kiểm tra `redis-cli MONITOR` để thấy key cache được `GET`
+- spam submit `/register` hoặc `/register/check-email` và xác nhận nhận `429`/thông báo chặn tương ứng
 - xác nhận có email verification
 - xác nhận chưa verify thì không vào được `/hoc-vien`
 
@@ -288,3 +300,16 @@ Cách xử lý nhanh:
 - đổi sang `REDIS_CLIENT=predis`
 - đảm bảo `composer require predis/predis` đã chạy xong
 - chạy `php artisan optimize:clear`
+
+### Lỗi: rate limit không ăn hoặc không thấy hit Redis
+
+Nguyên nhân thường gặp:
+- `RATE_LIMITER_STORE` không phải `redis`
+- Redis chưa chạy
+- config cache cũ chưa clear
+
+Cách xử lý nhanh:
+- kiểm tra `redis-cli PING`
+- kiểm tra `.env` có `RATE_LIMITER_STORE=redis`
+- chạy `php artisan optimize:clear`
+- chạy `redis-cli MONITOR` rồi spam nhẹ `/login` hoặc `/register/check-email` để xác nhận key limiter được tạo

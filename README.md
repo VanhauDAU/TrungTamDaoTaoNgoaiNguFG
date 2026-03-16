@@ -134,6 +134,13 @@ REDIS_PORT=6379
 REDIS_PASSWORD=null
 REDIS_DB=0
 REDIS_CACHE_DB=1
+RATE_LIMITER_STORE=redis
+AUTH_LOGIN_RATE_LIMIT_PER_MINUTE=12
+AUTH_LOGIN_RATE_LIMIT_IP_PER_MINUTE=30
+AUTH_REGISTER_RATE_LIMIT_PER_MINUTE=6
+AUTH_REGISTER_RATE_LIMIT_IP_PER_MINUTE=12
+AUTH_EMAIL_CHECK_RATE_LIMIT_PER_MINUTE=30
+AUTH_EMAIL_CHECK_RATE_LIMIT_IP_PER_MINUTE=120
 REGISTER_EMAIL_CHECK_CACHE_STORE=redis
 REGISTER_EMAIL_CHECK_CACHE_TTL=60
 ```
@@ -180,6 +187,10 @@ Neu dung XAMPP/Apache:
 - `DB_*`: ket noi CSDL.
 - `QUEUE_CONNECTION`: mac dinh `database`.
 - `REDIS_*`: cau hinh ket noi Redis.
+- `RATE_LIMITER_STORE`: cache store dung cho Laravel rate limiter, mac dinh `redis`.
+- `AUTH_LOGIN_RATE_LIMIT_*`: nguong chan spam cho login theo tai khoan/IP.
+- `AUTH_REGISTER_RATE_LIMIT_*`: nguong chan spam cho submit dang ky.
+- `AUTH_EMAIL_CHECK_RATE_LIMIT_*`: nguong chan spam cho kiem tra email realtime.
 - `REGISTER_EMAIL_CHECK_CACHE_STORE`: store dung cho cache kiem tra email realtime.
 - `REGISTER_EMAIL_CHECK_CACHE_TTL`: thoi gian cache ket qua check email, mac dinh 60 giay.
 - `MAIL_*`: cau hinh gui mail.
@@ -245,6 +256,14 @@ redis-cli MONITOR
 ```
 
 Sau do mo `/register` va nhap email. Ban se thay key dang `auth:register:email-check:<sha1>` duoc `GET`/`SETEX`.
+
+Muon quan sat rate limit Redis cua Auth:
+- nhap login qua nhanh hoac goi lap `/register/check-email`
+- tren `redis-cli MONITOR` ban se thay cac key limiter duoc doc/ghi truoc khi request vao sau controller
+- cac route nay hien co limiter rieng:
+  - `auth-login`
+  - `auth-register`
+  - `auth-email-check`
 
 Sau khi `git pull` code moi tu team, nen chay lai toi thieu:
 ```bash

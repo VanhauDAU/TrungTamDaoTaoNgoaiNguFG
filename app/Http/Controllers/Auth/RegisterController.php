@@ -20,6 +20,8 @@ class RegisterController extends Controller
         protected RegisterServiceInterface $registerService
     ) {
         $this->middleware('guest');
+        $this->middleware('throttle:auth-register')->only('register');
+        $this->middleware('throttle:auth-email-check')->only('checkEmail');
     }
 
     public function showRegistrationForm()

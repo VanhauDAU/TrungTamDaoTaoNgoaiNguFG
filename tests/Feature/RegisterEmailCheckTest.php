@@ -8,6 +8,20 @@ use Tests\TestCase;
 
 class RegisterEmailCheckTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config([
+            'cache.default' => 'array',
+            'cache.limiter' => 'array',
+        ]);
+
+        $this->app->forgetInstance('cache');
+        $this->app->forgetInstance('cache.store');
+        $this->app->forgetInstance('cache.rateLimiter');
+    }
+
     protected function tearDown(): void
     {
         Mockery::close();

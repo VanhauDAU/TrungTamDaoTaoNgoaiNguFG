@@ -19,6 +19,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Rate Limiter Store
+    |--------------------------------------------------------------------------
+    |
+    | This option controls which cache store should be used by the built-in
+    | Laravel rate limiter. We default to Redis so auth throttling and other
+    | anti-spam controls can avoid hitting MySQL on every request.
+    |
+    */
+
+    'limiter' => env('RATE_LIMITER_STORE', env('APP_ENV') === 'testing' ? 'array' : 'redis'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Cache Stores
     |--------------------------------------------------------------------------
     |
