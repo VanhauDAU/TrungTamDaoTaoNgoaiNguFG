@@ -36,6 +36,14 @@ class CoSoController extends Controller
         return view('admin.co-so.show', $this->coSoService->getDetail($id));
     }
 
+    public function operationalSnapshot(int $id)
+    {
+        return response()->json([
+            'success' => true,
+            'snapshot' => $this->coSoService->getOperationalSnapshot($id),
+        ]);
+    }
+
     public function edit(int $id)
     {
         return view('admin.co-so.edit', $this->coSoService->getEditFormData($id));

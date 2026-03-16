@@ -18,4 +18,12 @@ interface PhongHocServiceInterface
     public function toggleStatus(Request $request, int $id): array;
 
     public function lichSu(int $id): array;
+
+    public function getRoomQrData(int $id): array;
+
+    public function listMaintenanceTickets(int $id): array;
+
+    public function storeMaintenanceTicket(Request $request, int $id): array;
+
+    public function updateMaintenanceTicket(Request $request, int $ticketId): array;
 }

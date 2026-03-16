@@ -247,6 +247,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
         Route::get('/', [CoSoController::class, 'index'])->name('index');
         Route::get('/tao-moi', [CoSoController::class, 'create'])->name('create');
         Route::post('/', [CoSoController::class, 'store'])->name('store');
+        Route::get('/{id}/van-hanh', [CoSoController::class, 'operationalSnapshot'])->name('operational-snapshot');
         Route::get('/{id}', [CoSoController::class, 'show'])->name('show');
         Route::get('/{id}/sua', [CoSoController::class, 'edit'])->name('edit');
         Route::put('/{id}', [CoSoController::class, 'update'])->name('update');
@@ -264,6 +265,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
         Route::delete('/{id}', [PhongHocController::class, 'destroy'])->name('destroy');
         Route::patch('/{id}/toggle-status', [PhongHocController::class, 'toggleStatus'])->name('toggle-status');
         Route::get('/{id}/lich-su', [PhongHocController::class, 'lichSu'])->name('lich-su');
+        Route::get('/{id}/qr', [PhongHocController::class, 'qr'])->name('qr');
+        Route::get('/{id}/bao-tri', [PhongHocController::class, 'listMaintenanceTickets'])->name('bao-tri.index');
+        Route::post('/{id}/bao-tri', [PhongHocController::class, 'storeMaintenanceTicket'])->name('bao-tri.store');
+        Route::patch('/bao-tri/{ticketId}', [PhongHocController::class, 'updateMaintenanceTicket'])->name('bao-tri.update');
     });
 
     // ── Danh Mục Khóa Học ────────────────────────────────────────────────────
