@@ -228,7 +228,7 @@
                                             <i class="fas fa-pen"></i>
                                         </a>
                                         <button type="button" class="nv-btn-action nv-btn-action-del" title="Xóa"
-                                            onclick="confirmDelete({{ $nv->taiKhoanId }}, '{{ addslashes($hoTen) }}')">
+                                            onclick="confirmDelete('{{ $nv->taiKhoan }}', '{{ addslashes($hoTen) }}')">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </div>

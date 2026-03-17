@@ -236,7 +236,7 @@
                                         @endif
                                         @if (auth()->user()->canDo('hoc_vien', 'xoa'))
                                             <button type="button" class="btn-action btn-action-del" title="Xóa"
-                                                onclick="confirmDelete({{ $hv->taiKhoanId }}, '{{ addslashes($hoTen) }}')">
+                                                onclick="confirmDelete('{{ $hv->taiKhoan }}', '{{ addslashes($hoTen) }}')">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         @endif

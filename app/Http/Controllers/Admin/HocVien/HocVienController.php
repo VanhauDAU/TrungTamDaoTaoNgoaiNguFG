@@ -74,9 +74,13 @@ class HocVienController extends Controller
 
     public function destroy(string $taiKhoan)
     {
-        $hoTen = $this->hocVienService->destroy($taiKhoan);
+        try {
+            $hoTen = $this->hocVienService->destroy($taiKhoan);
 
-        return redirect()->route('admin.hoc-vien.index')
-            ->with('success', "Đã xóa học viên «{$hoTen}».");
+            return redirect()->route('admin.hoc-vien.index')
+                ->with('success', "Đã xóa học viên «{$hoTen}».");
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', $e->getMessage());
+        }
     }
 }

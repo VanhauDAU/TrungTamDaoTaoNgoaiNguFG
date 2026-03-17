@@ -207,6 +207,21 @@ class HocVienService implements HocVienServiceInterface
     {
         $hocVien = TaiKhoan::where('role', TaiKhoan::ROLE_HOC_VIEN)->where('taiKhoan', $taiKhoan)->firstOrFail();
         $hoTen = $hocVien->hoSoNguoiDung->hoTen ?? $hocVien->taiKhoan;
+
+        // Bổ sung logic kiểm tra dữ liệu liên kết trước khi xóa mềm học viên
+        $hasActiveRegistration = \App\Models\Education\DangKyLopHoc::where('taiKhoanId', $hocVien->taiKhoanId)
+            ->whereIn('trangThai', [
+                \App\Models\Education\DangKyLopHoc::TRANG_THAI_CHO_THANH_TOAN,
+                \App\Models\Education\DangKyLopHoc::TRANG_THAI_DA_XAC_NHAN,
+                \App\Models\Education\DangKyLopHoc::TRANG_THAI_DANG_HOC,
+                \App\Models\Education\DangKyLopHoc::TRANG_THAI_TAM_DUNG_NO_HOC_PHI,
+                \App\Models\Education\DangKyLopHoc::TRANG_THAI_BAO_LUU,
+            ])->exists();
+
+        if ($hasActiveRegistration) {
+            throw new \Exception("Không thể xóa: Học viên này đang có lịch sử đăng ký lớp học đang hoạt động hoặc bảo lưu!");
+        }
+
         $hocVien->delete();
         return $hoTen;
     }

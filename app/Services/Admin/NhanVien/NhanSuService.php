@@ -139,8 +139,18 @@ class NhanSuService implements NhanSuServiceInterface
     public function update(Request $request, TaiKhoan $nhanSu): void
     {
         DB::transaction(function () use ($request, $nhanSu) {
+            $taiKhoanUpdate = [];
             if ($request->filled('matKhau')) {
-                $nhanSu->update(['matKhau' => Hash::make($request->matKhau)]);
+                $taiKhoanUpdate['matKhau'] = Hash::make($request->matKhau);
+            }
+            if ($request->has('email')) {
+                $taiKhoanUpdate['email'] = $request->email;
+            }
+            if ($request->has('trangThai')) {
+                $taiKhoanUpdate['trangThai'] = $request->trangThai;
+            }
+            if (!empty($taiKhoanUpdate)) {
+                $nhanSu->update($taiKhoanUpdate);
             }
 
             $nhanSu->hoSoNguoiDung()->update([
@@ -168,17 +178,66 @@ class NhanSuService implements NhanSuServiceInterface
 
     public function destroy(string $taiKhoan, string $role): string
     {
-        $user  = TaiKhoan::where('role', $role)->where('taiKhoan', $taiKhoan)->firstOrFail();
-        $hoTen = $user->hoSoNguoiDung->hoTen ?? $user->taiKhoan;
-        $user->delete();
+        $nhanSu = $this->findByUsername($taiKhoan, $role);
+        $hoTen = $nhanSu->hoSoNguoiDung->hoTen ?? $nhanSu->taiKhoan;
+
+        // Bổ sung logic kiểm tra dữ liệu liên kết trước khi xóa mềm
+        $roleInt = (int) $role;
+        if ($roleInt === TaiKhoan::ROLE_GIAO_VIEN) {
+            $hasLopHoc = \App\Models\Education\LopHoc::where('taiKhoanId', $nhanSu->taiKhoanId)
+                ->whereIn('trangThai', [
+                    \App\Models\Education\LopHoc::TRANG_THAI_SAP_MO,
+                    \App\Models\Education\LopHoc::TRANG_THAI_DANG_TUYEN_SINH,
+                    \App\Models\Education\LopHoc::TRANG_THAI_CHOT_DANH_SACH,
+                    \App\Models\Education\LopHoc::TRANG_THAI_DANG_HOC,
+                ])->exists();
+
+            if ($hasLopHoc) {
+                throw new \Exception("Không thể xóa: Giáo viên này đang có lớp học đang hoạt động!");
+            }
+
+            $hasBuoiHoc = \App\Models\Education\BuoiHoc::where('taiKhoanId', $nhanSu->taiKhoanId)
+                ->whereIn('trangThai', [
+                    \App\Models\Education\BuoiHoc::TRANG_THAI_SAP_DIEN_RA,
+                    \App\Models\Education\BuoiHoc::TRANG_THAI_DANG_DIEN_RA,
+                ])->exists();
+
+            if ($hasBuoiHoc) {
+                throw new \Exception("Không thể xóa: Giáo viên này đang có ca dạy/buổi học sắp hoặc đang diễn ra!");
+            }
+        } elseif ($roleInt === TaiKhoan::ROLE_NHAN_VIEN || $roleInt === TaiKhoan::ROLE_ADMIN) {
+            $hasHoaDon = \App\Models\Finance\HoaDon::where('nguoiLapId', $nhanSu->taiKhoanId)->exists();
+            if ($hasHoaDon) {
+                throw new \Exception("Không thể xóa: Nhân viên này đã từng lập hóa đơn trên hệ thống!");
+            }
+
+            $hasPhieuThu = \App\Models\Finance\PhieuThu::where('nguoiDuyetId', $nhanSu->taiKhoanId)->exists();
+            if ($hasPhieuThu) {
+                throw new \Exception("Không thể xóa: Nhân viên này đã từng duyệt phiếu thu trên hệ thống!");
+            }
+        }
+
+        DB::transaction(function () use ($nhanSu) {
+            // Soft delete
+            $nhanSu->delete();
+        });
+
         return $hoTen;
     }
 
     public function restore(string $taiKhoan, string $role): string
     {
-        $user  = TaiKhoan::onlyTrashed()->where('role', $role)->where('taiKhoan', $taiKhoan)->firstOrFail();
-        $hoTen = $user->hoSoNguoiDung->hoTen ?? $user->taiKhoan;
-        $user->restore();
+        $nhanSu = TaiKhoan::onlyTrashed()
+            ->where('taiKhoan', $taiKhoan)
+            ->where('role', $role)
+            ->firstOrFail();
+
+        $hoTen = $nhanSu->hoSoNguoiDung->hoTen ?? $nhanSu->taiKhoan;
+
+        DB::transaction(function () use ($nhanSu) {
+            $nhanSu->restore();
+        });
+
         return $hoTen;
     }
 }
