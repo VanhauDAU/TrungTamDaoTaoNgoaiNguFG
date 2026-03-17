@@ -3,6 +3,9 @@
 namespace Tests\Feature;
 
 use App\Contracts\Auth\RegisterServiceInterface;
+use App\Providers\AppServiceProvider;
+use Illuminate\Cache\RateLimiter as CacheRateLimiter;
+use Illuminate\Support\Facades\RateLimiter;
 use Mockery;
 use Tests\TestCase;
 
@@ -26,6 +29,10 @@ class AuthRedisRateLimitTest extends TestCase
         $this->app->forgetInstance('cache');
         $this->app->forgetInstance('cache.store');
         $this->app->forgetInstance('cache.rateLimiter');
+        $this->app->forgetInstance(CacheRateLimiter::class);
+        RateLimiter::clearResolvedInstance(CacheRateLimiter::class);
+
+        (new AppServiceProvider($this->app))->boot();
     }
 
     protected function tearDown(): void

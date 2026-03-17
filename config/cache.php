@@ -28,7 +28,7 @@ return [
     |
     */
 
-    'limiter' => env('RATE_LIMITER_STORE', env('APP_ENV') === 'testing' ? 'array' : 'redis'),
+    'limiter' => env('RATE_LIMITER_STORE', env('APP_ENV') === 'testing' ? 'array' : 'redis_fallback'),
 
     /*
     |--------------------------------------------------------------------------
@@ -42,13 +42,13 @@ return [
     */
 
     'public_lists' => [
-        'store' => env('PUBLIC_LIST_CACHE_STORE', env('APP_ENV') === 'testing' ? 'array' : 'redis'),
+        'store' => env('PUBLIC_LIST_CACHE_STORE', env('APP_ENV') === 'testing' ? 'array' : 'redis_fallback'),
         'ttl' => (int) env('PUBLIC_LIST_CACHE_TTL', 300),
         'version_key' => env('PUBLIC_LIST_CACHE_VERSION_KEY', 'public-content:version'),
     ],
 
     'queued_exports' => [
-        'store' => env('QUEUED_EXPORT_STORE', env('APP_ENV') === 'testing' ? 'array' : 'redis'),
+        'store' => env('QUEUED_EXPORT_STORE', env('APP_ENV') === 'testing' ? 'array' : 'redis_fallback'),
         'ttl' => (int) env('QUEUED_EXPORT_TTL', 30),
         'disk' => env('QUEUED_EXPORT_DISK', 'local'),
     ],
@@ -112,6 +112,15 @@ return [
             'driver' => 'redis',
             'connection' => env('REDIS_CACHE_CONNECTION', 'cache'),
             'lock_connection' => env('REDIS_CACHE_LOCK_CONNECTION', 'default'),
+        ],
+
+        'redis_fallback' => [
+            'driver' => 'failover',
+            'stores' => [
+                'redis',
+                'database',
+                'array',
+            ],
         ],
 
         'dynamodb' => [

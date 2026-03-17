@@ -104,6 +104,60 @@ Lưu ý:
 - Nếu vừa thêm package mới như `predis/predis` mà chưa chạy `composer install`, các tính năng Redis sẽ không hoạt động đúng.
 - Nếu pull về có thêm cache public Redis, nhớ bổ sung `PUBLIC_LIST_CACHE_STORE` và `PUBLIC_LIST_CACHE_TTL` trong `.env` nếu máy đang dùng Redis local.
 
+### Quy trình chuẩn để pull và chạy full Redis trên macOS và Windows
+
+Để giảm lệch môi trường giữa macOS và Windows, team nên thống nhất:
+- PHP `>= 8.3`
+- Composer `2.x`
+- Node.js `>= 20`
+- MySQL local
+- Redis chạy bằng Docker
+
+Khởi động Redis giống nhau trên cả hai hệ điều hành:
+
+```bash
+docker run --name fivegenius-redis -p 6379:6379 -d redis:7-alpine
+docker exec -it fivegenius-redis redis-cli PING
+```
+
+Nếu Redis trả `PONG`, dùng quy trình sau sau mỗi lần `git pull`:
+
+```bash
+git pull
+composer install
+npm install
+php artisan optimize:clear
+php artisan migrate
+```
+
+Nếu là máy mới hoặc vừa clone lần đầu:
+
+```bash
+cp .env.example .env
+php artisan key:generate
+php artisan storage:link
+```
+
+Khi muốn chạy project đầy đủ với Redis, cập nhật `.env` local theo mẫu ở Phần 2 bên dưới, rồi chạy:
+
+```bash
+php artisan serve
+php artisan queue:work redis --queue=exports,notifications,maintenance,default --tries=3 --timeout=300
+npm run dev
+```
+
+Hoặc chạy gọn:
+
+```bash
+composer dev
+```
+
+Checklist lỗi nhanh:
+- `Class "Redis" not found`: đang dùng sai client hoặc đang phụ thuộc PHP extension `redis`; với project này nên giữ `REDIS_CLIENT=predis`.
+- `Call to a member function connect() on null`: `.env` đang để sai `REDIS_CLIENT=redis`; giá trị hợp lệ là `predis` hoặc `phpredis`.
+- `Connection refused 127.0.0.1:6379`: Redis chưa chạy hoặc Docker container chưa start.
+- `Composer detected issues in your platform`: PHP local đang thấp hơn version package hiện yêu cầu.
+
 ---
 
 ## Phần 2: Cấu hình .env quan trọng
@@ -129,18 +183,29 @@ MAIL_USERNAME=your@gmail.com
 MAIL_PASSWORD=app_password
 MAIL_FROM_ADDRESS=your@gmail.com
 MAIL_FROM_NAME="Five Genius"
+
 REDIS_CLIENT=predis
 REDIS_HOST=127.0.0.1
 REDIS_PORT=6379
 REDIS_PASSWORD=null
-QUEUE_CONNECTION=redis
-REDIS_QUEUE_CONNECTION=default
-REDIS_QUEUE=default
+REDIS_DB=0
+REDIS_CACHE_DB=1
+
+CACHE_STORE=database
+SESSION_DRIVER=database
+
+REGISTER_EMAIL_CHECK_CACHE_STORE=redis
+REGISTER_EMAIL_CHECK_CACHE_TTL=60
 RATE_LIMITER_STORE=redis
 PUBLIC_LIST_CACHE_STORE=redis
 PUBLIC_LIST_CACHE_TTL=300
-REGISTER_EMAIL_CHECK_CACHE_STORE=redis
-REGISTER_EMAIL_CHECK_CACHE_TTL=60
+QUEUED_EXPORT_STORE=redis
+QUEUED_EXPORT_TTL=30
+QUEUED_EXPORT_DISK=local
+
+QUEUE_CONNECTION=redis
+REDIS_QUEUE_CONNECTION=default
+REDIS_QUEUE=default
 ```
 
 Redis trong project hiện dùng cho:

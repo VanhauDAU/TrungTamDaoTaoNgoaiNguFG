@@ -91,8 +91,8 @@ class RegisterService implements RegisterServiceInterface
             ];
         }
 
-        $cacheStore = (string) config('auth.register_email_check_cache_store', env('REGISTER_EMAIL_CHECK_CACHE_STORE', 'redis'));
-        $cacheTtl = max(5, (int) config('auth.register_email_check_cache_ttl', env('REGISTER_EMAIL_CHECK_CACHE_TTL', 60)));
+        $cacheStore = (string) config('auth.register_email_check_cache_store', 'redis_fallback');
+        $cacheTtl = max(5, (int) config('auth.register_email_check_cache_ttl', 60));
         $cacheKey = 'auth:register:email-check:' . sha1($normalizedEmail);
 
         try {

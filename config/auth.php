@@ -138,4 +138,11 @@ return [
         ],
     ],
 
+    'register_email_check_cache_store' => env(
+        'REGISTER_EMAIL_CHECK_CACHE_STORE',
+        env('APP_ENV') === 'testing' ? 'array' : 'redis_fallback'
+    ),
+
+    'register_email_check_cache_ttl' => (int) env('REGISTER_EMAIL_CHECK_CACHE_TTL', 60),
+
 ];
