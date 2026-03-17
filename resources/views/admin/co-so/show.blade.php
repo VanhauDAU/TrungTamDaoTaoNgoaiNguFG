@@ -131,43 +131,60 @@
         </div>
 
         <div class="branch-main-column">
-            {{-- DANH SÁCH PHÒNG HỌC --}}
-            <div class="ops-card">
-                <div class="ops-card-head">
-                    <div>
-                        <div class="ops-card-title"><i class="fas fa-calendar-day"></i> Lịch phòng hôm nay</div>
-                        <div class="ops-card-subtitle">Chỉ hiển thị các phòng có lịch trong ngày để dễ theo dõi</div>
-                    </div>
+            <div class="cs-tabs">
+                <div class="cs-tab-list">
+                    <button type="button" class="cs-tab-btn active" data-tab="tab-rooms"><i class="fas fa-chalkboard-user"></i> Danh sách phòng học</button>
+                    <button type="button" class="cs-tab-btn" data-tab="tab-floorplan"><i class="fas fa-layer-group"></i> Sơ đồ mặt bằng</button>
+                    <button type="button" class="cs-tab-btn" data-tab="tab-timeline"><i class="fas fa-calendar-day"></i> Lịch phòng hôm nay</button>
+                    <button type="button" class="cs-tab-btn" data-tab="tab-staff"><i class="fas fa-id-badge"></i> Nhân sự</button>
                 </div>
-                <div id="opsTimelineGrid"></div>
             </div>
 
-            <div class="ops-card">
-                <div class="ops-card-head">
-                    <div>
-                        <div class="ops-card-title"><i class="fas fa-layer-group"></i> Sơ đồ mặt bằng số</div>
-                        <div class="ops-card-subtitle">Hiển thị phòng theo block và tầng, màu trạng thái tự làm mới mỗi 60 giây</div>
+            <div class="cs-tab-content">
+                {{-- TAB: DANH SÁCH LỊCH --}}
+                <div class="cs-tab-pane" id="tab-timeline">
+                    <div class="ops-card">
+                        <div class="ops-card-head">
+                            <div>
+                                <div class="ops-card-title"><i class="fas fa-calendar-day"></i> Lịch phòng hôm nay</div>
+                                <div class="ops-card-subtitle">Chỉ hiển thị các phòng có lịch trong ngày để dễ theo dõi</div>
+                            </div>
+                        </div>
+                        <div id="opsTimelineGrid"></div>
                     </div>
                 </div>
-                <div class="floor-plan-toolbar">
-                    <select id="floorPlanBlockFilter" class="form-control floor-plan-filter">
-                        <option value="">Tất cả block</option>
-                    </select>
-                    <select id="floorPlanLevelFilter" class="form-control floor-plan-filter">
-                        <option value="">Tất cả tầng</option>
-                    </select>
-                </div>
-                <div id="floorPlanGrid"></div>
-            </div>
 
-            <div class="rooms-card">
-                <div class="rooms-header">
-                    <div class="rooms-title">
-                        <i class="fas fa-chalkboard-user" style="color:#8b5cf6;"></i>
-                        Danh sách phòng học
+                {{-- TAB: SƠ ĐỒ MẶT BẰNG --}}
+                <div class="cs-tab-pane" id="tab-floorplan">
+                    <div class="ops-card">
+                        <div class="ops-card-head">
+                            <div>
+                                <div class="ops-card-title"><i class="fas fa-layer-group"></i> Sơ đồ mặt bằng số</div>
+                                <div class="ops-card-subtitle">Hiển thị phòng theo block và tầng, màu trạng thái tự làm mới mỗi 60 giây</div>
+                            </div>
+                        </div>
+                        <div class="floor-plan-toolbar">
+                            <select id="floorPlanBlockFilter" class="form-control floor-plan-filter">
+                                <option value="">Tất cả block</option>
+                            </select>
+                            <select id="floorPlanLevelFilter" class="form-control floor-plan-filter">
+                                <option value="">Tất cả tầng</option>
+                            </select>
+                        </div>
+                        <div id="floorPlanGrid"></div>
                     </div>
-                    <div class="rooms-count">{{ $coSo->phong_hocs_count ?? count($coSo->phongHocs) }} phòng</div>
                 </div>
+
+                {{-- TAB: DANH SÁCH PHÒNG HỌC --}}
+                <div class="cs-tab-pane active" id="tab-rooms">
+                    <div class="rooms-card">
+                        <div class="rooms-header">
+                            <div class="rooms-title">
+                                <i class="fas fa-chalkboard-user" style="color:#8b5cf6;"></i>
+                                Danh sách phòng học
+                            </div>
+                            <div class="rooms-count">{{ $coSo->phong_hocs_count ?? count($coSo->phongHocs) }} phòng</div>
+                        </div>
 
                 <div class="room-filter-bar">
                     <div class="room-filter-search">
@@ -324,17 +341,19 @@
                         </tbody>
                     </table>
                 @endif
-            </div>
-
-            {{-- DANH SÁCH NHÂN SỰ --}}
-            <div class="rooms-card">
-                <div class="rooms-header">
-                    <div class="rooms-title">
-                        <i class="fas fa-id-badge" style="color:#0ea5e9;"></i>
-                        Danh sách nhân sự
                     </div>
-                    <div class="rooms-count">{{ count($coSo->nhanSus) }} nhân sự</div>
                 </div>
+
+                {{-- TAB: DANH SÁCH NHÂN SỰ --}}
+                <div class="cs-tab-pane" id="tab-staff">
+                    <div class="rooms-card">
+                        <div class="rooms-header">
+                            <div class="rooms-title">
+                                <i class="fas fa-id-badge" style="color:#0ea5e9;"></i>
+                                Danh sách nhân sự
+                            </div>
+                            <div class="rooms-count">{{ count($coSo->nhanSus) }} nhân sự</div>
+                        </div>
 
                 @if (count($coSo->nhanSus) === 0)
                     <div class="empty-rooms">
@@ -385,6 +404,8 @@
                         </tbody>
                     </table>
                 @endif
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -398,7 +419,7 @@
                         class="fas fa-times"></i></button>
             </div>
 
-            <form id="roomForm" method="POST" action="{{ route('admin.phong-hoc.store') }}">
+            <form id="roomForm" class="ajax-form" method="POST" action="{{ route('admin.phong-hoc.store') }}">
                 @csrf
                 <input type="hidden" name="_method" id="roomMethod" value="POST">
                 <input type="hidden" name="coSoId" value="{{ $coSo->coSoId }}">
@@ -528,7 +549,7 @@
                     </div>
                     <div>
                         <div class="inline-section-title" id="maintenanceFormTitle">Tạo phiếu bảo trì</div>
-                        <form id="maintenanceForm">
+                        <form id="maintenanceForm" class="ajax-form">
                             @csrf
                             <input type="hidden" id="maintenanceTicketId">
                             <div class="form-group">
@@ -1676,11 +1697,54 @@
         });
 
         async function submitRoomForm(forceMaintenance = false) {
-            const actionUrl = form.action;
             const formData = new FormData(form);
+            const dataObj = Object.fromEntries(formData.entries());
+
+            // Prepare payload for format validation
+            const cleanData = {
+                tenPhong: dataObj.tenPhong,
+                khuBlock: dataObj.khuBlock,
+                tang: dataObj.tang !== '' ? Number(dataObj.tang) : null,
+                sucChua: dataObj.sucChua !== '' ? Number(dataObj.sucChua) : null,
+                trangThai: Number(dataObj.trangThai),
+                trangThietBi: dataObj.trangThietBi
+            };
+
+            // Joi Validation
+            const roomSchema = window.FiveGeniusValidation?.schemas?.room;
+            if (!roomSchema) {
+                console.error("Validation schema 'room' not found.");
+                return;
+            }
+            const { error } = roomSchema.validate(cleanData, { abortEarly: false });
+            if (error) {
+                RoomToast.fire({
+                    icon: 'error',
+                    title: error.details[0].message
+                });
+                return;
+            }
+
+            // Client-side Unique Room Name Validation
+            const cleanName = cleanData.tenPhong.toLowerCase();
+            const existingRooms = latestOperationsSnapshot.roomStates || [];
+            const isDuplicate = existingRooms.some(r => 
+                (r.tenPhong || '').toLowerCase().trim() === cleanName && 
+                String(r.phongHocId) !== String(currentEditingRowId)
+            );
+
+            if (isDuplicate) {
+                RoomToast.fire({
+                    icon: 'error',
+                    title: 'Tên phòng này đã tồn tại trong cơ sở, vui lòng chọn tên khác.'
+                });
+                return;
+            }
+
             if (forceMaintenance) {
                 formData.append('forceMaintenance', '1');
             }
+            const actionUrl = form.action;
             const originalBtnText = submitBtn.innerHTML;
 
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang lưu...';
@@ -1841,6 +1905,16 @@
             if (!e.target.closest('.room-actions-menu')) {
                 closeRoomActionMenus();
             }
+        });
+
+        // Tab Switching Logic
+        document.querySelectorAll('.cs-tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.cs-tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.cs-tab-pane').forEach(p => p.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById(btn.dataset.tab).classList.add('active');
+            });
         });
 
         document.addEventListener('DOMContentLoaded', function() {

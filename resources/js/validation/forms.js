@@ -97,6 +97,32 @@ const schemas = {
             'any.required': 'Vui lòng xác nhận mật khẩu mới.',
         }),
     }),
+    room: Joi.object({
+        tenPhong: Joi.string().trim().max(50).required().messages({
+            'string.empty': 'Vui lòng nhập tên phòng.',
+            'string.max': 'Tên phòng không được vượt quá 50 ký tự.',
+            'any.required': 'Vui lòng nhập tên phòng.'
+        }),
+        khuBlock: Joi.string().trim().max(50).allow('', null).messages({
+            'string.max': 'Tên block không được vượt quá 50 ký tự.'
+        }),
+        tang: Joi.number().integer().min(0).max(50).allow('', null).messages({
+            'number.base': 'Tầng phải là một số hợp lệ.',
+            'number.min': 'Tầng không được nhỏ hơn 0.',
+            'number.max': 'Tầng tối đa là 50.'
+        }),
+        sucChua: Joi.number().integer().min(1).max(999).allow('', null).messages({
+            'number.base': 'Sức chứa phải là một số.',
+            'number.min': 'Sức chứa tối thiểu là 1.',
+            'number.max': 'Sức chứa tối đa là 999.'
+        }),
+        trangThai: Joi.number().valid(0, 1, 3).required().messages({
+            'any.only': 'Trạng thái không hợp lệ.'
+        }),
+        trangThietBi: Joi.string().trim().max(500).allow('', null).messages({
+            'string.max': 'Ghi chú thiết bị quá dài.'
+        })
+    }),
 };
 
 function getSchema(form) {
@@ -213,4 +239,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
 window.FiveGeniusValidation = {
     validateForm,
+    schemas: schemas,
 };

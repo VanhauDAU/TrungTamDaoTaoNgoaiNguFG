@@ -11,6 +11,7 @@ use App\Models\Facility\PhongHocBaoTri;
 use App\Models\Facility\PhongHoc;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class PhongHocService implements PhongHocServiceInterface
 {
@@ -36,7 +37,12 @@ class PhongHocService implements PhongHocServiceInterface
     public function store(Request $request): PhongHoc
     {
         $request->validate([
-            'tenPhong' => 'required|string|max:50',
+            'tenPhong' => [
+                'required',
+                'string',
+                'max:50',
+                Rule::unique('phonghoc', 'tenPhong')->where('coSoId', $request->coSoId)
+            ],
             'coSoId' => 'required|exists:cosodaotao,coSoId',
             'sucChua' => 'nullable|integer|min:1|max:999',
             'trangThietBi' => 'nullable|string|max:500',
@@ -45,6 +51,7 @@ class PhongHocService implements PhongHocServiceInterface
             'trangThai' => 'required|in:0,1,3',
         ], [
             'tenPhong.required' => 'Vui lòng nhập tên phòng.',
+            'tenPhong.unique' => 'Tên phòng này đã tồn tại trong cơ sở đào tạo, vui lòng chọn tên khác.',
             'coSoId.required' => 'Vui lòng chọn cơ sở.',
             'coSoId.exists' => 'Cơ sở không tồn tại.',
         ]);
@@ -65,14 +72,22 @@ class PhongHocService implements PhongHocServiceInterface
         $phong = PhongHoc::findOrFail($id);
 
         $request->validate([
-            'tenPhong' => 'required|string|max:50',
+            'tenPhong' => [
+                'required',
+                'string',
+                'max:50',
+                Rule::unique('phonghoc', 'tenPhong')->ignore($id, 'phongHocId')->where('coSoId', $phong->coSoId)
+            ],
             'sucChua' => 'nullable|integer|min:1|max:999',
             'trangThietBi' => 'nullable|string|max:500',
             'khuBlock' => 'nullable|string|max:50',
             'tang' => 'nullable|integer|min:0|max:50',
             'trangThai' => 'required|in:0,1,3',
             'ghiChuBaoTri' => 'nullable|string|max:500',
-        ], ['tenPhong.required' => 'Vui lòng nhập tên phòng.']);
+        ], [
+            'tenPhong.required' => 'Vui lòng nhập tên phòng.',
+            'tenPhong.unique' => 'Tên phòng này đã tồn tại trong cơ sở đào tạo, vui lòng chọn tên khác.',
+        ]);
 
         $this->guardMaintenanceStateChange($phong, (int) $request->input('trangThai'), $request->boolean('forceMaintenance'));
 
