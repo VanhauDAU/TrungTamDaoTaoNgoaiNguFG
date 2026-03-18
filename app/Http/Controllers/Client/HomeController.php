@@ -23,8 +23,12 @@ class HomeController extends Controller
             function (): array {
                 return [
                     'khoaHocs' => KhoaHoc::query()
-                        ->with('danhMuc')
+                        ->with([
+                            'danhMuc',
+                            'lopHoc' => fn ($q) => $q->whereIn('trangThai', [0, 1])->with('chinhSachGia'),
+                        ])
                         ->orderByDesc('khoaHocId')
+                        ->take(8)
                         ->get(),
                     'topGiaoVien' => TaiKhoan::query()
                         ->with(['hoSoNguoiDung', 'nhanSu'])

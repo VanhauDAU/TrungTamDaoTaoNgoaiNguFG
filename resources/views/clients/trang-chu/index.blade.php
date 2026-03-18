@@ -27,7 +27,7 @@
                             </ul>
                         </div>
 
-                        <a href="#" class="btn btn-red mb-5">
+                        <a href="/register" class="btn btn-red mb-5">
                             Đăng ký ngay <img
                                 src="https://theforumcenter.com/wp-content/themes/the-forum/assets/images/right.png" alt="">
                         </a>
@@ -193,7 +193,7 @@
             </div>
 
             <div class="row g-4">
-                @foreach ($khoaHocs as $khoaHoc)
+                @forelse ($khoaHocs as $khoaHoc)
                     <div class="col-xl-3 col-lg-4 col-md-6">
                         <div class="course-card">
                             {{-- Badge Loại khóa học --}}
@@ -201,10 +201,11 @@
 
                             {{-- Hình ảnh & Nút yêu thích --}}
                             <div class="course-image-wrapper">
-                                <img src="{{ asset('storage/courses/' . ($khoaHoc->anhKhoaHoc ?? 'course-demo.jpg')) }}"
+                                <img src="{{ $khoaHoc->anhKhoaHoc ? asset('storage/' . $khoaHoc->anhKhoaHoc) : asset('assets/images/default-course.jpg') }}"
                                     alt="{{ $khoaHoc->tenKhoaHoc }}" class="course-img">
                                 <div class="course-overlay">
-                                    <button class="btn btn-light btn-sm rounded-pill px-3 fw-bold">Xem chi tiết</button>
+                                    <a href="{{ route('home.courses.show', $khoaHoc->slug) }}"
+                                        class="btn btn-light btn-sm rounded-pill px-3 fw-bold">Xem chi tiết</a>
                                 </div>
                                 <button class="wishlist-btn"><i class="far fa-heart"></i></button>
                             </div>
@@ -212,12 +213,20 @@
                             {{-- Nội dung --}}
                             <div class="course-content p-3">
                                 <div class="d-flex justify-content-between mb-2">
-                                    <span class="course-meta"><i class="far fa-clock me-1"></i> 24 Buổi</span>
-                                    <span class="course-rating"><i class="fas fa-star text-warning me-1"></i> 4.9</span>
+                                    <span class="course-meta">
+                                        <i class="far fa-clock me-1"></i>
+                                        @if ($khoaHoc->totalLessons)
+                                            {{ $khoaHoc->totalLessons }} Buổi
+                                        @else
+                                            Liên hệ
+                                        @endif
+                                    </span>
+                                    <span class="course-rating"><i class="fas fa-star text-warning me-1"></i>
+                                        {{ $khoaHoc->lopHoc->count() }} lớp</span>
                                 </div>
 
                                 <h5 class="course-title">
-                                    <a href="#">{{ $khoaHoc->tenKhoaHoc ?? 'Tên khóa học mẫu tại Five Genius' }}</a>
+                                    <a href="{{ route('home.courses.show', $khoaHoc->slug) }}">{{ $khoaHoc->tenKhoaHoc }}</a>
                                 </h5>
 
                                 <p class="course-description text-muted">
@@ -228,15 +237,24 @@
 
                                 <div class="course-footer d-flex justify-content-between align-items-center">
                                     <div class="course-price">
-                                        <span class="price-original">1.500.000đ</span>
-                                        <span class="price-discount">990.000đ</span>
+                                        @if ($khoaHoc->lowestPrice)
+                                            <span class="price-discount">{{ number_format($khoaHoc->lowestPrice, 0, ',', '.') }}đ</span>
+                                        @else
+                                            <span class="price-discount">Liên hệ tư vấn</span>
+                                        @endif
                                     </div>
-                                    <a href="#" class="enroll-btn"><i class="fas fa-arrow-right"></i></a>
+                                    <a href="{{ route('home.courses.show', $khoaHoc->slug) }}" class="enroll-btn">
+                                        <i class="fas fa-arrow-right"></i>
+                                    </a>
                                 </div>
                             </div>
                         </div>
                     </div>
-                @endforeach
+                @empty
+                    <div class="col-12 text-center text-muted py-4">
+                        <p>Chưa có khóa học nào được đăng.</p>
+                    </div>
+                @endforelse
             </div>
         </div>
     </section>

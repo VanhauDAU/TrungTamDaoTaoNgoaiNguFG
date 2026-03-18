@@ -1,5 +1,5 @@
 {{-- REGISTER ADVISE SECTION --}}
-<section class="register-section py-80">
+<section id="form_register_wrapper" class="register-section py-80">
     <div class="container">
         <div class="form_register_wrapper mx-auto">
             {{-- Form Laravel chuẩn --}}

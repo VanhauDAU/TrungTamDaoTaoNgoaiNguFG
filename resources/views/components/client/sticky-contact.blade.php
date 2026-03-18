@@ -1,5 +1,5 @@
 <div class="sticky-contact">
-    <a href="#" data-bs-toggle="modal" data-bs-target="#adviseModal" class="contact-link">
+    <a href="{{ route('home.index') }}#form_register_wrapper" class="contact-link">
         <span class="text-vertical">Đăng ký tư vấn</span>
         <div class="icon-box">
             <i class="bi bi-chat-left-text-fill"></i>
