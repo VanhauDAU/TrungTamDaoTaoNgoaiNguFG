@@ -16,7 +16,7 @@
         $hoTen = $profile->hoTen ?? $hocVien->taiKhoan;
     @endphp
 
-    <form action="{{ route('admin.hoc-vien.update', $hocVien->taiKhoan) }}" method="POST" id="hv-edit-form"
+    <form action="{{ route('admin.hoc-vien.update', $hocVien->taiKhoan) }}" method="POST" id="hv-edit-form" class="needs-validation" novalidate data-joi-schema="hocVien"
         autocomplete="off">
         @csrf
         @method('PUT')

@@ -19,9 +19,10 @@ const schemas = {
         }),
     }),
     register: Joi.object({
-        name: Joi.string().trim().max(255).required().messages({
+        name: Joi.string().trim().max(255).pattern(/^[^0-9]*$/).required().messages({
             'string.empty': 'Vui lòng nhập họ và tên.',
             'string.max': 'Họ và tên không được vượt quá 255 ký tự.',
+            'string.pattern.base': 'Họ và tên không được chứa chữ số.',
             'any.required': 'Vui lòng nhập họ và tên.',
         }),
         email: Joi.string().trim().email({ tlds: { allow: false } }).required().messages({
@@ -29,9 +30,9 @@ const schemas = {
             'string.email': 'Email không đúng định dạng.',
             'any.required': 'Vui lòng nhập email.',
         }),
-        phone: Joi.string().trim().length(10).required().messages({
+        phone: Joi.string().trim().pattern(/^[0-9]{10}$/).required().messages({
             'string.empty': 'Vui lòng nhập số điện thoại.',
-            'string.length': 'Số điện thoại phải có 10 ký tự.',
+            'string.pattern.base': 'Số điện thoại phải là 10 chữ số hợp lệ.',
             'any.required': 'Vui lòng nhập số điện thoại.',
         }),
         password: Joi.string().min(8).required().messages({
@@ -122,6 +123,38 @@ const schemas = {
         trangThietBi: Joi.string().trim().max(500).allow('', null).messages({
             'string.max': 'Ghi chú thiết bị quá dài.'
         })
+    }),
+    hocVien: Joi.object({
+        email: Joi.string().trim().email({ tlds: { allow: false } }).max(100).required().messages({
+            'string.empty': 'Vui lòng nhập email.',
+            'string.email': 'Email không đúng định dạng.',
+            'string.max': 'Email không được vượt quá 100 ký tự.',
+            'any.required': 'Vui lòng nhập email.',
+        }),
+        hoTen: Joi.string().trim().max(100).pattern(/^[^0-9]*$/).required().messages({
+            'string.empty': 'Vui lòng nhập họ và tên.',
+            'string.max': 'Họ và tên không được vượt quá 100 ký tự.',
+            'string.pattern.base': 'Họ và tên không được chứa chữ số.',
+            'any.required': 'Vui lòng nhập họ và tên.',
+        }),
+        soDienThoai: Joi.string().trim().pattern(/^[0-9]{10}$/).allow('', null).messages({
+            'string.pattern.base': 'Số điện thoại phải là 10 chữ số.',
+        }),
+        zalo: Joi.string().trim().pattern(/^[0-9]{10}$/).allow('', null).messages({
+            'string.pattern.base': 'SĐT Zalo phải là 10 chữ số.',
+        }),
+        cccd: Joi.string().trim().max(20).allow('', null).messages({
+            'string.max': 'CCCD không được vượt quá 20 ký tự.',
+        }),
+        sdtGuardian: Joi.string().trim().pattern(/^[0-9]{10}$/).allow('', null).messages({
+            'string.pattern.base': 'SĐT người giám hộ phải là 10 chữ số.',
+        }),
+        matKhau: Joi.string().min(8).allow('', null).messages({
+            'string.min': 'Mật khẩu phải có ít nhất 8 ký tự.',
+        }),
+        matKhau_confirmation: Joi.string().valid(Joi.ref('matKhau')).allow('', null).messages({
+            'any.only': 'Xác nhận mật khẩu không khớp.',
+        }),
     }),
 };
 

@@ -10,7 +10,7 @@
 
 @section('content')
 
-    <form action="{{ route('admin.hoc-vien.store') }}" method="POST" id="hv-create-form" autocomplete="off">
+    <form action="{{ route('admin.hoc-vien.store') }}" method="POST" id="hv-create-form" class="needs-validation" novalidate data-joi-schema="hocVien" autocomplete="off">
         @csrf
 
         {{-- ── Header ──────────────────────────────────────────── --}}

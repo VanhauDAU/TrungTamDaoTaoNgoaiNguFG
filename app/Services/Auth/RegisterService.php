@@ -33,12 +33,13 @@ class RegisterService implements RegisterServiceInterface
     public function validate(array $data): void
     {
         $validator = Validator::make($data, [
-            'name'     => ['required', 'string', 'max:255'],
+            'name'     => ['required', 'string', 'max:255', 'regex:/^[^0-9]*$/'],
             'email'    => ['required', 'string', 'email', 'max:255', 'unique:taikhoan,email'],
             'phone'    => ['required', 'string', 'regex:/^[0-9]{10}$/'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ], [
             'name.required'     => 'Vui lòng nhập họ và tên.',
+            'name.regex'        => 'Họ và tên không được chứa chữ số.',
             'email.required'    => 'Vui lòng nhập email.',
             'email.unique'      => 'Email này đã được đăng ký, vui lòng dùng email khác.',
             'phone.required'    => 'Vui lòng nhập số điện thoại.',
