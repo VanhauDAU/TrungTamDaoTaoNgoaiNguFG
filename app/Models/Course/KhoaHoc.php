@@ -26,15 +26,21 @@ class KhoaHoc extends Model
         'trangThai'
     ];
 
-    public static function generateMaKhoaHoc($danhMucId)
+    public static function generateMaKhoaHoc($danhMucId): string
     {
-        $danhMuc = DanhMucKhoaHoc::find($danhMucId);
-        $maVietTat = $danhMuc && $danhMuc->maDanhMuc ? $danhMuc->maDanhMuc : 'KH';
+        $danhMuc   = DanhMucKhoaHoc::find($danhMucId);
+        $maVietTat = strtoupper($danhMuc && $danhMuc->maDanhMuc ? $danhMuc->maDanhMuc : 'KH');
+        $prefix    = $maVietTat . '-';
 
-        $count = self::where('maKhoaHoc', 'LIKE', $maVietTat . '-%')->count();
-        $so = str_pad($count + 1, 3, '0', STR_PAD_LEFT);
+        // withTrashed() để tính cả bản ghi đã xóa mềm, tránh duplicate key
+        // Lấy số thứ tự lớn nhất hiện có thay vì đếm (tránh lỗi khi xóa giữa chừng)
+        $maxSo = self::withTrashed()
+            ->where('maKhoaHoc', 'LIKE', $prefix . '%')
+            ->get(['maKhoaHoc'])
+            ->map(fn($kh) => (int) ltrim(substr($kh->maKhoaHoc, strlen($prefix)), '0') ?: 0)
+            ->max() ?? 0;
 
-        return strtoupper($maVietTat) . '-' . $so;
+        return $prefix . str_pad($maxSo + 1, 3, '0', STR_PAD_LEFT);
     }
 
     public function danhMuc()

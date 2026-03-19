@@ -1130,7 +1130,8 @@ class LopHocService implements LopHocServiceInterface
         $counter = 1;
 
         while (true) {
-            $query = LopHoc::where('slug', $candidate);
+            // withTrashed() để tính cả bản ghi đã soft-delete, tránh duplicate key
+            $query = LopHoc::withTrashed()->where('slug', $candidate);
             if ($excludeId) {
                 $query->where('lopHocId', '!=', $excludeId);
             }

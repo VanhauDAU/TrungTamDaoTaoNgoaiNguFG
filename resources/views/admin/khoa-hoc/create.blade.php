@@ -151,16 +151,21 @@
         <div class="kf-tab-panel" id="tab-caidat">
             <div class="kf-card">
                 <div class="kf-card-title"><i class="fas fa-sliders-h"></i> Trạng thái khóa học</div>
+                @php
+                    // Lần đầu vào trang: old('trangThai') = null → default = 1 (hoạt động)
+                    // Sau khi validation fail: old('trangThai') = "0" hoặc "1" → giữ nguyên
+                    $isActive = old('trangThai') !== null ? (old('trangThai') == '1') : true;
+                @endphp
                 <div class="kf-toggle-group">
                     <label class="kf-toggle">
-                        <input type="hidden" name="trangThai" value="0">
+                        <input type="hidden" name="trangThai" value="{{ $isActive ? '1' : '0' }}">
                         <input type="checkbox" id="trangThaiToggle" value="1"
-                            {{ old('trangThai', 1) ? 'checked' : '' }}
+                            {{ $isActive ? 'checked' : '' }}
                             onchange="document.querySelector('input[name=trangThai]').value = this.checked ? 1 : 0">
                         <span class="kf-toggle-slider"></span>
                     </label>
                     <span class="kf-toggle-label" id="toggle-label">
-                        {{ old('trangThai', 1) ? 'Đang hoạt động' : 'Ngừng hoạt động' }}
+                        {{ $isActive ? 'Đang hoạt động' : 'Ngừng hoạt động' }}
                     </span>
                 </div>
                 <p class="form-hint" style="margin-top:10px">

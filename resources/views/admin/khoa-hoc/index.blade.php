@@ -174,7 +174,7 @@
                                 <i class="fas fa-pen"></i>
                             </a>
                             <button type="button" class="kh-btn-action kh-btn-del" title="Xóa"
-                                onclick="confirmDeleteKH({{ $kh->khoaHocId }}, '{{ addslashes($kh->tenKhoaHoc) }}', {{ $soLop }})">
+                                onclick="confirmDeleteKH('{{ $kh->slug }}', '{{ addslashes($kh->tenKhoaHoc) }}', {{ $soLop }})">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
@@ -205,7 +205,7 @@
 
 @section('script')
     <script>
-        function confirmDeleteKH(id, name, soLop) {
+        function confirmDeleteKH(slug, name, soLop) {
             if (soLop > 0) {
                 // Có lớp học — kiểm tra thêm ở server, ở đây chỉ cảnh báo
                 Swal.fire({
@@ -223,7 +223,7 @@
                 }).then(result => {
                     if (result.isConfirmed) {
                         const form = document.getElementById('delete-kh-form');
-                        form.action = `/admin/khoa-hoc/${id}`;
+                        form.action = `/admin/khoa-hoc/${slug}`;
                         form.submit();
                     }
                 });
@@ -243,7 +243,7 @@
             }).then(result => {
                 if (result.isConfirmed) {
                     const form = document.getElementById('delete-kh-form');
-                    form.action = `/admin/khoa-hoc/${id}`;
+                    form.action = `/admin/khoa-hoc/${slug}`;
                     form.submit();
                 }
             });

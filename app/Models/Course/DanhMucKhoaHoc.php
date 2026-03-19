@@ -57,10 +57,10 @@ class DanhMucKhoaHoc extends Model
     }
 
     // ── Generator ──────────────────────────────────────────────────
-    public static function generateMaDanhMuc($tenDanhMuc)
+    public static function generateMaDanhMuc(string $tenDanhMuc): string
     {
         $words = explode(' ', $tenDanhMuc);
-        $abbr = '';
+        $abbr  = '';
         foreach ($words as $word) {
             $abbr .= mb_substr($word, 0, 1);
         }
@@ -68,13 +68,24 @@ class DanhMucKhoaHoc extends Model
         $abbr = preg_replace('/[^A-Z]/', '', $abbr);
         if (empty($abbr)) $abbr = 'DM';
 
-        $count = self::where('maDanhMuc', 'LIKE', $abbr . '%')->count();
-        if ($count == 0) {
+        // Lấy tất cả mã có cùng prefix, tìm số thứ tự lớn nhất
+        $existingCodes = self::where('maDanhMuc', 'LIKE', $abbr . '%')
+            ->pluck('maDanhMuc');
+
+        // Nếu không có bản ghi nào → dùng mã thuần (không số)
+        if ($existingCodes->isEmpty()) {
             return $abbr;
         }
 
-        $so = str_pad($count + 1, 2, '0', STR_PAD_LEFT);
-        return $abbr . $so; 
+        // Tìm max số hậu tố trong các mã dạng ABBR + số (VD: TA, TA02, TA03)
+        $maxSo = $existingCodes->map(function ($ma) use ($abbr) {
+            $suffix = substr($ma, strlen($abbr));
+            return ctype_digit($suffix) && $suffix !== '' ? (int) $suffix : 0;
+        })->max();
+
+        // Mã gốc không số (ví dụ "TA") đang tồn tại → bắt đầu từ 02
+        $nextSo = max($maxSo + 1, 2);
+        return $abbr . str_pad($nextSo, 2, '0', STR_PAD_LEFT);
     }
 
     // ── Helpers ────────────────────────────────────────────────────

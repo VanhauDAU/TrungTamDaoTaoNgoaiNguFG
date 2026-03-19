@@ -225,7 +225,8 @@ class BaiVietService implements BaiVietServiceInterface
         $candidate = $slug;
         $counter = 1;
         while (true) {
-            $q = BaiViet::where('slug', $candidate);
+            // withTrashed() để tính cả bản ghi đã soft-delete, tránh duplicate key
+            $q = BaiViet::withTrashed()->where('slug', $candidate);
             if ($excludeId)
                 $q->where('baiVietId', '!=', $excludeId);
             if (!$q->exists())
