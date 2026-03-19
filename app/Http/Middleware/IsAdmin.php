@@ -20,7 +20,6 @@ class IsAdmin
         if (!auth()->user()->isStaff()) {
             abort(403, 'Bạn không có quyền truy cập trang này.');
         }
-
         return $next($request);
     }
 }

@@ -2,6 +2,14 @@
 
 Tất cả thay đổi đáng chú ý của dự án sẽ được ghi tại đây.
 
+## [2026-03-19] - Sửa lỗi giao diện Auth và Validate
+
+### Fixed
+
+- **Validate Học viên**: Thêm logic JavaScript chặn nhập ký tự chữ cái trực tiếp vào trường "Số điện thoại" trên form Đăng ký (`register.blade.php`).
+- **reCAPTCHA Bug**: Sửa lỗi Backend (trong `RegisterService.php` và `LoginService.php`) khiến bảng reCAPTCHA vẫn hiển thị trên form Đăng nhập và Đăng ký dù hệ thống đã tắt trong tệp cấu hình `.env` (`RECAPTCHA_ENABLED=false`).
+- **Clean code**: Dọn dẹp một số dòng code thừa và bổ sung từ khóa ở file ngôn ngữ `vi.json` cũng như trong các middleware `IsAdmin`, `TrackAuthenticatedDeviceSession`.
+
 ## [2026-03-16] - Bổ sung Redis cho Auth realtime và rate limit
 
 ### Added

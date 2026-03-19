@@ -32,7 +32,6 @@ class RegisterController extends Controller
     public function register(Request $request)
     {
         $this->validateRecaptcha($request, 'student_register');
-
         return $this->registerService->register($request);
     }
 
