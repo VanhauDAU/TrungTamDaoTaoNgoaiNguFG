@@ -171,7 +171,8 @@ class KhoaHocService implements KhoaHocServiceInterface
         $candidate = $slug;
         $counter   = 1;
         while (true) {
-            $q = KhoaHoc::where('slug', $candidate);
+            // withTrashed() để tính cả bản ghi đã soft-delete, tránh duplicate key
+            $q = KhoaHoc::withTrashed()->where('slug', $candidate);
             if ($excludeId) $q->where('khoaHocId', '!=', $excludeId);
             if (!$q->exists()) break;
             $candidate = $slug . '-' . $counter++;
