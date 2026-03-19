@@ -121,7 +121,9 @@ class RegisterService implements RegisterServiceInterface
 
     private function isRecaptchaEnabled(): bool
     {
-        return filled(config('services.recaptcha.secret_key'));
+        return (bool) config('services.recaptcha.enabled')
+            && filled(config('services.recaptcha.secret_key'))
+            && filled(config('services.recaptcha.site_key'));
     }
 
     private function resolveEmailAvailabilityPayload(string $normalizedEmail): array

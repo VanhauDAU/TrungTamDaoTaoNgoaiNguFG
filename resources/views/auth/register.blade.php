@@ -562,6 +562,14 @@
             });
         })();
 
+        // Chỉ cho phép nhập số vào ô điện thoại
+        const phoneInput = document.getElementById("phone");
+        if (phoneInput) {
+            phoneInput.addEventListener('input', function (e) {
+                this.value = this.value.replace(/[^0-9]/g, '');
+            });
+        }
+
         // Toggle password visibility for main password field
         function togglePassword() {
             var x = document.getElementById("password");

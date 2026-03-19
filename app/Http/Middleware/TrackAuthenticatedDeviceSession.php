@@ -23,7 +23,6 @@ class TrackAuthenticatedDeviceSession
         if ($user instanceof TaiKhoan) {
             $this->deviceSessionService->syncCurrentSession($request, $user);
         }
-
         return $response;
     }
 }
