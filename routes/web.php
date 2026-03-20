@@ -36,6 +36,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
 // ─── API ROUTES (Public) ────────────────────────────────────────────────────
+// Note: API bảo mật
 Route::prefix('api')->name('api.')->group(function () {
     // Lấy danh sách phường/xã theo tỉnh (từ provinces.open-api.vn proxy)
     Route::get('/phuong-xa/{maTinh}', [CoSoController::class, 'getPhuongXa'])->name('phuongxa');

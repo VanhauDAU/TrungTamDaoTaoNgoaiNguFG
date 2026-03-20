@@ -102,7 +102,8 @@ class LoginService implements LoginServiceInterface
         $field = filter_var($loginInput, FILTER_VALIDATE_EMAIL) ? 'email' : 'taiKhoan';
         $user = TaiKhoan::query()->where($field, $loginInput)->first();
 
-        if ($user instanceof TaiKhoan
+        if (
+            $user instanceof TaiKhoan
             && (int) $user->trangThai !== 1
             && Hash::check((string) $request->input('password'), (string) $user->matKhau)
         ) {
@@ -268,7 +269,6 @@ class LoginService implements LoginServiceInterface
             default => $user->role === TaiKhoan::ROLE_HOC_VIEN,
         };
     }
-
     public function staffDashboardRouteFor(TaiKhoan $user): string
     {
         if ($user->role === TaiKhoan::ROLE_GIAO_VIEN && Route::has('teacher.dashboard')) {
