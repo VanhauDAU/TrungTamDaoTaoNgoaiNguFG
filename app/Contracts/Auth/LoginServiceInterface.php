@@ -57,4 +57,14 @@ interface LoginServiceInterface
      * Lấy route redirect sau khi logout theo role.
      */
     public function logoutRedirectRouteFor(TaiKhoan $user): string;
+
+    /**
+     * Lấy route landing phù hợp với portal hiện tại của user.
+     */
+    public function landingRouteForUser(TaiKhoan $user): string;
+
+    /**
+     * Trả về trạng thái phiên hiện tại cho portal guard trên giao diện.
+     */
+    public function getSessionStatus(Request $request, string $expectedContext): array;
 }

@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
-class StudentPortalAccessTest extends TestCase
+class SessionPortalGuardTest extends TestCase
 {
     protected function setUp(): void
     {
@@ -20,60 +20,73 @@ class StudentPortalAccessTest extends TestCase
         $this->registerTestRoutes();
     }
 
-    public function test_verified_student_can_access_student_portal_route(): void
+    public function test_session_status_reports_logged_out_for_staff_context(): void
+    {
+        $this->getJson(route('auth.session-status', ['context' => 'staff']))
+            ->assertOk()
+            ->assertJson([
+                'authenticated' => false,
+                'allowed' => false,
+                'expectedContext' => 'staff',
+                'reason' => 'logged_out',
+            ]);
+    }
+
+    public function test_session_status_reports_portal_mismatch_for_staff_tab_with_student_session(): void
     {
         $student = $this->createAccount(TaiKhoan::ROLE_HOC_VIEN, true);
 
         $this->actingAs($student)
-            ->get('/__test__/student-only')
+            ->withSession(['auth_portal' => 'student'])
+            ->getJson(route('auth.session-status', ['context' => 'staff']))
             ->assertOk()
-            ->assertSee('OK');
-    }
-
-    public function test_teacher_cannot_access_student_portal_route(): void
-    {
-        $teacher = $this->createAccount(TaiKhoan::ROLE_GIAO_VIEN, true);
-
-        $this->actingAs($teacher)
-            ->get('/__test__/student-only')
-            ->assertRedirect(route('admin.dashboard'))
-            ->assertSessionHas('warning', 'Phiên học viên không còn hợp lệ vì trình duyệt hiện đang dùng cổng nội bộ ở tab khác.');
-    }
-
-    public function test_staff_cannot_access_student_portal_json_route(): void
-    {
-        $employee = $this->createAccount(TaiKhoan::ROLE_NHAN_VIEN, true);
-
-        $this->actingAs($employee)
-            ->getJson('/__test__/student-only-json')
-            ->assertForbidden()
             ->assertJson([
-                'message' => 'Phiên học viên không còn hợp lệ vì trình duyệt hiện đang dùng cổng nội bộ ở tab khác.',
+                'authenticated' => true,
+                'allowed' => false,
+                'expectedContext' => 'staff',
+                'actualPortal' => 'student',
+                'actualContext' => 'student',
                 'reason' => 'portal_mismatch',
             ]);
     }
 
-    public function test_unverified_student_is_redirected_to_verification_notice(): void
+    public function test_session_status_returns_fresh_csrf_token_for_allowed_student_tab(): void
     {
-        $student = $this->createAccount(TaiKhoan::ROLE_HOC_VIEN, false);
+        $student = $this->createAccount(TaiKhoan::ROLE_HOC_VIEN, true);
+
+        $response = $this->actingAs($student)
+            ->withSession(['auth_portal' => 'student'])
+            ->getJson(route('auth.session-status', ['context' => 'student']));
+
+        $response
+            ->assertOk()
+            ->assertJson([
+                'authenticated' => true,
+                'allowed' => true,
+                'expectedContext' => 'student',
+                'actualPortal' => 'student',
+                'actualContext' => 'student',
+                'reason' => 'ok',
+            ])
+            ->assertJsonStructure(['csrfToken']);
+    }
+
+    public function test_admin_middleware_redirects_student_session_to_student_home_instead_of_forbidden(): void
+    {
+        $student = $this->createAccount(TaiKhoan::ROLE_HOC_VIEN, true);
 
         $this->actingAs($student)
-            ->get('/__test__/student-only')
-            ->assertRedirect(route('verification.notice'));
+            ->get('/__test__/admin-only')
+            ->assertRedirect(route('home.student.index'))
+            ->assertSessionHas('warning', 'Phiên đăng nhập nội bộ không còn hợp lệ vì trình duyệt hiện đang dùng cổng học viên ở tab khác.');
     }
 
     private function registerTestRoutes(): void
     {
-        if (!Route::has('test.student-only')) {
-            Route::middleware(['web', 'auth', 'verified.student'])
-                ->get('/__test__/student-only', fn () => response('OK'))
-                ->name('test.student-only');
-        }
-
-        if (!Route::has('test.student-only-json')) {
-            Route::middleware(['web', 'auth', 'verified.student'])
-                ->get('/__test__/student-only-json', fn () => response()->json(['status' => 'ok']))
-                ->name('test.student-only-json');
+        if (!Route::has('test.admin-only')) {
+            Route::middleware(['web', 'auth', 'isAdmin'])
+                ->get('/__test__/admin-only', fn () => response('OK'))
+                ->name('test.admin-only');
         }
     }
 

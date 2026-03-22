@@ -95,27 +95,14 @@
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <script>
-        document.getElementById('btn-logout-client')?.addEventListener('click', function(e) {
-            e.preventDefault();
-            Swal.fire({
-                title: 'Đăng xuất?',
-                text: 'Bạn có chắc muốn đăng xuất không?',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: '<i class="fas fa-sign-out-alt me-1"></i> Đăng xuất',
-                cancelButtonText: 'Hủy',
-                confirmButtonColor: '#e31e24',
-                cancelButtonColor: '#6c757d',
-                reverseButtons: true,
-                focusCancel: true,
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    document.getElementById('logout-form').submit();
-                }
-            });
-        });
-    </script>
+    @auth
+        @include('partials.auth.session-guard', [
+            'sessionGuardContext' => Auth::user()->isStaff() ? 'staff' : 'student',
+            'sessionGuardLogoutButtonId' => 'btn-logout-client',
+            'sessionGuardLogoutFormId' => 'logout-form',
+            'sessionGuardStaleTitle' => 'Phiên đăng nhập đã thay đổi',
+        ])
+    @endauth
 </body>
 
 </html>

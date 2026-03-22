@@ -1,6 +1,6 @@
 # Auth Module Guide
 
-> Cập nhật: 2026-03-16
+> Cập nhật: 2026-03-22
 
 Tài liệu này là điểm vào chính cho module Auth sau đợt nâng cấp.
 
@@ -47,6 +47,10 @@ Module Auth hiện bao gồm:
 - `GET /staff/login`
 - `POST /staff/login`
 - `GET /admin/login` là đường dẫn cũ, hiện redirect sang `/staff/login`
+
+### Auth utility
+
+- `GET /auth/session-status?context=student|staff`
 
 ### Protected student area
 
@@ -156,6 +160,8 @@ Ví dụ:
 - Có chung rate limit middleware với login học viên nhưng key được tách theo portal.
 - Vẫn hỗ trợ checkbox `Ghi nhớ đăng nhập`.
 - Hiện tại sau đăng nhập vẫn vào khu nội bộ `/admin/*`; sau này có thể tách `teacher.dashboard` và `staff.dashboard` mà không cần đổi core auth.
+- Trong cùng một trình duyệt, hệ thống chỉ hỗ trợ một portal hợp lệ tại một thời điểm.
+- Nếu tab khác đăng nhập portal còn lại, tab cũ sẽ bị đánh dấu stale và được chuyển hướng mềm về đúng portal còn hiệu lực thay vì để phát sinh `403` hoặc `419`.
 
 ### Đăng ký học viên
 
@@ -230,6 +236,23 @@ Ví dụ:
   - thu hồi từng thiết bị
   - đăng xuất khỏi tất cả thiết bị
 - Audit log nền được ghi vào `nhatky_bao_mat`.
+
+### Portal session guard
+
+- Giao diện admin và client dùng endpoint `GET /auth/session-status` để kiểm tra phiên hiện tại theo `context`.
+- Response trả về các trường chính:
+  - `authenticated`
+  - `allowed`
+  - `reason`
+  - `redirectUrl`
+  - `csrfToken`
+- Nếu tab hiện tại không còn hợp lệ do portal bị thay thế:
+  - trang sẽ hiện cảnh báo
+  - điều hướng về portal đang còn hiệu lực
+  - không submit form logout bằng CSRF token cũ
+- Rule vận hành:
+  - muốn đăng nhập đồng thời admin và học viên, dùng trình duyệt khác hoặc cửa sổ ẩn danh
+  - không coi việc dùng 2 portal trong cùng một browser là luồng nghiệp vụ được hỗ trợ
 
 ## 7. Checklist đọc nhanh
 

@@ -25,7 +25,7 @@ class LoginController extends Controller
     public function __construct(
         protected LoginServiceInterface $loginService
     ) {
-        $this->middleware('guest')->except('logout', 'showForceChangePassword', 'processForceChangePassword');
+        $this->middleware('guest')->except('logout', 'showForceChangePassword', 'processForceChangePassword', 'sessionStatus');
         $this->middleware('auth')->only('logout', 'showForceChangePassword', 'processForceChangePassword');
         $this->middleware('throttle:auth-login')->only('login', 'adminLogin', 'teacherLogin', 'staffLogin');
     }
@@ -174,6 +174,18 @@ class LoginController extends Controller
         return $request->wantsJson()
             ? new JsonResponse([], 204)
             : redirect(route($redirectRoute));
+    }
+
+    public function sessionStatus(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'context' => ['required', 'in:student,staff'],
+        ]);
+
+        return response()
+            ->json($this->loginService->getSessionStatus($request, (string) $data['context']))
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+            ->header('Pragma', 'no-cache');
     }
 
     // ─────────────────────────────────────────────────────────────────────────

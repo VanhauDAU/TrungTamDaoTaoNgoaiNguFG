@@ -230,6 +230,7 @@ Neu dung XAMPP/Apache:
   - Giang vien: `/teacher/login`
   - Nhan vien/Admin: `/staff/login`
 - Giao dien login su dung dock chuyen portal co dinh o day man hinh de doi nhanh giua cac cong dang nhap.
+- Trong cung mot trinh duyet, he thong chi nen duoc su dung voi 1 portal dang nhap tai 1 thoi diem. Neu can test song song admin va hoc vien, hay dung trinh duyet khac hoac cua so an danh.
 - Tong quan module Auth: `docs/05-huong-dan/auth.md`
 - Kien truc va quyet dinh: `docs/01-phan-tich/auth-kien-truc-va-quyet-dinh.md`
 - Cau hinh va trien khai: `docs/05-huong-dan/auth-cau-hinh-va-trien-khai.md`

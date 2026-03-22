@@ -40,6 +40,50 @@ Phòng học theo cơ sở (dùng trong form lớp học).
 
 Giáo viên theo cơ sở.
 
+### GET `/auth/session-status`
+
+API tiện ích cho giao diện Auth/Admin/Client kiểm tra trạng thái phiên hiện tại theo portal.
+
+**Query:** `?context=student` hoặc `?context=staff`
+
+**Mô tả:**
+
+- Dùng cho frontend phát hiện tab stale khi người dùng đổi portal trong cùng một trình duyệt.
+- Không phải REST API public cho bên thứ ba.
+- Có thể trả kết quả ngay cả khi user đã bị logout hoặc session đã bị thay thế.
+
+**Response mẫu khi hợp lệ:**
+
+```json
+{
+    "authenticated": true,
+    "allowed": true,
+    "expectedContext": "staff",
+    "actualPortal": "staff",
+    "actualContext": "staff",
+    "reason": "ok",
+    "message": null,
+    "redirectUrl": "http://127.0.0.1:8000/admin/dashboard",
+    "csrfToken": "..."
+}
+```
+
+**Response mẫu khi tab stale do đổi portal:**
+
+```json
+{
+    "authenticated": true,
+    "allowed": false,
+    "expectedContext": "staff",
+    "actualPortal": "student",
+    "actualContext": "student",
+    "reason": "portal_mismatch",
+    "message": "Tab nội bộ này không còn hợp lệ vì trình duyệt hiện đang đăng nhập ở cổng học viên.",
+    "redirectUrl": "http://127.0.0.1:8000/hoc-vien",
+    "csrfToken": "..."
+}
+```
+
 ---
 
 ## 2. Client API (yêu cầu đăng nhập — auth)
