@@ -291,6 +291,100 @@ class LoginService implements LoginServiceInterface
         };
     }
 
+    public function getSessionStatus(Request $request, string $expectedContext): array
+    {
+        $user = $request->user();
+
+        if (!$user instanceof TaiKhoan) {
+            return [
+                'authenticated' => false,
+                'allowed' => false,
+                'expectedContext' => $expectedContext,
+                'actualPortal' => null,
+                'actualContext' => null,
+                'reason' => 'logged_out',
+                'message' => $expectedContext === 'staff'
+                    ? 'Phiên đăng nhập nội bộ đã hết hạn hoặc đã được thay thế ở tab khác.'
+                    : 'Phiên đăng nhập học viên đã hết hạn hoặc đã được thay thế ở tab khác.',
+                'redirectUrl' => route($expectedContext === 'staff' ? 'staff.login' : 'login'),
+                'csrfToken' => csrf_token(),
+            ];
+        }
+
+        $actualPortal = $this->activePortalForUser($request, $user);
+        $actualContext = $this->contextForPortal($actualPortal);
+
+        if ((int) $user->trangThai !== 1) {
+            return [
+                'authenticated' => false,
+                'allowed' => false,
+                'expectedContext' => $expectedContext,
+                'actualPortal' => $actualPortal,
+                'actualContext' => $actualContext,
+                'reason' => 'account_locked',
+                'message' => 'Tài khoản hiện tại đã bị khóa. Vui lòng đăng nhập lại khi tài khoản được kích hoạt.',
+                'redirectUrl' => route($this->logoutRedirectRouteFor($user)),
+                'csrfToken' => csrf_token(),
+            ];
+        }
+
+        if ($expectedContext !== $actualContext) {
+            return [
+                'authenticated' => true,
+                'allowed' => false,
+                'expectedContext' => $expectedContext,
+                'actualPortal' => $actualPortal,
+                'actualContext' => $actualContext,
+                'reason' => 'portal_mismatch',
+                'message' => $expectedContext === 'staff'
+                    ? 'Tab nội bộ này không còn hợp lệ vì trình duyệt hiện đang đăng nhập ở cổng học viên.'
+                    : 'Tab học viên này không còn hợp lệ vì trình duyệt hiện đang đăng nhập ở cổng nội bộ.',
+                'redirectUrl' => route($this->landingRouteForUser($user)),
+                'csrfToken' => csrf_token(),
+            ];
+        }
+
+        return [
+            'authenticated' => true,
+            'allowed' => true,
+            'expectedContext' => $expectedContext,
+            'actualPortal' => $actualPortal,
+            'actualContext' => $actualContext,
+            'reason' => 'ok',
+            'message' => null,
+            'redirectUrl' => route($this->landingRouteForUser($user)),
+            'csrfToken' => csrf_token(),
+        ];
+    }
+
+    public function landingRouteForUser(TaiKhoan $user): string
+    {
+        return $user->isStaff()
+            ? $this->staffDashboardRouteFor($user)
+            : 'home.student.index';
+    }
+
+    public function activePortalForUser(Request $request, TaiKhoan $user): string
+    {
+        $storedPortal = (string) $request->session()->get('auth_portal', '');
+
+        if ($storedPortal !== '' && $this->matchesPortal($user, $storedPortal)) {
+            return $storedPortal;
+        }
+
+        return match ((int) $user->role) {
+            TaiKhoan::ROLE_GIAO_VIEN => 'teacher',
+            TaiKhoan::ROLE_NHAN_VIEN,
+            TaiKhoan::ROLE_ADMIN => 'staff',
+            default => 'student',
+        };
+    }
+
+    public function contextForPortal(string $portal): string
+    {
+        return $portal === 'student' ? 'student' : 'staff';
+    }
+
     private function consecutiveFailedAttempts(string $loginInput, string $ip): int
     {
         return NhatKyDangNhap::soLanThatBaiLienTiep(

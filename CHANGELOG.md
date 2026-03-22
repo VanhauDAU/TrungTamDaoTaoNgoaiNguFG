@@ -2,6 +2,26 @@
 
 Tất cả thay đổi đáng chú ý của dự án sẽ được ghi tại đây.
 
+## [2026-03-22] - Ổn định phiên đăng nhập khi chuyển portal trong cùng trình duyệt
+
+### Added
+
+- Thêm endpoint `GET /auth/session-status` để giao diện admin/client kiểm tra trạng thái phiên hiện tại theo context `staff|student`.
+- Thêm `portal session guard` dùng chung cho layout admin và client để:
+  - đồng bộ lại CSRF token khi tab quay lại foreground
+  - phát hiện phiên bị thay thế bởi portal khác trong cùng trình duyệt
+  - chặn submit logout từ tab stale trước khi văng `419`
+- Thêm test `SessionPortalGuardTest` cho luồng mismatch session và redirect mềm.
+
+### Changed
+
+- Middleware `isAdmin` và `verified.student` không còn trả `403` HTML thô khi session đã bị thay thế bởi portal khác; thay vào đó sẽ redirect mềm về portal hiện còn hiệu lực kèm cảnh báo.
+- Nút đăng xuất ở layout admin/client giờ xác minh lại session trước khi submit form để tránh dùng CSRF token cũ.
+
+### Fixed
+
+- Sửa lỗi local khi đăng nhập admin ở một tab rồi đăng nhập client ở tab khác khiến trang admin báo không truy cập được nhưng bấm đăng xuất lại bị `419`.
+
 ## [2026-03-19] - Sửa lỗi giao diện Auth và Validate
 
 ### Fixed
