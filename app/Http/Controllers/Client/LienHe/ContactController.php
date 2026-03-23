@@ -33,6 +33,8 @@ class ContactController extends Controller
      */
     public function storeConsultation(Request $request)
     {
+        $authenticatedUser = $request->user();
+
         // Validation tùy chỉnh: yêu cầu ít nhất 1 trong 2 (email hoặc sđt)
         $validator = Validator::make($request->all(), [
             'fullname' => 'required|string|max:255',
@@ -81,7 +83,7 @@ class ContactController extends Controller
             'tieuDe' => 'Đăng ký tư vấn miễn phí',
             'noiDung' => $noiDung,
             'trangThai' => 0, // 0 = chưa xử lý
-            'taiKhoanId' => auth()->check() ? auth()->id() : null,
+            'taiKhoanId' => $authenticatedUser?->getAuthIdentifier(),
         ];
 
         // CRM: luôn gắn loại "tư vấn" để tránh rơi vào nhóm "Khác"
