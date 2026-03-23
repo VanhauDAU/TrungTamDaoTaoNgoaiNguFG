@@ -1,6 +1,6 @@
 # Auth - Vận Hành Và Kiểm Thử
 
-> Cập nhật: 2026-03-12
+> Cập nhật: 2026-03-23
 
 ## 1. Luồng nghiệp vụ chuẩn
 
@@ -81,6 +81,8 @@
 - [ ] Tạo ra username hệ thống, không dùng email
 - [ ] Gửi email verification thành công
 - [ ] Chưa verify thì không vào được `/hoc-vien`
+- [ ] Học viên đã đăng nhập mở lại `/register` sẽ về `/hoc-vien`, không rơi vào `/home`
+- [ ] Nhân sự đã đăng nhập mở lại `/register` sẽ về dashboard nội bộ, không rơi vào `/home`
 
 ### 2.4 Google login
 
@@ -118,6 +120,14 @@
 - [ ] Sau khi thu hồi thiết bị, remembered cookie cũ không tự khôi phục lại phiên đã bị cắt
 - [ ] `nhatky_bao_mat` có log cho `session_registered`, `session_revoked`, `logout_all_devices`, `remember_token_rotated`
 
+### 2.8 Portal switching trong cùng trình duyệt
+
+- [ ] Đăng nhập `/staff/login` ở tab A, sau đó đăng nhập `/login` ở tab B cùng trình duyệt thì tab A không còn thao tác được như tab nội bộ hợp lệ
+- [ ] Khi quay lại tab A, hệ thống hiện cảnh báo phiên nội bộ đã bị thay thế và chuyển hướng mềm thay vì render `403` thô
+- [ ] Từ tab admin stale, bấm `Đăng xuất` không còn bị `419`
+- [ ] Đăng nhập học viên trước rồi đăng nhập staff ở tab khác thì tab học viên cũ cũng bị phát hiện tương tự
+- [ ] Nếu cần dùng đồng thời admin và học viên, test bằng trình duyệt khác hoặc cửa sổ ẩn danh cho kết quả ổn định
+
 ## 3. Dữ liệu cần quan sát khi debug
 
 Trong bảng `taikhoan`, kiểm tra:
@@ -154,6 +164,7 @@ Kiểm tra:
 1. có đang login đúng cổng `/teacher/login` hoặc `/staff/login` không
 2. role có phải `1`, `2`, `3` không
 3. tài khoản có bị khóa hoặc bị tắt không
+4. có vừa đăng nhập cổng học viên ở tab khác cùng trình duyệt không
 
 ### User báo không nhận được mail verify
 
@@ -187,6 +198,14 @@ Kiểm tra:
 2. `remember_token` trong bảng `taikhoan` có đổi sau thao tác đó không
 3. user đang dùng remembered login hay chỉ là session hiện tại chưa logout
 
+### User báo tab admin hoặc tab học viên bị đá ra sau khi đăng nhập tab khác
+
+Kiểm tra:
+1. có đang dùng cùng một trình duyệt cho hai portal không
+2. request `GET /auth/session-status` ở tab cũ đang trả `reason = portal_mismatch` hay không
+3. trang cũ có giữ CSRF token cũ trước khi submit logout hay không
+4. hướng dẫn user dùng trình duyệt khác hoặc cửa sổ ẩn danh nếu cần song song hai vai trò
+
 ### User báo bị khóa đăng nhập quá lâu
 
 Kiểm tra:
@@ -194,6 +213,15 @@ Kiểm tra:
 2. lần đăng nhập thành công gần nhất đã xảy ra chưa
 3. `lockout_until` trong session còn bao lâu
 4. người dùng có đang tiếp tục nhập sai sau mỗi lần hết khóa hay không
+
+### User báo đang đăng nhập rồi nhưng mở `/register` lại bị đá sang trang không mong muốn
+
+Kiểm tra:
+1. user đang mang role nào trong bảng `taikhoan`
+2. `email_verified_at` của học viên có null không
+3. `phaiDoiMatKhau` có đang bật không
+4. app đã nạp cấu hình redirect guest mới trong `AppServiceProvider` hay chưa
+5. trình duyệt có đang giữ route `/home` cũ từ cache/tab cũ không
 
 ### User báo avatar bị hỏng sau Google login
 
@@ -219,6 +247,7 @@ Kiểm tra:
 - `Joi` đang là lớp validate client-side dùng chung cho các form Auth quan trọng.
 - Lockout hiện dùng chuỗi thất bại liên tiếp trong vòng 24 giờ gần nhất; đăng nhập thành công sẽ reset chuỗi này.
 - Token reCAPTCHA được gắn vào form bằng JavaScript trước khi submit; nếu form bị chỉnh sửa layout, cần đảm bảo token vẫn được append vào đúng form.
+- Auth hiện có thêm lớp `portal session guard` ở frontend để đồng bộ CSRF token mới và tránh `419` khi tab cũ bị stale do đổi portal trong cùng browser.
 
 ## 6. Khuyến nghị backlog tiếp theo
 

@@ -382,6 +382,7 @@ php artisan migrate
   - Giảng viên: `/teacher/login`
   - Nhân viên/Admin: `/staff/login`
 - Giao diện login sử dụng dock chuyển portal cố định ở đáy màn hình để đổi nhanh giữa các cổng đăng nhập.
+- Trong cùng một trình duyệt, hệ thống chỉ nên được sử dụng với 1 portal đăng nhập tại một thời điểm. Nếu cần test song song admin và học viên, hãy dùng trình duyệt khác hoặc cửa sổ ẩn danh.
 - Tổng quan module Auth: `docs/05-huong-dan/auth.md`
 - Kiến trúc và quyết định: `docs/01-phan-tich/auth-kien-truc-va-quyet-dinh.md`
 - Cấu hình và triển khai: `docs/05-huong-dan/auth-cau-hinh-va-trien-khai.md`

@@ -405,6 +405,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
 // ─── AUTH ROUTES ─────────────────────────────────────────────────────────────
 Auth::routes(['verify' => true]);
 
+Route::get('/auth/session-status', [LoginController::class, 'sessionStatus'])
+    ->name('auth.session-status');
+
 Route::middleware('guest')->group(function () {
     Route::get('/register/check-email', [RegisterController::class, 'checkEmail'])
         ->name('register.check-email');

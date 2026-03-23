@@ -1,6 +1,6 @@
 # Auth Module Guide
 
-> Cập nhật: 2026-03-16
+> Cập nhật: 2026-03-23
 
 Tài liệu này là điểm vào chính cho module Auth sau đợt nâng cấp.
 
@@ -48,12 +48,26 @@ Module Auth hiện bao gồm:
 - `POST /staff/login`
 - `GET /admin/login` là đường dẫn cũ, hiện redirect sang `/staff/login`
 
+### Auth utility
+
+- `GET /auth/session-status?context=student|staff`
+
 ### Protected student area
 
 Các route học viên yêu cầu:
 - đã đăng nhập
 - là học viên
 - đã xác thực email
+
+### Redirect khi đã đăng nhập nhưng vào lại route guest
+
+Các route guest auth như `/login`, `/register`, `/teacher/login`, `/staff/login` sẽ không còn rơi vào `/home` mặc định của Laravel.
+
+Hệ thống hiện redirect theo trạng thái thực của tài khoản:
+- học viên đã xác thực email về `home.student.index`
+- học viên chưa xác thực email về `verification.notice`
+- nhân sự về dashboard nội bộ phù hợp
+- tài khoản đang bật `phaiDoiMatKhau` về `force-change-password`
 
 ## 3. Quy ước username
 
@@ -156,6 +170,8 @@ Ví dụ:
 - Có chung rate limit middleware với login học viên nhưng key được tách theo portal.
 - Vẫn hỗ trợ checkbox `Ghi nhớ đăng nhập`.
 - Hiện tại sau đăng nhập vẫn vào khu nội bộ `/admin/*`; sau này có thể tách `teacher.dashboard` và `staff.dashboard` mà không cần đổi core auth.
+- Trong cùng một trình duyệt, hệ thống chỉ hỗ trợ một portal hợp lệ tại một thời điểm.
+- Nếu tab khác đăng nhập portal còn lại, tab cũ sẽ bị đánh dấu stale và được chuyển hướng mềm về đúng portal còn hiệu lực thay vì để phát sinh `403` hoặc `419`.
 
 ### Đăng ký học viên
 
@@ -167,6 +183,7 @@ Ví dụ:
 - Kết quả check email realtime được cache bằng Redis trong TTL ngắn; nếu Redis không sẵn sàng, backend fallback sang MySQL.
 - `POST /register` và `GET /register/check-email` đều có rate limit riêng để chống spam submit và spam dò email.
 - Nếu Google OAuth đã được cấu hình, trang đăng ký sẽ hiện nút đăng ký / đăng nhập bằng Google.
+- Nếu user đã đăng nhập mà vẫn mở lại `/register`, hệ thống sẽ chuyển về đúng landing page theo role thay vì đi vào `/home`.
 
 ### Avatar và provider
 
@@ -230,6 +247,23 @@ Ví dụ:
   - thu hồi từng thiết bị
   - đăng xuất khỏi tất cả thiết bị
 - Audit log nền được ghi vào `nhatky_bao_mat`.
+
+### Portal session guard
+
+- Giao diện admin và client dùng endpoint `GET /auth/session-status` để kiểm tra phiên hiện tại theo `context`.
+- Response trả về các trường chính:
+  - `authenticated`
+  - `allowed`
+  - `reason`
+  - `redirectUrl`
+  - `csrfToken`
+- Nếu tab hiện tại không còn hợp lệ do portal bị thay thế:
+  - trang sẽ hiện cảnh báo
+  - điều hướng về portal đang còn hiệu lực
+  - không submit form logout bằng CSRF token cũ
+- Rule vận hành:
+  - muốn đăng nhập đồng thời admin và học viên, dùng trình duyệt khác hoặc cửa sổ ẩn danh
+  - không coi việc dùng 2 portal trong cùng một browser là luồng nghiệp vụ được hỗ trợ
 
 ## 7. Checklist đọc nhanh
 

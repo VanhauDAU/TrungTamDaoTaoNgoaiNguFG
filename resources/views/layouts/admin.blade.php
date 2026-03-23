@@ -337,6 +337,12 @@
     {{-- Bootstrap JS (cho alert dismiss + dropdown) --}}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    @include('partials.auth.session-guard', [
+        'sessionGuardContext' => 'staff',
+        'sessionGuardLogoutButtonId' => 'btn-logout-admin',
+        'sessionGuardLogoutFormId' => 'admin-logout-form',
+        'sessionGuardStaleTitle' => 'Phiên nội bộ đã thay đổi',
+    ])
 
     <script>
         // ── SWEETALERT2 TOAST CONFIG ──────────────────────────
@@ -380,26 +386,6 @@
         if (sidebarToggle) {
             sidebarToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
         }
-
-        // Xác nhận đăng xuất bằng SweetAlert2
-        document.getElementById('btn-logout-admin')?.addEventListener('click', function () {
-            Swal.fire({
-                title: 'Đăng xuất?',
-                text: 'Bạn có chắc muốn đăng xuất khỏi hệ thống?',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: '<i class="fas fa-sign-out-alt me-1"></i> Đăng xuất',
-                cancelButtonText: 'Hủy',
-                confirmButtonColor: '#e31e24',
-                cancelButtonColor: '#6c757d',
-                reverseButtons: true,
-                focusCancel: true,
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    document.getElementById('admin-logout-form').submit();
-                }
-            });
-        });
 
         // Xử lý Tree-view Sidebar
         document.querySelectorAll('.nav-group-header').forEach(header => {

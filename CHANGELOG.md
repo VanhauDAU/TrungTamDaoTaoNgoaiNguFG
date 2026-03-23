@@ -2,6 +2,44 @@
 
 Tất cả thay đổi đáng chú ý của dự án sẽ được ghi tại đây.
 
+## [2026-03-23] - Chuẩn hóa redirect khi user đã đăng nhập nhưng mở lại route guest auth
+
+### Added
+
+- Thêm test `AuthenticatedRegisterRedirectTest` để khóa luồng redirect khi user đã đăng nhập nhưng truy cập lại `/register`.
+
+### Changed
+
+- `guest` middleware không còn dùng redirect mặc định của Laravel theo route tên `home`; hệ thống giờ điều hướng theo vai trò và trạng thái tài khoản hiện tại:
+  - học viên đã xác thực về `/hoc-vien`
+  - học viên chưa xác thực về `/email/verify`
+  - nhân sự về dashboard nội bộ
+- Luồng redirect khỏi các trang guest auth được gom về một cấu hình tập trung trong `AppServiceProvider` để tránh rơi lại vào `/home` khi framework tự chọn route mặc định.
+
+### Fixed
+
+- Sửa lỗi user đã đăng nhập nhưng mở route `/register` lại bị chuyển sang `http://127.0.0.1:8000/home`, gây lệch luồng với các portal thực tế của hệ thống.
+
+## [2026-03-22] - Ổn định phiên đăng nhập khi chuyển portal trong cùng trình duyệt
+
+### Added
+
+- Thêm endpoint `GET /auth/session-status` để giao diện admin/client kiểm tra trạng thái phiên hiện tại theo context `staff|student`.
+- Thêm `portal session guard` dùng chung cho layout admin và client để:
+  - đồng bộ lại CSRF token khi tab quay lại foreground
+  - phát hiện phiên bị thay thế bởi portal khác trong cùng trình duyệt
+  - chặn submit logout từ tab stale trước khi văng `419`
+- Thêm test `SessionPortalGuardTest` cho luồng mismatch session và redirect mềm.
+
+### Changed
+
+- Middleware `isAdmin` và `verified.student` không còn trả `403` HTML thô khi session đã bị thay thế bởi portal khác; thay vào đó sẽ redirect mềm về portal hiện còn hiệu lực kèm cảnh báo.
+- Nút đăng xuất ở layout admin/client giờ xác minh lại session trước khi submit form để tránh dùng CSRF token cũ.
+
+### Fixed
+
+- Sửa lỗi local khi đăng nhập admin ở một tab rồi đăng nhập client ở tab khác khiến trang admin báo không truy cập được nhưng bấm đăng xuất lại bị `419`.
+
 ## [2026-03-19] - Sửa lỗi giao diện Auth và Validate
 
 ### Fixed
