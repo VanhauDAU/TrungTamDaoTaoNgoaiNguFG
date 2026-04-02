@@ -13,16 +13,17 @@ Monolith Laravel phục vụ quản lý vận hành trung tâm ngoại ngữ: kh
 - [3. Tính năng chính](#3-tính-năng-chính)
 - [4. Công nghệ sử dụng](#4-công-nghệ-sử-dụng)
 - [5. Cấu trúc dự án](#5-cấu-trúc-dự-án)
-- [6. Cài đặt môi trường local](#6-cài-đặt-môi-trường-local)
-- [7. Chạy dự án](#7-chạy-dự-án)
-- [8. Biến môi trường quan trọng](#8-biến-môi-trường-quan-trọng)
-- [9. Mô hình học phí hiện tại](#9-mô-hình-học-phí-hiện-tại)
-- [10. Lệnh hữu ích](#10-lệnh-hữu-ích)
-- [11. Test và chất lượng mã nguồn](#11-test-và-chất-lượng-mã-nguồn)
-- [12. Lưu ý dữ liệu và migration](#12-lưu-ý-dữ-liệu-và-migration)
-- [13. Tài liệu Auth và Nhân sự](#13-tài-liệu-auth-và-nhân-sự)
-- [14. Quy trình phát triển](#14-quy-trình-phát-triển)
-- [15. Hỗ trợ](#15-hỗ-trợ)
+- [6. Upload ảnh dùng chung](#6-upload-ảnh-dùng-chung)
+- [7. Cài đặt môi trường local](#7-cài-đặt-môi-trường-local)
+- [8. Chạy dự án](#8-chạy-dự-án)
+- [9. Biến môi trường quan trọng](#9-biến-môi-trường-quan-trọng)
+- [10. Mô hình học phí hiện tại](#10-mô-hình-học-phí-hiện-tại)
+- [11. Lệnh hữu ích](#11-lệnh-hữu-ích)
+- [12. Test và chất lượng mã nguồn](#12-test-và-chất-lượng-mã-nguồn)
+- [13. Lưu ý dữ liệu và migration](#13-lưu-ý-dữ-liệu-và-migration)
+- [14. Tài liệu Auth và Nhân sự](#14-tài-liệu-auth-và-nhân-sự)
+- [15. Quy trình phát triển](#15-quy-trình-phát-triển)
+- [16. Hỗ trợ](#16-hỗ-trợ)
 
 ## 1. Tổng quan
 - Ngành: Hệ thống thông tin quản lý trung tâm ngoại ngữ.
@@ -76,6 +77,7 @@ flowchart LR
 - Quản lý thông báo nội bộ.
 - Quản lý liên hệ/lead (có hỗ trợ thùng rác và thao tác loạt).
 - Cấu hình cơ sở đào tạo, phòng học, địa chỉ theo tỉnh/phường.
+- Upload ảnh dùng chung cho avatar học viên, bài viết và khóa học.
 - Cổng nội bộ tách theo portal:
   - `/teacher/login` cho giảng viên
   - `/staff/login` cho nhân viên và admin
@@ -99,7 +101,11 @@ app/
 resources/views/
   clients/         # View client
   admin/           # View admin
-  components/      # Blade components
+  components/      # Blade components, gồm cả x-upload.image
+resources/js/components/
+  image-upload.js  # Logic upload ảnh dùng chung (preview, drag-drop, progress)
+app/Services/Support/Uploads/
+  ImageUploadService.php   # Backend upload ảnh dùng chung
 routes/
   web.php          # Toàn bộ route web + admin
 database/
@@ -108,15 +114,29 @@ database/
 public/assets/     # Static assets css/js/image
 ```
 
-## 6. Cài đặt môi trường local
-### 6.1 Yêu cầu
+## 6. Upload ảnh dùng chung
+- Backend dùng `ImageUploadService` + preset trong `config/uploads.php`.
+- API upload ảnh dùng chung: `POST /api/uploads/images`.
+- Blade component dùng chung: `x-upload.image`.
+- Có 2 chế độ:
+  - `instant`: upload AJAX ngay, dùng cho avatar học viên.
+  - `deferred`: chỉ preview/chọn file, gửi kèm form cha khi submit, dùng cho bài viết và khóa học.
+- Đã áp dụng sẵn tại:
+  - `clients/hoc-vien/profile/index.blade.php`
+  - `admin/bai-viet/create.blade.php`
+  - `admin/bai-viet/edit.blade.php`
+  - `admin/khoa-hoc/create.blade.php`
+  - `admin/khoa-hoc/edit.blade.php`
+
+## 7. Cài đặt môi trường local
+### 7.1 Yêu cầu
 - PHP 8.3+
 - Composer 2+
 - Node.js 18+ và npm
 - MySQL 8.x
 - Redis 7+ nếu muốn bật cache Redis cho các chức năng realtime
 
-### 6.2 Clone và cài đặt
+### 7.2 Clone và cài đặt
 ```bash
 git clone <repo-url>
 cd DACNCNPM_TrungTamNN
@@ -131,7 +151,7 @@ Lưu ý môi trường:
 - Nếu máy đang có cả XAMPP PHP 8.2 và Homebrew PHP 8.5, hãy dùng `php`, `composer`, `artisan` theo PHP Homebrew để chạy local.
 - XAMPP vẫn có thể dùng cho MySQL/Apache nếu phiên bản PHP đi kèm đã được nâng lên phù hợp; nếu không, nên chạy app bằng `php artisan serve`.
 
-### 6.3 Cấu hình `.env` (MySQL)
+### 7.3 Cấu hình `.env` (MySQL)
 ```env
 APP_NAME="DACNCNPM TrungTamNN"
 APP_ENV=local
@@ -190,7 +210,7 @@ Worker Redis của project hiện cần nghe các queue:
 - `exports` cho export Excel/PDF
 - `maintenance` cho batch job hóa đơn quá hạn và hủy giữ chỗ quá hạn
 
-## 7. Chạy dự án
+## 8. Chạy dự án
 ### Cách 1: Chạy đồng thời server + queue + vite (khuyến nghị)
 ```bash
 composer dev
@@ -213,7 +233,7 @@ Nếu dùng XAMPP/Apache:
 - Truy cập qua virtual host hoặc `/public` theo cấu hình Apache.
 - Chỉ dùng XAMPP để chạy web khi PHP của XAMPP đạt `>= 8.3`; nếu XAMPP còn PHP 8.2 thì `artisan` và ứng dụng sẽ bị chặn bởi Composer platform check.
 
-## 8. Biến môi trường quan trọng
+## 9. Biến môi trường quan trọng
 - `APP_URL`: URL gốc ứng dụng.
 - `DB_*`: kết nối CSDL.
 - `QUEUE_CONNECTION`: nên để `redis` nếu máy local cần chạy mail queue, gửi thông báo hàng loạt hoặc export nền.
@@ -231,7 +251,7 @@ Nếu dùng XAMPP/Apache:
 - `RECAPTCHA_*`: reCAPTCHA v3 cho login/register/quên mật khẩu public.
 - `GEMINI_API_KEY`, `GEMINI_MODEL`: khóa/mode AI (nếu kích hoạt tính năng liên quan).
 
-## 9. Mô hình học phí hiện tại
+## 10. Mô hình học phí hiện tại
 - Học phí được quản lý ở cấp `lớp học`, không còn ở cấp `khóa học`.
 - `Khóa học` chỉ mô tả chương trình đào tạo; giá bán và cách thu tiền nằm ở `lophoc_chinhsachgia`.
 - `Lớp học` có thể được tạo trước khi nhập học phí, nhưng phải có chính sách giá hợp lệ trước khi chuyển sang trạng thái tuyển sinh hoặc đang học.
@@ -249,7 +269,7 @@ Nếu dùng XAMPP/Apache:
   - `docs/05-huong-dan/nhan-su-ho-so-va-ban-giao-tai-khoan.md`
   - `docs/05-huong-dan/luong-nhan-su-va-payroll.md`
 
-## 10. Lệnh hữu ích
+## 11. Lệnh hữu ích
 ```bash
 # Chạy test
 php artisan test
@@ -282,7 +302,7 @@ Cache::store('redis')->put('redis_test', 'ok', 60);
 Cache::store('redis')->get('redis_test');
 ```
 
-## Redis đang làm gì trong project
+### Redis đang làm gì trong project
 - Cache kết quả `GET /register/check-email` để giảm query MySQL lặp lại khi người dùng gõ email đăng ký.
 - Làm store cho Laravel rate limiter của `login`, `register` và `check-email`.
 - Cache các danh sách public đọc nhiều:
@@ -345,7 +365,7 @@ redis-cli PING
 composer queue:redis
 ```
 
-## 11. Test và chất lượng mã nguồn
+## 12. Test và chất lượng mã nguồn
 ```bash
 # Test full
 composer test
@@ -358,7 +378,7 @@ Thư mục test hiện có:
 - `tests/Feature`
 - `tests/Unit`
 
-## 12. Lưu ý dữ liệu và migration
+## 13. Lưu ý dữ liệu và migration
 - Dự án hiện có nhiều bảng domain custom (`taikhoan`, `lienhe`, `hoadon`, ...).
 - Thư mục migration trong repo chủ yếu là migration bổ sung/cập nhật.
 - Nếu khởi tạo mới trên máy sạch, cần đảm bảo đã có schema nền từ team (hoặc bộ migration đầy đủ) trước khi chạy dự án toàn phần.
@@ -376,7 +396,7 @@ Lệnh migrate cơ bản:
 php artisan migrate
 ```
 
-## 13. Tài liệu Auth và Nhân sự
+## 14. Tài liệu Auth và Nhân sự
 - Portal đăng nhập hiện tại:
   - Học viên: `/login`
   - Giảng viên: `/teacher/login`
@@ -393,7 +413,7 @@ php artisan migrate
 - Figma handoff payroll: `docs/05-huong-dan/figma-luong-handoff.md`
 - Thay đổi theo mốc: `CHANGELOG.md`
 
-## 14. Quy trình phát triển
+## 15. Quy trình phát triển
 - Không push trực tiếp vào `main`.
 - Tạo branch theo chức năng, mở Pull Request để review.
 - Viết commit message rõ ràng theo mục đích:
@@ -403,7 +423,7 @@ php artisan migrate
   - `docs:` cập nhật tài liệu
   - `chore:` việc hệ thống/cấu hình
 
-## 15. Hỗ trợ
+## 16. Hỗ trợ
 - Nếu gặp lỗi khi setup, tạo issue trong repository và kèm:
   - log lỗi
   - bước tái hiện
