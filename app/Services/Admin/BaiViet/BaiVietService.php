@@ -6,6 +6,7 @@ use App\Contracts\Admin\BaiViet\BaiVietServiceInterface;
 use App\Models\Content\BaiViet;
 use App\Models\Content\DanhMucBaiViet;
 use App\Models\Content\Tag;
+use App\Services\Client\PublicContentCacheService;
 use App\Services\Support\Uploads\ImageUploadService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,7 +16,8 @@ use Illuminate\Support\Str;
 class BaiVietService implements BaiVietServiceInterface
 {
     public function __construct(
-        protected ImageUploadService $imageUploadService
+        protected ImageUploadService $imageUploadService,
+        protected PublicContentCacheService $publicContentCache
     ) {
     }
 
@@ -98,6 +100,7 @@ class BaiVietService implements BaiVietServiceInterface
         if ($request->filled('danhMucIds'))
             $baiViet->danhMucs()->sync($request->danhMucIds);
         $this->syncTags($baiViet, $request->input('tagNames', ''));
+        $this->bustPublicContentCache();
 
         return $baiViet;
     }
@@ -121,8 +124,7 @@ class BaiVietService implements BaiVietServiceInterface
                 Storage::disk('public')->delete($baiViet->anhDaiDien);
             }
             $data['anhDaiDien'] = $request->file('anhDaiDien')->store('bai-viet', 'public');
-        }
-        else {
+        } else {
             unset($data['anhDaiDien']);
         }
         if ($request->tieuDe !== $baiViet->tieuDe)
@@ -131,6 +133,7 @@ class BaiVietService implements BaiVietServiceInterface
         $baiViet->update(collect($data)->except(['danhMucIds', 'tagNames'])->toArray());
         $baiViet->danhMucs()->sync($request->input('danhMucIds', []));
         $this->syncTags($baiViet, $request->input('tagNames', ''));
+        $this->bustPublicContentCache();
 
         return $baiViet;
     }
@@ -140,6 +143,7 @@ class BaiVietService implements BaiVietServiceInterface
         $baiViet = BaiViet::findOrFail($id);
         $ten = $baiViet->tieuDe;
         $baiViet->delete();
+        $this->bustPublicContentCache();
         return $ten;
     }
 
@@ -148,6 +152,7 @@ class BaiVietService implements BaiVietServiceInterface
         $request->validate(['ids' => 'required|array|min:1', 'ids.*' => 'integer|exists:baiviet,baiVietId']);
         $count = BaiViet::whereIn('baiVietId', $request->ids)->count();
         BaiViet::whereIn('baiVietId', $request->ids)->delete();
+        $this->bustPublicContentCache();
         return $count;
     }
 
@@ -155,9 +160,9 @@ class BaiVietService implements BaiVietServiceInterface
     {
         return [
             'baiViets' => BaiViet::onlyTrashed()
-            ->with(['danhMucs', 'tags', 'taiKhoan.hoSoNguoiDung'])
-            ->search($request->q)->orderBy('deleted_at', 'desc')
-            ->paginate(12)->withQueryString(),
+                ->with(['danhMucs', 'tags', 'taiKhoan.hoSoNguoiDung'])
+                ->search($request->q)->orderBy('deleted_at', 'desc')
+                ->paginate(12)->withQueryString(),
         ];
     }
 
@@ -165,6 +170,7 @@ class BaiVietService implements BaiVietServiceInterface
     {
         $baiViet = BaiViet::onlyTrashed()->findOrFail($id);
         $baiViet->restore();
+        $this->bustPublicContentCache();
         return $baiViet;
     }
 
@@ -173,6 +179,7 @@ class BaiVietService implements BaiVietServiceInterface
         $request->validate(['ids' => 'required|array|min:1', 'ids.*' => 'integer']);
         $count = BaiViet::onlyTrashed()->whereIn('baiVietId', $request->ids)->count();
         BaiViet::onlyTrashed()->whereIn('baiVietId', $request->ids)->restore();
+        $this->bustPublicContentCache();
         return $count;
     }
 
@@ -186,6 +193,7 @@ class BaiVietService implements BaiVietServiceInterface
         $baiViet->danhMucs()->detach();
         $baiViet->tags()->detach();
         $baiViet->forceDelete();
+        $this->bustPublicContentCache();
         return $ten;
     }
 
@@ -194,6 +202,7 @@ class BaiVietService implements BaiVietServiceInterface
         $baiViet = BaiViet::findOrFail($id);
         $baiViet->trangThai = $baiViet->trangThai ? 0 : 1;
         $baiViet->save();
+        $this->bustPublicContentCache();
         return [
             'success' => true,
             'trangThai' => $baiViet->trangThai,
@@ -240,5 +249,10 @@ class BaiVietService implements BaiVietServiceInterface
             $candidate = $slug . '-' . $counter++;
         }
         return $candidate;
+    }
+
+    private function bustPublicContentCache(): void
+    {
+        $this->publicContentCache->bust();
     }
 }

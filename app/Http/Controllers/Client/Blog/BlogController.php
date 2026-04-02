@@ -20,9 +20,8 @@ class BlogController extends Controller
         $payload = $this->publicContentCache->remember(
             'blog.index',
             $request->only(['s', 'category', 'tag', 'sort', 'page']),
-            fn (): array => $this->buildIndexPayload($request)
+            fn(): array => $this->buildIndexPayload($request)
         );
-
         return view('clients.bai-viet.index', $payload);
     }
 
@@ -113,7 +112,7 @@ class BlogController extends Controller
             'categories' => DanhMucBaiViet::query()
                 ->where('trangThai', 1)
                 ->withCount([
-                    'baiViets' => fn ($builder) => $builder->where('trangThai', 1),
+                    'baiViets' => fn($builder) => $builder->where('trangThai', 1),
                 ])
                 ->having('bai_viets_count', '>', 0)
                 ->orderBy('tenDanhMuc')
