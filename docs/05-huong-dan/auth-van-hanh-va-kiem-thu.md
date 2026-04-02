@@ -81,6 +81,8 @@
 - [ ] Tạo ra username hệ thống, không dùng email
 - [ ] Gửi email verification thành công
 - [ ] Chưa verify thì không vào được `/hoc-vien`
+- [ ] Học viên đã đăng nhập mở lại `/register` sẽ về `/hoc-vien`, không rơi vào `/home`
+- [ ] Nhân sự đã đăng nhập mở lại `/register` sẽ về dashboard nội bộ, không rơi vào `/home`
 
 ### 2.4 Google login
 
@@ -211,6 +213,15 @@ Kiểm tra:
 2. lần đăng nhập thành công gần nhất đã xảy ra chưa
 3. `lockout_until` trong session còn bao lâu
 4. người dùng có đang tiếp tục nhập sai sau mỗi lần hết khóa hay không
+
+### User báo đang đăng nhập rồi nhưng mở `/register` lại bị đá sang trang không mong muốn
+
+Kiểm tra:
+1. user đang mang role nào trong bảng `taikhoan`
+2. `email_verified_at` của học viên có null không
+3. `phaiDoiMatKhau` có đang bật không
+4. app đã nạp cấu hình redirect guest mới trong `AppServiceProvider` hay chưa
+5. trình duyệt có đang giữ route `/home` cũ từ cache/tab cũ không
 
 ### User báo avatar bị hỏng sau Google login
 
