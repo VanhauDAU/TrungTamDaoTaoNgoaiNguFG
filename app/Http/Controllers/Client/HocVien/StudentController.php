@@ -40,13 +40,14 @@ class StudentController extends Controller
         $user = Auth::user();
         if (!$user instanceof TaiKhoan)
             abort(403);
-        $this->studentService->updateAvatar($request, $user);
+        $upload = $this->studentService->updateAvatar($request, $user);
         $user->refresh()->load('hoSoNguoiDung');
 
         if ($request->expectsJson()) {
             return response()->json([
                 'message' => 'Cập nhật ảnh đại diện thành công!',
                 'avatarUrl' => $user->getAvatarUrl(),
+                'file' => $upload,
             ]);
         }
 

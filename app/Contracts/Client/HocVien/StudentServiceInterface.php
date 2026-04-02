@@ -9,7 +9,7 @@ interface StudentServiceInterface
 {
     public function updateProfile(Request $request, TaiKhoan $user): void;
 
-    public function updateAvatar(Request $request, TaiKhoan $user): void;
+    public function updateAvatar(Request $request, TaiKhoan $user): array;
 
     public function updatePassword(Request $request, TaiKhoan $user): void;
 

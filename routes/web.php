@@ -32,6 +32,7 @@ use App\Http\Controllers\Client\ThongBao\ClientThongBaoController;
 use App\Http\Controllers\Auth\GoogleLoginController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Upload\ImageUploadController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
@@ -46,6 +47,12 @@ Route::prefix('api')->name('api.')->group(function () {
     Route::get('/phong-hoc/{coSoId}', [AdminLopHocController::class, 'getPhongByCoso'])->name('phong-hoc-by-coso');
     // Giáo viên theo cơ sở
     Route::get('/giao-vien/{coSoId}', [AdminLopHocController::class, 'getGiaoVienByCoso'])->name('giao-vien-by-coso');
+});
+
+Route::prefix('api/uploads')->name('api.uploads.')->middleware('auth')->group(function () {
+    Route::post('/images', [ImageUploadController::class, 'store'])
+        ->middleware('throttle:20,1')
+        ->name('images.store');
 });
 
 // ─── CLIENT ROUTES ──────────────────────────────────────────────────────────
