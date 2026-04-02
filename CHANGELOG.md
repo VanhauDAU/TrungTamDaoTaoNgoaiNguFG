@@ -2,6 +2,55 @@
 
 Tất cả thay đổi đáng chú ý của dự án sẽ được ghi tại đây.
 
+## [2026-04-02] — Tối ưu giao diện upload avatar & Kiểm định bảo mật upload
+
+### Changed
+
+- **Giao diện profile học viên — khu vực avatar** được thiết kế lại hoàn toàn:
+  - Layout 2 cột: cột trái (avatar + nút + progress), cột phải (info + chọn ảnh + guideline + feedback).
+  - Ảnh xem trước **thay thế ngay vào chỗ avatar hiện tại** (cùng một `<img>`) thay vì hiển thị ở ô riêng — loại bỏ hiện tượng nhiều avatar xuất hiện cùng lúc.
+  - Nút **Xác nhận / Hủy** nằm ngay dưới avatar, ẩn khi chưa chọn ảnh, hiện khi đã chọn.
+  - Click vào avatar mở file picker trực tiếp qua `<label for="avatarInput">` bên trong overlay.
+  - Class `is-preview` thêm vào circle khi đang xem trước (đổi outline thành dashed teal); Hủy → khôi phục `src` về ảnh gốc.
+  - **Thanh tiến trình upload** chuyển sang cột trái (ngay dưới nút Xác nhận/Hủy) để người dùng thấy tiến độ cạnh ảnh.
+
+- **CSS avatar** (`account.css`) được tái cấu trúc:
+  - Thêm `@keyframes` cho pulse, shimmer progress, slide-up, spin.
+  - `.avatar-progress-wrap` có `width: 100%` để fill toàn cột trái.
+  - `.avatar-card-actions` — flex column, `gap: 6px`, animation `fadeSlideUp`.
+  - Feedback message có style riêng theo loại (error/success/info) thay vì chỉ thay đổi class màu chữ.
+  - Xóa styles cũ của `avatar-review-box`, `avatar-thumb-wrap`, `avatar-review-badge`, `avatar-review-content`.
+
+- **JavaScript** avatar upload được tái cấu trúc:
+  - Bỏ `pendingPreview` riêng biệt, thay bằng swap `avatarImg.src = previewUrl` trực tiếp.
+  - `resetSelection()` khôi phục `src` và xóa class `is-preview` khi người dùng hủy.
+  - Helper `setFeedback()` render HTML với icon Font Awesome theo kiểu (error/success/info).
+  - Sau khi upload thành công hiển thị progress 100% trong 600ms rồi mới reset giao diện.
+
+### Added
+
+- Tài liệu bảo mật upload: `docs/05-huong-dan/upload-security-checklist.md`
+  - Kiểm định đầy đủ 5 tiêu chí bảo mật upload cho tính năng avatar học viên (kết quả: **5/5 ĐẠT**).
+  - Liệt kê các cải tiến tiếp theo cho môi trường production.
+
+### Security (Audit — Không thay đổi code)
+
+Kết quả kiểm tra **upload ảnh đại diện học viên** theo checklist bảo mật:
+
+| # | Tiêu chí | Kết quả |
+|---|----------|---------|
+| 1 | Kiểm tra MIME type thực | ✅ Đạt — rule `image` + `mimes` dùng `finfo` |
+| 2 | Tên file ngẫu nhiên | ✅ Đạt — `store()` sinh UUID v4 tự động |
+| 3 | Lưu ngoài webroot | ✅ Đạt — `storage/app/public/`, symlink ra `public/storage` |
+| 4 | Giới hạn kích thước & số lượng | ✅ Đạt — 2MB backend + frontend, 1 file/lần |
+| 5 | Yêu cầu xác thực | ✅ Đạt — `auth` + `verified.student` + type-check |
+
+**Cải tiến đề xuất (chưa triển khai):**
+- Rate limit 5 req/phút cho route upload avatar.
+- Rule `dimensions` giới hạn kích thước pixel.
+- Resize ảnh về 400×400px dùng `intervention/image`.
+- Strip EXIF metadata (GPS, camera info).
+
 ## [2026-03-22] - Ổn định phiên đăng nhập khi chuyển portal trong cùng trình duyệt
 
 ### Added

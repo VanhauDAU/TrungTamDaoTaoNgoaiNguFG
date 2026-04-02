@@ -17,6 +17,10 @@ use Illuminate\Support\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Drivers\Gd\Driver;
+use Intervention\Image\Encoders\JpegEncoder;
 
 class StudentService implements StudentServiceInterface
 {
@@ -48,49 +52,71 @@ class StudentService implements StudentServiceInterface
         ]);
 
         $user->hoSoNguoiDung()->updateOrCreate(
-        ['taiKhoanId' => $user->taiKhoanId],
-        [
-            'hoTen' => $request->hoTen,
-            'soDienThoai' => $request->soDienThoai,
-            'zalo' => $request->zalo,
-            'ngaySinh' => $request->ngaySinh ?: null,
-            'gioiTinh' => $request->gioiTinh !== '' ? $request->gioiTinh : null,
-            'diaChi' => $request->diaChi,
-            'cccd' => $request->cccd,
-            'nguoiGiamHo' => $request->nguoiGiamHo,
-            'sdtGuardian' => $request->sdtGuardian,
-            'moiQuanHe' => $request->moiQuanHe,
-            'trinhDoHienTai' => $request->trinhDoHienTai,
-            'ngonNguMucTieu' => $request->ngonNguMucTieu,
-            'nguonBietDen' => $request->nguonBietDen,
-            'ghiChu' => $request->ghiChu,
-        ]
+            ['taiKhoanId' => $user->taiKhoanId],
+            [
+                'hoTen' => $request->hoTen,
+                'soDienThoai' => $request->soDienThoai,
+                'zalo' => $request->zalo,
+                'ngaySinh' => $request->ngaySinh ?: null,
+                'gioiTinh' => $request->gioiTinh !== '' ? $request->gioiTinh : null,
+                'diaChi' => $request->diaChi,
+                'cccd' => $request->cccd,
+                'nguoiGiamHo' => $request->nguoiGiamHo,
+                'sdtGuardian' => $request->sdtGuardian,
+                'moiQuanHe' => $request->moiQuanHe,
+                'trinhDoHienTai' => $request->trinhDoHienTai,
+                'ngonNguMucTieu' => $request->ngonNguMucTieu,
+                'nguonBietDen' => $request->nguonBietDen,
+                'ghiChu' => $request->ghiChu,
+            ]
         );
     }
 
     public function updateAvatar(Request $request, TaiKhoan $user): void
     {
         $request->validate([
-            'anhDaiDien' => 'required|image|mimes:jpg,jpeg,png,gif,webp|max:2048',
+            'anhDaiDien' => [
+                'required',
+                'image',
+                'mimes:jpg,jpeg,png,gif,webp',
+                'max:2048',                                   // ≤ 2 MB
+                'dimensions:max_width=5000,max_height=5000',  // chặn gigapixel DoS
+            ],
         ], [
             'anhDaiDien.required' => 'Vui lòng chọn ảnh.',
             'anhDaiDien.image' => 'File phải là ảnh.',
             'anhDaiDien.mimes' => 'Chỉ chấp nhận JPG, PNG, GIF hoặc WebP.',
             'anhDaiDien.max' => 'Ảnh không được vượt quá 2MB.',
+            'anhDaiDien.dimensions' => 'Ảnh không được lớn hơn 5000×5000 px.',
         ]);
 
+        // Xóa ảnh cũ nếu có
         $hoSo = $user->hoSoNguoiDung;
         if ($hoSo && $hoSo->anhDaiDien && Storage::disk('public')->exists($hoSo->anhDaiDien)) {
             Storage::disk('public')->delete($hoSo->anhDaiDien);
         }
 
-        $path = $request->file('anhDaiDien')->store('anh-dai-dien', 'public');
+        // Resize về tối đa 400×400px, giữ tỉ lệ, strip EXIF bằng cách re-encode
+        $filename    = Str::uuid() . '.jpg';
+        $storagePath = 'anh-dai-dien/' . $filename;
+
+        $manager = new ImageManager(new Driver());
+        $image   = $manager->decode($request->file('anhDaiDien')->getRealPath());
+
+        // Scale down nếu cạnh nào vượt 400px, không phóng to ảnh nhỏ
+        $image->scaleDown(width: 400, height: 400);
+
+        // Encode sang JPEG quality 85 — strip EXIF tự động khi re-encode
+        $encoded = $image->encode(new JpegEncoder(quality: 85));
+
+        Storage::disk('public')->put($storagePath, $encoded);
 
         $user->hoSoNguoiDung()->updateOrCreate(
-        ['taiKhoanId' => $user->taiKhoanId],
-        ['anhDaiDien' => $path]
+            ['taiKhoanId' => $user->taiKhoanId],
+            ['anhDaiDien' => $storagePath]
         );
     }
+
 
     public function updatePassword(Request $request, TaiKhoan $user): void
     {
@@ -109,7 +135,7 @@ class StudentService implements StudentServiceInterface
         }
 
         $user->update(['matKhau' => Hash::make($request->new_password)]);
-        $user->rotateRememberToken('password_changed', (string)$request->session()->getId());
+        $user->rotateRememberToken('password_changed', (string) $request->session()->getId());
     }
 
     public function getInvoices(TaiKhoan $user): array
@@ -192,15 +218,15 @@ class StudentService implements StudentServiceInterface
     {
         return [
             'classes' => DangKyLopHoc::where('taiKhoanId', $user->taiKhoanId)
-            ->visibleToStudent()
-            ->with(['lopHoc.khoaHoc', 'lopHoc.coSo', 'lopHoc.taiKhoan.hoSoNguoiDung', 'lopHoc.buoiHocs.caHoc'])
-            ->orderBy('ngayDangKy', 'desc')->get(),
+                ->visibleToStudent()
+                ->with(['lopHoc.khoaHoc', 'lopHoc.coSo', 'lopHoc.taiKhoan.hoSoNguoiDung', 'lopHoc.buoiHocs.caHoc'])
+                ->orderBy('ngayDangKy', 'desc')->get(),
         ];
     }
 
     public function getSchedule(Request $request, TaiKhoan $user): array
     {
-        $baseDate = $request->get('tuan') ?Carbon::parse($request->get('tuan')) : Carbon::now();
+        $baseDate = $request->get('tuan') ? Carbon::parse($request->get('tuan')) : Carbon::now();
         $startOfWeek = $baseDate->copy()->startOfWeek(Carbon::MONDAY);
         $endOfWeek = $baseDate->copy()->endOfWeek(Carbon::SUNDAY);
 
