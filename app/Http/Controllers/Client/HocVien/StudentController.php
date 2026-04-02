@@ -41,6 +41,15 @@ class StudentController extends Controller
         if (!$user instanceof TaiKhoan)
             abort(403);
         $this->studentService->updateAvatar($request, $user);
+        $user->refresh()->load('hoSoNguoiDung');
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'Cập nhật ảnh đại diện thành công!',
+                'avatarUrl' => $user->getAvatarUrl(),
+            ]);
+        }
+
         return back()->with('success_avatar', 'Cập nhật ảnh đại diện thành công!');
     }
 

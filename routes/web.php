@@ -74,7 +74,9 @@ Route::prefix('/')->name('home.')->group(function () {
     Route::prefix('hoc-vien')->name('student.')->middleware(['auth', 'verified.student'])->group(function () {
         Route::get('/', [StudentController::class, 'index'])->name('index');
         Route::post('/', [StudentController::class, 'updateProfile'])->name('update-profile');
-        Route::post('/anh-dai-dien', [StudentController::class, 'updateAvatar'])->name('update-avatar');
+        Route::post('/anh-dai-dien', [StudentController::class, 'updateAvatar'])
+            ->middleware('throttle:5,1')   // tối đa 5 lần upload/phút/người dùng
+            ->name('update-avatar');
         Route::get('/thiet-bi-dang-nhap', [StudentController::class, 'devices'])->name('devices');
         Route::post('/thiet-bi-dang-nhap/dang-xuat-tat-ca', [StudentController::class, 'logoutAllDevices'])->name('devices.logout-all');
         Route::post('/thiet-bi-dang-nhap/{sessionId}/dang-xuat', [StudentController::class, 'revokeDeviceSession'])->name('devices.logout');

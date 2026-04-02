@@ -251,53 +251,314 @@
 }
 
 /* ============================================
-   AVATAR UPLOAD
+   AVATAR UPLOAD — PREMIUM REDESIGN
 ============================================ */
-.avatar-upload-area {
-    display: flex;
-    align-items: center;
-    gap: 24px;
-    flex-wrap: wrap;
+
+/* Keyframes */
+@keyframes avatarRingPulse {
+    0%   { box-shadow: 0 0 0 0 rgba(39, 196, 181, 0.45); }
+    70%  { box-shadow: 0 0 0 10px rgba(39, 196, 181, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(39, 196, 181, 0); }
+}
+@keyframes progressShimmer {
+    0%   { background-position: -200% center; }
+    100% { background-position: 200% center; }
+}
+@keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes uploadSpin {
+    to { transform: rotate(360deg); }
 }
 
+.avatar-upload-area {
+    display: grid;
+    grid-template-columns: 148px minmax(0, 1fr);
+    gap: 20px;
+    align-items: start;
+}
+
+/* ── Avatar card (col trái) ── */
+.avatar-current-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.avatar-card-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #e8f7f5 0%, #d0f0ed 100%);
+    color: #10454F;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border: 1px solid rgba(39,196,181,0.25);
+}
+
+/* Avatar circle */
 .avatar-preview {
     position: relative;
-    width: 100px;
-    height: 100px;
+    width: 120px;
+    height: 120px;
     border-radius: 50%;
     overflow: hidden;
     cursor: pointer;
-    border: 3px solid #e0f5f3;
+    border: 3px solid transparent;
+    background-clip: padding-box;
+    outline: 3px solid rgba(39,196,181,0.25);
+    outline-offset: 3px;
     flex-shrink: 0;
+    box-shadow:
+        0 4px 12px rgba(16, 69, 79, 0.12),
+        0 16px 32px rgba(16, 69, 79, 0.06);
+    transition: outline-color 0.3s ease, transform 0.25s ease;
 }
-
+.avatar-preview:hover {
+    outline-color: #27C4B5;
+    transform: scale(1.03);
+}
 .avatar-preview img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
+    transition: transform 0.35s ease;
+}
+.avatar-preview:hover img {
+    transform: scale(1.06);
 }
 
+/* Overlay – dùng label để click mở file picker */
 .avatar-overlay {
     position: absolute;
     inset: 0;
-    background: rgba(16, 69, 79, 0.55);
+    background: linear-gradient(160deg, rgba(16,69,79,0.6) 0%, rgba(39,196,181,0.45) 100%);
     display: flex;
     align-items: center;
     justify-content: center;
     opacity: 0;
-    transition: opacity 0.25s;
+    transition: opacity 0.3s ease;
+    backdrop-filter: blur(2px);
+}
+.avatar-overlay-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
     color: #fff;
-    font-size: 1.4rem;
+    font-size: 1.5rem;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+    justify-content: center;
+    margin: 0;
+}
+.overlay-hint {
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    opacity: 0.9;
+}
+.avatar-preview:hover .avatar-overlay { opacity: 1; }
+
+/* Khi đang xem trước ảnh mới */
+.avatar-preview.is-preview {
+    outline-color: #27C4B5;
+    outline-style: dashed;
+}
+.avatar-preview.is-preview img {
+    transform: none;
 }
 
-.avatar-preview:hover .avatar-overlay {
+/* Uploading state */
+.avatar-preview.is-uploading {
+    pointer-events: none;
+    animation: avatarRingPulse 1.4s ease-out infinite;
+}
+.avatar-preview.is-uploading img {
+    filter: brightness(0.6) blur(1px);
+}
+.avatar-preview.is-uploading .avatar-overlay {
     opacity: 1;
+    background: rgba(16,69,79,0.55);
+}
+.avatar-preview.is-uploading .avatar-overlay::before {
+    content: '';
+    display: block;
+    width: 28px;
+    height: 28px;
+    border: 3px solid rgba(255,255,255,0.2);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: uploadSpin 0.8s linear infinite;
 }
 
-.avatar-info {
-    flex: 1;
+/* Nút Xác nhận / Hủy bên dưới avatar */
+.avatar-card-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+    animation: fadeSlideUp 0.25s ease;
 }
+
+/* ── Info panel (col phải) ── */
+.avatar-info {
+    min-width: 0;
+    padding: 20px 22px;
+    border: 1px solid rgba(39,196,181,0.2);
+    border-radius: 18px;
+    background: linear-gradient(145deg, #ffffff 0%, #f6fefe 100%);
+    box-shadow: 0 2px 12px rgba(16,69,79,0.04);
+    transition: box-shadow 0.3s ease;
+}
+
+.avatar-info-header {
+    margin-bottom: 14px;
+}
+.avatar-info-header strong {
+    display: block;
+    margin-bottom: 4px;
+    color: #10454F;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.avatar-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.avatar-guideline {
+    margin-top: 10px;
+    color: #7a9099;
+    font-size: 0.83rem;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.avatar-guideline::before {
+    content: '\f05a';
+    font-family: 'Font Awesome 5 Free';
+    font-weight: 900;
+    color: #27C4B5;
+    font-size: 0.8rem;
+}
+
+/* Selected file chip */
+.avatar-selected-file {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 10px;
+    padding: 5px 12px;
+    background: linear-gradient(135deg, #e8f7f5 0%, #d0f0ed 100%);
+    border: 1px solid rgba(39,196,181,0.3);
+    border-radius: 999px;
+    color: #10454F;
+    font-weight: 600;
+    font-size: 0.82rem;
+    animation: fadeSlideUp 0.3s ease;
+}
+.avatar-selected-file::before {
+    content: '\f1c5';
+    font-family: 'Font Awesome 5 Free';
+    font-weight: 900;
+    color: #27C4B5;
+    font-size: 0.85rem;
+}
+
+/* ── PROGRESS (nằm ở cột trái, dưới avatar) ── */
+.avatar-progress-wrap {
+    width: 100%;          /* fill toàn bộ cột trái */
+    margin-top: 10px;
+    animation: fadeSlideUp 0.3s ease;
+}
+.avatar-progress-track {
+    position: relative;
+    height: 7px;
+    border-radius: 999px;
+    background: #e0f5f3;
+    overflow: hidden;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.06);
+}
+.avatar-progress-fill {
+    height: 100%;
+    border-radius: 999px;
+    background-size: 200% 100%;
+    background-image: linear-gradient(90deg, #27C4B5 0%, #5de0d4 30%, #10454F 60%, #27C4B5 100%);
+    animation: progressShimmer 1.8s linear infinite;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: width;
+}
+.avatar-progress-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 5px;
+}
+.avatar-progress-text {
+    color: #5e7680;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+.avatar-progress-pct {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #10454F;
+    font-variant-numeric: tabular-nums;
+}
+
+
+/* ── Feedback ── */
+.avatar-upload-feedback {
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+    min-height: 24px;
+    margin-top: 10px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    animation: fadeSlideUp 0.25s ease;
+    border: 1px solid transparent;
+}
+.avatar-upload-feedback:empty { padding: 0; border: none; min-height: 0; margin: 0; }
+.avatar-upload-feedback.text-danger  { background: #fff2f2; border-color: rgba(220,53,69,0.25);  color: #c82333; }
+.avatar-upload-feedback.text-success { background: #f0fdf9; border-color: rgba(39,196,181,0.3); color: #0d7a6b; }
+.avatar-upload-feedback.text-muted   { background: #f0faff; border-color: rgba(13,110,253,0.15); color: #3b75b8; }
+
+/* ── Responsive ── */
+@media (max-width: 767.98px) {
+    .avatar-upload-area {
+        grid-template-columns: 1fr;
+    }
+    .avatar-current-card {
+        align-items: center;
+        text-align: center;
+    }
+    .avatar-card-actions {
+        max-width: 200px;
+    }
+    .avatar-info {
+        padding: 16px;
+    }
+    .avatar-progress-wrap {
+        max-width: 100%;
+    }
+}
+
 
 /* Select styling */
 .form-control-custom select,

@@ -85,34 +85,79 @@
                                 <i class="fas fa-camera me-2"></i>Ảnh đại diện
                             </h6>
                             <form action="{{ route('home.student.update-avatar') }}" method="POST"
-                                enctype="multipart/form-data">
+                                enctype="multipart/form-data" id="avatarUploadForm">
                                 @csrf
                                 <div class="avatar-upload-area">
-                                    <div class="avatar-preview" id="avatarPreviewWrap">
-                                        <img id="avatarPreview" src="{{ Auth::user()->getAvatarUrl() }}"
-                                            alt="Ảnh đại diện">
-                                        <div class="avatar-overlay">
-                                            <i class="fas fa-camera"></i>
+
+                                    {{-- Avatar: hiện tại / xem trước + nút bên dưới --}}
+                                    <div class="avatar-current-card">
+                                        <div class="avatar-preview" id="avatarPreviewWrap">
+                                            <img id="avatarPreview" src="{{ Auth::user()->getAvatarUrl() }}"
+                                                data-avatar-image alt="Ảnh đại diện">
+                                            <div class="avatar-overlay" id="avatarOverlay">
+                                                <label for="avatarInput" class="avatar-overlay-inner">
+                                                    <i class="fas fa-camera"></i>
+                                                    <span class="overlay-hint">Đổi ảnh</span>
+                                                </label>
+                                            </div>
                                         </div>
+
+                                        {{-- Nút hiện khi chọn ảnh mới --}}
+                                        <div class="avatar-card-actions d-none" id="avatarCardActions">
+                                            <button type="button" class="btn btn-update btn-sm w-100" id="avatarConfirmBtn">
+                                                <i class="fas fa-upload me-1"></i> Xác nhận
+                                            </button>
+                                            <button type="button" class="btn btn-outline-secondary btn-sm w-100" id="avatarCancelBtn">
+                                                <i class="fas fa-times me-1"></i> Hủy
+                                            </button>
+                                        </div>
+
+                                        {{-- Thanh tiến trình upload (hiện phía trước, ngay cạnh ảnh) --}}
+                                        <div class="avatar-progress-wrap d-none" id="avatarProgressWrap">
+                                            <div class="avatar-progress-track">
+                                                <div class="avatar-progress-fill" id="avatarProgressFill" style="width:0%"></div>
+                                            </div>
+                                            <div class="avatar-progress-footer">
+                                                <span class="avatar-progress-text" id="avatarProgressText">Đang chuẩn bị...</span>
+                                                <span class="avatar-progress-pct" id="avatarProgressPct">0%</span>
+                                            </div>
+                                        </div>
+
                                     </div>
+
+                                    {{-- Panel thông tin --}}
                                     <div class="avatar-info">
-                                        <p class="text-muted small mb-2">Chấp nhận JPG, PNG, GIF, WebP. Tối đa 2MB.</p>
-                                        <div class="d-flex gap-2 align-items-center flex-wrap">
+                                        <div class="avatar-info-header">
+                                            <strong>Đổi ảnh đại diện</strong>
+                                            <p class="text-muted small mb-0">Nhấn vào ảnh hoặc chọn file bên dưới, ảnh xem trước hiện ngay tại chỗ.</p>
+                                        </div>
+                                        <div class="avatar-actions">
                                             <label class="btn btn-outline-secondary btn-sm" for="avatarInput">
                                                 <i class="fas fa-folder-open me-1"></i> Chọn ảnh
                                             </label>
-                                            <input type="file" id="avatarInput" name="anhDaiDien" accept="image/*"
-                                                class="d-none">
-                                            <button type="submit" class="btn btn-update btn-sm" id="avatarSubmitBtn"
-                                                style="display:none!important">
+                                            <input type="file" id="avatarInput" name="anhDaiDien" accept="image/*" class="d-none">
+                                        </div>
+
+                                        <p class="avatar-guideline mb-0">Chấp nhận JPG, PNG, GIF, WebP. Tối đa 2MB.</p>
+
+                                        {{-- Tên file đã chọn --}}
+                                        <div class="avatar-selected-file d-none" id="avatarSelectedFile"></div>
+
+                                        {{-- Feedback --}}
+                                        <div class="avatar-upload-feedback d-none" id="avatarUploadFeedback"></div>
+
+                                        <noscript>
+                                            <button type="submit" class="btn btn-update btn-sm mt-2">
                                                 <i class="fas fa-upload me-1"></i> Tải lên
                                             </button>
-                                        </div>
+                                        </noscript>
                                         @error('anhDaiDien')
-                                            <div class="text-danger small mt-1"><i
-                                                    class="fas fa-exclamation-triangle me-1"></i>{{ $message }}</div>
+                                            <div class="text-danger small mt-1">
+                                                <i class="fas fa-exclamation-triangle me-1"></i>{{ $message }}
+                                            </div>
                                         @enderror
                                     </div>
+
                                 </div>
                             </form>
                         </div>
@@ -314,20 +359,190 @@
 
 @section('script')
     <script>
-        // Preview ảnh khi chọn file
-        document.getElementById('avatarInput')?.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(evt) {
-                document.getElementById('avatarPreview').src = evt.target.result;
-                // Hiện nút Tải lên
-                const btn = document.getElementById('avatarSubmitBtn');
-                if (btn) btn.style.removeProperty('display');
+        (() => {
+            const form           = document.getElementById('avatarUploadForm');
+            const input          = document.getElementById('avatarInput');
+            const avatarImg      = document.getElementById('avatarPreview');      // circle img (hiện tại và preview)
+            const previewWrap    = document.getElementById('avatarPreviewWrap');
+            const cardActions    = document.getElementById('avatarCardActions');  // div chứa 2 nút
+            const confirmBtn     = document.getElementById('avatarConfirmBtn');
+            const cancelBtn      = document.getElementById('avatarCancelBtn');
+            const selectedFileEl = document.getElementById('avatarSelectedFile');
+            const feedback       = document.getElementById('avatarUploadFeedback');
+            const progressWrap   = document.getElementById('avatarProgressWrap');
+            const progressFill   = document.getElementById('avatarProgressFill');
+            const progressText   = document.getElementById('avatarProgressText');
+            const progressPct    = document.getElementById('avatarProgressPct');
+
+            if (!form || !input || !avatarImg || !confirmBtn || !cancelBtn) return;
+
+            const ALLOWED  = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            const MAX_SIZE = 2 * 1024 * 1024;
+            let originalAvatarUrl = avatarImg.getAttribute('src');
+            let previewUrl  = null;
+            let isUploading = false;
+
+            /* --- Helpers --- */
+            const fmtSize = (n) => n < 1024 ? `${n} B`
+                : n < 1048576 ? `${(n / 1024).toFixed(1)} KB`
+                : `${(n / 1048576).toFixed(2)} MB`;
+
+            const ICONS = {
+                error  : 'fas fa-times-circle',
+                success: 'fas fa-check-circle',
+                info   : 'fas fa-info-circle',
             };
-            reader.readAsDataURL(file);
-            // Auto submit form avatar
-            e.target.closest('form').submit();
-        });
+
+            const setFeedback = (msg, type = 'info') => {
+                feedback.innerHTML = `<i class="${ICONS[type] ?? ICONS.info}"></i><span>${msg}</span>`;
+                feedback.className = 'avatar-upload-feedback';
+                feedback.classList.add(type === 'error' ? 'text-danger' : type === 'success' ? 'text-success' : 'text-muted');
+            };
+            const clearFeedback = () => {
+                feedback.innerHTML = '';
+                feedback.className = 'avatar-upload-feedback d-none';
+            };
+
+            const setProgress = (pct, label) => {
+                const p = Math.max(0, Math.min(100, pct));
+                if (progressFill) progressFill.style.width = `${p}%`;
+                if (progressText) progressText.textContent = label ?? `Đang tải lên: ${p}%`;
+                if (progressPct)  progressPct.textContent  = `${p}%`;
+            };
+            const resetProgress = () => {
+                setProgress(0, 'Đang chuẩn bị...');
+                progressWrap.classList.add('d-none');
+            };
+
+            const revokePreviewUrl = () => {
+                if (previewUrl) { URL.revokeObjectURL(previewUrl); previewUrl = null; }
+            };
+
+            /* Ẩn nút, khôi phục ảnh gốc */
+            const resetSelection = ({ restoreOriginal = true, keepFeedback = false } = {}) => {
+                revokePreviewUrl();
+                input.value = '';
+                cardActions.classList.add('d-none');
+                confirmBtn.disabled = false;
+                cancelBtn.disabled  = false;
+                selectedFileEl.textContent = '';
+                selectedFileEl.classList.add('d-none');
+                previewWrap.classList.remove('is-uploading');
+                resetProgress();
+                if (restoreOriginal) {
+                    avatarImg.setAttribute('src', originalAvatarUrl); // khôi phục ảnh gốc
+                    previewWrap.classList.remove('is-preview');        // gỡ class preview
+                }
+                if (!keepFeedback) clearFeedback();
+            };
+
+            const updateAllAvatarImages = (url) =>
+                document.querySelectorAll('[data-avatar-image]').forEach(img => img.setAttribute('src', url));
+
+            /* --- Chọn file --- */
+            input.addEventListener('change', (e) => {
+                const file = e.target.files?.[0];
+                resetProgress();
+                clearFeedback();
+
+                if (!file) { resetSelection(); return; }
+
+                if (!ALLOWED.includes(file.type)) {
+                    resetSelection({ keepFeedback: true });
+                    setFeedback('Ảnh không đúng định dạng. Chỉ chấp nhận JPG, PNG, GIF hoặc WebP.', 'error');
+                    return;
+                }
+                if (file.size > MAX_SIZE) {
+                    resetSelection({ keepFeedback: true });
+                    setFeedback('Ảnh vượt quá giới hạn 2 MB. Vui lòng chọn ảnh nhỏ hơn.', 'error');
+                    return;
+                }
+
+                revokePreviewUrl();
+                previewUrl = URL.createObjectURL(file);
+
+                // Swap ảnh ngay vào circle hiện tại
+                avatarImg.setAttribute('src', previewUrl);
+                previewWrap.classList.add('is-preview');  // hiện tiêu đề "Xem trước"
+
+                // Hiện các nút bên dưới avatar
+                cardActions.classList.remove('d-none');
+
+                selectedFileEl.textContent = `${file.name} (${fmtSize(file.size)})`;
+                selectedFileEl.classList.remove('d-none');
+            });
+
+            /* --- Hủy --- */
+            cancelBtn.addEventListener('click', () => { if (!isUploading) resetSelection(); });
+
+            /* --- Xác nhận upload --- */
+            confirmBtn.addEventListener('click', () => {
+                if (isUploading || !input.files?.length) return;
+
+                isUploading = true;
+                confirmBtn.disabled = true;
+                cancelBtn.disabled  = true;
+                previewWrap.classList.add('is-uploading');
+                progressWrap.classList.remove('d-none');
+                setProgress(0, 'Đang chuẩn bị tải lên...');
+                setFeedback('Đang tải ảnh đại diện lên hệ thống...', 'info');
+
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', form.action, true);
+                xhr.setRequestHeader('Accept', 'application/json');
+                xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+
+                xhr.upload.addEventListener('progress', (ev) => {
+                    if (!ev.lengthComputable) return;
+                    setProgress(Math.round((ev.loaded / ev.total) * 100), 'Đang tải lên...');
+                });
+
+                xhr.onload = () => {
+                    isUploading = false;
+                    previewWrap.classList.remove('is-uploading');
+
+                    let res = null;
+                    try { res = xhr.responseText ? JSON.parse(xhr.responseText) : null; } catch (_) {}
+
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        setProgress(100, 'Hoàn tất!');
+                        originalAvatarUrl = res?.avatarUrl || avatarImg.getAttribute('src');
+                        updateAllAvatarImages(originalAvatarUrl);
+                        avatarImg.setAttribute('src', originalAvatarUrl);
+                        setTimeout(() => {
+                            resetSelection({ restoreOriginal: false, keepFeedback: true });
+                            setFeedback(res?.message || 'Cập nhật ảnh đại diện thành công!', 'success');
+                        }, 600);
+                        return;
+                    }
+
+                    confirmBtn.disabled = false;
+                    cancelBtn.disabled  = false;
+                    progressWrap.classList.add('d-none');
+
+                    if (xhr.status === 422 && res?.errors) {
+                        setFeedback(Object.values(res.errors).flat()[0] || 'Dữ liệu ảnh chưa hợp lệ.', 'error');
+                        return;
+                    }
+                    setFeedback(res?.message || 'Không thể tải ảnh lên lúc này. Vui lòng thử lại.', 'error');
+                };
+
+                xhr.onerror = () => {
+                    isUploading = false;
+                    previewWrap.classList.remove('is-uploading');
+                    confirmBtn.disabled = false;
+                    cancelBtn.disabled  = false;
+                    progressWrap.classList.add('d-none');
+                    setFeedback('Kết nối bị gián đoạn. Vui lòng kiểm tra mạng và thử lại.', 'error');
+                };
+
+                xhr.send(new FormData(form));
+            });
+
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                if (!isUploading && input.files?.length) confirmBtn.click();
+            });
+        })();
     </script>
 @endsection
