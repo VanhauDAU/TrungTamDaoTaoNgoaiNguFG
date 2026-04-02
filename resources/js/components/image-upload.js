@@ -15,7 +15,6 @@ function initImageUpload(root) {
 
     root.dataset.uploadReady = "true";
 
-    const form = root.querySelector("[data-upload-form]");
     const input = root.querySelector("[data-upload-input]");
     const preview = root.querySelector("[data-upload-preview]");
     const dropzone = root.querySelector("[data-upload-dropzone]");
@@ -30,16 +29,19 @@ function initImageUpload(root) {
     const progressText = root.querySelector("[data-upload-progress-text]");
     const progressPct = root.querySelector("[data-upload-progress-pct]");
 
-    if (!form || !input || !preview || !dropzone || !previewShell || !confirmBtn || !cancelBtn) {
-        return;
-    }
-
     const allowedTypes = csv(root.dataset.allowedTypes);
     const allowedLabel = root.dataset.allowedLabel || "JPG, PNG, GIF, WebP";
     const maxSize = Number(root.dataset.maxSize || 0);
     const maxSizeLabel = root.dataset.maxSizeLabel || formatSize(maxSize);
     const syncSelector = root.dataset.syncSelector || "";
     const responseUrlKey = root.dataset.responseUrlKey || "";
+    const uploadMode = root.dataset.uploadMode || "instant";
+    const isInstantMode = uploadMode === "instant";
+    const form = root.querySelector("[data-upload-form]") || root.closest("form");
+
+    if (!form || !input || !preview || !dropzone || !previewShell || !cancelBtn) {
+        return;
+    }
 
     let originalUrl = preview.getAttribute("src") || "";
     let previewUrl = null;
@@ -101,7 +103,9 @@ function initImageUpload(root) {
         if (selectedFileEl) {
             selectedFileEl.textContent = "";
         }
-        confirmBtn.disabled = false;
+        if (confirmBtn) {
+            confirmBtn.disabled = false;
+        }
         cancelBtn.disabled = false;
         previewShell.classList.remove("is-preview", "is-uploading");
         dropzone.classList.remove("is-dragover");
@@ -132,6 +136,16 @@ function initImageUpload(root) {
         root.dispatchEvent(new CustomEvent(eventName, { detail, bubbles: true }));
     };
 
+    const assignFileToInput = (file) => {
+        if (!file || typeof DataTransfer === "undefined") {
+            return;
+        }
+
+        const transfer = new DataTransfer();
+        transfer.items.add(file);
+        input.files = transfer.files;
+    };
+
     const handleFile = (file) => {
         resetProgress();
         clearFeedback();
@@ -157,6 +171,7 @@ function initImageUpload(root) {
 
         revokePreviewUrl();
         selectedFile = file;
+        assignFileToInput(file);
         previewUrl = URL.createObjectURL(file);
         preview.setAttribute("src", previewUrl);
         previewShell.classList.add("is-preview");
@@ -165,6 +180,10 @@ function initImageUpload(root) {
         if (selectedFileEl) {
             selectedFileEl.textContent = `${file.name} (${formatSize(file.size)})`;
             selectedFileEl.classList.remove("d-none");
+        }
+
+        if (!isInstantMode) {
+            setFeedback("Ảnh đã sẵn sàng. Nhấn lưu biểu mẫu để cập nhật.", "info");
         }
     };
 
@@ -183,12 +202,14 @@ function initImageUpload(root) {
     };
 
     const submitUpload = () => {
-        if (isUploading || !selectedFile) {
+        if (!isInstantMode || isUploading || !selectedFile) {
             return;
         }
 
         isUploading = true;
-        confirmBtn.disabled = true;
+        if (confirmBtn) {
+            confirmBtn.disabled = true;
+        }
         cancelBtn.disabled = true;
         previewShell.classList.add("is-uploading");
         progressWrap?.classList.remove("d-none");
@@ -239,7 +260,9 @@ function initImageUpload(root) {
                 return;
             }
 
-            confirmBtn.disabled = false;
+            if (confirmBtn) {
+                confirmBtn.disabled = false;
+            }
             cancelBtn.disabled = false;
             progressWrap?.classList.add("d-none");
 
@@ -257,7 +280,9 @@ function initImageUpload(root) {
         xhr.onerror = () => {
             isUploading = false;
             previewShell.classList.remove("is-uploading");
-            confirmBtn.disabled = false;
+            if (confirmBtn) {
+                confirmBtn.disabled = false;
+            }
             cancelBtn.disabled = false;
             progressWrap?.classList.add("d-none");
             setFeedback("Kết nối bị gián đoạn. Vui lòng kiểm tra mạng và thử lại.", "error");
@@ -287,10 +312,10 @@ function initImageUpload(root) {
         }
     });
 
-    confirmBtn.addEventListener("click", submitUpload);
+    confirmBtn?.addEventListener("click", submitUpload);
 
     form.addEventListener("submit", (event) => {
-        if (!isUploading && selectedFile) {
+        if (isInstantMode && !isUploading && selectedFile) {
             event.preventDefault();
             submitUpload();
         }
