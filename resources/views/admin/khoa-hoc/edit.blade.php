@@ -108,18 +108,21 @@
 
             <div class="kf-card">
                 <div class="kf-card-title"><i class="fas fa-image"></i> Ảnh khóa học</div>
-                <div class="kf-img-upload" id="img-drop-zone">
-                    <input type="file" name="anhKhoaHoc" accept="image/*" id="img-input">
-                    <div class="kf-img-placeholder" id="img-placeholder"
-                        style="{{ $khoaHoc->anhKhoaHoc ? 'display:none' : '' }}">
-                        <i class="fas fa-cloud-upload-alt"></i>
-                        <div>Kéo ảnh vào đây hoặc <strong style="color:#0f766e">chọn file</strong></div>
-                        <small>JPG, PNG, WEBP · Tối đa 2MB · Để trống giữ ảnh cũ</small>
-                    </div>
-                    <img id="img-preview" class="kf-img-preview"
-                        src="{{ $khoaHoc->anhKhoaHoc ? asset('storage/' . $khoaHoc->anhKhoaHoc) : '' }}"
-                        style="{{ $khoaHoc->anhKhoaHoc ? 'display:block' : '' }}" alt="Ảnh khóa học">
-                </div>
+                <x-upload.image
+                    :standalone="false"
+                    mode="deferred"
+                    name="anhKhoaHoc"
+                    title="Ảnh khóa học"
+                    description="Chọn ảnh mới nếu cần thay ảnh cũ. Nếu bỏ trống, hệ thống sẽ giữ nguyên ảnh hiện tại."
+                    choose-label="Đổi ảnh"
+                    preview-url="{{ $khoaHoc->anhKhoaHoc ? asset('storage/' . $khoaHoc->anhKhoaHoc) : '' }}"
+                    preview-alt="Ảnh khóa học"
+                    hint="Chấp nhận JPG, PNG, GIF, WebP. Tối đa 2MB."
+                    max-size="2097152"
+                    max-size-label="2MB"
+                    allowed-extensions-label="JPG, PNG, GIF, WebP"
+                    pending-label="Ảnh mới sẽ được lưu khi bạn nhấn Lưu thay đổi."
+                />
             </div>
         </div>
 
@@ -188,16 +191,6 @@
                 btn.classList.add('active');
                 document.getElementById(btn.dataset.tab).classList.add('active');
             });
-        });
-        document.getElementById('img-input').addEventListener('change', function() {
-            if (!this.files[0]) return;
-            const reader = new FileReader();
-            reader.onload = e => {
-                document.getElementById('img-preview').src = e.target.result;
-                document.getElementById('img-preview').style.display = 'block';
-                document.getElementById('img-placeholder').style.display = 'none';
-            };
-            reader.readAsDataURL(this.files[0]);
         });
     </script>
 @endsection

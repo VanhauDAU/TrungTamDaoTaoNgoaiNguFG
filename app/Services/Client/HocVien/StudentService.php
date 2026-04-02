@@ -3,6 +3,7 @@
 namespace App\Services\Client\HocVien;
 
 use App\Contracts\Client\HocVien\StudentServiceInterface;
+use App\Services\Support\Uploads\ImageUploadService;
 
 use App\Models\Auth\TaiKhoan;
 use App\Models\Education\BuoiHoc;
@@ -24,6 +25,11 @@ use Intervention\Image\Encoders\JpegEncoder;
 
 class StudentService implements StudentServiceInterface
 {
+    public function __construct(
+        protected ImageUploadService $imageUploadService
+    ) {
+    }
+
     public function updateProfile(Request $request, TaiKhoan $user): void
     {
         $request->validate([
@@ -72,23 +78,9 @@ class StudentService implements StudentServiceInterface
         );
     }
 
-    public function updateAvatar(Request $request, TaiKhoan $user): void
+    public function updateAvatar(Request $request, TaiKhoan $user): array
     {
-        $request->validate([
-            'anhDaiDien' => [
-                'required',
-                'image',
-                'mimes:jpg,jpeg,png,gif,webp',
-                'max:2048',                                   // ≤ 2 MB
-                'dimensions:max_width=5000,max_height=5000',  // chặn gigapixel DoS
-            ],
-        ], [
-            'anhDaiDien.required' => 'Vui lòng chọn ảnh.',
-            'anhDaiDien.image' => 'File phải là ảnh.',
-            'anhDaiDien.mimes' => 'Chỉ chấp nhận JPG, PNG, GIF hoặc WebP.',
-            'anhDaiDien.max' => 'Ảnh không được vượt quá 2MB.',
-            'anhDaiDien.dimensions' => 'Ảnh không được lớn hơn 5000×5000 px.',
-        ]);
+        $upload = $this->imageUploadService->validateAndStore($request, 'avatar', 'anhDaiDien');
 
         // Xóa ảnh cũ nếu có
         $hoSo = $user->hoSoNguoiDung;
@@ -96,25 +88,12 @@ class StudentService implements StudentServiceInterface
             Storage::disk('public')->delete($hoSo->anhDaiDien);
         }
 
-        // Resize về tối đa 400×400px, giữ tỉ lệ, strip EXIF bằng cách re-encode
-        $filename    = Str::uuid() . '.jpg';
-        $storagePath = 'anh-dai-dien/' . $filename;
-
-        $manager = new ImageManager(new Driver());
-        $image   = $manager->decode($request->file('anhDaiDien')->getRealPath());
-
-        // Scale down nếu cạnh nào vượt 400px, không phóng to ảnh nhỏ
-        $image->scaleDown(width: 400, height: 400);
-
-        // Encode sang JPEG quality 85 — strip EXIF tự động khi re-encode
-        $encoded = $image->encode(new JpegEncoder(quality: 85));
-
-        Storage::disk('public')->put($storagePath, $encoded);
-
         $user->hoSoNguoiDung()->updateOrCreate(
             ['taiKhoanId' => $user->taiKhoanId],
-            ['anhDaiDien' => $storagePath]
+            ['anhDaiDien' => $upload['path']]
         );
+
+        return $upload;
     }
 
 
