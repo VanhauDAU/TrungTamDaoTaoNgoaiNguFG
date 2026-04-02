@@ -1,6 +1,6 @@
 # TIEN DO DU AN - Trung Tam Dao Tao Ngoai Ngu Five Genius
 
-> Cập nhật lần cuối: 2026-04-02 14:37
+> Cập nhật lần cuối: 2026-04-02 17:10
 
 ## ✅ Đã hoàn thành
 
@@ -20,6 +20,8 @@
 - [x] Audit log nền cho phiên đăng nhập và token rotation
 - [x] **Upload avatar học viên** — validate MIME thực (không chỉ extension), tên file UUID ngẫu nhiên, lưu ngoài webroot, giới hạn 2MB, yêu cầu xác thực `auth + verified.student`
 - [x] **Giao diện upload avatar** — preview thay vào avatar hiện tại, nút Xác nhận/Hủy dưới avatar, thanh tiến trình cột trái, feedback có icon, AJAX không reload trang
+- [x] **Upload ảnh dùng chung** — service backend `ImageUploadService`, preset cấu hình `config/uploads.php`, API `POST /api/uploads/images`
+- [x] **Component upload ảnh tái sử dụng** — `x-upload.image` hỗ trợ preview, drag-drop, progress, feedback, đồng bộ ảnh theo 2 mode `instant/deferred`
 
 ### Cơ sở vật chất
 
@@ -31,6 +33,7 @@
 
 - [x] Danh muc khoa hoc dang cay de quy vo han cap
 - [x] Quan ly Khoa hoc (CRUD, anh, soft delete)
+- [x] Ap dung component upload anh dung chung cho form tao/sua khoa hoc
 - [x] Quan ly Lop hoc (gan giao vien, phong, ca, co so)
 - [x] Chinh sach gia theo lop hoc, khong con goi hoc phi theo khoa hoc
 - [x] Loai bo `thu theo thang` khoi runtime billing moi
@@ -90,6 +93,7 @@
 - [x] Bài viết / Blog (CRUD, slug, soft delete, tinymce)
 - [x] Danh mục bài viết, Tags
 - [x] Upload ảnh inline
+- [x] Ap dung component upload anh dung chung cho form tao/sua bai viet
 
 ### Thông báo
 
@@ -114,6 +118,7 @@
 - [x] Hướng dẫn vận hành tổng hợp cho auth, học phí lớp, đăng ký và hồ sơ nhân sự
 - [x] Tài liệu database được cập nhật thêm mô hình nhân sự mở rộng
 - [x] Feature test `NhanSuWorkflowTest` cho luồng hồ sơ nhân sự
+- [x] README / README_vi / upload security checklist được đồng bộ theo kiến trúc upload ảnh dùng chung
 
 ---
 
@@ -129,11 +134,9 @@
 
 ### 🔐 Upload bảo mật — cải tiến tiếp theo
 
-- [ ] Rate limit route `POST /hoc-vien/cap-nhat-anh` (tối đa 5 req/phút)
-- [ ] Rule `dimensions` giới hạn kích thước pixel ảnh đại diện
-- [ ] Resize ảnh về 400×400px dùng `intervention/image` trước khi lưu
-- [ ] Strip EXIF metadata để bảo vệ privacy (GPS, camera info)
 - [ ] Cân nhắc disk private + signed URL cho file nhạy cảm hơn (production)
+- [ ] Mở rộng preset và policy riêng cho upload file không phải ảnh (CV, tài liệu, đính kèm thông báo)
+- [ ] Bổ sung thêm feature test cho mode `deferred` ở form admin nếu cần khóa chặt giao diện theo regression test
 
 ---
 

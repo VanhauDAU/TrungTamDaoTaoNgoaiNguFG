@@ -15,16 +15,17 @@ Tai lieu:
 - [2. Tinh nang chinh](#2-tinh-nang-chinh)
 - [3. Cong nghe su dung](#3-cong-nghe-su-dung)
 - [4. Cau truc du an](#4-cau-truc-du-an)
-- [5. Cai dat moi truong local](#5-cai-dat-moi-truong-local)
-- [6. Chay du an](#6-chay-du-an)
-- [7. Bien moi truong quan trong](#7-bien-moi-truong-quan-trong)
-- [8. Mo hinh hoc phi hien tai](#8-mo-hinh-hoc-phi-hien-tai)
-- [9. Tai lieu Auth va Nhan su](#9-tai-lieu-auth-va-nhan-su)
-- [10. Lenh huu ich](#10-lenh-huu-ich)
-- [11. Test va chat luong ma nguon](#11-test-va-chat-luong-ma-nguon)
-- [12. Luu y du lieu va migration](#12-luu-y-du-lieu-va-migration)
-- [13. Quy trinh phat trien](#13-quy-trinh-phat-trien)
-- [14. Ho tro](#14-ho-tro)
+- [5. Upload anh dung chung](#5-upload-anh-dung-chung)
+- [6. Cai dat moi truong local](#6-cai-dat-moi-truong-local)
+- [7. Chay du an](#7-chay-du-an)
+- [8. Bien moi truong quan trong](#8-bien-moi-truong-quan-trong)
+- [9. Mo hinh hoc phi hien tai](#9-mo-hinh-hoc-phi-hien-tai)
+- [10. Tai lieu Auth va Nhan su](#10-tai-lieu-auth-va-nhan-su)
+- [11. Lenh huu ich](#11-lenh-huu-ich)
+- [12. Test va chat luong ma nguon](#12-test-va-chat-luong-ma-nguon)
+- [13. Luu y du lieu va migration](#13-luu-y-du-lieu-va-migration)
+- [14. Quy trinh phat trien](#14-quy-trinh-phat-trien)
+- [15. Ho tro](#15-ho-tro)
 
 ## 1. Tong quan
 - Nganh: He thong thong tin quan ly trung tam ngoai ngu.
@@ -59,6 +60,7 @@ Tai lieu:
 - Quan ly thong bao noi bo.
 - Quan ly lien he/lead (co ho tro thung rac va thao tac loat).
 - Cau hinh co so dao tao, phong hoc, dia chi theo tinh/phuong.
+- Upload anh dung chung cho avatar hoc vien, bai viet va khoa hoc.
 - Cong noi bo tach theo portal:
   - `/teacher/login` cho giang vien
   - `/staff/login` cho nhan vien va admin
@@ -82,7 +84,11 @@ app/
 resources/views/
   clients/         # View client
   admin/           # View admin
-  components/      # Blade components
+  components/      # Blade components, gom ca x-upload.image
+resources/js/components/
+  image-upload.js  # Logic upload anh dung chung (preview, drag-drop, progress)
+app/Services/Support/Uploads/
+  ImageUploadService.php   # Backend upload anh dung chung
 routes/
   web.php          # Toan bo route web + admin
 database/
@@ -91,15 +97,29 @@ database/
 public/assets/     # Static assets css/js/image
 ```
 
-## 5. Cai dat moi truong local
-### 5.1 Yeu cau
+## 5. Upload anh dung chung
+- Backend dung `ImageUploadService` + preset trong `config/uploads.php`.
+- API upload anh dung chung: `POST /api/uploads/images`.
+- Blade component dung chung: `x-upload.image`.
+- Co 2 che do:
+  - `instant`: upload AJAX ngay, dung cho avatar hoc vien.
+  - `deferred`: chi preview/chon file, gui kem form cha khi submit, dung cho bai viet va khoa hoc.
+- Da ap dung san tai:
+  - `clients/hoc-vien/profile/index.blade.php`
+  - `admin/bai-viet/create.blade.php`
+  - `admin/bai-viet/edit.blade.php`
+  - `admin/khoa-hoc/create.blade.php`
+  - `admin/khoa-hoc/edit.blade.php`
+
+## 6. Cai dat moi truong local
+### 6.1 Yeu cau
 - PHP 8.3+
 - Composer 2+
 - Node.js 18+ va npm
 - MySQL 8.x
 - Redis 7+ neu muon bat cache Redis cho cac chuc nang realtime
 
-### 5.2 Clone va cai dat
+### 6.2 Clone va cai dat
 ```bash
 git clone <repo-url>
 cd DACNCNPM_TrungTamNN
@@ -114,7 +134,7 @@ Luu y moi truong:
 - Neu may dang co ca XAMPP PHP 8.2 va Homebrew PHP 8.5, hay dung `php`, `composer`, `artisan` theo PHP Homebrew de chay local.
 - XAMPP van co the dung cho MySQL/Apache neu PHP di kem da duoc nang cap; neu khong, nen chay app bang `php artisan serve`.
 
-### 5.3 Cau hinh `.env` (MySQL)
+### 6.3 Cau hinh `.env` (MySQL)
 ```env
 APP_NAME="DACNCNPM TrungTamNN"
 APP_ENV=local
@@ -173,7 +193,7 @@ Worker Redis cua project hien can nghe cac queue:
 - `exports` cho export Excel/PDF
 - `maintenance` cho batch job hoa don qua han va huy giu cho qua han
 
-## 6. Chay du an
+## 7. Chay du an
 ### Cach 1: Chay dong thoi server + queue + vite (khuyen nghi)
 ```bash
 composer dev
@@ -196,7 +216,7 @@ Neu dung XAMPP/Apache:
 - Truy cap qua virtual host hoac `/public` theo cau hinh Apache.
 - Chi dung XAMPP de chay web khi PHP cua XAMPP dat `>= 8.3`; neu XAMPP con PHP 8.2 thi `artisan` va ung dung se bi chan boi Composer platform check.
 
-## 7. Bien moi truong quan trong
+## 8. Bien moi truong quan trong
 - `APP_URL`: URL goc ung dung.
 - `DB_*`: ket noi CSDL.
 - `QUEUE_CONNECTION`: nen de `redis` neu may local can chay mail queue, gui thong bao hang loat hoac export nen.
@@ -214,7 +234,7 @@ Neu dung XAMPP/Apache:
 - `RECAPTCHA_*`: reCAPTCHA v3 cho login/register/quen mat khau public.
 - `GEMINI_API_KEY`, `GEMINI_MODEL`: khoa/mode AI (neu kich hoat tinh nang lien quan).
 
-## 8. Mo hinh hoc phi hien tai
+## 9. Mo hinh hoc phi hien tai
 - Hoc phi duoc quan ly o cap `lop hoc`, khong con o cap `khoa hoc`.
 - `khoahoc` chi mo ta san pham dao tao; gia ban va cach thu tien nam o `lophoc_chinhsachgia`.
 - `lophoc` co the tao truoc khi nhap hoc phi, nhung phai co chinh sach gia hop le truoc khi chuyen sang trang thai tuyen sinh/van hanh.
@@ -224,7 +244,7 @@ Neu dung XAMPP/Apache:
 - Bang `lophoc_dotthu` duoc dung de luu ke hoach thu theo dot; runtime hien tai van tao 1 hoa don tong cho moi dang ky va de san nen cho billing tach dot ve sau.
 - Huong dan van hanh tong hop: `docs/05-huong-dan/huong-dan.md`.
 
-## 9. Tai lieu Auth va Nhan su
+## 10. Tai lieu Auth va Nhan su
 - Portal dang nhap hien tai:
   - Hoc vien: `/login`
   - Giang vien: `/teacher/login`
@@ -241,7 +261,7 @@ Neu dung XAMPP/Apache:
 - Figma handoff payroll: `docs/05-huong-dan/figma-luong-handoff.md`
 - Thay doi theo moc: `CHANGELOG.md`
 
-## 10. Lenh huu ich
+## 11. Lenh huu ich
 ```bash
 # Chay test
 php artisan test
@@ -270,7 +290,7 @@ Cache::store('redis')->put('redis_test', 'ok', 60);
 Cache::store('redis')->get('redis_test');
 ```
 
-## Redis dang lam gi trong project
+### Redis dang lam gi trong project
 - Cache ket qua `GET /register/check-email` de giam query MySQL lap lai khi nguoi dung go email dang ky.
 - Lam store cho Laravel rate limiter cua `login`, `register` va `check-email`.
 - Cache cac danh sach public doc nhieu:
@@ -333,7 +353,7 @@ redis-cli PING
 composer queue:redis
 ```
 
-## 11. Test va chat luong ma nguon
+## 12. Test va chat luong ma nguon
 ```bash
 # Test full
 composer test
@@ -346,7 +366,7 @@ Thu muc test hien co:
 - `tests/Feature`
 - `tests/Unit`
 
-## 12. Luu y du lieu va migration
+## 13. Luu y du lieu va migration
 - Du an hien co nhieu bang domain custom (`taikhoan`, `lienhe`, `hoadon`, ...).
 - Thu muc migration trong repo chu yeu la migration bo sung/cap nhat.
 - Neu khoi tao moi tren may sach, can dam bao da co schema nen tu team (hoac bo migration day du) truoc khi chay du an toan phan.
@@ -363,7 +383,7 @@ Lenh migrate co ban:
 php artisan migrate
 ```
 
-## 13. Quy trinh phat trien
+## 14. Quy trinh phat trien
 - Khong push truc tiep vao `main`.
 - Tao branch theo chuc nang, mo Pull Request de review.
 - Viet commit message ro rang theo muc dich:
@@ -373,7 +393,7 @@ php artisan migrate
   - `docs:` cap nhat tai lieu
   - `chore:` viec he thong/cau hinh
 
-## 14. Ho tro
+## 15. Ho tro
 - Neu gap loi khi setup, tao issue trong repository va kem:
   - log loi
   - buoc tai hien

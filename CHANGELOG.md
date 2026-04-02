@@ -2,6 +2,31 @@
 
 Tất cả thay đổi đáng chú ý của dự án sẽ được ghi tại đây.
 
+## [2026-04-02] - Chuẩn hóa upload ảnh dùng chung và áp dụng cho form admin
+
+### Added
+
+- Thêm cấu hình preset upload ảnh dùng chung tại `config/uploads.php`.
+- Thêm service `ImageUploadService` để gom validation, lưu file, transform ảnh và trả metadata theo một format thống nhất.
+- Thêm API upload ảnh dùng chung `POST /api/uploads/images` qua `ImageUploadController`.
+- Thêm Blade component `x-upload.image` và module JS/CSS dùng chung cho toàn dự án.
+- Thêm 2 chế độ sử dụng cho component:
+  - `instant`: upload AJAX ngay, có progress bar
+  - `deferred`: chỉ preview/drag-drop, file được submit cùng form cha
+- Thêm test `ReusableImageUploadTest` cho API upload ảnh dùng chung và flow cập nhật avatar học viên.
+
+### Changed
+
+- Luồng upload avatar học viên không còn tự giữ logic validate/lưu ảnh riêng trong `StudentService`; đã chuyển sang dùng `ImageUploadService` với preset `avatar`.
+- Upload ảnh inline của bài viết trong TinyMCE được chuyển sang dùng chung backend upload ảnh.
+- Form ảnh đại diện bài viết và ảnh khóa học ở admin đã đổi sang `x-upload.image` ở chế độ `deferred`, thay thế preview script gắn cứng tại từng view.
+- Tài liệu `README`, `README_vi`, `docs/progress.md` và checklist bảo mật upload được cập nhật để phản ánh kiến trúc upload mới.
+
+### Fixed
+
+- Loại bỏ tình trạng logic upload ảnh bị lặp ở nhiều màn hình Blade.
+- Đồng bộ trải nghiệm chọn ảnh, drag-drop, preview và validation frontend giữa profile học viên, bài viết và khóa học.
+
 ## [2026-04-02] — Tối ưu giao diện upload avatar & Kiểm định bảo mật upload
 
 ### Changed
