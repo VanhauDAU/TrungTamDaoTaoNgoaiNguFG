@@ -59,6 +59,16 @@ Các route học viên yêu cầu:
 - là học viên
 - đã xác thực email
 
+### Redirect khi đã đăng nhập nhưng vào lại route guest
+
+Các route guest auth như `/login`, `/register`, `/teacher/login`, `/staff/login` sẽ không còn rơi vào `/home` mặc định của Laravel.
+
+Hệ thống hiện redirect theo trạng thái thực của tài khoản:
+- học viên đã xác thực email về `home.student.index`
+- học viên chưa xác thực email về `verification.notice`
+- nhân sự về dashboard nội bộ phù hợp
+- tài khoản đang bật `phaiDoiMatKhau` về `force-change-password`
+
 ## 3. Quy ước username
 
 `username` hiện là mã hệ thống, không dùng email, không dùng CCCD.
@@ -173,6 +183,7 @@ Ví dụ:
 - Kết quả check email realtime được cache bằng Redis trong TTL ngắn; nếu Redis không sẵn sàng, backend fallback sang MySQL.
 - `POST /register` và `GET /register/check-email` đều có rate limit riêng để chống spam submit và spam dò email.
 - Nếu Google OAuth đã được cấu hình, trang đăng ký sẽ hiện nút đăng ký / đăng nhập bằng Google.
+- Nếu user đã đăng nhập mà vẫn mở lại `/register`, hệ thống sẽ chuyển về đúng landing page theo role thay vì đi vào `/home`.
 
 ### Avatar và provider
 

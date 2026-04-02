@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
+use Illuminate\Auth\Middleware\RedirectIfAuthenticated;
+use App\Models\Auth\TaiKhoan;
 use App\Models\Course\KhoaHoc;
 use App\Models\Course\DanhMucKhoaHoc;
 use App\Models\Content\BaiViet;
@@ -118,6 +120,7 @@ class AppServiceProvider extends ServiceProvider
     {
         Paginator::useBootstrapFive();
 
+        $this->configureAuthenticatedGuestRedirects();
         $this->registerAuthRateLimiters();
         $this->registerPublicContentObservers();
 
@@ -148,6 +151,33 @@ class AppServiceProvider extends ServiceProvider
                 $view->with($payload);
             }
         );
+    }
+
+    private function configureAuthenticatedGuestRedirects(): void
+    {
+        RedirectIfAuthenticated::redirectUsing(function (Request $request): string {
+            $user = $request->user();
+
+            if (!$user instanceof TaiKhoan) {
+                return route('home.index');
+            }
+
+            if ((int) $user->phaiDoiMatKhau === 1) {
+                return route('force-change-password');
+            }
+
+            if ($user->role === TaiKhoan::ROLE_HOC_VIEN && !$user->hasVerifiedEmail()) {
+                return route('verification.notice');
+            }
+
+            if ($user->isStaff()) {
+                $loginService = $this->app->make(LoginServiceInterface::class);
+
+                return route($loginService->staffDashboardRouteFor($user));
+            }
+
+            return route('home.student.index');
+        });
     }
 
     private function registerPublicContentObservers(): void
