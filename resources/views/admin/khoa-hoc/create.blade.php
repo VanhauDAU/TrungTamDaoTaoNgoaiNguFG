@@ -108,18 +108,20 @@
             {{-- Upload ảnh --}}
             <div class="kf-card">
                 <div class="kf-card-title"><i class="fas fa-image"></i> Ảnh khóa học</div>
-                <div class="kf-img-upload" id="img-drop-zone">
-                    <input type="file" name="anhKhoaHoc" accept="image/*" id="img-input">
-                    <div class="kf-img-placeholder" id="img-placeholder">
-                        <i class="fas fa-cloud-upload-alt"></i>
-                        <div>Kéo ảnh vào đây hoặc <strong style="color:#0f766e">chọn file</strong></div>
-                        <small>JPG, PNG, WEBP · Tối đa 2MB</small>
-                    </div>
-                    <img src="" alt="Preview" class="kf-img-preview" id="img-preview">
-                </div>
-                @error('anhKhoaHoc')
-                    <div class="invalid-feedback" style="display:block;margin-top:6px">{{ $message }}</div>
-                @enderror
+                <x-upload.image
+                    :standalone="false"
+                    mode="deferred"
+                    name="anhKhoaHoc"
+                    title="Ảnh khóa học"
+                    description="Ảnh này sẽ xuất hiện trên danh sách và trang chi tiết khóa học sau khi bạn lưu."
+                    choose-label="Chọn ảnh"
+                    preview-alt="Ảnh khóa học"
+                    hint="Chấp nhận JPG, PNG, GIF, WebP. Tối đa 2MB."
+                    max-size="2097152"
+                    max-size-label="2MB"
+                    allowed-extensions-label="JPG, PNG, GIF, WebP"
+                    pending-label="Ảnh sẽ được gửi cùng biểu mẫu tạo khóa học."
+                />
             </div>
         </div>
 
@@ -198,22 +200,6 @@
                 document.getElementById(btn.dataset.tab).classList.add('active');
             });
         });
-
-        // ── Image preview ──────────────────────────────
-        document.getElementById('img-input').addEventListener('change', function() {
-            previewImage(this.files[0]);
-        });
-
-        function previewImage(file) {
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = e => {
-                document.getElementById('img-preview').src = e.target.result;
-                document.getElementById('img-preview').style.display = 'block';
-                document.getElementById('img-placeholder').style.display = 'none';
-            };
-            reader.readAsDataURL(file);
-        }
 
         // ── Toggle label ───────────────────────────────
         document.getElementById('trangThaiToggle').addEventListener('change', function() {

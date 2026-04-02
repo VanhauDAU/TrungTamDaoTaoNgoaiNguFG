@@ -95,18 +95,21 @@
             {{-- Upload ảnh --}}
             <div class="bf-card">
                 <div class="bf-card-title"><i class="fas fa-image"></i> Ảnh đại diện</div>
-                <div class="bf-img-upload" id="img-drop-zone">
-                    <input type="file" name="anhDaiDien" accept="image/*" id="img-input">
-                    <div class="bf-img-placeholder" id="img-placeholder"
-                        style="{{ $baiViet->anhDaiDien ? 'display:none' : '' }}">
-                        <i class="fas fa-cloud-upload-alt"></i>
-                        <div>Kéo ảnh vào đây hoặc <strong style="color:#1d4ed8">chọn file</strong></div>
-                        <small>JPG, PNG, WEBP · Tối đa 2MB</small>
-                    </div>
-                    <img src="{{ $baiViet->anhDaiDien ? asset('storage/' . $baiViet->anhDaiDien) : '' }}" alt="Preview"
-                        class="bf-img-preview" id="img-preview"
-                        style="{{ $baiViet->anhDaiDien ? 'display:block' : 'display:none' }}">
-                </div>
+                <x-upload.image
+                    :standalone="false"
+                    mode="deferred"
+                    name="anhDaiDien"
+                    title="Ảnh đại diện bài viết"
+                    description="Chọn ảnh mới nếu cần thay thế ảnh hiện tại. Nếu không chọn, hệ thống sẽ giữ nguyên ảnh cũ."
+                    choose-label="Đổi ảnh"
+                    preview-url="{{ $baiViet->anhDaiDien ? asset('storage/' . $baiViet->anhDaiDien) : '' }}"
+                    preview-alt="Ảnh đại diện bài viết"
+                    hint="Chấp nhận JPG, PNG, GIF, WebP. Tối đa 2MB."
+                    max-size="2097152"
+                    max-size-label="2MB"
+                    allowed-extensions-label="JPG, PNG, GIF, WebP"
+                    pending-label="Ảnh mới sẽ được lưu khi bạn cập nhật bài viết."
+                />
             </div>
         </div>
 
@@ -232,18 +235,6 @@
                 btn.classList.add('active');
                 document.getElementById(btn.dataset.tab).classList.add('active');
             });
-        });
-
-        // ── Image preview ──────────────────────────────
-        document.getElementById('img-input').addEventListener('change', function () {
-            if (!this.files[0]) return;
-            const reader = new FileReader();
-            reader.onload = e => {
-                document.getElementById('img-preview').src = e.target.result;
-                document.getElementById('img-preview').style.display = 'block';
-                document.getElementById('img-placeholder').style.display = 'none';
-            };
-            reader.readAsDataURL(this.files[0]);
         });
 
         // ── Toggle label ───────────────────────────────
