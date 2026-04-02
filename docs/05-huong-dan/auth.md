@@ -1,6 +1,6 @@
 # Auth Module Guide
 
-> Cập nhật: 2026-03-23
+> Cập nhật: 2026-03-22
 
 Tài liệu này là điểm vào chính cho module Auth sau đợt nâng cấp.
 

@@ -1,6 +1,6 @@
 # TIEN DO DU AN - Trung Tam Dao Tao Ngoai Ngu Five Genius
 
-> Cap nhat lan cuoi: 2026-03-15 22:10
+> Cập nhật lần cuối: 2026-04-02 14:37
 
 ## ✅ Đã hoàn thành
 
@@ -18,6 +18,8 @@
 - [x] Ghi nhớ đăng nhập + rotate remember token khi đổi/reset mật khẩu
 - [x] Học viên tự xem và thu hồi thiết bị đã đăng nhập
 - [x] Audit log nền cho phiên đăng nhập và token rotation
+- [x] **Upload avatar học viên** — validate MIME thực (không chỉ extension), tên file UUID ngẫu nhiên, lưu ngoài webroot, giới hạn 2MB, yêu cầu xác thực `auth + verified.student`
+- [x] **Giao diện upload avatar** — preview thay vào avatar hiện tại, nút Xác nhận/Hủy dưới avatar, thanh tiến trình cột trái, feedback có icon, AJAX không reload trang
 
 ### Cơ sở vật chất
 
@@ -117,13 +119,21 @@
 
 ## Dang phat trien
 
-- [ ] Bang diem hoc vien
-- [ ] Danh gia giao vien sau khoa hoc
-- [ ] Bao cao doanh thu chi tiet (admin)
-- [ ] Dashboard thong ke nang cao
-- [ ] Quy trinh hoan tien / dieu chinh cong no / credit note
-- [ ] Bang luong ky / payroll thuc te theo ky
-- [ ] Phieu luong va xac nhan chi tra
+- [ ] Bảng điểm học viên
+- [ ] Đánh giá giáo viên sau khóa học
+- [ ] Báo cáo doanh thu chi tiết (admin)
+- [ ] Dashboard thống kê nâng cao
+- [ ] Quy trình hoàn tiền / điều chỉnh công nợ / credit note
+- [ ] Bảng lương kỳ / payroll thực tế theo kỳ
+- [ ] Phiếu lương và xác nhận chi trả
+
+### 🔐 Upload bảo mật — cải tiến tiếp theo
+
+- [ ] Rate limit route `POST /hoc-vien/cap-nhat-anh` (tối đa 5 req/phút)
+- [ ] Rule `dimensions` giới hạn kích thước pixel ảnh đại diện
+- [ ] Resize ảnh về 400×400px dùng `intervention/image` trước khi lưu
+- [ ] Strip EXIF metadata để bảo vệ privacy (GPS, camera info)
+- [ ] Cân nhắc disk private + signed URL cho file nhạy cảm hơn (production)
 
 ---
 

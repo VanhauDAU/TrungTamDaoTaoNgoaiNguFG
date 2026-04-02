@@ -109,6 +109,7 @@
                         <div class="dropdown">
                             <a class="user-pill d-flex align-items-center gap-2" href="#" data-bs-toggle="dropdown">
                                 <img src="{{ Auth::user()->getAvatarUrl() }}" class="rounded-circle shadow-sm"
+                                    data-avatar-image
                                     width="38" height="38" style="object-fit: cover;">
                                 <span
                                     class="fw-semibold d-none d-md-block">{{ Auth::user()->hoSoNguoiDung->hoTen ?? Auth::user()->name }}</span>

@@ -1,6 +1,6 @@
 # Auth - Vận Hành Và Kiểm Thử
 
-> Cập nhật: 2026-03-23
+> Cập nhật: 2026-03-22
 
 ## 1. Luồng nghiệp vụ chuẩn
 

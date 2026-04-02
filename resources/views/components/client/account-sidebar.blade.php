@@ -6,7 +6,7 @@
 
         <div class="sidebar-user-info">
             <div class="user-avatar-wrapper">
-                <img src="{{ Auth::user()->getAvatarUrl() }}" alt="Avatar" class="sidebar-avatar">
+                <img src="{{ Auth::user()->getAvatarUrl() }}" alt="Avatar" class="sidebar-avatar" data-avatar-image>
             </div>
             <h3 class="user-name">{{ Auth::user()->hoSoNguoiDung->hoTen ?? Auth::user()->name }}</h3>
             <p class="user-email">{{ Auth::user()->email }}</p>
