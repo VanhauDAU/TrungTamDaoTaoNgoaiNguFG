@@ -6,6 +6,7 @@ use App\Contracts\Admin\BaiViet\BaiVietServiceInterface;
 use App\Models\Content\BaiViet;
 use App\Models\Content\DanhMucBaiViet;
 use App\Models\Content\Tag;
+use App\Services\Support\Uploads\ImageUploadService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -13,6 +14,11 @@ use Illuminate\Support\Str;
 
 class BaiVietService implements BaiVietServiceInterface
 {
+    public function __construct(
+        protected ImageUploadService $imageUploadService
+    ) {
+    }
+
     public function getList(Request $request): array
     {
         $query = BaiViet::with(['danhMucs', 'tags', 'taiKhoan.hoSoNguoiDung']);
@@ -197,9 +203,9 @@ class BaiVietService implements BaiVietServiceInterface
 
     public function uploadImage(Request $request): string
     {
-        $request->validate(['file' => 'required|image|mimes:jpg,jpeg,png,gif,webp|max:4096']);
-        $path = $request->file('file')->store('bai-viet/content', 'public');
-        return asset('storage/' . $path);
+        $upload = $this->imageUploadService->validateAndStore($request, 'content_image', 'file');
+
+        return $upload['url'];
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

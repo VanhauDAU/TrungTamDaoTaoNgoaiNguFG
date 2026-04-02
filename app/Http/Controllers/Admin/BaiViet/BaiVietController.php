@@ -97,6 +97,11 @@ class BaiVietController extends Controller
     public function uploadImage(Request $request)
     {
         $location = $this->baiVietService->uploadImage($request);
-        return response()->json(['location' => $location]);
+
+        return response()->json([
+            'message' => 'Tải ảnh lên thành công.',
+            'location' => $location,
+            'file' => ['url' => $location],
+        ]);
     }
 }
