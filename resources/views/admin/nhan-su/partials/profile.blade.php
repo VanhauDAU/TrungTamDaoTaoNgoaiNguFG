@@ -10,32 +10,19 @@
     <div class="profile-hero">
         {{-- ===== AVATAR ===== --}}
         @php
-            $avatarUrl   = $record->getAvatarUrl();
-            $isDefault   = str_contains($avatarUrl, 'user-default.png');
-            $hoTenFull   = $profile?->hoTen ?? '';
+            $avatarUrl    = $record->getAvatarUrl();
+            $isDefault    = str_contains($avatarUrl, 'user-default.png');
+            $hoTenFull    = $profile?->hoTen ?? '';
             // Lấy ký tự đầu trong HỌ (từ đầu tiên)
-            $initials    = mb_strtoupper(mb_substr(trim(explode(' ', $hoTenFull)[0]), 0, 1, 'UTF-8'), 'UTF-8') ?: '?';
+            $initials     = mb_strtoupper(mb_substr(trim(explode(' ', $hoTenFull)[0]), 0, 1, 'UTF-8'), 'UTF-8') ?: '?';
         @endphp
-        <form id="avatar-upload-form"
-              action="{{ route($routePrefix . '.avatar.update', $record->taiKhoan) }}"
-              method="POST"
-              enctype="multipart/form-data"
-              style="display:none">
-            @csrf
-            <input type="file" id="avatar-file-input" name="anhDaiDien"
-                   accept="image/jpeg,image/png,image/webp">
-        </form>
 
-        <div class="avatar-wrapper" title="Bấm để thay ảnh đại diện" onclick="document.getElementById('avatar-file-input').click()">
+        <div class="avatar-wrapper">
             @if (!$isDefault)
                 <img src="{{ $avatarUrl }}" alt="Ảnh đại diện" class="avatar-img">
             @else
                 <div class="avatar-initials">{{ $initials }}</div>
             @endif
-            <div class="avatar-overlay">
-                <i class="fas fa-camera"></i>
-                <span>Thay ảnh</span>
-            </div>
         </div>
 
         <div style="flex:1">

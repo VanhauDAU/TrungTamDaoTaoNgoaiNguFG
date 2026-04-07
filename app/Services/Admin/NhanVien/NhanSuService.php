@@ -130,6 +130,7 @@ class NhanSuService implements NhanSuServiceInterface
             $taiKhoan->assignSystemUsername();
 
             $this->upsertCoreProfile($taiKhoan, $validated, true);
+            $this->handleAvatarUpload($request, $taiKhoan);
             $this->upsertProfileSnapshot($taiKhoan, $validated['nhanSuMauQuyDinhId'], $validated['ghiChuHoSo'] ?? null);
             $this->createSalaryPackage($taiKhoan, $validated, true);
 
@@ -215,7 +216,7 @@ class NhanSuService implements NhanSuServiceInterface
     {
         $validated = $this->validateUpdateRequest($request, $nhanSu);
 
-        DB::transaction(function () use ($validated, $nhanSu) {
+        DB::transaction(function () use ($validated, $request, $nhanSu) {
             $oldStatus = (int) $nhanSu->trangThai;
             $passwordChanged = !empty($validated['matKhau']);
 
@@ -232,6 +233,7 @@ class NhanSuService implements NhanSuServiceInterface
             }
 
             $this->upsertCoreProfile($nhanSu, $validated, false);
+            $this->handleAvatarUpload($request, $nhanSu);
         });
     }
 
@@ -245,6 +247,15 @@ class NhanSuService implements NhanSuServiceInterface
             'anhDaiDien.mimes'     => 'Chỉ chấp nhận định dạng JPG, PNG, WEBP.',
             'anhDaiDien.max'       => 'Ảnh không được vượt quá 2MB.',
         ])->validate();
+
+        $this->handleAvatarUpload($request, $taiKhoan);
+    }
+
+    private function handleAvatarUpload(Request $request, TaiKhoan $taiKhoan): void
+    {
+        if (!$request->hasFile('anhDaiDien')) {
+            return;
+        }
 
         $hoSo = $taiKhoan->hoSoNguoiDung;
 
@@ -434,6 +445,8 @@ class NhanSuService implements NhanSuServiceInterface
             [
                 'email' => ['required', 'email', 'max:100', 'unique:taikhoan,email'],
                 'hoTen' => ['required', 'string', 'max:100'],
+                'anhDaiDien' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+                'khoaHocId' => ['nullable', 'exists:khoahoc,khoaHocId'],
                 'soDienThoai' => ['nullable', 'string', 'max:20'],
                 'zalo' => ['nullable', 'string', 'max:20'],
                 'ngaySinh' => ['nullable', 'date'],
@@ -475,6 +488,7 @@ class NhanSuService implements NhanSuServiceInterface
                 'trangThai' => ['required', Rule::in(['0', '1', 0, 1])],
                 'matKhau' => ['nullable', 'string', 'min:8', 'confirmed'],
                 'hoTen' => ['required', 'string', 'max:100'],
+                'anhDaiDien' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
                 'soDienThoai' => ['nullable', 'string', 'max:20'],
                 'zalo' => ['nullable', 'string', 'max:20'],
                 'ngaySinh' => ['nullable', 'date'],

@@ -145,6 +145,28 @@
         <div class="staff-card-body">
             <div class="staff-grid">
                 <div class="staff-control staff-field-full">
+                    <label class="staff-label" for="anhDaiDien">
+                        <span>Ảnh đại diện</span>
+                        <span class="staff-hint">Định dạng JPG, PNG, WEBP, tối đa 2MB. Nên dùng ảnh tỉ lệ 1:1.</span>
+                    </label>
+                    <x-upload.image
+                        id="avatar-upload"
+                        name="anhDaiDien"
+                        title="Tải ảnh đại diện"
+                        description="Kéo thả ảnh hoặc click để chọn"
+                        chooseLabel="Chọn ảnh"
+                        mode="deferred"
+                        :standalone="false"
+                        :previewUrl="$record ? $record->getAvatarUrl() : ''"
+                        previewShape="circle"
+                        accept="image/jpeg,image/png,image/webp"
+                        :allowedTypes="['image/jpeg', 'image/png', 'image/webp']"
+                        allowedExtensionsLabel="JPG, PNG, WebP"
+                        maxSize="2097152"
+                    />
+                </div>
+
+                <div class="staff-control staff-field-full">
                     <label class="staff-label" for="hoTen">
                         <span>Họ và tên <span class="staff-required">*</span></span>
                     </label>
