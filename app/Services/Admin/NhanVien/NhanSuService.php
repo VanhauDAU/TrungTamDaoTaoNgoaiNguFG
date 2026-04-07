@@ -235,6 +235,32 @@ class NhanSuService implements NhanSuServiceInterface
         });
     }
 
+    public function updateAvatar(Request $request, TaiKhoan $taiKhoan): void
+    {
+        Validator::make($request->all(), [
+            'anhDaiDien' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+        ], [
+            'anhDaiDien.required'  => 'Vui lòng chọn ảnh đại diện.',
+            'anhDaiDien.image'     => 'File phải là ảnh.',
+            'anhDaiDien.mimes'     => 'Chỉ chấp nhận định dạng JPG, PNG, WEBP.',
+            'anhDaiDien.max'       => 'Ảnh không được vượt quá 2MB.',
+        ])->validate();
+
+        $hoSo = $taiKhoan->hoSoNguoiDung;
+
+        // Xóa ảnh cũ nếu tồn tại trên disk public
+        if ($hoSo && $hoSo->anhDaiDien && Storage::disk('public')->exists($hoSo->anhDaiDien)) {
+            Storage::disk('public')->delete($hoSo->anhDaiDien);
+        }
+
+        $path = $request->file('anhDaiDien')->store('nhan-su/avatar', 'public');
+
+        HoSoNguoiDung::updateOrCreate(
+            ['taiKhoanId' => $taiKhoan->taiKhoanId],
+            ['anhDaiDien' => $path]
+        );
+    }
+
     public function uploadDocument(Request $request, TaiKhoan $taiKhoan): void
     {
         $validated = Validator::make($request->all(), [
