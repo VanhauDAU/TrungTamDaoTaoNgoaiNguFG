@@ -9,7 +9,7 @@
 @endsection
 
 @section('content')
-    <form action="{{ route('admin.nhan-vien.update', $record->taiKhoan) }}" method="POST" autocomplete="off">
+    <form action="{{ route('admin.nhan-vien.update', $record->taiKhoan) }}" method="POST" enctype="multipart/form-data" autocomplete="off">
         @csrf
         @method('PUT')
 

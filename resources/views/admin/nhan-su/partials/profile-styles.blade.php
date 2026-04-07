@@ -271,14 +271,18 @@
         height: 84px;
         flex-shrink: 0;
         border-radius: 50%;
-        cursor: pointer;
+        cursor: default;
         overflow: hidden;
         border: 3px solid rgba(255, 255, 255, 0.5);
         box-shadow: 0 4px 16px rgba(0,0,0,0.25);
         transition: transform 0.2s, box-shadow 0.2s;
     }
 
-    .avatar-wrapper:hover {
+    .avatar-wrapper.avatar-editable {
+        cursor: pointer;
+    }
+
+    .avatar-wrapper.avatar-editable:hover {
         transform: scale(1.06);
         box-shadow: 0 6px 24px rgba(0,0,0,0.35);
     }
@@ -325,7 +329,7 @@
         font-size: 1.1rem;
     }
 
-    .avatar-wrapper:hover .avatar-overlay {
+    .avatar-wrapper.avatar-editable:hover .avatar-overlay {
         opacity: 1;
     }
 </style>
