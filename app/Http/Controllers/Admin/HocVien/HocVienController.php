@@ -17,7 +17,7 @@ class HocVienController extends Controller
     {
         $this->middleware('permission:hoc_vien,xem')->only('index', 'export', 'trash');
         $this->middleware('permission:hoc_vien,them')->only('create', 'store', 'restore');
-        $this->middleware('permission:hoc_vien,sua')->only('edit', 'update');
+        $this->middleware('permission:hoc_vien,sua')->only('edit', 'update', 'updateAvatar');
         $this->middleware('permission:hoc_vien,xoa')->only('destroy');
     }
 
@@ -78,6 +78,17 @@ class HocVienController extends Controller
 
         return redirect()->route('admin.hoc-vien.index')
             ->with('success', 'Đã cập nhật thông tin học viên thành công.');
+    }
+
+    public function updateAvatar(Request $request, string $taiKhoan)
+    {
+        $hocVien = $this->hocVienService->findByUsername($taiKhoan);
+        $avatarUrl = $this->hocVienService->updateAvatar($request, $hocVien);
+
+        return response()->json([
+            'message'   => 'Cập nhật ảnh đại diện học viên thành công.',
+            'avatarUrl' => $avatarUrl,
+        ]);
     }
 
     public function trash(Request $request)

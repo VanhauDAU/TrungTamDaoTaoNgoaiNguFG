@@ -39,6 +39,12 @@ interface HocVienServiceInterface
     public function update(Request $request, TaiKhoan $hocVien): void;
 
     /**
+     * Cập nhật ảnh đại diện học viên (admin).
+     * Trả về URL ảnh mới sau khi upload.
+     */
+    public function updateAvatar(Request $request, TaiKhoan $hocVien): string;
+
+    /**
      * Xóa mềm học viên.
      */
     public function destroy(string $taiKhoan): string;

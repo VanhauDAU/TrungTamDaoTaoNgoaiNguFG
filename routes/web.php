@@ -171,6 +171,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
         Route::patch('/{id}/khoi-phuc', [AdminHocVienController::class, 'restore'])->name('restore');
         Route::get('/{taiKhoan}/sua', [AdminHocVienController::class, 'edit'])->name('edit');
         Route::put('/{taiKhoan}', [AdminHocVienController::class, 'update'])->name('update');
+        Route::post('/{taiKhoan}/anh-dai-dien', [AdminHocVienController::class, 'updateAvatar'])
+            ->middleware('throttle:10,1')
+            ->name('update-avatar');
         Route::delete('/{taiKhoan}', [AdminHocVienController::class, 'destroy'])->name('destroy');
     });
 

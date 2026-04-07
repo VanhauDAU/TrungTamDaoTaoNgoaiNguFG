@@ -7,6 +7,7 @@
 @section('stylesheet')
     <link rel="stylesheet" href="{{ asset('assets/admin/css/pages/hoc-vien/create.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/admin/css/pages/hoc-vien/edit.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/admin/css/components/image-upload.css') }}">
 @endsection
 
 @section('content')
@@ -14,6 +15,9 @@
     @php
         $profile = $hocVien->hoSoNguoiDung;
         $hoTen = $profile->hoTen ?? $hocVien->taiKhoan;
+        $anhDaiDien = $profile->anhDaiDien ?? null;
+        // Lấy chữ cái đầu trong họ (phần đầu tiên của hoTen)
+        $initials = mb_strtoupper(mb_substr(explode(' ', trim($hoTen))[0], 0, 1));
     @endphp
 
     <form action="{{ route('admin.hoc-vien.update', $hocVien->taiKhoan) }}" method="POST" id="hv-edit-form" class="needs-validation" novalidate data-joi-schema="hocVien"
@@ -42,6 +46,7 @@
         {{-- ── Step indicator ───────────────────────────────────── --}}
         <div class="hv-steps-sticky">
             <div class="hv-steps">
+                <a href="#sec-avatar" class="hv-step"><span>0</span> Ảnh đại diện</a>
                 <a href="#sec-account" class="hv-step active"><span>1</span> Tài khoản</a>
                 <a href="#sec-personal" class="hv-step"><span>2</span> Cá nhân</a>
                 <a href="#sec-guardian" class="hv-step"><span>3</span> Người giám hộ</a>
@@ -73,6 +78,59 @@
                 </div>
             </div>
         @endif
+
+        {{-- ── SECTION 0: Ảnh đại diện ──────────────────────────── --}}
+        <div class="hv-form-section" id="sec-avatar">
+            <div class="hv-section-header">
+                <div class="hv-section-icon" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff">
+                    <i class="fas fa-camera"></i>
+                </div>
+                <div>
+                    <div class="hv-section-title">Ảnh đại diện</div>
+                    <div class="hv-section-desc">Cập nhật ảnh đại diện cho học viên. Xem trước ảnh trước khi xác nhận lưu.</div>
+                </div>
+            </div>
+            <div class="hv-section-body">
+                <div class="hv-avatar-wrap">
+
+                    {{-- Avatar preview hiện tại --}}
+                    <div class="hv-avatar-current">
+                        @if ($anhDaiDien)
+                            <img src="{{ $anhDaiDien }}" alt="Ảnh đại diện {{ $hoTen }}"
+                                 class="hv-avatar-img" id="hv-avatar-display" data-avatar-display>
+                        @else
+                            <div class="hv-avatar-initials" id="hv-avatar-display" data-avatar-display>
+                                {{ $initials }}
+                            </div>
+                        @endif
+                        <div class="hv-avatar-name">{{ $hoTen }}</div>
+                        <div class="hv-avatar-username">@{{ $hocVien->taiKhoan }}</div>
+                    </div>
+
+                    {{-- Upload component --}}
+                    <div class="hv-avatar-upload-col">
+                        <x-upload.image
+                            action="{{ route('admin.hoc-vien.update-avatar', $hocVien->taiKhoan) }}"
+                            name="anhDaiDien"
+                            title="Cập nhật ảnh đại diện"
+                            description="Chọn ảnh, xem trước rồi nhấn Xác nhận để lưu. Hỗ trợ kéo và thả."
+                            choose-label="Chọn ảnh"
+                            confirm-label="Xác nhận lưu ảnh"
+                            preview-url="{{ $anhDaiDien ?? '' }}"
+                            preview-alt="Ảnh đại diện"
+                            preview-shape="circle"
+                            hint="Chấp nhận JPG, PNG, GIF, WebP · Tối đa 2MB · Ảnh sẽ được resize về 400×400px"
+                            max-size="2097152"
+                            max-size-label="2MB"
+                            allowed-extensions-label="JPG, PNG, GIF, WebP"
+                            response-url-key="avatarUrl"
+                            sync-selector="[data-avatar-display]"
+                            mode="instant"
+                        />
+                    </div>
+                </div>
+            </div>
+        </div>
 
         {{-- ── SECTION 1: Tài khoản ────────────────────────────── --}}
         <div class="hv-form-section" id="sec-account">
@@ -361,6 +419,7 @@
 @endsection
 
 @section('script')
+    <script src="{{ asset('assets/admin/js/components/image-upload.js') }}"></script>
     <script>
         // ── Toggle password fields ─────────────────────────────────────
         const toggle = document.getElementById('changePwdToggle');
@@ -400,7 +459,7 @@
         });
 
         // ── Highlight step on scroll ──────────────────────────────────
-        const sections = ['sec-account', 'sec-personal', 'sec-guardian', 'sec-learning', 'sec-note'];
+        const sections = ['sec-avatar', 'sec-account', 'sec-personal', 'sec-guardian', 'sec-learning', 'sec-note'];
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
@@ -417,6 +476,28 @@
         sections.forEach(id => {
             const el = document.getElementById(id);
             if (el) observer.observe(el);
+        });
+
+        // ── Sync avatar display khi upload thành công ─────────────────
+        // Component upload.image tự sync qua data-avatar-display nhờ sync-selector
+        // Nhưng nếu đang hiển thị initials (div), cần replace thành img
+        document.querySelector('[data-upload-component]')?.addEventListener('upload:success', (e) => {
+            const url = e.detail?.resolvedUrl;
+            if (!url) return;
+
+            const display = document.getElementById('hv-avatar-display');
+            if (!display) return;
+
+            if (display.tagName === 'DIV') {
+                // Đổi từ initials div sang img
+                const img = document.createElement('img');
+                img.src = url;
+                img.alt = 'Ảnh đại diện';
+                img.className = 'hv-avatar-img';
+                img.id = 'hv-avatar-display';
+                img.setAttribute('data-avatar-display', '');
+                display.replaceWith(img);
+            }
         });
     </script>
 @endsection

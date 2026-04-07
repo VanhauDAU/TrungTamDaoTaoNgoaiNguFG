@@ -5,10 +5,12 @@ namespace App\Services\Admin\HocVien;
 use App\Contracts\Admin\HocVien\HocVienServiceInterface;
 use App\Models\Auth\HoSoNguoiDung;
 use App\Models\Auth\TaiKhoan;
+use App\Services\Support\Uploads\ImageUploadService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class HocVienService implements HocVienServiceInterface
@@ -214,6 +216,32 @@ class HocVienService implements HocVienServiceInterface
             ]
             );
         });
+    }
+
+    public function updateAvatar(Request $request, TaiKhoan $hocVien): string
+    {
+        $imageUploadService = app(ImageUploadService::class);
+
+        $file = $imageUploadService->validateAndStore($request, 'avatar', 'anhDaiDien');
+
+        // Xóa ảnh cũ nếu có
+        $profile = $hocVien->hoSoNguoiDung;
+        if ($profile && $profile->anhDaiDien) {
+            $oldPath = ltrim(parse_url($profile->anhDaiDien, PHP_URL_PATH), '/');
+            $storagePath = str_replace('storage/', '', $oldPath);
+            if (Storage::disk('public')->exists($storagePath)) {
+                Storage::disk('public')->delete($storagePath);
+            }
+        }
+
+        $avatarUrl = $file['url'];
+
+        $hocVien->hoSoNguoiDung()->updateOrCreate(
+            ['taiKhoanId' => $hocVien->taiKhoanId],
+            ['anhDaiDien' => $avatarUrl]
+        );
+
+        return $avatarUrl;
     }
 
     public function destroy(string $taiKhoan): string
