@@ -161,10 +161,12 @@
                     <tbody>
                         @foreach ($nhanViens as $nv)
                             @php
-                                $profile = $nv->hoSoNguoiDung;
-                                $nhanSu = $nv->nhanSu;
-                                $hoTen = $profile->hoTen ?? $nv->taiKhoan;
-                                $initials = strtoupper(substr($hoTen, 0, 1));
+                                $profile  = $nv->hoSoNguoiDung;
+                                $nhanSu   = $nv->nhanSu;
+                                $hoTen    = $profile->hoTen ?? $nv->taiKhoan;
+                                $initials = mb_strtoupper(mb_substr(trim(explode(' ', $hoTen)[0]), 0, 1, 'UTF-8'), 'UTF-8');
+                                $avatarUrl = $nv->getAvatarUrl();
+                                $hasPhoto  = !str_contains($avatarUrl, 'user-default.png');
                             @endphp
                             <tr>
                                 <td style="color:#8899a6;font-size:0.78rem">
@@ -172,13 +174,17 @@
                                 </td>
 
                                 <td>
-                                    <div class="nv-info">
-                                        <div class="nv-avatar">{{ $initials }}</div>
+                                    <a href="{{ route('admin.nhan-vien.show', $nv->taiKhoan) }}" class="nv-info" style="text-decoration:none;color:inherit">
+                                        @if ($hasPhoto)
+                                            <img src="{{ $avatarUrl }}" alt="{{ $hoTen }}" class="nv-avatar-img">
+                                        @else
+                                            <div class="nv-avatar">{{ $initials }}</div>
+                                        @endif
                                         <div>
                                             <div class="nv-name">{{ $hoTen }}</div>
                                             <div class="nv-username">{{ $nv->taiKhoan }}</div>
                                         </div>
-                                    </div>
+                                    </a>
                                 </td>
 
                                 <td>{{ $nv->email }}</td>

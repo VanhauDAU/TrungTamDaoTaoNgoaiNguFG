@@ -263,4 +263,69 @@
             padding: 18px;
         }
     }
+
+    /* ===== AVATAR ===== */
+    .avatar-wrapper {
+        position: relative;
+        width: 84px;
+        height: 84px;
+        flex-shrink: 0;
+        border-radius: 50%;
+        cursor: pointer;
+        overflow: hidden;
+        border: 3px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .avatar-wrapper:hover {
+        transform: scale(1.06);
+        box-shadow: 0 6px 24px rgba(0,0,0,0.35);
+    }
+
+    .avatar-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        border-radius: 50%;
+    }
+
+    .avatar-initials {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #6366f1, #0ea5e9);
+        color: #fff;
+        font-size: 2rem;
+        font-weight: 800;
+        letter-spacing: -1px;
+        user-select: none;
+    }
+
+    .avatar-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(0,0,0,0.50);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        color: #fff;
+        font-size: 0.72rem;
+        font-weight: 600;
+        opacity: 0;
+        transition: opacity 0.2s;
+    }
+
+    .avatar-overlay i {
+        font-size: 1.1rem;
+    }
+
+    .avatar-wrapper:hover .avatar-overlay {
+        opacity: 1;
+    }
 </style>
