@@ -20,7 +20,7 @@ class GiaoVienController extends Controller
     {
         $this->middleware('permission:giao_vien,xem')->only('index', 'trash', 'show');
         $this->middleware('permission:giao_vien,them')->only('create', 'store', 'restore');
-        $this->middleware('permission:giao_vien,sua')->only('edit', 'update');
+        $this->middleware('permission:giao_vien,sua')->only('edit', 'update', 'updateAvatar');
         $this->middleware('permission:giao_vien,xoa')->only('destroy');
         $this->middleware('permission:nhan_su,sua')->only('storeDocument', 'storeSalaryPackage', 'archiveDocument');
         $this->middleware('permission:nhan_su,xem')->only('downloadDocument', 'downloadProfilePdf', 'downloadHandoverPdf');
@@ -85,6 +85,15 @@ class GiaoVienController extends Controller
 
         return redirect()->route('admin.giao-vien.index')
             ->with('success', 'Đã cập nhật thông tin giáo viên thành công.');
+    }
+
+    public function updateAvatar(Request $request, string $taiKhoan)
+    {
+        $giaoVien = $this->nhanSuService->findByUsername($taiKhoan, TaiKhoan::ROLE_GIAO_VIEN);
+        $this->nhanSuService->updateAvatar($request, $giaoVien);
+
+        return redirect()->route('admin.giao-vien.show', $giaoVien->taiKhoan)
+            ->with('success', 'Đã cập nhật ảnh đại diện thành công.');
     }
 
     public function destroy(string $taiKhoan)

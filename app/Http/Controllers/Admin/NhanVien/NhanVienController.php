@@ -20,7 +20,7 @@ class NhanVienController extends Controller
     {
         $this->middleware('permission:nhan_vien,xem')->only('index', 'trash', 'show');
         $this->middleware('permission:nhan_vien,them')->only('create', 'store', 'restore');
-        $this->middleware('permission:nhan_vien,sua')->only('edit', 'update');
+        $this->middleware('permission:nhan_vien,sua')->only('edit', 'update', 'updateAvatar');
         $this->middleware('permission:nhan_vien,xoa')->only('destroy');
         $this->middleware('permission:nhan_su,sua')->only('storeDocument', 'storeSalaryPackage', 'archiveDocument');
         $this->middleware('permission:nhan_su,xem')->only('downloadDocument', 'downloadProfilePdf', 'downloadHandoverPdf');
@@ -85,6 +85,15 @@ class NhanVienController extends Controller
 
         return redirect()->route('admin.nhan-vien.index')
             ->with('success', 'Đã cập nhật nhân viên «' . $request->hoTen . '» thành công.');
+    }
+
+    public function updateAvatar(Request $request, string $taiKhoan)
+    {
+        $nhanVien = $this->nhanSuService->findByUsername($taiKhoan, TaiKhoan::ROLE_NHAN_VIEN);
+        $this->nhanSuService->updateAvatar($request, $nhanVien);
+
+        return redirect()->route('admin.nhan-vien.show', $nhanVien->taiKhoan)
+            ->with('success', 'Đã cập nhật ảnh đại diện thành công.');
     }
 
     public function destroy(string $taiKhoan)

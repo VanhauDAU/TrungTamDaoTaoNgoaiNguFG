@@ -193,6 +193,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
         Route::get('/thung-rac', [AdminGiaoVienController::class, 'trash'])->name('trash');
         Route::patch('/{id}/khoi-phuc', [AdminGiaoVienController::class, 'restore'])->name('restore');
         Route::get('/{taiKhoan}', [AdminGiaoVienController::class, 'show'])->name('show');
+        Route::post('/{taiKhoan}/anh-dai-dien', [AdminGiaoVienController::class, 'updateAvatar'])->name('avatar.update');
         Route::post('/{taiKhoan}/tai-lieu', [AdminGiaoVienController::class, 'storeDocument'])->name('documents.store');
         Route::get('/{taiKhoan}/tai-lieu/{documentId}/tai-xuong', [AdminGiaoVienController::class, 'downloadDocument'])->name('documents.download');
         Route::patch('/{taiKhoan}/tai-lieu/{documentId}/luu-tru', [AdminGiaoVienController::class, 'archiveDocument'])->name('documents.archive');
@@ -212,6 +213,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
         Route::get('/thung-rac', [AdminNhanVienController::class, 'trash'])->name('trash');
         Route::patch('/{id}/khoi-phuc', [AdminNhanVienController::class, 'restore'])->name('restore');
         Route::get('/{taiKhoan}', [AdminNhanVienController::class, 'show'])->name('show');
+        Route::post('/{taiKhoan}/anh-dai-dien', [AdminNhanVienController::class, 'updateAvatar'])->name('avatar.update');
         Route::post('/{taiKhoan}/tai-lieu', [AdminNhanVienController::class, 'storeDocument'])->name('documents.store');
         Route::get('/{taiKhoan}/tai-lieu/{documentId}/tai-xuong', [AdminNhanVienController::class, 'downloadDocument'])->name('documents.download');
         Route::patch('/{taiKhoan}/tai-lieu/{documentId}/luu-tru', [AdminNhanVienController::class, 'archiveDocument'])->name('documents.archive');
