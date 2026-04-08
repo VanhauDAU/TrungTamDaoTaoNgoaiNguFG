@@ -8,7 +8,24 @@
 
 <div class="profile-page">
     <div class="profile-hero">
-        <div>
+        {{-- ===== AVATAR ===== --}}
+        @php
+            $avatarUrl    = $record->getAvatarUrl();
+            $isDefault    = str_contains($avatarUrl, 'user-default.png');
+            $hoTenFull    = $profile?->hoTen ?? '';
+            // Lấy ký tự đầu trong HỌ (từ đầu tiên)
+            $initials     = mb_strtoupper(mb_substr(trim(explode(' ', $hoTenFull)[0]), 0, 1, 'UTF-8'), 'UTF-8') ?: '?';
+        @endphp
+
+        <div class="avatar-wrapper">
+            @if (!$isDefault)
+                <img src="{{ $avatarUrl }}" alt="Ảnh đại diện" class="avatar-img">
+            @else
+                <div class="avatar-initials">{{ $initials }}</div>
+            @endif
+        </div>
+
+        <div style="flex:1">
             <h1>{{ $profile?->hoTen ?: $record->taiKhoan }}</h1>
             <p>
                 Hồ sơ {{ mb_strtolower($roleLabel) }} gồm tài khoản, thông tin cá nhân, quy định áp dụng, gói lương hiện hành

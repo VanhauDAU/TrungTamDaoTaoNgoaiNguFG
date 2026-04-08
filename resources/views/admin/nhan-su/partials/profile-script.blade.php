@@ -9,4 +9,5 @@
 
         await navigator.clipboard.writeText(`Username: ${username}\nPassword: ${password}`);
     });
+
 </script>

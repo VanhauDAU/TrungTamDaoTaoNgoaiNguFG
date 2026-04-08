@@ -52,6 +52,11 @@ interface NhanSuServiceInterface
     public function update(Request $request, TaiKhoan $nhanSu): void;
 
     /**
+     * Upload/cập nhật ảnh đại diện cho nhân sự.
+     */
+    public function updateAvatar(Request $request, TaiKhoan $taiKhoan): void;
+
+    /**
      * Upload tài liệu nhân sự.
      */
     public function uploadDocument(Request $request, TaiKhoan $taiKhoan): void;
