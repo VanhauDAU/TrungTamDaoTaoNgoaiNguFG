@@ -276,10 +276,30 @@
     flex-shrink: 0;
 }
 
+.nv-avatar-img {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 2px solid #e2e8f0;
+}
+
 .nv-info {
     display: flex;
     align-items: center;
     gap: 12px;
+    transition: all 0.2s;
+}
+
+.nv-info:hover .nv-name {
+    color: #27c4b5;
+}
+
+.nv-info:hover .nv-avatar,
+.nv-info:hover .nv-avatar-img {
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 .nv-name {

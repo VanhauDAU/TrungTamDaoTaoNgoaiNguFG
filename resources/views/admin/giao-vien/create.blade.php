@@ -9,7 +9,7 @@
 @endsection
 
 @section('content')
-    <form action="{{ route('admin.giao-vien.store') }}" method="POST" enctype="multipart/form-data" autocomplete="off">
+    <form action="{{ route('admin.giao-vien.store') }}" method="POST" enctype="multipart/form-data" autocomplete="off" novalidate data-joi-schema="nhanSu">
         @csrf
 
         @include('admin.nhan-su.partials.form', [

@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
 class HocVienService implements HocVienServiceInterface
@@ -78,6 +80,7 @@ class HocVienService implements HocVienServiceInterface
             'email' => 'required|email|max:100|unique:taikhoan,email',
             'matKhau' => 'required|string|min:8|confirmed',
             'hoTen' => ['required', 'string', 'max:100', 'regex:/^[^0-9]*$/'],
+            'anhDaiDien' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'soDienThoai' => ['nullable', 'string', 'regex:/^[0-9]{10}$/'],
             'zalo' => ['nullable', 'string', 'regex:/^[0-9]{10}$/'],
             'ngaySinh' => 'nullable|date',
@@ -103,6 +106,9 @@ class HocVienService implements HocVienServiceInterface
             'zalo.regex' => 'Số Zalo phải có đúng 10 chữ số.',
             'sdtGuardian.regex' => 'Số điện thoại người giám hộ phải có đúng 10 chữ số.',
             'cccd.unique' => 'CCCD/CMND này đã được đăng ký.',
+            'anhDaiDien.image' => 'File đại diện phải là ảnh.',
+            'anhDaiDien.mimes' => 'Chỉ chấp nhận định dạng JPG, PNG, WEBP.',
+            'anhDaiDien.max' => 'Ảnh đại diện không được vượt quá 2MB.',
         ]);
 
         return DB::transaction(function () use ($request) {
@@ -137,6 +143,8 @@ class HocVienService implements HocVienServiceInterface
                 'ghiChu' => $request->ghiChu,
             ]);
 
+            $this->handleAvatarUpload($request, $taiKhoan);
+
             return $taiKhoan;
         });
     }
@@ -154,6 +162,7 @@ class HocVienService implements HocVienServiceInterface
         $request->validate([
             'email' => ['required', 'email', 'max:100', Rule::unique('taikhoan', 'email')->ignore($hocVien->taiKhoanId, 'taiKhoanId')],
             'hoTen' => ['required', 'string', 'max:100', 'regex:/^[^0-9]*$/'],
+            'anhDaiDien' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'trangThai' => 'required|in:0,1',
             'matKhau' => 'nullable|string|min:8|confirmed',
             'soDienThoai' => ['nullable', 'string', 'regex:/^[0-9]{10}$/'],
@@ -180,6 +189,9 @@ class HocVienService implements HocVienServiceInterface
             'matKhau.min' => 'Mật khẩu phải ít nhất 8 ký tự.',
             'matKhau.confirmed' => 'Xác nhận mật khẩu không khớp.',
             'cccd.unique' => 'CCCD/CMND đã được đăng ký bởi học viên khác.',
+            'anhDaiDien.image' => 'File đại diện phải là ảnh.',
+            'anhDaiDien.mimes' => 'Chỉ chấp nhận định dạng JPG, PNG, WEBP.',
+            'anhDaiDien.max' => 'Ảnh đại diện không được vượt quá 2MB.',
         ]);
 
         DB::transaction(function () use ($request, $hocVien) {
@@ -213,6 +225,8 @@ class HocVienService implements HocVienServiceInterface
                 'ghiChu' => $request->ghiChu,
             ]
             );
+
+            $this->handleAvatarUpload($request, $hocVien);
         });
     }
 
@@ -230,5 +244,25 @@ class HocVienService implements HocVienServiceInterface
         $hoTen = $hocVien->hoSoNguoiDung->hoTen ?? $hocVien->taiKhoan;
         $hocVien->restore();
         return $hoTen;
+    }
+
+    private function handleAvatarUpload(Request $request, TaiKhoan $taiKhoan): void
+    {
+        if (!$request->hasFile('anhDaiDien')) {
+            return;
+        }
+
+        $hoSo = $taiKhoan->hoSoNguoiDung;
+
+        if ($hoSo && $hoSo->anhDaiDien && Storage::disk('public')->exists($hoSo->anhDaiDien)) {
+            Storage::disk('public')->delete($hoSo->anhDaiDien);
+        }
+
+        $path = $request->file('anhDaiDien')->store('hoc-vien/avatar', 'public');
+
+        HoSoNguoiDung::updateOrCreate(
+            ['taiKhoanId' => $taiKhoan->taiKhoanId],
+            ['anhDaiDien' => $path]
+        );
     }
 }

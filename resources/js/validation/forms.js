@@ -146,6 +146,10 @@ const schemas = {
         cccd: Joi.string().trim().max(20).allow('', null).messages({
             'string.max': 'CCCD không được vượt quá 20 ký tự.',
         }),
+        nguoiGiamHo: Joi.string().trim().max(100).pattern(/^[^0-9]*$/).allow('', null).messages({
+            'string.max': 'Họ tên người giám hộ không được vượt quá 100 ký tự.',
+            'string.pattern.base': 'Họ tên người giám hộ không được chứa chữ số.',
+        }),
         sdtGuardian: Joi.string().trim().pattern(/^[0-9]{10}$/).allow('', null).messages({
             'string.pattern.base': 'SĐT người giám hộ phải là 10 chữ số.',
         }),
@@ -154,6 +158,64 @@ const schemas = {
         }),
         matKhau_confirmation: Joi.string().valid(Joi.ref('matKhau')).allow('', null).messages({
             'any.only': 'Xác nhận mật khẩu không khớp.',
+        }),
+    }),
+    nhanSu: Joi.object({
+        email: Joi.string().trim().email({ tlds: { allow: false } }).max(100).required().messages({
+            'string.empty': 'Vui lòng nhập email.',
+            'string.email': 'Email không đúng định dạng.',
+            'string.max': 'Email không được vượt quá 100 ký tự.',
+            'any.required': 'Vui lòng nhập email.',
+        }),
+        hoTen: Joi.string().trim().max(100).pattern(/^[^0-9]*$/).required().messages({
+            'string.empty': 'Vui lòng nhập họ và tên.',
+            'string.max': 'Họ và tên không được vượt quá 100 ký tự.',
+            'string.pattern.base': 'Họ và tên không được chứa chữ số.',
+            'any.required': 'Vui lòng nhập họ và tên.',
+        }),
+        ngaySinh: Joi.date().max('now').allow('', null).messages({
+            'date.base': 'Ngày sinh không hợp lệ.',
+            'date.max': 'Ngày sinh không được lớn hơn hôm nay.',
+        }),
+        soDienThoai: Joi.string().trim().pattern(/^[0-9]{10}$/).allow('', null).messages({
+            'string.pattern.base': 'Số điện thoại phải là 10 chữ số.',
+        }),
+        zalo: Joi.string().trim().pattern(/^[0-9]{10}$/).allow('', null).messages({
+            'string.pattern.base': 'SĐT Zalo phải là 10 chữ số.',
+        }),
+        cccd: Joi.string().trim().pattern(/^[0-9]{9,12}$/).allow('', null).messages({
+            'string.pattern.base': 'CCCD/CMND phải là 9 đến 12 chữ số.',
+        }),
+        loaiHopDong: Joi.string().trim().required().messages({
+            'string.empty': 'Vui lòng chọn loại hợp đồng.',
+            'any.required': 'Vui lòng chọn loại hợp đồng.',
+        }),
+        coSoId: Joi.string().trim().min(1).required().messages({
+            'string.empty': 'Vui lòng chọn cơ sở làm việc.',
+            'string.min': 'Vui lòng chọn cơ sở làm việc.',
+            'any.required': 'Vui lòng chọn cơ sở làm việc.',
+        }),
+        matKhau: Joi.string().min(8).allow('', null).messages({
+            'string.min': 'Mật khẩu phải có ít nhất 8 ký tự.',
+        }),
+        matKhau_confirmation: Joi.string().valid(Joi.ref('matKhau')).allow('', null).messages({
+            'any.only': 'Xác nhận mật khẩu không khớp.',
+        }),
+        nhanSuMauQuyDinhId: Joi.alternatives().try(
+            Joi.string().trim().min(1),
+            Joi.number().integer().min(1)
+        ).allow('', null).messages({
+            'alternatives.match': 'Vui lòng chọn mẫu quy định.',
+        }),
+        loaiLuong: Joi.string().trim().allow('', null).messages({
+            'string.base': 'Loại lương không hợp lệ.',
+        }),
+        luongChinh: Joi.number().min(0).allow('', null).messages({
+            'number.base': 'Lương chính phải là một số hợp lệ.',
+            'number.min': 'Lương chính không được nhỏ hơn 0.',
+        }),
+        hieuLucTu: Joi.date().allow('', null).messages({
+            'date.base': 'Ngày hiệu lực không hợp lệ.',
         }),
     }),
 };
@@ -194,6 +256,10 @@ function getErrorAnchor(input) {
     return input.closest('.password_box') || input;
 }
 
+function isStaffForm(input) {
+    return !!input.closest('.staff-control');
+}
+
 function showFieldError(form, fieldName, message) {
     const input = form.querySelector(`[name="${fieldName}"]`);
 
@@ -203,11 +269,20 @@ function showFieldError(form, fieldName, message) {
 
     input.classList.add('is-invalid');
 
-    const feedback = document.createElement('div');
-    feedback.className = 'invalid-feedback d-block joi-feedback';
-    feedback.textContent = message;
+    if (isStaffForm(input)) {
+        const feedback = document.createElement('span');
+        feedback.className = 'staff-error joi-feedback';
+        feedback.textContent = message;
 
-    getErrorAnchor(input).insertAdjacentElement('afterend', feedback);
+        const staffControl = input.closest('.staff-control');
+        staffControl.appendChild(feedback);
+    } else {
+        const feedback = document.createElement('div');
+        feedback.className = 'invalid-feedback d-block joi-feedback';
+        feedback.textContent = message;
+
+        getErrorAnchor(input).insertAdjacentElement('afterend', feedback);
+    }
 }
 
 function applyNormalizedValues(form, value) {
@@ -257,12 +332,10 @@ function validateForm(form) {
 
 function bindForm(form) {
     form.addEventListener('submit', (event) => {
-        if (validateForm(form)) {
-            return;
+        if (!validateForm(form)) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
         }
-
-        event.preventDefault();
-        event.stopPropagation();
     });
 }
 

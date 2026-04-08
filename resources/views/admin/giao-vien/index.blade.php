@@ -164,7 +164,9 @@
                                 $profile = $gv->hoSoNguoiDung;
                                 $nhanSu = $gv->nhanSu;
                                 $hoTen = $profile->hoTen ?? $gv->taiKhoan;
-                                $initials = strtoupper(substr($hoTen, 0, 1));
+                                $initials = mb_strtoupper(mb_substr(trim(explode(' ', $hoTen)[0]), 0, 1, 'UTF-8'), 'UTF-8');
+                                $avatarUrl = $gv->getAvatarUrl();
+                                $hasPhoto  = !str_contains($avatarUrl, 'user-default.png');
                             @endphp
                             <tr>
                                 <td style="color:#8899a6;font-size:0.78rem">
@@ -172,13 +174,17 @@
                                 </td>
 
                                 <td>
-                                    <div class="gv-info">
-                                        <div class="gv-avatar">{{ $initials }}</div>
+                                    <a href="{{ route('admin.giao-vien.show', $gv->taiKhoan) }}" class="gv-info" style="text-decoration:none;color:inherit">
+                                        @if ($hasPhoto)
+                                            <img src="{{ $avatarUrl }}" alt="{{ $hoTen }}" class="gv-avatar-img">
+                                        @else
+                                            <div class="gv-avatar">{{ $initials }}</div>
+                                        @endif
                                         <div>
                                             <div class="gv-name">{{ $hoTen }}</div>
                                             <div class="gv-username">{{ $gv->taiKhoan }}</div>
                                         </div>
-                                    </div>
+                                    </a>
                                 </td>
 
                                 <td>{{ $gv->email }}</td>

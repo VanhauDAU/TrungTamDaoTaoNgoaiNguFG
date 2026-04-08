@@ -461,8 +461,14 @@
 
         // Hiện loader khi submit form truyền thống (không phải ajax)
         document.querySelectorAll('form:not(.ajax-form)').forEach(form => {
-            form.addEventListener('submit', function () {
-                showLoader();
+            form.addEventListener('submit', function (e) {
+                // Đợi một chút để các script validation khác (như JOI) chạy trước
+                // Nếu form không submit (nghĩa là validation thất bại), không hiện loader
+                setTimeout(() => {
+                    if (!e.defaultPrevented) {
+                        showLoader();
+                    }
+                }, 10);
             });
         });
 
