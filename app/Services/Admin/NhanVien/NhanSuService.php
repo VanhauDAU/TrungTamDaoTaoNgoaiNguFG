@@ -248,15 +248,6 @@ class NhanSuService implements NhanSuServiceInterface
             'anhDaiDien.max'       => 'Ảnh không được vượt quá 2MB.',
         ])->validate();
 
-        $this->handleAvatarUpload($request, $taiKhoan);
-    }
-
-    private function handleAvatarUpload(Request $request, TaiKhoan $taiKhoan): void
-    {
-        if (!$request->hasFile('anhDaiDien')) {
-            return;
-        }
-
         $hoSo = $taiKhoan->hoSoNguoiDung;
 
         // Xóa ảnh cũ nếu tồn tại trên disk public
