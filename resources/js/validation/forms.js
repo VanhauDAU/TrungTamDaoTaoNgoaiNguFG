@@ -332,12 +332,10 @@ function validateForm(form) {
 
 function bindForm(form) {
     form.addEventListener('submit', (event) => {
-        if (validateForm(form)) {
-            return;
+        if (!validateForm(form)) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
         }
-
-        event.preventDefault();
-        event.stopPropagation();
     });
 }
 
