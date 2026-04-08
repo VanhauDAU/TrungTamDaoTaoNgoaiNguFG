@@ -17,7 +17,7 @@
     @endphp
 
     <form action="{{ route('admin.hoc-vien.update', $hocVien->taiKhoan) }}" method="POST" id="hv-edit-form" class="needs-validation" novalidate data-joi-schema="hocVien"
-        autocomplete="off">
+        autocomplete="off" enctype="multipart/form-data">
         @csrf
         @method('PUT')
 
@@ -170,6 +170,29 @@
             </div>
             <div class="hv-section-body">
                 <div class="form-grid">
+                    {{-- Ảnh đại diện --}}
+                    <div class="form-group full">
+                        <label class="form-label" for="anhDaiDien">
+                            Ảnh đại diện
+                            <span class="form-hint-inline">Định dạng JPG, PNG, WEBP, tối đa 2MB.</span>
+                        </label>
+                        <x-upload.image
+                            id="avatar-upload"
+                            name="anhDaiDien"
+                            title="Tải ảnh đại diện"
+                            description="Kéo thả ảnh hoặc click để chọn"
+                            chooseLabel="Chọn ảnh"
+                            mode="deferred"
+                            :standalone="false"
+                            :previewUrl="$hocVien->getAvatarUrl()"
+                            previewShape="circle"
+                            accept="image/jpeg,image/png,image/webp"
+                            :allowedTypes="['image/jpeg', 'image/png', 'image/webp']"
+                            allowedExtensionsLabel="JPG, PNG, WebP"
+                            maxSize="2097152"
+                        />
+                    </div>
+
                     {{-- Họ tên --}}
                     <div class="form-group full">
                         <label class="form-label" for="hoTen">Họ và tên <span class="required">*</span></label>
