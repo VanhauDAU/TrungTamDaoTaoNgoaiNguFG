@@ -8,18 +8,7 @@
 
 @section('content')
     <section class="chat-page">
-        <div class="chat-page-container">
-            <div class="chat-page-header">
-                <div class="chat-page-header-main">
-                    <a href="{{ route('home.student.index') }}" class="chat-back-link">
-                        <i class="fas fa-arrow-left"></i>
-                        <span>Quay lại tài khoản</span>
-                    </a>
-                </div>
-            </div>
-
-            <div id="chat-app" class="chat-shell"></div>
-        </div>
+        <div id="chat-app" class="chat-shell"></div>
     </section>
 @endsection
 
@@ -29,6 +18,7 @@
             rooms: @json($rooms),
             selectedRoom: @json($selectedRoom),
             csrf: '{{ csrf_token() }}',
+            backUrl: '{{ route('home.student.index') }}',
             reactionEmojis: @json(\App\Services\Client\Chat\ChatMessageService::reactionEmojis()),
             composerEmojis: @json(\App\Services\Client\Chat\ChatMessageService::composerEmojis()),
             endpoints: {
@@ -38,6 +28,7 @@
                 members: '{{ url('/api/chat/rooms/__ROOM__/members') }}',
                 search: '{{ url('/api/chat/rooms/__ROOM__/search') }}',
                 join: '{{ url('/api/chat/rooms/__ROOM__/join') }}',
+                leave: '{{ url('/api/chat/rooms/__ROOM__/leave') }}',
                 typing: '{{ url('/api/chat/rooms/__ROOM__/typing') }}',
                 direct: '{{ route('home.api.chat.direct') }}',
                 read: '{{ url('/api/chat/rooms/__ROOM__/read') }}',

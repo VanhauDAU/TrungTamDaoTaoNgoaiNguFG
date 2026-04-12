@@ -132,6 +132,7 @@ Route::prefix('/')->name('home.')->group(function () {
         Route::get('/rooms/{id}/members', [ClientChatController::class, 'members'])->name('members');
         Route::get('/rooms/{id}/search', [ClientChatController::class, 'search'])->name('search');
         Route::post('/rooms/{id}/join', [ClientChatController::class, 'join'])->name('join');
+        Route::delete('/rooms/{id}/leave', [ClientChatController::class, 'leave'])->name('leave');
         Route::post('/rooms/{id}/typing', [ClientChatController::class, 'typing'])->name('typing');
         Route::post('/rooms/direct', [ClientChatController::class, 'direct'])->name('direct');
         Route::post('/rooms/{id}/read', [ClientChatController::class, 'markRead'])->name('read');
