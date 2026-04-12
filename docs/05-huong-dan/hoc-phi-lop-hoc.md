@@ -97,6 +97,7 @@ Y nghia `ngayHetHanGiuCho`:
 - `phieuthu` la giao dich thu tien thuc te.
 - `taiKhoanId` tren `phieuthu` la hoc vien/nguoi nop tien.
 - `nguoiDuyetId` la nhan su ghi nhan thu tien.
+- Moi `phieuthu` hop le co the duoc xuat PDF de in hoac gui email lai.
 
 ## 3. Mo hinh loai thu dang ho tro
 
@@ -329,3 +330,35 @@ flowchart LR
     S -->|"Co"| T["Job invoice:check-overdue tam dung do no hoc phi"]
     S -->|"Khong"| U["Hoc vien tiep tuc hoc / hoan thanh"]
 ```
+### 9.2 Xuat hoa don va phieu thu
+
+He thong hien tai ho tro day du 2 loai chung tu:
+
+- `Hoa don`
+- `Phieu thu`
+
+Tai khu vuc admin:
+
+- danh sach hoa don co nut in nhanh
+- trang chi tiet hoa don co nut:
+  - `In hoa don`
+  - `Gui email`
+- khi lap phieu thu co tuy chon:
+  - `Xac nhan tao phieu thu`
+  - `Luu va in phieu thu`
+- trong lich su phiếu thu, tung phieu hop le co nut:
+  - `In`
+  - `Email`
+
+Tai cong hoc vien:
+
+- trang chi tiet hoa don co the in/gửi email hoa don
+- danh sach phiếu thu tong hop co the chon tung phiếu de in/gửi email
+- lich su thanh toan trong chi tiet hoa don co the in/gửi email lai tung phiếu thu
+
+### 9.3 Luu y mail va PDF
+
+- PDF duoc render bang DOMPDF trong backend
+- Email gui kem file PDF thong qua `FinanceDocumentService`
+- Neu moi truong chua cau hinh SMTP thuc te va dang de `MAIL_MAILER=log` thi email se khong di ra ngoai
+- Ban in la tai lieu nghiep vu noi bo / chung tu doi soat, khong phai hoa don dien tu theo chuan thue

@@ -92,10 +92,14 @@ Route::prefix('/')->name('home.')->group(function () {
         Route::post('/doi-mat-khau', [StudentController::class, 'updatePassword'])->name('update-password');
         Route::get('/hoa-don', [StudentController::class, 'invoices'])->name('invoices');
         Route::get('/hoa-don/{id}', [StudentController::class, 'invoiceDetail'])->name('invoices.show');
+        Route::get('/hoa-don/{id}/in', [StudentController::class, 'printInvoice'])->name('invoices.print');
+        Route::post('/hoa-don/{id}/gui-email', [StudentController::class, 'emailInvoice'])->name('invoices.email');
         Route::prefix('hoc-phi')->name('tuition.')->group(function () {
             Route::get('/', [StudentController::class, 'tuitionIndex'])->name('index');
             Route::get('/cong-no', [StudentController::class, 'tuitionDebts'])->name('debts');
             Route::get('/phieu-thu', [StudentController::class, 'tuitionReceipts'])->name('receipts');
+            Route::get('/phieu-thu/{id}/in', [StudentController::class, 'printReceipt'])->name('receipts.print');
+            Route::post('/phieu-thu/{id}/gui-email', [StudentController::class, 'emailReceipt'])->name('receipts.email');
             Route::get('/thanh-toan-truc-tuyen', [StudentController::class, 'tuitionPayments'])->name('payments');
             Route::get('/hoa-don/{id}', [StudentController::class, 'invoiceDetail'])->name('invoices.show');
         });
@@ -342,7 +346,11 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
     // ── Hóa Đơn & Phiếu Thu ─────────────────────────────────────
     Route::prefix('hoa-don')->name('hoa-don.')->group(function () {
         Route::get('/', [AdminHoaDonController::class, 'index'])->name('index');
+        Route::get('/phieu-thu/{id}/in', [AdminHoaDonController::class, 'printReceipt'])->name('phieu-thu.print');
+        Route::post('/phieu-thu/{id}/gui-email', [AdminHoaDonController::class, 'emailReceipt'])->name('phieu-thu.email');
         Route::get('/{id}', [AdminHoaDonController::class, 'show'])->name('show');
+        Route::get('/{id}/in', [AdminHoaDonController::class, 'printInvoice'])->name('print');
+        Route::post('/{id}/gui-email', [AdminHoaDonController::class, 'emailInvoice'])->name('email');
         Route::put('/{id}', [AdminHoaDonController::class, 'update'])->name('update');
         Route::post('/{id}/phieu-thu', [AdminHoaDonController::class, 'storePhieuThu'])->name('phieu-thu.store');
         Route::delete('/phieu-thu/{id}', [AdminHoaDonController::class, 'destroyPhieuThu'])->name('phieu-thu.destroy');

@@ -126,7 +126,7 @@ class HoaDonService implements HoaDonServiceInterface
         return $hoaDon->fresh();
     }
 
-    public function storePhieuThu(Request $request, int $hoaDonId): void
+    public function storePhieuThu(Request $request, int $hoaDonId): PhieuThu
     {
         $hoaDon = HoaDon::findOrFail($hoaDonId);
         $conNo = (float) $hoaDon->conNo;
@@ -149,9 +149,9 @@ class HoaDonService implements HoaDonServiceInterface
             'ngayThu.required' => 'Vui lòng chọn ngày thu.',
         ]);
 
-        DB::transaction(function () use ($data, $hoaDon) {
+        $phieuThu = DB::transaction(function () use ($data, $hoaDon) {
             $user = Auth::user();
-            PhieuThu::create([
+            $receipt = PhieuThu::create([
                 'maPhieuThu'           => PhieuThu::generateMaPhieuThu(),
                 'hoaDonId'             => $hoaDon->hoaDonId,
                 'soTien'               => $data['soTien'],
@@ -163,7 +163,11 @@ class HoaDonService implements HoaDonServiceInterface
                 'trangThai'            => PhieuThu::TRANG_THAI_HOP_LE,
             ]);
             $hoaDon->recalculate();
+
+            return $receipt;
         });
+
+        return $phieuThu->fresh(['hoaDon', 'taiKhoan.hoSoNguoiDung', 'nguoiDuyet.hoSoNguoiDung']);
     }
 
     public function destroyPhieuThu(int $id): int

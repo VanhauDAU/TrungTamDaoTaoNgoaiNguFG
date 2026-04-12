@@ -70,10 +70,25 @@
                                     </div>
                                 </div>
                             </div>
-                            <a href="{{ route('home.student.tuition.debts') }}" class="inv-btn inv-btn--ghost">
-                                <i class="fas fa-arrow-left"></i> Quay lại
-                            </a>
+                            <div class="d-flex flex-wrap gap-2 justify-content-end">
+                                <a href="{{ route('home.student.invoices.print', $invoice->hoaDonId) }}" target="_blank"
+                                    class="inv-btn inv-btn--outline">
+                                    <i class="fas fa-print"></i> In hóa đơn
+                                </a>
+                                <button type="button" class="inv-btn inv-btn--outline"
+                                    onclick="studentRequestDocumentEmail('{{ route('home.student.invoices.email', $invoice->hoaDonId) }}', '{{ auth()->user()->email ?? '' }}', 'hóa đơn {{ $maHD }}')">
+                                    <i class="fas fa-envelope"></i> Gửi email
+                                </button>
+                                <a href="{{ route('home.student.tuition.debts') }}" class="inv-btn inv-btn--ghost">
+                                    <i class="fas fa-arrow-left"></i> Quay lại
+                                </a>
+                            </div>
                         </div>
+                        <form id="student-document-email-form" method="POST" style="display:none;">
+                            @csrf
+                            <input type="hidden" name="email" id="student-document-email-input">
+                            <input type="hidden" name="message" id="student-document-email-message">
+                        </form>
 
                         {{-- ── CẢNH BÁO QUÁ HẠN ──────────────────────────────── --}}
                         @if ($isQuaHan)
@@ -325,6 +340,16 @@
                                                         <i class="fas fa-calendar-check"></i>
                                                         {{ \Carbon\Carbon::parse($phieu->ngayThu)->format('d/m/Y') }}
                                                     </div>
+                                                    <div class="d-flex flex-wrap gap-2 mt-2">
+                                                        <a href="{{ route('home.student.tuition.receipts.print', $phieu->phieuThuId) }}"
+                                                            target="_blank" class="inv-btn inv-btn--outline">
+                                                            <i class="fas fa-print"></i> In phiếu thu
+                                                        </a>
+                                                        <button type="button" class="inv-btn inv-btn--outline"
+                                                            onclick="studentRequestDocumentEmail('{{ route('home.student.tuition.receipts.email', $phieu->phieuThuId) }}', '{{ auth()->user()->email ?? '' }}', 'phiếu thu {{ $phieu->maPhieuThu ?? 'PT-' . str_pad($phieu->phieuThuId, 6, '0', STR_PAD_LEFT) }}')">
+                                                            <i class="fas fa-envelope"></i> Gửi email
+                                                        </button>
+                                                    </div>
                                                     @if ($phieu->ghiChu)
                                                         <div class="inv-timeline__note">{{ $phieu->ghiChu }}</div>
                                                     @endif
@@ -425,6 +450,24 @@
                     btn.style.color = '';
                 }, 2000);
             });
+        }
+
+        function studentSubmitDocumentEmail(action, email, message) {
+            const form = document.getElementById('student-document-email-form');
+            document.getElementById('student-document-email-input').value = email;
+            document.getElementById('student-document-email-message').value = message || '';
+            form.action = action;
+            form.submit();
+        }
+
+        function studentRequestDocumentEmail(action, defaultEmail, label) {
+            const email = window.prompt(`Nhập email để gửi ${label}:`, defaultEmail || '');
+            if (!email) {
+                return;
+            }
+
+            const message = window.prompt('Ghi chú email (không bắt buộc):', '') || '';
+            studentSubmitDocumentEmail(action, email.trim(), message.trim());
         }
     </script>
 @endsection

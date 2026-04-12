@@ -21,6 +21,11 @@
                             ['label' => 'Phiếu thu tổng hợp'],
                         ]" />
                         @if ($receipts->count() > 0)
+                            <form id="student-document-email-form" method="POST" style="display:none;">
+                                @csrf
+                                <input type="hidden" name="email" id="student-document-email-input">
+                                <input type="hidden" name="message" id="student-document-email-message">
+                            </form>
                             <div class="tuition-ledger">
                                 <div class="tuition-ledger__head tuition-ledger__head--receipts">
                                     <span>Phiếu thu</span>
@@ -78,11 +83,21 @@
                                             <div class="tuition-row__cell tuition-row__cell--amount-only">
                                                 <span class="tuition-row__label">Số tiền</span>
                                                 <div class="tuition-row__amount-main">{{ number_format($receipt->soTien, 0, ',', '.') }}đ</div>
-                                                @if ($invoice)
-                                                    <a href="{{ route('home.student.tuition.invoices.show', $invoice->hoaDonId) }}" class="tuition-inline-link">
-                                                        Xem hóa đơn liên quan
+                                                <div class="d-flex flex-wrap gap-2 mt-2">
+                                                    <a href="{{ route('home.student.tuition.receipts.print', $receipt->phieuThuId) }}"
+                                                        target="_blank" class="tuition-inline-link">
+                                                        In phiếu thu
                                                     </a>
-                                                @endif
+                                                    <button type="button" class="btn btn-link tuition-inline-link p-0 border-0"
+                                                        onclick="studentRequestDocumentEmail('{{ route('home.student.tuition.receipts.email', $receipt->phieuThuId) }}', '{{ auth()->user()->email ?? '' }}', 'phiếu thu {{ $receiptCode }}')">
+                                                        Gửi email
+                                                    </button>
+                                                    @if ($invoice)
+                                                        <a href="{{ route('home.student.tuition.invoices.show', $invoice->hoaDonId) }}" class="tuition-inline-link">
+                                                            Xem hóa đơn liên quan
+                                                        </a>
+                                                    @endif
+                                                </div>
                                             </div>
                                         </article>
                                     @endforeach
@@ -106,4 +121,26 @@
             </div>
         </div>
     </section>
+@endsection
+
+@section('script')
+    <script>
+        function studentSubmitDocumentEmail(action, email, message) {
+            const form = document.getElementById('student-document-email-form');
+            document.getElementById('student-document-email-input').value = email;
+            document.getElementById('student-document-email-message').value = message || '';
+            form.action = action;
+            form.submit();
+        }
+
+        function studentRequestDocumentEmail(action, defaultEmail, label) {
+            const email = window.prompt(`Nhập email để gửi ${label}:`, defaultEmail || '');
+            if (!email) {
+                return;
+            }
+
+            const message = window.prompt('Ghi chú email (không bắt buộc):', '') || '';
+            studentSubmitDocumentEmail(action, email.trim(), message.trim());
+        }
+    </script>
 @endsection

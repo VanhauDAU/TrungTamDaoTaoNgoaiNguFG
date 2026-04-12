@@ -2,6 +2,46 @@
 
 Tất cả thay đổi đáng chú ý của dự án sẽ được ghi tại đây.
 
+## [2026-04-12] - Hoàn thiện xuất PDF và gửi email cho hóa đơn, phiếu thu
+
+### Added
+
+- Thêm service dùng chung `FinanceDocumentService` để render PDF và gửi email cho:
+  - hóa đơn
+  - phiếu thu
+- Thêm mailer `FinanceDocumentMail` và mẫu email đính kèm tài liệu tài chính.
+- Thêm 2 mẫu PDF mới:
+  - `resources/views/admin/hoa-don/pdf/invoice.blade.php`
+  - `resources/views/admin/hoa-don/pdf/receipt.blade.php`
+- Thêm route in/email cho admin:
+  - `GET /admin/hoa-don/{id}/in`
+  - `POST /admin/hoa-don/{id}/gui-email`
+  - `GET /admin/hoa-don/phieu-thu/{id}/in`
+  - `POST /admin/hoa-don/phieu-thu/{id}/gui-email`
+- Thêm route in/email cho học viên:
+  - `GET /hoc-vien/hoa-don/{id}/in`
+  - `POST /hoc-vien/hoa-don/{id}/gui-email`
+  - `GET /hoc-vien/hoc-phi/phieu-thu/{id}/in`
+  - `POST /hoc-vien/hoc-phi/phieu-thu/{id}/gui-email`
+- Thêm test `FinanceDocumentWorkflowTest` cho:
+  - admin lập phiếu thu và mở in ngay
+  - admin gửi email hóa đơn
+  - học viên in và gửi email tài liệu của chính mình
+
+### Changed
+
+- Trang chi tiết hóa đơn admin có thêm cụm thao tác `In hóa đơn` và `Gửi email`.
+- Form lập phiếu thu ở admin có thêm tùy chọn `Lưu và in phiếu thu`.
+- Lịch sử phiếu thu trong chi tiết hóa đơn admin có thêm thao tác in/email trên từng phiếu hợp lệ.
+- Trang danh sách hóa đơn admin có thêm nút in nhanh tại từng dòng.
+- Trang chi tiết hóa đơn học viên có thêm thao tác in/email cho hóa đơn và từng phiếu thu liên quan.
+- Trang `Phiếu thu tổng hợp` của học viên giờ có thể chọn từng phiếu để in hoặc gửi email lại.
+
+### Fixed
+
+- Bịt thiếu hụt nghiệp vụ trước đây khi đã ghi nhận thu tiền nhưng chưa thể xuất ngay phiếu thu cho người nộp.
+- Chuẩn hóa luồng phát hành tài liệu tài chính giữa khu vực admin và cổng học viên thay vì mỗi màn dùng logic riêng.
+
 ## [2026-04-02] - Chuẩn hóa upload ảnh dùng chung và áp dụng cho form admin
 
 ### Added

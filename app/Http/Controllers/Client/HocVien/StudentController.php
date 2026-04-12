@@ -6,14 +6,17 @@ use App\Contracts\Client\HocVien\StudentServiceInterface;
 use App\Http\Controllers\Controller;
 use App\Models\Auth\TaiKhoan;
 use App\Services\Auth\DeviceSessionService;
+use App\Services\Finance\FinanceDocumentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Validation\ValidationException;
 
 class StudentController extends Controller
 {
     public function __construct(
-        protected StudentServiceInterface $studentService
+        protected StudentServiceInterface $studentService,
+        protected FinanceDocumentService $financeDocumentService
         )
     {
     }
@@ -177,6 +180,58 @@ class StudentController extends Controller
         return view('clients.hoc-vien.invoices.show', $this->studentService->getInvoiceDetail($user, $id));
     }
 
+    public function printInvoice(int $id)
+    {
+        /** @var TaiKhoan $user */
+        $user = Auth::user();
+        if (!$user instanceof TaiKhoan)
+            abort(403);
+
+        return $this->financeDocumentService->streamInvoicePdf(
+            $this->financeDocumentService->findInvoiceForUser($user, $id)
+        );
+    }
+
+    public function emailInvoice(Request $request, int $id)
+    {
+        /** @var TaiKhoan $user */
+        $user = Auth::user();
+        if (!$user instanceof TaiKhoan)
+            abort(403);
+
+        $invoice = $this->financeDocumentService->findInvoiceForUser($user, $id);
+        [$email, $message] = $this->validateDocumentEmailPayload($request, $user->email);
+        $this->financeDocumentService->sendInvoiceEmail($invoice, $email, $message);
+
+        return back()->with('success', 'Đã gửi email hóa đơn thành công.');
+    }
+
+    public function printReceipt(int $id)
+    {
+        /** @var TaiKhoan $user */
+        $user = Auth::user();
+        if (!$user instanceof TaiKhoan)
+            abort(403);
+
+        return $this->financeDocumentService->streamReceiptPdf(
+            $this->financeDocumentService->findReceiptForUser($user, $id)
+        );
+    }
+
+    public function emailReceipt(Request $request, int $id)
+    {
+        /** @var TaiKhoan $user */
+        $user = Auth::user();
+        if (!$user instanceof TaiKhoan)
+            abort(403);
+
+        $receipt = $this->financeDocumentService->findReceiptForUser($user, $id);
+        [$email, $message] = $this->validateDocumentEmailPayload($request, $user->email);
+        $this->financeDocumentService->sendReceiptEmail($receipt, $email, $message);
+
+        return back()->with('success', 'Đã gửi email phiếu thu thành công.');
+    }
+
     public function myClasses()
     {
         /** @var TaiKhoan $user */
@@ -193,5 +248,23 @@ class StudentController extends Controller
         if (!$user instanceof TaiKhoan)
             abort(403);
         return view('clients.hoc-vien.lich-hoc.index', $this->studentService->getSchedule($request, $user));
+    }
+
+    private function validateDocumentEmailPayload(Request $request, ?string $fallbackEmail): array
+    {
+        $data = $request->validate([
+            'email' => 'nullable|email|max:255',
+            'message' => 'nullable|string|max:500',
+        ]);
+
+        $email = $data['email'] ?? $fallbackEmail;
+
+        if (!$email) {
+            throw ValidationException::withMessages([
+                'email' => ['Tài khoản của bạn chưa có email nhận tài liệu. Vui lòng nhập email thủ công.'],
+            ]);
+        }
+
+        return [$email, $data['message'] ?? null];
     }
 }
