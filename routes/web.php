@@ -168,6 +168,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
     Route::prefix('hoc-vien')->name('hoc-vien.')->group(function () {
         Route::get('/', [AdminHocVienController::class, 'index'])->name('index');
         Route::get('/xuat-excel', [AdminHocVienController::class, 'export'])->name('export');
+        Route::post('/tra-cuu-cccd', [AdminHocVienController::class, 'lookupCitizen'])
+            ->middleware('throttle:30,1')
+            ->name('lookup-citizen');
         Route::get('/tao-moi', [AdminHocVienController::class, 'create'])->name('create');
         Route::post('/', [AdminHocVienController::class, 'store'])->name('store');
         Route::get('/thung-rac', [AdminHocVienController::class, 'trash'])->name('trash');

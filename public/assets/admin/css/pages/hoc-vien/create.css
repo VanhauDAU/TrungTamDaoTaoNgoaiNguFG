@@ -290,6 +290,59 @@ select.form-control {
     margin-top: 2px;
 }
 
+.citizen-lookup-status {
+    display: none;
+    margin-top: 8px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    border: 1px solid transparent;
+}
+
+.citizen-lookup-status.is-hint,
+.citizen-lookup-status.is-loading,
+.citizen-lookup-status.is-success,
+.citizen-lookup-status.is-warning,
+.citizen-lookup-status.is-error {
+    display: block;
+}
+
+.citizen-lookup-status.is-hint {
+    color: #475569;
+    background: #f8fafc;
+    border-color: #e2e8f0;
+}
+
+.citizen-lookup-status.is-loading {
+    color: #1d4ed8;
+    background: #eff6ff;
+    border-color: #bfdbfe;
+}
+
+.citizen-lookup-status.is-success {
+    color: #166534;
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+}
+
+.citizen-lookup-status.is-warning {
+    color: #92400e;
+    background: #fffbeb;
+    border-color: #fde68a;
+}
+
+.citizen-lookup-status.is-error {
+    color: #b91c1c;
+    background: #fef2f2;
+    border-color: #fecaca;
+}
+
+.citizen-lookup-status__meta {
+    margin-top: 4px;
+    font-weight: 600;
+}
+
 /* ── Password strength ─────────────────────────────────── */
 .pass-strength {
     margin-top: 6px;

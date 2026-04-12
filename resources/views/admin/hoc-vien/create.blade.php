@@ -103,6 +103,7 @@
                         @error('cccd')
                             <div class="invalid-feedback"><i class="fas fa-circle-xmark"></i> {{ $message }}</div>
                         @enderror
+                        <div class="citizen-lookup-status" id="citizen-lookup-status" aria-live="polite"></div>
                     </div>
 
                     {{-- Preview tài khoản & mật khẩu tự sinh --}}
@@ -411,4 +412,5 @@
             if (el) observer.observe(el);
         });
     </script>
+    @include('admin.hoc-vien.partials.citizen-lookup-script')
 @endsection
