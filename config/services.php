@@ -52,4 +52,12 @@ return [
         'min_score' => env('RECAPTCHA_MIN_SCORE', 0.5),
     ],
 
+    'vietqr' => [
+        'client_id' => env('VIETQR_CLIENT_ID'),
+        'api_key' => env('VIETQR_API_KEY'),
+        'citizen_url' => env('VIETQR_CITIZEN_URL', 'https://api.vietqr.io/v2/citizen'),
+        'timeout' => (int) env('VIETQR_TIMEOUT', 8),
+        'connect_timeout' => (int) env('VIETQR_CONNECT_TIMEOUT', 5),
+    ],
+
 ];
