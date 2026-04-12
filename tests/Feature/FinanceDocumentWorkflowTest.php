@@ -86,31 +86,14 @@ class FinanceDocumentWorkflowTest extends TestCase
         });
     }
 
-    public function test_student_can_print_and_email_owned_finance_documents(): void
+    public function test_student_portal_does_not_expose_print_or_email_document_routes(): void
     {
-        Mail::fake();
-
         $student = $this->createStudent('HV000002', 'student@example.com', 'Học viên In Mail');
-        $admin = $this->createAdmin();
-        $invoice = $this->createInvoice($student, $admin);
-        $receipt = $this->createReceipt($invoice, $student, $admin);
 
-        $printResponse = $this->actingAs($student)->get(route('home.student.tuition.receipts.print', $receipt->phieuThuId));
-        $printResponse->assertOk();
-        $this->assertStringContainsString('application/pdf', (string) $printResponse->headers->get('content-type'));
-
-        $this->actingAs($student)
-            ->post(route('home.student.invoices.email', $invoice->hoaDonId), [
-                'email' => 'me@example.com',
-                'message' => 'Vui lòng lưu giúp tôi.',
-            ])
-            ->assertRedirect()
-            ->assertSessionHas('success', 'Đã gửi email hóa đơn thành công.');
-
-        Mail::assertSent(FinanceDocumentMail::class, function (FinanceDocumentMail $mail) {
-            return $mail->hasTo('me@example.com')
-                && $mail->documentType === 'invoice';
-        });
+        $this->actingAs($student)->get('/hoc-vien/hoa-don/1/in')->assertNotFound();
+        $this->actingAs($student)->post('/hoc-vien/hoa-don/1/gui-email')->assertNotFound();
+        $this->actingAs($student)->get('/hoc-vien/hoc-phi/phieu-thu/1/in')->assertNotFound();
+        $this->actingAs($student)->post('/hoc-vien/hoc-phi/phieu-thu/1/gui-email')->assertNotFound();
     }
 
     private function createFinanceSchema(): void

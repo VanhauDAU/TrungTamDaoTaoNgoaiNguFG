@@ -81,7 +81,7 @@
 - [x] Ghi log ket qua xu ly hoa don qua han
 - [x] Chuan hoa ownership cua `phieuthu`: hoc vien nop tien va nhan su ghi nhan tach rieng
 - [x] Moi thay doi hoa don tu admin deu recalculate hoa don va dang ky lien quan
-- [x] Xuat PDF hoa don va phiếu thu o ca admin va cong hoc vien
+- [x] Xuat PDF hoa don va phiếu thu o khu vuc admin
 - [x] Ho tro `Luu va in phiếu thu` ngay sau khi ghi nhan thu tien
 - [x] Gui email hoa don / phiếu thu kem file PDF
 
@@ -121,7 +121,7 @@
 - [x] Hướng dẫn vận hành tổng hợp cho auth, học phí lớp, đăng ký và hồ sơ nhân sự
 - [x] Tài liệu database được cập nhật thêm mô hình nhân sự mở rộng
 - [x] Feature test `NhanSuWorkflowTest` cho luồng hồ sơ nhân sự
-- [x] Feature test `FinanceDocumentWorkflowTest` cho in PDF / gui email hoa don, phiếu thu
+- [x] Feature test `FinanceDocumentWorkflowTest` cho in PDF / gui email hoa don, phiếu thu o admin
 - [x] README / README_vi / upload security checklist được đồng bộ theo kiến trúc upload ảnh dùng chung
 
 ---

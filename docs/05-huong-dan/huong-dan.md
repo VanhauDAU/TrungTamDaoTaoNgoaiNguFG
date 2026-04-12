@@ -407,11 +407,8 @@ Ghi chú hiện tại:
 ### 4.4 Xem hóa đơn
 
 - `/hoc-vien/hoa-don` → danh sách hóa đơn → click xem chi tiết
-- Tại trang chi tiết hóa đơn, học viên có thể:
-  - in hóa đơn PDF
-  - gửi lại hóa đơn vào email
-  - in / gửi email từng phiếu thu đã phát sinh
-- Tại `/hoc-vien/hoc-phi/phieu-thu`, học viên có thể chọn từng phiếu thu để in hoặc gửi email lại
+- Tại trang chi tiết hóa đơn và danh sách phiếu thu, học viên chỉ xem thông tin để đối soát
+- Nếu cần bản in hoặc file gửi mail, nhân sự thực hiện tại khu vực admin sau khi ghi nhận thu tiền
 
 ### 4.5 Sử dụng chat lớp học
 

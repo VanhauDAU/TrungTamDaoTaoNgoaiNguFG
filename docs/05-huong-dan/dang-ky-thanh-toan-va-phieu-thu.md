@@ -68,7 +68,6 @@ Tac vu van hanh moi:
 - O trang chi tiet hoa don, moi phiếu thu hop le deu co the:
   - in lai
   - gui email file PDF cho hoc vien / phu huynh
-- Danh sach phiếu thu o cong hoc vien cung cho phep chon tung phiếu de in hoac gui email
 
 ### 3.3.1 Xuat va gui tai lieu tai chinh
 
@@ -84,18 +83,11 @@ Tai admin:
 - `GET /admin/hoa-don/phieu-thu/{id}/in`: mo ban in phieu thu
 - `POST /admin/hoa-don/phieu-thu/{id}/gui-email`: gui email phieu thu
 
-Tai cong hoc vien:
-
-- `GET /hoc-vien/hoa-don/{id}/in`
-- `POST /hoc-vien/hoa-don/{id}/gui-email`
-- `GET /hoc-vien/hoc-phi/phieu-thu/{id}/in`
-- `POST /hoc-vien/hoc-phi/phieu-thu/{id}/gui-email`
-
 Luu y van hanh:
 
 - Neu he thong dang dung `MAIL_MAILER=log` thi thao tac gui email se ghi vao log thay vi gui ra ngoai
 - Ban in hien tai dung PDF sinh boi DOMPDF
-- Hoc vien chi duoc in/gui email tai lieu cua chinh minh
+- Cong hoc vien chi dung de xem va doi soat, khong mo route in/gui email tai lieu
 
 ### 3.4 Chuyen trang thai dang ky
 

@@ -92,14 +92,10 @@ Route::prefix('/')->name('home.')->group(function () {
         Route::post('/doi-mat-khau', [StudentController::class, 'updatePassword'])->name('update-password');
         Route::get('/hoa-don', [StudentController::class, 'invoices'])->name('invoices');
         Route::get('/hoa-don/{id}', [StudentController::class, 'invoiceDetail'])->name('invoices.show');
-        Route::get('/hoa-don/{id}/in', [StudentController::class, 'printInvoice'])->name('invoices.print');
-        Route::post('/hoa-don/{id}/gui-email', [StudentController::class, 'emailInvoice'])->name('invoices.email');
         Route::prefix('hoc-phi')->name('tuition.')->group(function () {
             Route::get('/', [StudentController::class, 'tuitionIndex'])->name('index');
             Route::get('/cong-no', [StudentController::class, 'tuitionDebts'])->name('debts');
             Route::get('/phieu-thu', [StudentController::class, 'tuitionReceipts'])->name('receipts');
-            Route::get('/phieu-thu/{id}/in', [StudentController::class, 'printReceipt'])->name('receipts.print');
-            Route::post('/phieu-thu/{id}/gui-email', [StudentController::class, 'emailReceipt'])->name('receipts.email');
             Route::get('/thanh-toan-truc-tuyen', [StudentController::class, 'tuitionPayments'])->name('payments');
             Route::get('/hoa-don/{id}', [StudentController::class, 'invoiceDetail'])->name('invoices.show');
         });

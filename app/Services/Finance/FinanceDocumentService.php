@@ -4,7 +4,6 @@ namespace App\Services\Finance;
 
 use App\Mail\FinanceDocumentMail;
 use App\Models\Auth\TaiKhoan;
-use App\Models\Education\DangKyLopHoc;
 use App\Models\Finance\HoaDon;
 use App\Models\Finance\PhieuThu;
 use Illuminate\Support\Facades\Mail;
@@ -21,29 +20,6 @@ class FinanceDocumentService
     public function findReceiptForAdmin(int $id): PhieuThu
     {
         return PhieuThu::with($this->receiptRelations())->findOrFail($id);
-    }
-
-    public function findInvoiceForUser(TaiKhoan $user, int $id): HoaDon
-    {
-        return HoaDon::where('taiKhoanId', $user->taiKhoanId)
-            ->where('hoaDonId', $id)
-            ->where(function ($query) {
-                $query->whereNull('dangKyLopHocId')
-                    ->orWhereHas('dangKyLopHoc', function ($registrationQuery) {
-                        $registrationQuery->where('trangThai', '!=', DangKyLopHoc::TRANG_THAI_HUY);
-                    })
-                    ->orWhere('daTra', '>', 0);
-            })
-            ->with($this->invoiceRelations())
-            ->firstOrFail();
-    }
-
-    public function findReceiptForUser(TaiKhoan $user, int $id): PhieuThu
-    {
-        return PhieuThu::where('taiKhoanId', $user->taiKhoanId)
-            ->where('phieuThuId', $id)
-            ->with($this->receiptRelations())
-            ->firstOrFail();
     }
 
     public function streamInvoicePdf(HoaDon $invoice, string $disposition = 'inline'): Response
