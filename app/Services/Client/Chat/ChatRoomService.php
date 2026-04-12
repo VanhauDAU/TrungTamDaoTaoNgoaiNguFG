@@ -9,6 +9,7 @@ use App\Models\Interaction\Chat\ChatRoom;
 use App\Models\Interaction\Chat\ChatRoomMember;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class ChatRoomService
 {
@@ -263,7 +264,7 @@ class ChatRoomService
             : ($room->tenPhong ?? optional($room->lopHoc)->tenLopHoc ?? 'Nhóm chat lớp');
         $roomAvatarUrl = $room->isDirect()
             ? $this->avatarUrlForAccount($directPeer)
-            : $this->avatarUrlForAccount($teacher);
+            : null;
 
         return [
             'id' => $room->chatRoomId,
@@ -272,6 +273,7 @@ class ChatRoomService
             'type' => $room->loai,
             'lopHocId' => $room->lopHocId,
             'className' => $room->isDirect() ? 'Đoạn chat riêng' : optional($room->lopHoc)->tenLopHoc,
+            'classCode' => $room->isDirect() ? null : optional($room->lopHoc)->maLopHoc,
             'courseName' => $room->isDirect() ? null : optional(optional($room->lopHoc)->khoaHoc)->tenKhoaHoc,
             'teacherName' => $room->isDirect() ? ($directPeer?->getRoleLabel() ?? 'Thành viên') : $teacherName,
             'teacherAvatarUrl' => $this->avatarUrlForAccount($teacher),
@@ -407,6 +409,34 @@ class ChatRoomService
         );
     }
 
+    public function leaveRoom(ChatRoom $room, TaiKhoan $taiKhoan): void
+    {
+        DB::transaction(function () use ($room, $taiKhoan) {
+            if ($room->isDirect()) {
+                // Direct chat: xóa hẳn bản ghi member của người dùng này
+                ChatRoomMember::query()
+                    ->where('chatRoomId', $room->chatRoomId)
+                    ->where('taiKhoanId', $taiKhoan->taiKhoanId)
+                    ->delete();
+
+                // Nếu không còn thành viên nào → xóa luôn room
+                $remainingMembers = ChatRoomMember::query()
+                    ->where('chatRoomId', $room->chatRoomId)
+                    ->count();
+
+                if ($remainingMembers === 0) {
+                    $room->delete();
+                }
+            } else {
+                // Class group: đặt roiAt = now() (rời nhóm, không xóa room vì còn người khác)
+                ChatRoomMember::query()
+                    ->where('chatRoomId', $room->chatRoomId)
+                    ->where('taiKhoanId', $taiKhoan->taiKhoanId)
+                    ->update(['roiAt' => now()]);
+            }
+        });
+    }
+
     private function getUnreadCount(ChatRoom $room, TaiKhoan $taiKhoan, ?ChatRoomMember $member): int
     {
         if (!$member) {
@@ -443,7 +473,25 @@ class ChatRoomService
 
     private function avatarUrlForAccount(?TaiKhoan $account): ?string
     {
-        return $account?->getAvatarUrl();
+        if (!$account) {
+            return null;
+        }
+
+        $path = $account->hoSoNguoiDung?->anhDaiDien;
+
+        if (is_string($path) && $path !== '') {
+            if (Str::startsWith($path, ['http://', 'https://'])) {
+                return $path;
+            }
+
+            return asset('storage/' . ltrim($path, '/'));
+        }
+
+        if (is_string($account->google_avatar) && $account->google_avatar !== '') {
+            return $account->google_avatar;
+        }
+
+        return null;
     }
 
     private function makeLastMessagePreview(?ChatMessage $message): ?string
