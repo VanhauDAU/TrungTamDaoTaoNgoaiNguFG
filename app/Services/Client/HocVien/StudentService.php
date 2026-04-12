@@ -135,16 +135,13 @@ class StudentService implements StudentServiceInterface
 
     public function getReceiptSummary(TaiKhoan $user): array
     {
-        $receiptQuery = PhieuThu::where('taiKhoanId', $user->taiKhoanId)
-            ->where('trangThai', PhieuThu::TRANG_THAI_HOP_LE)
-            ->with([
-                'hoaDon.dangKyLopHoc.lopHoc.khoaHoc',
-                'hoaDon.dangKyLopHocPhuPhi',
-                'hoaDon.coSo',
-                'nguoiDuyet.hoSoNguoiDung',
-            ]);
+        $receiptQuery = $this->receiptQueryForUser($user);
 
-        $receipts = $receiptQuery->orderByDesc('ngayThu')->paginate(12);
+        $receipts = $receiptQuery
+            ->orderByDesc('ngayThu')
+            ->orderByDesc('created_at')
+            ->orderByDesc('phieuThuId')
+            ->paginate(12);
         $receiptCollection = (clone $receiptQuery)->get();
 
         return [
@@ -156,6 +153,13 @@ class StudentService implements StudentServiceInterface
                 'onlineCount' => $receiptCollection->where('phuongThucThanhToan', 3)->count(),
             ],
         ];
+    }
+
+    public function getReceiptDetail(TaiKhoan $user, int $id): PhieuThu
+    {
+        return $this->receiptQueryForUser($user)
+            ->where('phieuThuId', $id)
+            ->firstOrFail();
     }
 
     public function getOnlinePayments(TaiKhoan $user): array
@@ -248,6 +252,19 @@ class StudentService implements StudentServiceInterface
                     ->orWhere('daTra', '>', 0);
             })
             ->with(['dangKyLopHoc.lopHoc.khoaHoc', 'dangKyLopHocPhuPhi', 'coSo']);
+    }
+
+    private function receiptQueryForUser(TaiKhoan $user): Builder
+    {
+        return PhieuThu::where('taiKhoanId', $user->taiKhoanId)
+            ->where('trangThai', PhieuThu::TRANG_THAI_HOP_LE)
+            ->with([
+                'hoaDon.dangKyLopHoc.lopHoc.khoaHoc',
+                'hoaDon.dangKyLopHocPhuPhi',
+                'hoaDon.coSo',
+                'hoaDon.nguoiLap.hoSoNguoiDung',
+                'nguoiDuyet.hoSoNguoiDung',
+            ]);
     }
 
     private function buildInvoiceSummary(Collection $invoices): array

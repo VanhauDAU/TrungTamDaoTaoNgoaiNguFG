@@ -267,7 +267,7 @@
                                 <th class="text-end">Tổng phải thu</th>
                                 <th class="text-end">Còn nợ</th>
                                 <th>Ngày lập / Hạn TT</th>
-                                <th class="text-center">Xem</th>
+                                <th class="text-center">Thao tác</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -365,11 +365,19 @@
                                     </td>
 
                                     <td class="text-center">
-                                        <a href="{{ route('admin.hoa-don.show', $hoaDon->hoaDonId) }}"
-                                            class="btn btn-sm btn-light border rounded-circle action-btn"
-                                            title="Xem chi tiết">
-                                            <i class="fas fa-eye text-primary"></i>
-                                        </a>
+                                        <div class="d-inline-flex gap-2">
+                                            <a href="{{ route('admin.hoa-don.show', $hoaDon->hoaDonId) }}"
+                                                class="btn btn-sm btn-light border rounded-circle action-btn"
+                                                title="Xem chi tiết">
+                                                <i class="fas fa-eye text-primary"></i>
+                                            </a>
+                                            <a href="{{ route('admin.hoa-don.print', $hoaDon->hoaDonId) }}"
+                                                target="_blank"
+                                                class="btn btn-sm btn-light border rounded-circle action-btn"
+                                                title="In hóa đơn">
+                                                <i class="fas fa-print text-secondary"></i>
+                                            </a>
+                                        </div>
                                     </td>
                                 </tr>
                             @endforeach

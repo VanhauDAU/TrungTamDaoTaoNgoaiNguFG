@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Client\ThongBao;
 
 use App\Http\Controllers\Controller;
 use App\Models\Interaction\ThongBao;
+use App\Models\Interaction\ThongBaoTepDinh;
 use App\Models\Interaction\ThongBaoNguoiDung;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
@@ -220,6 +222,28 @@ class ClientThongBaoController extends Controller
         return response()->json(['count' => $count]);
     }
 
+    public function downloadAttachment(int $id): StreamedResponse
+    {
+        $attachment = ThongBaoTepDinh::query()
+            ->whereKey($id)
+            ->whereHas('thongBao', fn($query) => $query
+                ->where('sendTrangThai', ThongBao::SEND_TRANG_THAI_DA_GUI)
+                ->whereNull('deleted_at')
+                ->whereHas('nguoiNhans', fn($recipientQuery) => $recipientQuery
+                    ->where('taiKhoanId', Auth::id())))
+            ->firstOrFail();
+
+        $disk = $this->resolveAttachmentDisk($attachment->duongDan);
+
+        return Storage::disk($disk)->download(
+            $attachment->duongDan,
+            $attachment->tenFile,
+            [
+                'Content-Type' => $attachment->loaiFile ?: (Storage::disk($disk)->mimeType($attachment->duongDan) ?: 'application/octet-stream'),
+            ]
+        );
+    }
+
     // ── API: đánh dấu 1 thông báo đã đọc ─────────────────────────────────────
     public function markRead($id)
     {
@@ -259,5 +283,18 @@ class ClientThongBaoController extends Controller
             ->update(['daDoc' => true, 'ngayDoc' => now()]);
 
         return response()->json(['success' => true, 'message' => 'Đã đọc tất cả thông báo']);
+    }
+
+    private function resolveAttachmentDisk(string $path): string
+    {
+        if (Storage::disk('local')->exists($path)) {
+            return 'local';
+        }
+
+        if (Storage::disk('public')->exists($path)) {
+            return 'public';
+        }
+
+        abort(404);
     }
 }
