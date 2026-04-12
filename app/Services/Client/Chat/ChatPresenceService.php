@@ -6,6 +6,7 @@ use App\Models\Auth\TaiKhoan;
 use App\Models\Interaction\Chat\ChatRoom;
 use App\Models\Interaction\Chat\ChatRoomMember;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 
 class ChatPresenceService
 {
@@ -43,13 +44,34 @@ class ChatPresenceService
                 return [
                     'id' => $account->taiKhoanId,
                     'name' => $name,
-                    'avatarUrl' => ($account->hoSoNguoiDung && $account->hoSoNguoiDung->anhDaiDien)
-                        ? asset('storage/' . ltrim($account->hoSoNguoiDung->anhDaiDien, '/'))
-                        : null,
+                    'avatarUrl' => $this->avatarUrlForAccount($account),
                 ];
             })
             ->values()
             ->all();
+    }
+
+    private function avatarUrlForAccount(?TaiKhoan $account): ?string
+    {
+        if (!$account) {
+            return null;
+        }
+
+        $path = $account->hoSoNguoiDung?->anhDaiDien;
+
+        if (is_string($path) && $path !== '') {
+            if (Str::startsWith($path, ['http://', 'https://'])) {
+                return $path;
+            }
+
+            return asset('storage/' . ltrim($path, '/'));
+        }
+
+        if (is_string($account->google_avatar) && $account->google_avatar !== '') {
+            return $account->google_avatar;
+        }
+
+        return null;
     }
 
     private function typingKey(int $roomId, int $userId): string

@@ -192,6 +192,26 @@ class ClientChatController extends Controller
         ]);
     }
 
+    public function leave(Request $request, int $roomId, ChatRoomService $chatRoomService, ChatAccessService $chatAccessService)
+    {
+        $user = $request->user();
+        $room = $chatRoomService->getVisibleRoomForUser($roomId, $user, $chatAccessService);
+
+        abort_unless($room, 404);
+
+        if (!$chatAccessService->canAccessRoom($user, $room)) {
+            return response()->json(['message' => 'Bạn chưa tham gia nhóm chat này.'], 403);
+        }
+
+        $chatRoomService->leaveRoom($room, $user);
+
+        return response()->json([
+            'message' => $room->isDirect()
+                ? 'Đã xóa đoạn chat.'
+                : 'Đã rời khỏi nhóm chat lớp học.',
+        ]);
+    }
+
     public function direct(Request $request, ChatRoomService $chatRoomService, ChatAccessService $chatAccessService)
     {
         $validated = $request->validate([

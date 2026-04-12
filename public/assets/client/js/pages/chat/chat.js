@@ -4,8 +4,17 @@
     const BS = window.CHAT_BOOTSTRAP;
     const root = document.getElementById("chat-app");
     const POLL_MS = 1500;
-    const ROOM_MS = 15000;
+    const ROOM_MS = 5000;
     const MOBILE_BREAKPOINT = 991.98;
+    const WEEKDAY_LABELS = [
+        "Chủ Nhật",
+        "Thứ Hai",
+        "Thứ Ba",
+        "Thứ Tư",
+        "Thứ Năm",
+        "Thứ Sáu",
+        "Thứ Bảy",
+    ];
     const REACTION_EMOJIS = Array.isArray(BS?.reactionEmojis)
         ? BS.reactionEmojis
         : ["👍", "❤️", "😂", "😮", "😢", "🔥", "😡"];
@@ -70,12 +79,21 @@
         highlightedMessageId: null,
         replyingTo: null,
         openMessageMenuId: null,
+        openRoomMenuId: null,
         openReactionPickerId: null,
         openReceiptDetailsMessageId: null,
         composerEmojiOpen: false,
         typingUsers: [],
         roomMembers: [],
         roomMembersLoading: false,
+        confirmingDeleteRoomId: null,
+        infoSectionsOpen: {
+            info: true,
+            customize: true,
+            media: false,
+            privacy: false,
+            members: true,
+        },
     };
 
     let pollTimer = null;
@@ -128,18 +146,55 @@
     }
 
     function roomInitials(room) {
-        return initialsFromText(
-            room?.name || room?.className || room?.courseName,
-            "CH",
-        );
+        return initialsFromText(roomTitle(room) || room?.name, "CH");
+    }
+
+    function hasUsableAvatarUrl(avatarUrl) {
+        const url = String(avatarUrl || "").trim();
+
+        return Boolean(url) && !url.includes("/assets/images/user-default.png");
     }
 
     function avatarInnerHtml(name, avatarUrl, fallback = "CH") {
-        if (avatarUrl) {
+        if (hasUsableAvatarUrl(avatarUrl)) {
             return `<img src="${esc(avatarUrl)}" alt="${esc(name || fallback)}" class="chat-avatar-image">`;
         }
 
         return esc(initialsFromText(name, fallback));
+    }
+
+    function pad2(value) {
+        return String(value).padStart(2, "0");
+    }
+
+    function parseSentDate(value) {
+        if (!value) return null;
+
+        const date = new Date(value);
+        return Number.isNaN(date.getTime()) ? null : date;
+    }
+
+    function formatMessageTime(date) {
+        if (!date) return "";
+        return `${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
+    }
+
+    function messageTimeLabel(message) {
+        return formatMessageTime(parseSentDate(message?.sentAt));
+    }
+
+    function messageDayKey(message) {
+        const date = parseSentDate(message?.sentAt);
+        if (!date) return "";
+
+        return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
+    }
+
+    function messageDayLabel(message) {
+        const date = parseSentDate(message?.sentAt);
+        if (!date) return "";
+
+        return `${WEEKDAY_LABELS[date.getDay()]}, ${pad2(date.getDate())}/${pad2(date.getMonth() + 1)}/${date.getFullYear()}`;
     }
 
     function latestMineReceiptMessageId() {
@@ -464,102 +519,321 @@
     function roomStats() {
         return {
             total: state.rooms.length,
-            unread: state.rooms.filter((room) => Number(room.unreadCount) > 0)
-                .length,
-            active: state.rooms.filter((room) => room.canAccess).length,
+            unread: state.rooms.filter((room) => Number(room.unreadCount) > 0).length,
         };
     }
 
-    function roomStatusLabel(room) {
-        if (!room) return "Chưa chọn phòng";
-        if (room.canAccess) return "Đang hoạt động";
-        if (room.canJoin) return "Sẵn sàng tham gia";
-        return "Chưa mở";
-    }
+    function roomTitle(room) {
+        if (!room) return "Chat lớp học";
 
-    function roomStatusClass(room) {
-        if (!room) return "is-idle";
-        if (room.canAccess) return "is-live";
-        if (room.canJoin) return "is-ready";
-        return "is-locked";
-    }
+        if (room.type === "direct") {
+            return room.name || room.directPeerName || "Đoạn chat riêng";
+        }
 
-    function roomMembershipText(room) {
-        if (!room) return "Chưa tham gia";
-        if (room.canAccess) return "Đã tham gia";
-        if (room.canJoin) return "Có thể tham gia";
-        return "Chờ kích hoạt";
-    }
-
-    function roomSendText(room) {
-        if (!room) return "Chưa chọn phòng";
-        if (room.canSend) return "Có thể gửi tin nhắn";
-        if (room.canAccess) return "Chỉ xem tin nhắn";
-        return "Chưa thể gửi";
+        return room.className || room.name || "Nhóm lớp học";
     }
 
     function roomSecondaryTitle(room) {
-        if (!room) return "Nhóm lớp học";
+        if (!room) return "Mã lớp đang cập nhật";
 
         if (room.type === "direct") {
-            return (
-                room.directContextClassName ||
-                room.directContextLabel ||
-                room.className ||
-                "Đoạn chat riêng"
-            );
+            return "Đoạn chat riêng";
         }
 
-        return room.courseName || room.className || "Nhóm lớp học";
-    }
-
-    function roomMetaCaption(room) {
-        if (!room) return "Chưa có thông tin";
-
-        if (room.type === "direct") {
-            return room.directContextLabel || "Đoạn chat riêng";
-        }
-
-        return room.teacherName || "Chưa có giáo viên";
+        return room.classCode ? `Mã lớp: ${room.classCode}` : "Mã lớp đang cập nhật";
     }
 
     function selectedRoomSubtitle(room) {
         if (!room) return "Chọn một nhóm chat để bắt đầu trao đổi với lớp học.";
 
         if (room.type === "direct") {
-            return [
-                room.directContextLabel || "Đoạn chat riêng",
-                room.teacherName || null,
-            ]
-                .filter(Boolean)
-                .join(" • ");
+            return "Đoạn chat riêng";
         }
 
-        return [
-            room.className,
-            room.courseName,
-            room.teacherName ? `GV: ${room.teacherName}` : null,
-        ]
-            .filter(Boolean)
-            .join(" • ");
+        return room.classCode ? `Mã lớp: ${room.classCode}` : "Mã lớp đang cập nhật";
     }
 
-    function roomMetaChips(room) {
+    function roomMenuItems(room) {
         if (!room) return [];
 
+        const deleteLabel = room.type === "direct" ? "Xóa đoạn chat" : "Rời nhóm chat";
+
+        const items = [
+            {
+                action: "delete-room",
+                icon: "fa-trash-can",
+                label: deleteLabel,
+                danger: true,
+            },
+        ];
+
         if (room.type === "direct") {
-            return [
-                room.directContextClassName || "Đoạn chat riêng",
-                room.directContextCourseName || room.directContextLabel || "Kết nối lớp học",
-                room.directPeerName || room.name,
-            ];
+            items.unshift({
+                action: "view-profile",
+                icon: "fa-user",
+                label: "Xem trang cá nhân",
+            });
+        } else {
+            items.unshift({
+                action: "view-class-info",
+                icon: "fa-school",
+                label: "Xem thông tin lớp",
+            });
         }
 
+        return items;
+    }
+
+    function infoPanelActions(room) {
+        if (!room) return [];
+
         return [
-            room.className || "Nhóm lớp học",
-            room.courseName || "Chưa gắn khóa học",
-            room.teacherName || "Chưa phân công",
+            {
+                icon: "fa-user",
+                label: room.type === "direct" ? "Trang cá nhân" : "Thông tin lớp",
+                action:
+                    room.type === "direct" ? "view-profile" : "view-class-info",
+            },
+            {
+                icon: "fa-bell",
+                label: "Tắt thông báo",
+                action: "mute-chat",
+            },
+            {
+                icon: "fa-magnifying-glass",
+                label: "Tìm kiếm",
+                action: "focus-search",
+            },
         ];
+    }
+
+    function infoPanelSections(room) {
+        if (!room) return [];
+
+        return [
+            {
+                key: "info",
+                title: "Thông tin về đoạn chat",
+                items: [
+                    {
+                        icon: "fa-thumbtack",
+                        label: "Xem tin nhắn đã ghim",
+                        action: "view-pinned",
+                    },
+                    {
+                        icon:
+                            room.type === "direct" ? "fa-user" : "fa-school",
+                        label:
+                            room.type === "direct"
+                                ? "Xem trang cá nhân"
+                                : "Xem thông tin lớp",
+                        action:
+                            room.type === "direct"
+                                ? "view-profile"
+                                : "view-class-info",
+                    },
+                ],
+            },
+            {
+                key: "customize",
+                title: "Tùy chỉnh đoạn chat",
+                items: [
+                    {
+                        icon: "fa-palette",
+                        label: "Đổi chủ đề",
+                        action: "theme",
+                        accent: "is-purple",
+                    },
+                    {
+                        icon: "fa-thumbs-up",
+                        label: "Thay đổi biểu tượng cảm xúc",
+                        action: "reaction-icon",
+                        accent: "is-blue",
+                    },
+                    {
+                        icon: "fa-font",
+                        label: "Chỉnh sửa biệt danh",
+                        action: "nickname",
+                    },
+                ],
+            },
+            {
+                key: "media",
+                title: "File phương tiện & file",
+                items: [
+                    {
+                        icon: "fa-image",
+                        label: "Ảnh và video",
+                        action: "media-gallery",
+                    },
+                    {
+                        icon: "fa-file-lines",
+                        label: "Tệp đã chia sẻ",
+                        action: "shared-files",
+                    },
+                ],
+            },
+            {
+                key: "privacy",
+                title: "Quyền riêng tư và hỗ trợ",
+                items: [
+                    {
+                        icon: "fa-bell-slash",
+                        label: "Tắt thông báo đoạn chat",
+                        action: "mute-chat",
+                    },
+                    {
+                        icon: "fa-triangle-exclamation",
+                        label: "Báo cáo hoặc phản hồi",
+                        action: "report-chat",
+                    },
+                ],
+            },
+        ];
+    }
+
+    function toggleInfoSection(sectionKey) {
+        state.infoSectionsOpen = {
+            ...state.infoSectionsOpen,
+            [sectionKey]: !state.infoSectionsOpen[sectionKey],
+        };
+        renderInfoPanel();
+    }
+
+    function handleRoomMenuAction(action, roomId) {
+        const room = roomById(roomId);
+        if (!room) return;
+
+        if (action === "delete-room") {
+            closeRoomMenu();
+            showDeleteRoomConfirm(room);
+            return;
+        }
+
+        closeRoomMenu();
+
+        const messages = {
+            "view-profile": "Trang cá nhân trong chat đang được cập nhật.",
+            "view-class-info": "Trang thông tin lớp trong chat đang được cập nhật.",
+            "mute-chat": "Tắt thông báo cho đoạn chat sẽ được hỗ trợ ở bước tiếp theo.",
+            "view-pinned": "Danh sách tin nhắn đã ghim đang được cập nhật.",
+            theme: "Đổi chủ đề cho đoạn chat đang được cập nhật.",
+            "reaction-icon":
+                "Thay đổi biểu tượng cảm xúc mặc định đang được cập nhật.",
+            nickname: "Chỉnh sửa biệt danh đang được cập nhật.",
+            "media-gallery": "Bộ sưu tập ảnh và video đang được cập nhật.",
+            "shared-files": "Danh sách tệp đã chia sẻ đang được cập nhật.",
+            "report-chat": "Tính năng báo cáo đoạn chat đang được cập nhật.",
+        };
+
+        if (action === "focus-search") {
+            toggleMessageSearch(true);
+            return;
+        }
+
+        notice("error", messages[action] || "Tính năng này đang được cập nhật.");
+    }
+
+    function showDeleteRoomConfirm(room) {
+        state.confirmingDeleteRoomId = Number(room.id);
+
+        const isDirect = room.type === "direct";
+        const title = isDirect ? "Xóa đoạn chat?" : "Rời nhóm chat?";
+        const body = isDirect
+            ? `Đoạn chat với <strong>${esc(room.name || "người dùng")}</strong> sẽ bị xóa vĩnh viễn khỏi cơ sở dữ liệu. Bạn không thể hoàn tác hành động này.`
+            : `Bạn sẽ rời khỏi nhóm chat lớp <strong>${esc(room.name || "lớp học")}</strong>. Bạn có thể tham gia lại sau.`;
+        const confirmLabel = isDirect ? "Xóa vĩnh viễn" : "Rời nhóm";
+
+        // Remove existing modal if any
+        document.getElementById("chat-delete-confirm-modal")?.remove();
+
+        const modal = document.createElement("div");
+        modal.id = "chat-delete-confirm-modal";
+        modal.className = "chat-confirm-modal-backdrop";
+        modal.innerHTML = `
+            <div class="chat-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="chat-confirm-title">
+                <div class="chat-confirm-modal-icon">
+                    <i class="fas fa-triangle-exclamation"></i>
+                </div>
+                <h4 id="chat-confirm-title">${title}</h4>
+                <p>${body}</p>
+                <div class="chat-confirm-modal-actions">
+                    <button type="button" class="chat-confirm-cancel" data-confirm-cancel>Hủy bỏ</button>
+                    <button type="button" class="chat-confirm-ok" data-confirm-ok>${confirmLabel}</button>
+                </div>
+            </div>`;
+
+        document.body.appendChild(modal);
+        requestAnimationFrame(() => modal.classList.add("is-visible"));
+
+        modal.querySelector("[data-confirm-cancel]").addEventListener("click", () => {
+            closeDeleteRoomConfirm();
+        });
+
+        modal.querySelector("[data-confirm-ok]").addEventListener("click", () => {
+            closeDeleteRoomConfirm();
+            executeDeleteRoom(state.confirmingDeleteRoomId);
+        });
+
+        modal.addEventListener("click", (e) => {
+            if (e.target === modal) closeDeleteRoomConfirm();
+        });
+    }
+
+    function closeDeleteRoomConfirm() {
+        const modal = document.getElementById("chat-delete-confirm-modal");
+        if (!modal) return;
+        modal.classList.remove("is-visible");
+        setTimeout(() => modal.remove(), 240);
+        state.confirmingDeleteRoomId = null;
+    }
+
+    async function executeDeleteRoom(roomId) {
+        if (!roomId) return;
+
+        try {
+            await api(ep(BS.endpoints.leave, roomId), { method: "DELETE" });
+
+            // Remove from state
+            state.rooms = state.rooms.filter(
+                (r) => Number(r.id) !== Number(roomId),
+            );
+
+            if (
+                state.selectedRoom &&
+                Number(state.selectedRoom.id) === Number(roomId)
+            ) {
+                state.selectedRoom = null;
+                state.messages = [];
+                state.messagesLoaded = false;
+                state.roomMembers = [];
+                stopPoll();
+                setUrl(null);
+
+                const nextRoom = filteredRooms()[0] || null;
+                if (nextRoom) {
+                    selectRoom(Number(nextRoom.id));
+                } else {
+                    renderMainHeader();
+                    renderMessageBoard();
+                    renderComposer();
+                    renderInfoPanel();
+                }
+            }
+
+            renderRoomList();
+            notice("success", "Đã xóa đoạn chat thành công.");
+        } catch (error) {
+            notice("error", error.payload?.message || error.message);
+        }
+    }
+
+    function closeRoomMenu() {
+        state.openRoomMenuId = null;
+        const menu = root.querySelector(".chat-room-menu.is-open");
+        const trigger = root.querySelector(".chat-room-more-btn.is-open");
+        menu?.classList.remove("is-open");
+        trigger?.classList.remove("is-open");
     }
 
     function findMessageById(messageId) {
@@ -1120,21 +1394,27 @@
         }
     }
 
+    function sortRoomsByLastMessage() {
+        state.rooms.sort((a, b) => {
+            const aTime = a.lastMessageAt || a.updatedAt || "";
+            const bTime = b.lastMessageAt || b.updatedAt || "";
+            return bTime > aTime ? 1 : bTime < aTime ? -1 : 0;
+        });
+    }
+
     function filteredRooms() {
         const query = state.roomQuery.trim().toLowerCase();
 
         return state.rooms.filter((room) => {
             if (state.roomFilter === "unread" && Number(room.unreadCount) <= 0)
                 return false;
-            if (state.roomFilter === "active" && !room.canAccess) return false;
 
             if (!query) return true;
 
             return [
                 room.name,
                 room.className,
-                room.courseName,
-                room.teacherName,
+                room.classCode,
                 room.lastMessagePreview,
             ]
                 .filter(Boolean)
@@ -1144,60 +1424,14 @@
         });
     }
 
-    function messageSnapshot() {
-        const committedMessages = state.messages.filter(
-            (message) => !message._pending,
-        );
-        const mine = committedMessages.filter(
-            (message) => message.isMine,
-        ).length;
-        const others = committedMessages.length - mine;
-        const lastMessage = committedMessages.at(-1) || null;
-
-        return {
-            totalLoaded: committedMessages.length,
-            mine,
-            others,
-            lastMessage,
-            preview:
-                truncateText(
-                    lastMessage?.content ||
-                        (Array.isArray(lastMessage?.attachments) &&
-                        lastMessage.attachments.length
-                            ? lastMessage.attachments[0]?.isImage
-                                ? "[Ảnh đính kèm]"
-                                : "[Tệp đính kèm]"
-                            : "") ||
-                        state.selectedRoom?.lastMessagePreview ||
-                        "Chưa có tin nhắn",
-                    130,
-                ) || "Chưa có tin nhắn",
-        };
-    }
-
     function renderSidebarMeta() {
         const stats = roomStats();
 
-        const totalEl = document.getElementById("chat-filter-total");
-        const unreadEl = document.getElementById("chat-filter-unread");
-        const activeEl = document.getElementById("chat-filter-active");
-        const summaryTotal = document.getElementById("chat-summary-total");
-        const summaryUnread = document.getElementById("chat-summary-unread");
-        const summaryActive = document.getElementById("chat-summary-active");
+        const summaryTotal = document.getElementById("chat-filter-count-all");
+        const summaryUnread = document.getElementById("chat-filter-count-unread");
 
-        if (totalEl) totalEl.textContent = stats.total;
-        if (unreadEl) unreadEl.textContent = stats.unread;
-        if (activeEl) activeEl.textContent = stats.active;
         if (summaryTotal) summaryTotal.textContent = stats.total;
         if (summaryUnread) summaryUnread.textContent = stats.unread;
-        if (summaryActive) summaryActive.textContent = stats.active;
-
-        root.querySelectorAll("[data-room-filter]").forEach((button) => {
-            button.classList.toggle(
-                "is-active",
-                button.dataset.roomFilter === state.roomFilter,
-            );
-        });
     }
 
     function renderRoomList() {
@@ -1223,7 +1457,7 @@
                 <div class="chat-room-empty">
                     <i class="fas fa-search"></i>
                     <h4>Không tìm thấy kết quả</h4>
-                    <p>Thử tìm theo tên lớp, khóa học hoặc giáo viên.</p>
+                    <p>Thử tìm theo tên lớp, mã lớp hoặc nội dung gần đây.</p>
                 </div>`;
             return;
         }
@@ -1235,35 +1469,58 @@
                         const isActive =
                             state.selectedRoom &&
                             Number(state.selectedRoom.id) === Number(room.id);
+                        const menuItems = roomMenuItems(room);
+                        const isMenuOpen =
+                            Number(state.openRoomMenuId) === Number(room.id);
 
                         return `
-                            <button type="button" class="chat-room-item ${isActive ? "is-active" : ""}" data-room-id="${room.id}">
+                            <div class="chat-room-item ${isActive ? "is-active" : ""}" data-room-id="${room.id}" role="button" tabindex="0">
                                 <div class="chat-room-row">
                                     <div class="chat-room-avatar-wrap">
-                                        <div class="chat-room-avatar">${avatarInnerHtml(room.name, room.avatarUrl, "CH")}</div>
-                                        <span class="chat-room-dot ${room.canAccess ? "is-live" : ""}"></span>
+                                        <div class="chat-room-avatar">${avatarInnerHtml(roomTitle(room), room.avatarUrl, roomInitials(room))}</div>
                                     </div>
                                     <div class="chat-room-content">
                                         <div class="chat-room-top">
-                                            <div class="chat-room-name">${esc(room.name)}</div>
-                                            ${
-                                                Number(room.unreadCount) > 0
-                                                    ? `<span class="chat-room-badge">${room.unreadCount}</span>`
-                                                    : `<span class="chat-room-time">${esc(room.lastMessageAtLabel || "Mới")}</span>`
-                                            }
+                                            <div class="chat-room-name">${esc(roomTitle(room))}</div>
+                                            <div class="chat-room-top-actions">
+                                                ${
+                                                    Number(room.unreadCount) > 0
+                                                        ? `<span class="chat-room-badge">${room.unreadCount}</span>`
+                                                        : `<span class="chat-room-time">${esc(room.lastMessageAtLabel || "Mới")}</span>`
+                                                }
+                                                <div class="chat-room-menu-wrap">
+                                                    <button
+                                                        type="button"
+                                                        class="chat-room-more-btn ${isMenuOpen ? "is-open" : ""}"
+                                                        data-room-menu-btn="${room.id}"
+                                                        aria-label="Tùy chọn đoạn chat"
+                                                    >
+                                                        <i class="fas fa-ellipsis"></i>
+                                                    </button>
+                                                    <div class="chat-room-menu ${isMenuOpen ? "is-open" : ""}" data-room-menu-id="${room.id}">
+                                                        ${menuItems
+                                                            .map(
+                                                                (item) => `
+                                                                    <button
+                                                                        type="button"
+                                                                        class="chat-room-menu-item ${item.danger ? "is-danger" : ""}"
+                                                                        data-room-menu-action="${esc(item.action)}"
+                                                                        data-room-id="${room.id}"
+                                                                    >
+                                                                        <i class="fas ${esc(item.icon)}"></i>
+                                                                        <span>${esc(item.label)}</span>
+                                                                    </button>`,
+                                                            )
+                                                            .join("")}
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                         <div class="chat-room-course">${esc(roomSecondaryTitle(room))}</div>
                                         <div class="chat-room-preview">${esc(room.lastMessagePreview || "Chưa có tin nhắn")}</div>
-                                        <div class="chat-room-meta">
-                                            <span>${esc(roomMetaCaption(room))}</span>
-                                            <span class="chat-room-state ${roomStatusClass(room)}">
-                                                <i class="fas ${room.canAccess ? "fa-circle-check" : room.canJoin ? "fa-user-plus" : "fa-lock"}"></i>
-                                                ${esc(roomMembershipText(room))}
-                                            </span>
-                                        </div>
                                     </div>
                                 </div>
-                            </button>`;
+                            </div>`;
                     })
                     .join("")}
             </div>`;
@@ -1274,7 +1531,6 @@
         if (!header) return;
 
         const room = state.selectedRoom;
-        const chips = roomMetaChips(room);
         const typingText = typingSummaryText();
         const activeElement = document.activeElement;
         const searchWasFocused = activeElement?.id === "chat-message-search";
@@ -1292,34 +1548,27 @@
                         <i class="fas fa-bars"></i>
                     </button>
                     <div class="chat-main-avatar-wrap">
-                        <div class="chat-main-avatar">${room ? avatarInnerHtml(room.name, room.avatarUrl, "CH") : "CH"}</div>
-                        <span class="chat-main-avatar-dot ${room && room.canAccess ? "is-live" : ""}"></span>
+                        <div class="chat-main-avatar">${room ? avatarInnerHtml(roomTitle(room), room.avatarUrl, roomInitials(room)) : "CH"}</div>
                     </div>
                     <div class="chat-main-summary">
                         <div class="chat-main-title-row">
-                            <h3 class="chat-main-title">${esc(room?.name || "Chat lớp học")}</h3>
-                            ${
-                                room
-                                    ? `<span class="chat-main-status ${roomStatusClass(room)}">${esc(roomStatusLabel(room))}</span>`
-                                    : ""
-                            }
+                            <h3 class="chat-main-title">${esc(roomTitle(room))}</h3>
                         </div>
                         <p class="chat-main-subtitle">${esc(selectedRoomSubtitle(room))}</p>
                         ${
-                            chips.length
-                                ? `<div class="chat-main-tags">
-                                        ${chips
-                                            .map(
-                                                (chip) =>
-                                                    `<span class="chat-main-pill">${esc(chip)}</span>`,
-                                            )
-                                            .join("")}
-                                   </div>`
+                            typingText
+                                ? `<div class="chat-main-typing">${esc(typingText)}</div>`
                                 : ""
                         }
                     </div>
                 </div>
                 <div class="chat-main-actions">
+                    <button type="button" class="chat-header-icon" data-room-action="call" title="Gọi thoại">
+                        <i class="fas fa-phone"></i>
+                    </button>
+                    <button type="button" class="chat-header-icon" data-room-action="video" title="Gọi video">
+                        <i class="fas fa-video"></i>
+                    </button>
                     <button type="button" class="chat-header-icon ${state.messageSearchOpen ? "is-active" : ""}" data-toggle-message-search title="Tìm kiếm trong đoạn chat">
                         <i class="fas fa-magnifying-glass"></i>
                     </button>
@@ -1374,7 +1623,21 @@
         }
     }
 
-    function buildMessageEl(message) {
+    function shouldShowMessageTime(index) {
+        const current = state.messages[index];
+        const next = state.messages[index + 1];
+
+        if (!current || current.isSystem) return false;
+        if (!next || next.isSystem) return true;
+
+        return (
+            Boolean(current.isMine) !== Boolean(next.isMine) ||
+            String(current.senderId || "") !== String(next.senderId || "") ||
+            messageDayKey(current) !== messageDayKey(next)
+        );
+    }
+
+    function buildMessageEl(message, showTime = true) {
         const wrap = document.createElement("div");
         wrap.className = `chat-message-row${message.isMine ? " is-mine" : ""}${message.isSystem ? " is-system" : ""}${Number(state.highlightedMessageId) === Number(message.id) ? " is-highlighted" : ""}`;
         if (message._pending) wrap.dataset.pending = message.id;
@@ -1521,12 +1784,10 @@
                                 ? `<div class="chat-message-text">${esc(message.content)}</div>`
                                 : ""
                         }
-                        <div class="chat-message-meta-row">
-                            <div class="chat-message-time">${message._pending ? "Đang gửi..." : esc(message.sentAtLabel || "")}</div>
-                        </div>
                     </div>
                     ${menuHtml}
                 </div>
+                ${showTime && messageTimeLabel(message) ? `<div class="chat-message-time">${esc(messageTimeLabel(message))}</div>` : ""}
                 ${
                     shouldShowReceipt
                         ? `<div class="chat-message-receipt-line">${receiptSummaryHtml(message.receipt, message.id)}</div>`
@@ -1596,6 +1857,7 @@
 
         board.classList.add("has-messages");
         const unreadMessageId = firstUnreadIncomingMessageId();
+        let previousDayKey = "";
         board.innerHTML = `
             ${
                 state.hasOlderMessages
@@ -1607,7 +1869,13 @@
             }
             <div class="chat-message-list">
                 ${state.messages
-                    .map((message) => {
+                    .map((message, index) => {
+                        const currentDayKey = messageDayKey(message);
+                        const dayDivider =
+                            currentDayKey && currentDayKey !== previousDayKey
+                                ? `<div class="chat-day-divider"><span>${esc(messageDayLabel(message))}</span></div>`
+                                : "";
+                        previousDayKey = currentDayKey || previousDayKey;
                         const divider =
                             unreadMessageId &&
                             Number(message.id) === Number(unreadMessageId)
@@ -1616,7 +1884,7 @@
                                    </div>`
                                 : "";
 
-                        return `${divider}${buildMessageEl(message).outerHTML}`;
+                        return `${dayDivider}${divider}${buildMessageEl(message, shouldShowMessageTime(index)).outerHTML}`;
                     })
                     .join("")}
             </div>`;
@@ -1645,12 +1913,49 @@
                 <div class="chat-info-empty">
                     <i class="fas fa-circle-info"></i>
                     <h4>Thông tin đoạn chat</h4>
-                    <p>Chọn một phòng chat để xem chi tiết lớp học, trạng thái tham gia và hoạt động gần đây.</p>
+                    <p>Chọn một phòng chat để xem chi tiết lớp và thành viên trong đoạn chat.</p>
                 </div>`;
             return;
         }
 
-        const snapshot = messageSnapshot();
+        const quickActions = infoPanelActions(room);
+        const sectionHtml = infoPanelSections(room)
+            .map((section) => {
+                const isOpen = Boolean(state.infoSectionsOpen[section.key]);
+
+                return `
+                    <section class="chat-drawer-section ${isOpen ? "is-open" : ""}">
+                        <button
+                            type="button"
+                            class="chat-drawer-section-toggle"
+                            data-info-section="${esc(section.key)}"
+                            aria-expanded="${isOpen ? "true" : "false"}"
+                        >
+                            <span>${esc(section.title)}</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="chat-drawer-section-body">
+                            ${section.items
+                                .map(
+                                    (item) => `
+                                        <button
+                                            type="button"
+                                            class="chat-drawer-item"
+                                            data-info-action="${esc(item.action)}"
+                                            data-room-id="${room.id}"
+                                        >
+                                            <span class="chat-drawer-item-icon ${esc(item.accent || "")}">
+                                                <i class="fas ${esc(item.icon)}"></i>
+                                            </span>
+                                            <span>${esc(item.label)}</span>
+                                        </button>`,
+                                )
+                                .join("")}
+                        </div>
+                    </section>`;
+            })
+            .join("");
+
         const membersHtml = state.roomMembersLoading
             ? `<div class="chat-members-empty">
                     <i class="fas fa-spinner fa-spin"></i>
@@ -1697,75 +2002,66 @@
                  </div>`;
 
         panel.innerHTML = `
-            <div class="chat-info-hero">
-                <div class="chat-info-avatar-wrap">
-                    <div class="chat-info-avatar">${avatarInnerHtml(room.name, room.avatarUrl, "CH")}</div>
-                    <span class="chat-info-avatar-dot ${room.canAccess ? "is-live" : ""}"></span>
-                </div>
-                <h4 class="chat-info-title">${esc(room.name)}</h4>
-                <p class="chat-info-subtitle">${esc(selectedRoomSubtitle(room))}</p>
-                <span class="chat-main-status ${roomStatusClass(room)}">${esc(roomStatusLabel(room))}</span>
-            </div>
-
-            <div class="chat-info-section">
-                <div class="chat-info-section-head">
-                    <h5>Thành viên đoạn chat</h5>
-                </div>
-                ${membersHtml}
-            </div>
-
-            <div class="chat-info-section">
-                <div class="chat-info-section-head">
-                    <h5>Tùy chọn nhanh</h5>
-                </div>
-                <div class="chat-info-actions">
-                    <button type="button" class="chat-info-action-btn" disabled>
-                        <i class="fas fa-image"></i>
-                        <span>Tập tin</span>
-                    </button>
-                    <button type="button" class="chat-info-action-btn" disabled>
-                        <i class="fas fa-bell-slash"></i>
-                        <span>Thông báo</span>
-                    </button>
-                    <button type="button" class="chat-info-action-btn" data-focus-message-search>
-                        <i class="fas fa-magnifying-glass"></i>
-                        <span>Tìm kiếm</span>
+            <div class="chat-drawer">
+                <div class="chat-drawer-head">
+                    <span>Chi tiết đoạn chat</span>
+                    <button
+                        type="button"
+                        class="chat-drawer-close"
+                        data-close-info
+                        aria-label="Đóng thông tin đoạn chat"
+                    >
+                        <i class="fas fa-xmark"></i>
                     </button>
                 </div>
-            </div>
+                <div class="chat-drawer-hero">
+                    <div class="chat-info-avatar-wrap">
+                        <div class="chat-info-avatar">${avatarInnerHtml(roomTitle(room), room.avatarUrl, roomInitials(room))}</div>
+                        <span class="chat-drawer-presence ${typingSummaryText() ? "is-live" : ""}"></span>
+                    </div>
+                    <h4 class="chat-info-title">${esc(roomTitle(room))}</h4>
+                    <p class="chat-info-subtitle">${esc(room.type === "direct" ? "Đang hoạt động" : selectedRoomSubtitle(room))}</p>
+                    <span class="chat-drawer-pill">
+                        <i class="fas fa-lock"></i>
+                        <span>Được mã hóa đầu cuối</span>
+                    </span>
 
-            <div class="chat-info-section">
-                <div class="chat-info-section-head">
-                    <h5>Tổng quan hội thoại</h5>
-                </div>
-                <div class="chat-info-highlight">
-                    <span class="chat-info-highlight-label">Xem nhanh tin nhắn gần nhất</span>
-                    <p>${esc(snapshot.preview)}</p>
-                </div>
-                <div class="chat-info-mini-grid">
-                    <div class="chat-info-mini-card">
-                        <strong>${snapshot.totalLoaded}</strong>
-                        <span>Tin đã tải</span>
-                    </div>
-                    <div class="chat-info-mini-card">
-                        <strong>${snapshot.mine}</strong>
-                        <span>Tin của bạn</span>
-                    </div>
-                    <div class="chat-info-mini-card">
-                        <strong>${snapshot.others}</strong>
-                        <span>Từ thành viên khác</span>
+                    <div class="chat-drawer-actions">
+                        ${quickActions
+                            .map(
+                                (action) => `
+                                    <button
+                                        type="button"
+                                        class="chat-drawer-action"
+                                        data-info-action="${esc(action.action)}"
+                                        data-room-id="${room.id}"
+                                    >
+                                        <span class="chat-drawer-action-icon">
+                                            <i class="fas ${esc(action.icon)}"></i>
+                                        </span>
+                                        <span>${esc(action.label)}</span>
+                                    </button>`,
+                            )
+                            .join("")}
                     </div>
                 </div>
-            </div>
 
-            <div class="chat-info-section">
-                <div class="chat-info-section-head">
-                    <h5>Gợi ý sử dụng</h5>
-                </div>
-                <ul class="chat-info-tips">
-                    <li>Danh sách phòng và đoạn chat đều cuộn trong khung riêng, trang sẽ không cuộn bên ngoài.</li>
-                    <li>Bộ lọc bên trái giúp tách nhanh các đoạn chat chưa đọc và đã tham gia.</li>
-                </ul>
+                ${sectionHtml}
+
+                <section class="chat-drawer-section ${state.infoSectionsOpen.members ? "is-open" : ""}">
+                    <button
+                        type="button"
+                        class="chat-drawer-section-toggle"
+                        data-info-section="members"
+                        aria-expanded="${state.infoSectionsOpen.members ? "true" : "false"}"
+                    >
+                        <span>Thành viên đoạn chat</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="chat-drawer-section-body">
+                        ${membersHtml}
+                    </div>
+                </section>
             </div>`;
     }
 
@@ -1830,7 +2126,7 @@
                         }
                         ${draftAttachmentHtml()}
                         <div class="chat-composer-input-shell">
-                            <textarea id="chat-message-input" placeholder="Nhập tin nhắn cho lớp học của bạn...">${esc(state.messageDraft)}</textarea>
+                            <textarea id="chat-message-input" placeholder="Nhập tin nhắn để trả lời...">${esc(state.messageDraft)}</textarea>
                             <div class="chat-composer-emoji">
                                 <button
                                     type="button"
@@ -1892,17 +2188,20 @@
         const sidebar = root.querySelector(".chat-sidebar");
         const infoPanel = root.querySelector(".chat-info-panel");
         const headerInfoButton = root.querySelector("[data-toggle-info]");
+        const layout = root.querySelector(".chat-layout");
 
         if (!isMobileViewport()) {
             state.mobileSidebarOpen = false;
-            state.mobileInfoOpen = false;
         }
 
         sidebar?.classList.toggle("is-open", state.mobileSidebarOpen);
         infoPanel?.classList.toggle("is-open", state.mobileInfoOpen);
         headerInfoButton?.classList.toggle("is-active", state.mobileInfoOpen);
+        layout?.classList.toggle(
+            "has-info-open",
+            !isMobileViewport() && state.mobileInfoOpen,
+        );
 
-        const layout = root.querySelector(".chat-layout");
         const existingBackdrop = root.querySelector(".chat-panel-backdrop");
         const shouldShowBackdrop =
             isMobileViewport() &&
@@ -1923,7 +2222,7 @@
         if (!isMobileViewport()) return;
 
         if (panel === "rooms") {
-            state.mobileSidebarOpen = open;
+            state.mobileSidebarOpen = isMobileViewport() ? open : false;
             if (open) state.mobileInfoOpen = false;
         }
 
@@ -1937,7 +2236,9 @@
 
     function closeMobilePanels() {
         state.mobileSidebarOpen = false;
-        state.mobileInfoOpen = false;
+        if (isMobileViewport()) {
+            state.mobileInfoOpen = false;
+        }
         updateMobilePanels();
     }
 
@@ -1946,30 +2247,24 @@
             <div class="chat-layout">
                 <aside class="chat-sidebar">
                     <div class="chat-sidebar-header">
-                        <div class="chat-sidebar-headline">
-                            <div>
-                                <h3 class="chat-sidebar-title">Đoạn chat</h3>
-                                <p class="chat-sidebar-note">Trao đổi nhanh với lớp học, giáo viên và thông báo mới nhất.</p>
-                            </div>
-                        </div>
+                        <a href="${esc(BS.backUrl || "/")}" class="chat-sidebar-back">
+                            <i class="fas fa-arrow-left"></i>
+                            <span>Quay lại</span>
+                        </a>
 
                         <div class="chat-sidebar-search">
                             <i class="fas fa-search"></i>
-                            <input id="chat-room-search" type="text" placeholder="Tìm theo lớp, khóa học, giáo viên" value="${esc(state.roomQuery)}">
+                            <input id="chat-room-search" type="text" placeholder="Tìm theo tên lớp hoặc mã lớp" value="${esc(state.roomQuery)}">
                         </div>
 
-                        <div class="chat-sidebar-filters">
-                            <button type="button" class="chat-filter-pill" data-room-filter="all">
-                                Tất cả
-                                <span id="chat-filter-total">0</span>
+                        <div class="chat-sidebar-filters" role="tablist" aria-label="Bộ lọc đoạn chat">
+                            <button type="button" class="chat-sidebar-filter ${state.roomFilter === "all" ? "is-active" : ""}" data-room-filter="all">
+                                <span>Tất cả</span>
+                                <strong id="chat-filter-count-all">0</strong>
                             </button>
-                            <button type="button" class="chat-filter-pill" data-room-filter="unread">
-                                Chưa đọc
-                                <span id="chat-filter-unread">0</span>
-                            </button>
-                            <button type="button" class="chat-filter-pill" data-room-filter="active">
-                                Đang tham gia
-                                <span id="chat-filter-active">0</span>
+                            <button type="button" class="chat-sidebar-filter ${state.roomFilter === "unread" ? "is-active" : ""}" data-room-filter="unread">
+                                <span>Chưa đọc</span>
+                                <strong id="chat-filter-count-unread">0</strong>
                             </button>
                         </div>
                     </div>
@@ -2286,6 +2581,7 @@
 
                     if (appended) {
                         syncRoomInList({ ...data.room, unreadCount: 0 });
+                        sortRoomsByLastMessage();
                         renderRoomList();
                         renderMainHeader();
                         renderInfoPanel();
@@ -2360,6 +2656,7 @@
                         ? { ...state.selectedRoom }
                         : null;
                     state.rooms = nextRooms;
+                    sortRoomsByLastMessage();
 
                     if (state.selectedRoom) {
                         const refreshed = roomById(state.selectedRoom.id);
@@ -2676,7 +2973,6 @@
 
         const pendingId = `p_${Date.now()}`;
         const now = new Date();
-        const pad = (n) => String(n).padStart(2, "0");
 
         const optimistic = {
             id: pendingId,
@@ -2695,7 +2991,8 @@
                 thumbnailUrl: attachment.previewUrl,
                 downloadUrl: attachment.previewUrl,
             })),
-            sentAtLabel: `${pad(now.getHours())}:${pad(now.getMinutes())} ${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()}`,
+            sentAt: now.toISOString(),
+            sentAtLabel: `${pad2(now.getHours())}:${pad2(now.getMinutes())}`,
             _pending: true,
         };
 
@@ -2801,14 +3098,39 @@
             closeComposerEmojiPicker();
         }
 
+        if (
+            !event.target.closest(".chat-room-menu-wrap") &&
+            !event.target.closest("[data-room-menu-btn]")
+        ) {
+            closeRoomMenu();
+        }
+
         if (event.target.closest("[data-toggle-rooms]")) {
             setMobilePanel("rooms", !state.mobileSidebarOpen);
             return;
         }
 
         if (event.target.closest("[data-toggle-info]")) {
-            if (isMobileViewport())
-                setMobilePanel("info", !state.mobileInfoOpen);
+            state.mobileInfoOpen = !state.mobileInfoOpen;
+            updateMobilePanels();
+            return;
+        }
+
+        if (event.target.closest("[data-close-info]")) {
+            state.mobileInfoOpen = false;
+            updateMobilePanels();
+            return;
+        }
+
+        const roomActionButton = event.target.closest("[data-room-action]");
+        if (roomActionButton) {
+            const action = roomActionButton.dataset.roomAction || "";
+            const messages = {
+                call: "Gọi thoại trong chat đang được cập nhật.",
+                video: "Gọi video trong chat đang được cập nhật.",
+            };
+
+            notice("error", messages[action] || "Tính năng đang được cập nhật.");
             return;
         }
 
@@ -2822,12 +3144,6 @@
             return;
         }
 
-        const filterButton = event.target.closest("[data-room-filter]");
-        if (filterButton) {
-            state.roomFilter = filterButton.dataset.roomFilter || "all";
-            renderRoomList();
-            return;
-        }
 
         const directButton = event.target.closest("[data-open-direct]");
         if (directButton) {
@@ -2842,6 +3158,21 @@
 
         if (event.target.closest("[data-focus-message-search]")) {
             toggleMessageSearch(true);
+            return;
+        }
+
+        const infoActionButton = event.target.closest("[data-info-action]");
+        if (infoActionButton) {
+            handleRoomMenuAction(
+                infoActionButton.dataset.infoAction || "",
+                Number(infoActionButton.dataset.roomId || state.selectedRoom?.id),
+            );
+            return;
+        }
+
+        const infoSectionButton = event.target.closest("[data-info-section]");
+        if (infoSectionButton) {
+            toggleInfoSection(infoSectionButton.dataset.infoSection || "");
             return;
         }
 
@@ -2948,8 +3279,35 @@
             }
         }
 
+        const roomMenuButton = event.target.closest("[data-room-menu-btn]");
+        if (roomMenuButton) {
+            const roomId = Number(roomMenuButton.dataset.roomMenuBtn);
+            state.openRoomMenuId =
+                Number(state.openRoomMenuId) === roomId ? null : roomId;
+            renderRoomList();
+            return;
+        }
+
+        const roomMenuAction = event.target.closest("[data-room-menu-action]");
+        if (roomMenuAction) {
+            handleRoomMenuAction(
+                roomMenuAction.dataset.roomMenuAction || "",
+                Number(roomMenuAction.dataset.roomId),
+            );
+            return;
+        }
+
         const roomButton = event.target.closest("[data-room-id]");
-        if (roomButton) selectRoom(Number(roomButton.dataset.roomId));
+        if (roomButton) {
+            selectRoom(Number(roomButton.dataset.roomId));
+            return;
+        }
+
+        const roomFilterButton = event.target.closest("[data-room-filter]");
+        if (roomFilterButton) {
+            state.roomFilter = roomFilterButton.dataset.roomFilter || "all";
+            renderRoomList();
+        }
     });
 
     root.addEventListener("submit", (event) => {
@@ -3000,6 +3358,16 @@
     );
 
     root.addEventListener("keydown", (event) => {
+        const roomItem = event.target.closest("[data-room-id]");
+        if (
+            roomItem &&
+            (event.key === "Enter" || event.key === " ")
+        ) {
+            event.preventDefault();
+            selectRoom(Number(roomItem.dataset.roomId));
+            return;
+        }
+
         if (
             event.target.id === "chat-message-input" &&
             event.key === "Enter" &&
@@ -3010,7 +3378,8 @@
         }
 
         if (event.key === "Escape") {
-            if (state.openMessageMenuId !== null) closeMessageMenu();
+            if (state.confirmingDeleteRoomId !== null) closeDeleteRoomConfirm();
+            else if (state.openMessageMenuId !== null) closeMessageMenu();
             else if (state.openReactionPickerId !== null) closeReactionPicker();
             else if (state.openReceiptDetailsMessageId !== null)
                 closeReceiptDetails();
