@@ -8,6 +8,7 @@ use App\Http\Controllers\Client\KhoaHoc\CourseController;
 use App\Http\Controllers\Client\HocVien\StudentController;
 use App\Http\Controllers\Client\Chat\ClientChatController;
 use App\Http\Controllers\Admin\HomeController as AdminHomeController;
+use App\Http\Controllers\Admin\CauHinhController;
 use App\Http\Controllers\Admin\NhomQuyenController;
 use App\Http\Controllers\Admin\HocVien\HocVienController as AdminHocVienController;
 use App\Http\Controllers\Admin\HocVien\DangKyHocController as AdminDangKyHocController;
@@ -145,6 +146,13 @@ Route::prefix('/')->name('home.')->group(function () {
 // ─── ADMIN ROUTES ────────────────────────────────────────────────────────────
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(function () {
     Route::get('/dashboard', [AdminHomeController::class, 'index'])->name('dashboard');
+
+    // ── Cấu hình hệ thống ────────────────────────────────────────
+    Route::prefix('cau-hinh')->name('cau-hinh.')->group(function () {
+        Route::get('/', [CauHinhController::class, 'index'])->name('index');
+        Route::post('/', [CauHinhController::class, 'update'])->name('update');
+        Route::post('/reset', [CauHinhController::class, 'reset'])->name('reset');
+    });
 
     // ── Phân quyền (chỉ Admin role=3 mới vào được) ──────────────────────────
     Route::prefix('phan-quyen')->name('phan-quyen.')->group(function () {

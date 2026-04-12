@@ -1178,26 +1178,13 @@
     function renderSidebarMeta() {
         const stats = roomStats();
 
-        const totalEl = document.getElementById("chat-filter-total");
-        const unreadEl = document.getElementById("chat-filter-unread");
-        const activeEl = document.getElementById("chat-filter-active");
         const summaryTotal = document.getElementById("chat-summary-total");
         const summaryUnread = document.getElementById("chat-summary-unread");
         const summaryActive = document.getElementById("chat-summary-active");
 
-        if (totalEl) totalEl.textContent = stats.total;
-        if (unreadEl) unreadEl.textContent = stats.unread;
-        if (activeEl) activeEl.textContent = stats.active;
         if (summaryTotal) summaryTotal.textContent = stats.total;
         if (summaryUnread) summaryUnread.textContent = stats.unread;
         if (summaryActive) summaryActive.textContent = stats.active;
-
-        root.querySelectorAll("[data-room-filter]").forEach((button) => {
-            button.classList.toggle(
-                "is-active",
-                button.dataset.roomFilter === state.roomFilter,
-            );
-        });
     }
 
     function renderRoomList() {
@@ -1956,21 +1943,6 @@
                         <div class="chat-sidebar-search">
                             <i class="fas fa-search"></i>
                             <input id="chat-room-search" type="text" placeholder="Tìm theo lớp, khóa học, giáo viên" value="${esc(state.roomQuery)}">
-                        </div>
-
-                        <div class="chat-sidebar-filters">
-                            <button type="button" class="chat-filter-pill" data-room-filter="all">
-                                Tất cả
-                                <span id="chat-filter-total">0</span>
-                            </button>
-                            <button type="button" class="chat-filter-pill" data-room-filter="unread">
-                                Chưa đọc
-                                <span id="chat-filter-unread">0</span>
-                            </button>
-                            <button type="button" class="chat-filter-pill" data-room-filter="active">
-                                Đang tham gia
-                                <span id="chat-filter-active">0</span>
-                            </button>
                         </div>
                     </div>
 
@@ -2822,12 +2794,6 @@
             return;
         }
 
-        const filterButton = event.target.closest("[data-room-filter]");
-        if (filterButton) {
-            state.roomFilter = filterButton.dataset.roomFilter || "all";
-            renderRoomList();
-            return;
-        }
 
         const directButton = event.target.closest("[data-open-direct]");
         if (directButton) {
