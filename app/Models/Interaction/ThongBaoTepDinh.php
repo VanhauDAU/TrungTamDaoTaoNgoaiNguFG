@@ -33,7 +33,7 @@ class ThongBaoTepDinh extends Model
     /** URL công khai để tải file */
     public function getUrlAttribute(): string
     {
-        return Storage::url($this->duongDan);
+        return route('home.thong-bao.attachments.download', $this->tepDinhId);
     }
 
     /** Kích thước dạng đọc được (KB / MB) */

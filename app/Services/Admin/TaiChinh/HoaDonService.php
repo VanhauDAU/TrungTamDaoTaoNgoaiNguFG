@@ -6,13 +6,20 @@ use App\Contracts\Admin\TaiChinh\HoaDonServiceInterface;
 use App\Models\Facility\CoSoDaoTao;
 use App\Models\Finance\HoaDon;
 use App\Models\Finance\PhieuThu;
+use App\Services\Finance\ReceiptNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Throwable;
 use Illuminate\Validation\ValidationException;
 
 class HoaDonService implements HoaDonServiceInterface
 {
+    public function __construct(
+        private ReceiptNotificationService $receiptNotificationService
+    ) {
+    }
+
     public function getList(Request $request): array
     {
         $query = HoaDon::with([
@@ -130,6 +137,7 @@ class HoaDonService implements HoaDonServiceInterface
     {
         $hoaDon = HoaDon::findOrFail($hoaDonId);
         $conNo = (float) $hoaDon->conNo;
+        $minimumReceiptAmount = $this->minimumReceiptAmount($hoaDon);
 
         if ($conNo <= 0) {
             throw ValidationException::withMessages([
@@ -138,16 +146,27 @@ class HoaDonService implements HoaDonServiceInterface
         }
 
         $data   = $request->validate([
-            'soTien'               => 'required|numeric|min:1000|max:' . $conNo,
+            'soTien'               => 'required|numeric|min:1|max:' . $conNo,
             'ngayThu'              => 'required|date',
             'phuongThucThanhToan'  => 'required|in:1,2,3',
             'ghiChu'               => 'nullable|string|max:500',
         ], [
             'soTien.required'  => 'Vui lòng nhập số tiền.',
-            'soTien.min'       => 'Số tiền phải tối thiểu 1.000đ.',
+            'soTien.min'       => 'Số tiền thu phải lớn hơn 0.',
             'soTien.max'       => 'Số tiền thu không được vượt quá công nợ còn lại.',
             'ngayThu.required' => 'Vui lòng chọn ngày thu.',
         ]);
+
+        if ((float) $data['soTien'] < $minimumReceiptAmount) {
+            $isFinalReceipt = $conNo <= $this->minimumBaseReceiptAmount($hoaDon);
+            $message = $isFinalReceipt
+                ? 'Công nợ còn lại đã thấp hơn mức tối thiểu 25%, vui lòng thu đủ ' . number_format($conNo, 0, ',', '.') . 'đ để tất toán.'
+                : 'Mỗi phiếu thu phải tối thiểu ' . number_format($minimumReceiptAmount, 0, ',', '.') . 'đ (25% giá trị phải thu).';
+
+            throw ValidationException::withMessages([
+                'soTien' => [$message],
+            ]);
+        }
 
         $phieuThu = DB::transaction(function () use ($data, $hoaDon) {
             $user = Auth::user();
@@ -166,6 +185,12 @@ class HoaDonService implements HoaDonServiceInterface
 
             return $receipt;
         });
+
+        try {
+            $this->receiptNotificationService->sendReceiptCreatedNotification($phieuThu);
+        } catch (Throwable $exception) {
+            report($exception);
+        }
 
         return $phieuThu->fresh(['hoaDon', 'taiKhoan.hoSoNguoiDung', 'nguoiDuyet.hoSoNguoiDung']);
     }
@@ -199,5 +224,22 @@ class HoaDonService implements HoaDonServiceInterface
             'hocPhiCount' => $items->where('nguonThu', HoaDon::NGUON_THU_HOC_PHI)->count(),
             'phuPhiCount' => $items->where('nguonThu', HoaDon::NGUON_THU_PHU_PHI)->count(),
         ];
+    }
+
+    private function minimumReceiptAmount(HoaDon $hoaDon): float
+    {
+        return min($this->minimumBaseReceiptAmount($hoaDon), max(0, (float) $hoaDon->conNo));
+    }
+
+    private function minimumBaseReceiptAmount(HoaDon $hoaDon): float
+    {
+        return (float) ceil($this->collectibleAmount($hoaDon) * 0.25);
+    }
+
+    private function collectibleAmount(HoaDon $hoaDon): float
+    {
+        $grossAmount = (float) (($hoaDon->tongTienSauThue ?? 0) > 0 ? $hoaDon->tongTienSauThue : $hoaDon->tongTien);
+
+        return max(0, $grossAmount - (float) $hoaDon->giamGia);
     }
 }

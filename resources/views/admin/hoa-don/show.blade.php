@@ -12,12 +12,15 @@
     $maHD = $hoaDon->maHoaDon ?: 'HD-' . str_pad($hoaDon->hoaDonId, 6, '0', STR_PAD_LEFT);
     $profile = $hoaDon->taiKhoan?->hoSoNguoiDung;
     $hoTen = $profile->hoTen ?? ($hoaDon->taiKhoan?->taiKhoan ?? '—');
-    $tongPhaiThu = max(0, (float) $hoaDon->tongTien - (float) $hoaDon->giamGia);
+    $tongPhaiThu = max(0, (float) (($hoaDon->tongTienSauThue ?? 0) > 0 ? $hoaDon->tongTienSauThue : $hoaDon->tongTien) - (float) $hoaDon->giamGia);
     $daThu = (float) $hoaDon->daTra;
     $conNo = (float) $hoaDon->conNo;
     $phanTramThu = $tongPhaiThu > 0 ? min(100, (int) round(($daThu / $tongPhaiThu) * 100)) : 100;
     $phieuThuHopLe = $hoaDon->phieuThus->where('trangThai', \App\Models\Finance\PhieuThu::TRANG_THAI_HOP_LE);
     $tongPhieuThuHopLe = (float) $phieuThuHopLe->sum('soTien');
+    $mucThuToiThieuCoBan = (float) ceil($tongPhaiThu * 0.25);
+    $mucThuToiThieuHienTai = min($mucThuToiThieuCoBan, $conNo);
+    $isFinalReceiptThreshold = $conNo > 0 && $conNo <= $mucThuToiThieuCoBan;
     $soPhieuDaHuy = $hoaDon->phieuThus->where('trangThai', \App\Models\Finance\PhieuThu::TRANG_THAI_HUY)->count();
     $coTheThuTien = auth()->user()->canDo('tai_chinh', 'sua') && $conNo > 0;
     $defaultPanel = $errors->any() ? 'receipt' : 'summary';
@@ -438,8 +441,8 @@
                                     @endif
 
                                     <div class="receipt-quick-amounts">
-                                        <button type="button" class="receipt-quick-amount" data-amount="{{ max(1000, (int) round($conNo * 0.25)) }}">25%</button>
-                                        <button type="button" class="receipt-quick-amount" data-amount="{{ max(1000, (int) round($conNo * 0.5)) }}">50%</button>
+                                        <button type="button" class="receipt-quick-amount" data-amount="{{ max(1, (int) ceil($conNo * 0.25)) }}">25%</button>
+                                        <button type="button" class="receipt-quick-amount" data-amount="{{ max(1, (int) ceil($conNo * 0.5)) }}">50%</button>
                                         <button type="button" class="receipt-quick-amount" data-amount="{{ (int) $conNo }}">Thu đủ</button>
                                     </div>
 
@@ -452,6 +455,17 @@
                                         <div class="form-text">
                                             Công nợ còn lại: {{ number_format($conNo, 0, ',', '.') }}đ.
                                         </div>
+                                        @if ($conNo > 0)
+                                            <div class="form-text">
+                                                @if ($isFinalReceiptThreshold)
+                                                    Công nợ còn lại đã thấp hơn mức tối thiểu 25%; cần thu đủ
+                                                    {{ number_format($conNo, 0, ',', '.') }}đ để tất toán.
+                                                @else
+                                                    Mỗi phiếu thu phải tối thiểu {{ number_format($mucThuToiThieuHienTai, 0, ',', '.') }}đ
+                                                    (25% tổng phải thu).
+                                                @endif
+                                            </div>
+                                        @endif
                                     </div>
 
                                     <div class="mb-3">

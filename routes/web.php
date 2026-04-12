@@ -96,6 +96,8 @@ Route::prefix('/')->name('home.')->group(function () {
             Route::get('/', [StudentController::class, 'tuitionIndex'])->name('index');
             Route::get('/cong-no', [StudentController::class, 'tuitionDebts'])->name('debts');
             Route::get('/phieu-thu', [StudentController::class, 'tuitionReceipts'])->name('receipts');
+            Route::get('/phieu-thu/{id}/in', [StudentController::class, 'printReceipt'])->name('receipts.print');
+            Route::get('/phieu-thu/{id}/tai-xuong', [StudentController::class, 'downloadReceipt'])->name('receipts.download');
             Route::get('/thanh-toan-truc-tuyen', [StudentController::class, 'tuitionPayments'])->name('payments');
             Route::get('/hoa-don/{id}', [StudentController::class, 'invoiceDetail'])->name('invoices.show');
         });
@@ -107,6 +109,7 @@ Route::prefix('/')->name('home.')->group(function () {
     // ── Thông báo client (auth required) ────────────────────────────────────
     Route::prefix('thong-bao')->name('thong-bao.')->middleware(['auth', 'verified.student'])->group(function () {
         Route::get('/', [ClientThongBaoController::class, 'index'])->name('index');
+        Route::get('/tep-dinh/{id}/tai-xuong', [ClientThongBaoController::class, 'downloadAttachment'])->name('attachments.download');
     });
 
     // ── Thông báo client API (auth, JSON) ────────────────────────────────────

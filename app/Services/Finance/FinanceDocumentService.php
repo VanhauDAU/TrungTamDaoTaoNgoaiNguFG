@@ -34,7 +34,7 @@ class FinanceDocumentService
 
     public function streamReceiptPdf(PhieuThu $receipt, string $disposition = 'inline'): Response
     {
-        $artifact = $this->renderReceiptArtifact($receipt);
+        $artifact = $this->buildReceiptArtifact($receipt);
 
         return response($artifact['content'], 200, [
             'Content-Type' => $artifact['mime'],
@@ -58,7 +58,7 @@ class FinanceDocumentService
 
     public function sendReceiptEmail(PhieuThu $receipt, string $email, ?string $message = null): void
     {
-        $artifact = $this->renderReceiptArtifact($receipt);
+        $artifact = $this->buildReceiptArtifact($receipt);
         $code = $receipt->maPhieuThu ?: 'PT-' . str_pad((string) $receipt->phieuThuId, 6, '0', STR_PAD_LEFT);
 
         Mail::to($email)->send(new FinanceDocumentMail(
@@ -78,6 +78,11 @@ class FinanceDocumentService
     public function defaultReceiptEmail(PhieuThu $receipt): ?string
     {
         return $receipt->taiKhoan?->email ?? $receipt->hoaDon?->taiKhoan?->email;
+    }
+
+    public function buildReceiptArtifact(PhieuThu $receipt): array
+    {
+        return $this->renderReceiptArtifact($receipt);
     }
 
     private function renderInvoiceArtifact(HoaDon $invoice): array
