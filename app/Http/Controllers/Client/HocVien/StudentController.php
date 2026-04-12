@@ -6,6 +6,7 @@ use App\Contracts\Client\HocVien\StudentServiceInterface;
 use App\Http\Controllers\Controller;
 use App\Models\Auth\TaiKhoan;
 use App\Services\Auth\DeviceSessionService;
+use App\Services\Finance\FinanceDocumentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Password;
@@ -13,7 +14,8 @@ use Illuminate\Support\Facades\Password;
 class StudentController extends Controller
 {
     public function __construct(
-        protected StudentServiceInterface $studentService
+        protected StudentServiceInterface $studentService,
+        protected FinanceDocumentService $financeDocumentService
         )
     {
     }
@@ -157,6 +159,32 @@ class StudentController extends Controller
         if (!$user instanceof TaiKhoan)
             abort(403);
         return view('clients.hoc-vien.tuition.receipts', $this->studentService->getReceiptSummary($user));
+    }
+
+    public function printReceipt(int $id)
+    {
+        /** @var TaiKhoan $user */
+        $user = Auth::user();
+        if (!$user instanceof TaiKhoan) {
+            abort(403);
+        }
+
+        $receipt = $this->studentService->getReceiptDetail($user, $id);
+
+        return $this->financeDocumentService->streamReceiptPdf($receipt);
+    }
+
+    public function downloadReceipt(int $id)
+    {
+        /** @var TaiKhoan $user */
+        $user = Auth::user();
+        if (!$user instanceof TaiKhoan) {
+            abort(403);
+        }
+
+        $receipt = $this->studentService->getReceiptDetail($user, $id);
+
+        return $this->financeDocumentService->streamReceiptPdf($receipt, 'attachment');
     }
 
     public function tuitionPayments()

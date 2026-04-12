@@ -142,6 +142,34 @@ class NhanSuWorkflowTest extends TestCase
         $this->assertSame('PART_TIME', $employee->nhanSu->loaiHopDong);
     }
 
+    public function test_employee_update_accepts_avatar_upload_without_crashing(): void
+    {
+        Storage::fake('public');
+
+        $admin = $this->createAdmin();
+        $employee = $this->createStaffAccount(TaiKhoan::ROLE_NHAN_VIEN, 'NV000022', 'avatar@example.com', 'Nhân viên Ảnh');
+
+        $this->actingAs($admin)->put(route('admin.nhan-vien.update', $employee->taiKhoan), [
+            'email' => 'avatar-updated@example.com',
+            'trangThai' => 1,
+            'hoTen' => 'Nhân viên Ảnh',
+            'anhDaiDien' => UploadedFile::fake()->image('avatar.png', 200, 200),
+            'chucVu' => 'Nhân viên',
+            'chuyenMon' => 'IT',
+            'bangCap' => 'Cử nhân',
+            'hocVi' => 'AWS',
+            'loaiHopDong' => 'FULL_TIME',
+            'ngayVaoLam' => '2026-03-15',
+            'coSoId' => 1,
+        ])->assertRedirect(route('admin.nhan-vien.index'));
+
+        $employee->refresh();
+
+        $this->assertSame('avatar-updated@example.com', $employee->email);
+        $this->assertNotNull($employee->hoSoNguoiDung?->anhDaiDien);
+        Storage::disk('public')->assertExists($employee->hoSoNguoiDung->anhDaiDien);
+    }
+
     public function test_updating_password_and_locking_account_rotates_remember_token(): void
     {
         $admin = $this->createAdmin();

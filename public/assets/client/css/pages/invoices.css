@@ -557,6 +557,125 @@
     color: #115e59;
 }
 
+.tuition-inline-link--button {
+    border: 0;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+}
+
+.tuition-ledger__meta-note {
+    padding: 12px 16px 0;
+    color: #64748b;
+    font-size: 0.85rem;
+}
+
+.tuition-row__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.tuition-action-icon {
+    width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #0f766e;
+    text-decoration: none;
+    transition: all 0.18s ease;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+}
+
+.tuition-action-icon:hover {
+    color: #ffffff;
+    background: #0f766e;
+    border-color: #0f766e;
+    transform: translateY(-1px);
+}
+
+.tuition-action-icon:focus-visible {
+    outline: 2px solid rgba(15, 118, 110, 0.28);
+    outline-offset: 2px;
+}
+
+.receipt-modal {
+    border: 0;
+    border-radius: 24px;
+    overflow: hidden;
+}
+
+.receipt-modal .modal-header {
+    padding: 22px 24px 10px;
+    border-bottom: 0;
+}
+
+.receipt-modal .modal-body {
+    padding: 0 24px 20px;
+}
+
+.receipt-modal__eyebrow {
+    color: #64748b;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 6px;
+}
+
+.receipt-modal__amount {
+    margin-bottom: 18px;
+    color: #0f766e;
+    font-size: 2rem;
+    font-weight: 800;
+}
+
+.receipt-modal__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+.receipt-modal__item {
+    padding: 14px 16px;
+    border-radius: 16px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+}
+
+.receipt-modal__item span,
+.receipt-modal__note span {
+    display: block;
+    margin-bottom: 6px;
+    color: #64748b;
+    font-size: 0.8rem;
+}
+
+.receipt-modal__item strong,
+.receipt-modal__note div {
+    color: #0f172a;
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+.receipt-modal__note {
+    padding: 16px;
+    border-radius: 16px;
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+}
+
+.receipt-modal__footer {
+    justify-content: space-between;
+    gap: 12px;
+    padding: 0 24px 24px;
+    border-top: 0;
+}
+
 .tuition-method-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -897,6 +1016,14 @@
 
     .tuition-subnav__link {
         width: 100%;
+        justify-content: flex-start;
+    }
+
+    .receipt-modal__grid {
+        grid-template-columns: 1fr;
+    }
+
+    .receipt-modal__footer {
         justify-content: flex-start;
     }
 }

@@ -10,7 +10,7 @@
 
 @section('content')
 
-    <form action="{{ route('admin.hoc-vien.store') }}" method="POST" id="hv-create-form" class="needs-validation" novalidate data-joi-schema="hocVien" autocomplete="off">
+    <form action="{{ route('admin.hoc-vien.store') }}" method="POST" id="hv-create-form" class="needs-validation" novalidate data-joi-schema="hocVien" autocomplete="off" enctype="multipart/form-data">
         @csrf
 
         {{-- ── Header ──────────────────────────────────────────── --}}
@@ -103,6 +103,7 @@
                         @error('cccd')
                             <div class="invalid-feedback"><i class="fas fa-circle-xmark"></i> {{ $message }}</div>
                         @enderror
+                        <div class="citizen-lookup-status" id="citizen-lookup-status" aria-live="polite"></div>
                     </div>
 
                     {{-- Preview tài khoản & mật khẩu tự sinh --}}
@@ -136,6 +137,28 @@
             </div>
             <div class="hv-section-body">
                 <div class="form-grid">
+                    {{-- Ảnh đại diện --}}
+                    <div class="form-group full">
+                        <label class="form-label" for="anhDaiDien">
+                            Ảnh đại diện
+                            <span class="form-hint-inline">Định dạng JPG, PNG, WEBP, tối đa 2MB.</span>
+                        </label>
+                        <x-upload.image
+                            id="avatar-upload"
+                            name="anhDaiDien"
+                            title="Tải ảnh đại diện"
+                            description="Kéo thả ảnh hoặc click để chọn"
+                            chooseLabel="Chọn ảnh"
+                            mode="deferred"
+                            :standalone="false"
+                            previewShape="circle"
+                            accept="image/jpeg,image/png,image/webp"
+                            :allowedTypes="['image/jpeg', 'image/png', 'image/webp']"
+                            allowedExtensionsLabel="JPG, PNG, WebP"
+                            maxSize="2097152"
+                        />
+                    </div>
+
                     {{-- Họ tên --}}
                     <div class="form-group full">
                         <label class="form-label" for="hoTen">
@@ -389,4 +412,5 @@
             if (el) observer.observe(el);
         });
     </script>
+    @include('admin.hoc-vien.partials.citizen-lookup-script')
 @endsection

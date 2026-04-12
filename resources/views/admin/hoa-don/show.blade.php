@@ -12,12 +12,15 @@
     $maHD = $hoaDon->maHoaDon ?: 'HD-' . str_pad($hoaDon->hoaDonId, 6, '0', STR_PAD_LEFT);
     $profile = $hoaDon->taiKhoan?->hoSoNguoiDung;
     $hoTen = $profile->hoTen ?? ($hoaDon->taiKhoan?->taiKhoan ?? '—');
-    $tongPhaiThu = max(0, (float) $hoaDon->tongTien - (float) $hoaDon->giamGia);
+    $tongPhaiThu = max(0, (float) (($hoaDon->tongTienSauThue ?? 0) > 0 ? $hoaDon->tongTienSauThue : $hoaDon->tongTien) - (float) $hoaDon->giamGia);
     $daThu = (float) $hoaDon->daTra;
     $conNo = (float) $hoaDon->conNo;
     $phanTramThu = $tongPhaiThu > 0 ? min(100, (int) round(($daThu / $tongPhaiThu) * 100)) : 100;
     $phieuThuHopLe = $hoaDon->phieuThus->where('trangThai', \App\Models\Finance\PhieuThu::TRANG_THAI_HOP_LE);
     $tongPhieuThuHopLe = (float) $phieuThuHopLe->sum('soTien');
+    $mucThuToiThieuCoBan = (float) ceil($tongPhaiThu * 0.25);
+    $mucThuToiThieuHienTai = min($mucThuToiThieuCoBan, $conNo);
+    $isFinalReceiptThreshold = $conNo > 0 && $conNo <= $mucThuToiThieuCoBan;
     $soPhieuDaHuy = $hoaDon->phieuThus->where('trangThai', \App\Models\Finance\PhieuThu::TRANG_THAI_HUY)->count();
     $coTheThuTien = auth()->user()->canDo('tai_chinh', 'sua') && $conNo > 0;
     $defaultPanel = $errors->any() ? 'receipt' : 'summary';
@@ -39,6 +42,21 @@
                     <span>Quay lại danh sách</span>
                 </a>
                 <div class="invoice-detail-hero__action-btns">
+                    <a href="{{ route('admin.hoa-don.print', $hoaDon->hoaDonId) }}" target="_blank"
+                        class="btn btn-light btn-sm border">
+                        <i class="fas fa-print me-1"></i> In hóa đơn
+                    </a>
+                    @if ($hoaDon->taiKhoan?->email)
+                        <button type="button" class="btn btn-light btn-sm border"
+                            onclick="requestDocumentEmail('{{ route('admin.hoa-don.email', $hoaDon->hoaDonId) }}', '{{ $hoaDon->taiKhoan->email }}', 'hóa đơn {{ $maHD }}')">
+                            <i class="fas fa-envelope me-1"></i> Gửi email
+                        </button>
+                    @else
+                        <button type="button" class="btn btn-light btn-sm border"
+                            onclick="requestDocumentEmail('{{ route('admin.hoa-don.email', $hoaDon->hoaDonId) }}', '', 'hóa đơn {{ $maHD }}')">
+                            <i class="fas fa-envelope me-1"></i> Gửi email
+                        </button>
+                    @endif
                     @if ($coTheThuTien)
                         <button type="button" class="btn btn-primary btn-sm" data-panel-trigger="receipt">
                             <i class="fas fa-plus me-1"></i> Lập phiếu thu
@@ -279,10 +297,20 @@
                                         @endif
                                     </div>
                                     @if ($hopLe && auth()->user()->canDo('tai_chinh', 'sua'))
-                                        <button type="button" class="btn btn-outline-danger btn-sm"
-                                            onclick="confirmCancelReceipt({{ $phieuThu->phieuThuId }}, '{{ $maPhieuThu }}')">
-                                            <i class="fas fa-ban"></i> Hủy phiếu thu
-                                        </button>
+                                        <div class="d-flex gap-2 align-items-start">
+                                            <a href="{{ route('admin.hoa-don.phieu-thu.print', $phieuThu->phieuThuId) }}"
+                                                target="_blank" class="btn btn-outline-secondary btn-sm">
+                                                <i class="fas fa-print"></i> In
+                                            </a>
+                                            <button type="button" class="btn btn-outline-primary btn-sm"
+                                                onclick="requestDocumentEmail('{{ route('admin.hoa-don.phieu-thu.email', $phieuThu->phieuThuId) }}', '{{ $hoaDon->taiKhoan?->email ?? '' }}', 'phiếu thu {{ $maPhieuThu }}')">
+                                                <i class="fas fa-envelope"></i> Email
+                                            </button>
+                                            <button type="button" class="btn btn-outline-danger btn-sm"
+                                                onclick="confirmCancelReceipt({{ $phieuThu->phieuThuId }}, '{{ $maPhieuThu }}')">
+                                                <i class="fas fa-ban"></i> Hủy phiếu thu
+                                            </button>
+                                        </div>
                                     @endif
                                 </article>
                             @endforeach
@@ -413,8 +441,8 @@
                                     @endif
 
                                     <div class="receipt-quick-amounts">
-                                        <button type="button" class="receipt-quick-amount" data-amount="{{ max(1000, (int) round($conNo * 0.25)) }}">25%</button>
-                                        <button type="button" class="receipt-quick-amount" data-amount="{{ max(1000, (int) round($conNo * 0.5)) }}">50%</button>
+                                        <button type="button" class="receipt-quick-amount" data-amount="{{ max(1, (int) ceil($conNo * 0.25)) }}">25%</button>
+                                        <button type="button" class="receipt-quick-amount" data-amount="{{ max(1, (int) ceil($conNo * 0.5)) }}">50%</button>
                                         <button type="button" class="receipt-quick-amount" data-amount="{{ (int) $conNo }}">Thu đủ</button>
                                     </div>
 
@@ -427,6 +455,17 @@
                                         <div class="form-text">
                                             Công nợ còn lại: {{ number_format($conNo, 0, ',', '.') }}đ.
                                         </div>
+                                        @if ($conNo > 0)
+                                            <div class="form-text">
+                                                @if ($isFinalReceiptThreshold)
+                                                    Công nợ còn lại đã thấp hơn mức tối thiểu 25%; cần thu đủ
+                                                    {{ number_format($conNo, 0, ',', '.') }}đ để tất toán.
+                                                @else
+                                                    Mỗi phiếu thu phải tối thiểu {{ number_format($mucThuToiThieuHienTai, 0, ',', '.') }}đ
+                                                    (25% tổng phải thu).
+                                                @endif
+                                            </div>
+                                        @endif
                                     </div>
 
                                     <div class="mb-3">
@@ -455,8 +494,11 @@
                                             placeholder="Ví dụ: học viên chuyển khoản từ ngân hàng A, nội dung CK 123456...">{{ old('ghiChu') }}</textarea>
                                     </div>
 
-                                    <button type="submit" class="btn btn-primary w-100">
+                                    <button type="submit" class="btn btn-primary w-100 mb-2">
                                         <i class="fas fa-check"></i> Xác nhận tạo phiếu thu
+                                    </button>
+                                    <button type="submit" name="afterAction" value="print" class="btn btn-outline-secondary w-100">
+                                        <i class="fas fa-print"></i> Lưu và in phiếu thu
                                     </button>
                                 </form>
                             @else
@@ -475,6 +517,11 @@
         <form id="cancel-receipt-form" method="POST" style="display:none">
             @csrf
             @method('DELETE')
+        </form>
+        <form id="document-email-form" method="POST" style="display:none">
+            @csrf
+            <input type="hidden" name="email" id="document-email-input">
+            <input type="hidden" name="message" id="document-email-message">
         </form>
     </div>
 @endsection
@@ -571,6 +618,10 @@
             document.querySelector(`.invoice-sidebar-actions [data-panel-trigger="{{ $defaultPanel }}"]`)?.click();
         @endif
 
+        @if (session('autoPrintReceiptId'))
+            window.open(@json(route('admin.hoa-don.phieu-thu.print', session('autoPrintReceiptId'))), '_blank');
+        @endif
+
         function confirmCancelReceipt(id, code) {
             Swal.fire({
                 title: 'Hủy phiếu thu?',
@@ -591,6 +642,54 @@
                 form.action = `{{ url('/admin/hoa-don/phieu-thu') }}/${id}`;
                 form.submit();
             });
+        }
+
+        function submitDocumentEmail(action, email, message) {
+            const form = document.getElementById('document-email-form');
+            document.getElementById('document-email-input').value = email;
+            document.getElementById('document-email-message').value = message || '';
+            form.action = action;
+            form.submit();
+        }
+
+        function requestDocumentEmail(action, defaultEmail, label) {
+            if (window.Swal) {
+                Swal.fire({
+                    title: `Gửi ${label}`,
+                    html: `
+                        <input id="swal-document-email" class="swal2-input" type="email" placeholder="Email người nhận" value="${defaultEmail || ''}">
+                        <textarea id="swal-document-message" class="swal2-textarea" placeholder="Ghi chú email (không bắt buộc)"></textarea>
+                    `,
+                    focusConfirm: false,
+                    showCancelButton: true,
+                    confirmButtonText: 'Gửi email',
+                    cancelButtonText: 'Đóng',
+                    preConfirm: () => {
+                        const email = document.getElementById('swal-document-email')?.value?.trim() || '';
+                        const message = document.getElementById('swal-document-message')?.value?.trim() || '';
+
+                        if (!email) {
+                            Swal.showValidationMessage('Vui lòng nhập email người nhận.');
+                            return false;
+                        }
+
+                        return { email, message };
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed && result.value) {
+                        submitDocumentEmail(action, result.value.email, result.value.message);
+                    }
+                });
+                return;
+            }
+
+            const email = window.prompt(`Nhập email để gửi ${label}:`, defaultEmail || '');
+            if (!email) {
+                return;
+            }
+
+            const message = window.prompt('Ghi chú email (không bắt buộc):', '') || '';
+            submitDocumentEmail(action, email.trim(), message.trim());
         }
     </script>
 @endsection
