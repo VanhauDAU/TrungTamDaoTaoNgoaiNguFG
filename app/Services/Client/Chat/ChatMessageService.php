@@ -778,6 +778,24 @@ class ChatMessageService
 
     private function avatarUrlForAccount(?TaiKhoan $account): ?string
     {
-        return $account?->getAvatarUrl();
+        if (!$account) {
+            return null;
+        }
+
+        $path = $account->hoSoNguoiDung?->anhDaiDien;
+
+        if (is_string($path) && $path !== '') {
+            if (Str::startsWith($path, ['http://', 'https://'])) {
+                return $path;
+            }
+
+            return asset('storage/' . ltrim($path, '/'));
+        }
+
+        if (is_string($account->google_avatar) && $account->google_avatar !== '') {
+            return $account->google_avatar;
+        }
+
+        return null;
     }
 }

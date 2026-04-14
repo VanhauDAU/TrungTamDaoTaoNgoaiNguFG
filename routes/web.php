@@ -8,6 +8,7 @@ use App\Http\Controllers\Client\KhoaHoc\CourseController;
 use App\Http\Controllers\Client\HocVien\StudentController;
 use App\Http\Controllers\Client\Chat\ClientChatController;
 use App\Http\Controllers\Admin\HomeController as AdminHomeController;
+use App\Http\Controllers\Admin\CauHinhController;
 use App\Http\Controllers\Admin\NhomQuyenController;
 use App\Http\Controllers\Admin\HocVien\HocVienController as AdminHocVienController;
 use App\Http\Controllers\Admin\HocVien\DangKyHocController as AdminDangKyHocController;
@@ -96,6 +97,8 @@ Route::prefix('/')->name('home.')->group(function () {
             Route::get('/', [StudentController::class, 'tuitionIndex'])->name('index');
             Route::get('/cong-no', [StudentController::class, 'tuitionDebts'])->name('debts');
             Route::get('/phieu-thu', [StudentController::class, 'tuitionReceipts'])->name('receipts');
+            Route::get('/phieu-thu/{id}/in', [StudentController::class, 'printReceipt'])->name('receipts.print');
+            Route::get('/phieu-thu/{id}/tai-xuong', [StudentController::class, 'downloadReceipt'])->name('receipts.download');
             Route::get('/thanh-toan-truc-tuyen', [StudentController::class, 'tuitionPayments'])->name('payments');
             Route::get('/hoa-don/{id}', [StudentController::class, 'invoiceDetail'])->name('invoices.show');
         });
@@ -107,6 +110,7 @@ Route::prefix('/')->name('home.')->group(function () {
     // ── Thông báo client (auth required) ────────────────────────────────────
     Route::prefix('thong-bao')->name('thong-bao.')->middleware(['auth', 'verified.student'])->group(function () {
         Route::get('/', [ClientThongBaoController::class, 'index'])->name('index');
+        Route::get('/tep-dinh/{id}/tai-xuong', [ClientThongBaoController::class, 'downloadAttachment'])->name('attachments.download');
     });
 
     // ── Thông báo client API (auth, JSON) ────────────────────────────────────
@@ -128,6 +132,7 @@ Route::prefix('/')->name('home.')->group(function () {
         Route::get('/rooms/{id}/members', [ClientChatController::class, 'members'])->name('members');
         Route::get('/rooms/{id}/search', [ClientChatController::class, 'search'])->name('search');
         Route::post('/rooms/{id}/join', [ClientChatController::class, 'join'])->name('join');
+        Route::delete('/rooms/{id}/leave', [ClientChatController::class, 'leave'])->name('leave');
         Route::post('/rooms/{id}/typing', [ClientChatController::class, 'typing'])->name('typing');
         Route::post('/rooms/direct', [ClientChatController::class, 'direct'])->name('direct');
         Route::post('/rooms/{id}/read', [ClientChatController::class, 'markRead'])->name('read');
@@ -142,6 +147,13 @@ Route::prefix('/')->name('home.')->group(function () {
 // ─── ADMIN ROUTES ────────────────────────────────────────────────────────────
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(function () {
     Route::get('/dashboard', [AdminHomeController::class, 'index'])->name('dashboard');
+
+    // ── Cấu hình hệ thống ────────────────────────────────────────
+    Route::prefix('cau-hinh')->name('cau-hinh.')->group(function () {
+        Route::get('/', [CauHinhController::class, 'index'])->name('index');
+        Route::post('/', [CauHinhController::class, 'update'])->name('update');
+        Route::post('/reset', [CauHinhController::class, 'reset'])->name('reset');
+    });
 
     // ── Phân quyền (chỉ Admin role=3 mới vào được) ──────────────────────────
     Route::prefix('phan-quyen')->name('phan-quyen.')->group(function () {
@@ -165,6 +177,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
     Route::prefix('hoc-vien')->name('hoc-vien.')->group(function () {
         Route::get('/', [AdminHocVienController::class, 'index'])->name('index');
         Route::get('/xuat-excel', [AdminHocVienController::class, 'export'])->name('export');
+        Route::post('/tra-cuu-cccd', [AdminHocVienController::class, 'lookupCitizen'])
+            ->middleware('throttle:30,1')
+            ->name('lookup-citizen');
         Route::get('/tao-moi', [AdminHocVienController::class, 'create'])->name('create');
         Route::post('/', [AdminHocVienController::class, 'store'])->name('store');
         Route::get('/thung-rac', [AdminHocVienController::class, 'trash'])->name('trash');
@@ -342,7 +357,11 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
     // ── Hóa Đơn & Phiếu Thu ─────────────────────────────────────
     Route::prefix('hoa-don')->name('hoa-don.')->group(function () {
         Route::get('/', [AdminHoaDonController::class, 'index'])->name('index');
+        Route::get('/phieu-thu/{id}/in', [AdminHoaDonController::class, 'printReceipt'])->name('phieu-thu.print');
+        Route::post('/phieu-thu/{id}/gui-email', [AdminHoaDonController::class, 'emailReceipt'])->name('phieu-thu.email');
         Route::get('/{id}', [AdminHoaDonController::class, 'show'])->name('show');
+        Route::get('/{id}/in', [AdminHoaDonController::class, 'printInvoice'])->name('print');
+        Route::post('/{id}/gui-email', [AdminHoaDonController::class, 'emailInvoice'])->name('email');
         Route::put('/{id}', [AdminHoaDonController::class, 'update'])->name('update');
         Route::post('/{id}/phieu-thu', [AdminHoaDonController::class, 'storePhieuThu'])->name('phieu-thu.store');
         Route::delete('/phieu-thu/{id}', [AdminHoaDonController::class, 'destroyPhieuThu'])->name('phieu-thu.destroy');

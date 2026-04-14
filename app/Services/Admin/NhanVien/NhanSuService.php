@@ -248,19 +248,7 @@ class NhanSuService implements NhanSuServiceInterface
             'anhDaiDien.max'       => 'Ảnh không được vượt quá 2MB.',
         ])->validate();
 
-        $hoSo = $taiKhoan->hoSoNguoiDung;
-
-        // Xóa ảnh cũ nếu tồn tại trên disk public
-        if ($hoSo && $hoSo->anhDaiDien && Storage::disk('public')->exists($hoSo->anhDaiDien)) {
-            Storage::disk('public')->delete($hoSo->anhDaiDien);
-        }
-
-        $path = $request->file('anhDaiDien')->store('nhan-su/avatar', 'public');
-
-        HoSoNguoiDung::updateOrCreate(
-            ['taiKhoanId' => $taiKhoan->taiKhoanId],
-            ['anhDaiDien' => $path]
-        );
+        $this->handleAvatarUpload($request, $taiKhoan);
     }
 
     public function uploadDocument(Request $request, TaiKhoan $taiKhoan): void
@@ -528,6 +516,26 @@ class NhanSuService implements NhanSuServiceInterface
                 'luongCoBan' => $validated['luongChinh'] ?? $taiKhoan->nhanSu?->luongCoBan ?? 0,
                 'trangThai' => $syncStatusFromAccount ? (int) $taiKhoan->trangThai : ((int) ($validated['trangThai'] ?? $taiKhoan->trangThai)),
             ]
+        );
+    }
+
+    private function handleAvatarUpload(Request $request, TaiKhoan $taiKhoan): void
+    {
+        if (!$request->hasFile('anhDaiDien')) {
+            return;
+        }
+
+        $hoSo = $taiKhoan->hoSoNguoiDung;
+
+        if ($hoSo && $hoSo->anhDaiDien && Storage::disk('public')->exists($hoSo->anhDaiDien)) {
+            Storage::disk('public')->delete($hoSo->anhDaiDien);
+        }
+
+        $path = $request->file('anhDaiDien')->store('nhan-su/avatar', 'public');
+
+        HoSoNguoiDung::updateOrCreate(
+            ['taiKhoanId' => $taiKhoan->taiKhoanId],
+            ['anhDaiDien' => $path]
         );
     }
 

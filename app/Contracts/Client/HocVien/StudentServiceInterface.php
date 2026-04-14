@@ -3,6 +3,7 @@
 namespace App\Contracts\Client\HocVien;
 
 use App\Models\Auth\TaiKhoan;
+use App\Models\Finance\PhieuThu;
 use Illuminate\Http\Request;
 
 interface StudentServiceInterface
@@ -18,6 +19,8 @@ interface StudentServiceInterface
     public function getTuitionDebtLookup(TaiKhoan $user): array;
 
     public function getReceiptSummary(TaiKhoan $user): array;
+
+    public function getReceiptDetail(TaiKhoan $user, int $id): PhieuThu;
 
     public function getOnlinePayments(TaiKhoan $user): array;
 

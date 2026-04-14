@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin\HocVien;
 use App\Contracts\Admin\HocVien\HocVienServiceInterface;
 use App\Jobs\GenerateHocVienExportJob;
 use App\Http\Controllers\Controller;
+use App\Models\Auth\TaiKhoan;
+use App\Services\Support\CitizenLookupService;
 use App\Services\Support\QueuedExportService;
 use Illuminate\Http\Request;
 
@@ -99,5 +101,29 @@ class HocVienController extends Controller
 
         return redirect()->route('admin.hoc-vien.index')
             ->with('success', "Đã xóa học viên «{$hoTen}».");
+    }
+
+    public function lookupCitizen(Request $request, CitizenLookupService $citizenLookupService)
+    {
+        $user = $request->user();
+
+        abort_unless(
+            $user instanceof TaiKhoan
+                && ($user->canDo('hoc_vien', 'them') || $user->canDo('hoc_vien', 'sua')),
+            403
+        );
+
+        $validated = $request->validate([
+            'cccd' => ['required', 'string', 'regex:/^(?:\d{9}|\d{12})$/'],
+            'hoTen' => ['required', 'string', 'max:100'],
+        ], [
+            'cccd.required' => 'Vui lòng nhập CCCD/CMND để đối chiếu.',
+            'cccd.regex' => 'CCCD/CMND phải gồm đúng 9 hoặc 12 chữ số.',
+            'hoTen.required' => 'Vui lòng nhập họ tên để đối chiếu.',
+        ]);
+
+        return response()->json(
+            $citizenLookupService->lookupCitizen($validated['cccd'], $validated['hoTen'])
+        );
     }
 }

@@ -62,6 +62,33 @@ Ket qua:
 - Hoa don cap nhat `trangThai`
 - Dang ky cap nhat lai trang thai
 
+Tac vu van hanh moi:
+
+- Ngay sau khi lap phiếu thu, admin co the chon `Luu va in phiếu thu`
+- O trang chi tiet hoa don, moi phiếu thu hop le deu co the:
+  - in lai
+  - gui email file PDF cho hoc vien / phu huynh
+
+### 3.3.1 Xuat va gui tai lieu tai chinh
+
+He thong ho tro 2 loai tai lieu:
+
+- `Phieu thu`
+- `Hoa don`
+
+Tai admin:
+
+- `GET /admin/hoa-don/{id}/in`: mo ban in hoa don
+- `POST /admin/hoa-don/{id}/gui-email`: gui email hoa don dinh kem file PDF
+- `GET /admin/hoa-don/phieu-thu/{id}/in`: mo ban in phieu thu
+- `POST /admin/hoa-don/phieu-thu/{id}/gui-email`: gui email phieu thu
+
+Luu y van hanh:
+
+- Neu he thong dang dung `MAIL_MAILER=log` thi thao tac gui email se ghi vao log thay vi gui ra ngoai
+- Ban in hien tai dung PDF sinh boi DOMPDF
+- Cong hoc vien chi dung de xem va doi soat, khong mo route in/gui email tai lieu
+
 ### 3.4 Chuyen trang thai dang ky
 
 - Neu hoc phi chinh da thu du:
@@ -99,6 +126,8 @@ Job `invoice:check-overdue` chay hang ngay:
 - Khong chuyen lop neu da phat sinh thu tien
 - Khoi phuc dang ky phai kiem tra lai si so va lich hoc
 - Sua hoa don luon phai recalculate lai
+- Khi hoc vien can chung tu ngay, uu tien dung `Luu va in phiếu thu` ngay luc thu tien
+- Neu gui lai hoa don/phieu thu qua email, can xac nhan dung dia chi nhan truoc khi submit
 
 ## 5. Mermaid flow
 
