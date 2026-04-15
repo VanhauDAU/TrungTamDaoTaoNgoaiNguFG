@@ -82,7 +82,7 @@ class TaiKhoanController extends Controller
         $request->validate([
             'nhomQuyenId' => 'required|exists:nhomquyen,nhomQuyenId'
         ]);
-
+ 
         $taiKhoan->update([
             'nhomQuyenId' => $request->nhomQuyenId
         ]);

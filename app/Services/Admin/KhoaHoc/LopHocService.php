@@ -139,6 +139,7 @@ class LopHocService implements LopHocServiceInterface
         ])->where('slug', $slug)->firstOrFail();
 
         $coSoId = $lopHoc->coSoId;
+        $mergeEligibility = $this->evaluateMergeSourceEligibility($lopHoc);
 
         return array_merge(compact('lopHoc'), [
             'caHocs' => CaHoc::where('trangThai', 1)->orderBy('tenCa')->get(),
@@ -148,6 +149,13 @@ class LopHocService implements LopHocServiceInterface
             'soHocVienDangKy' => $lopHoc->dangKyLopHocs->count(),
             'soBuoiDaHoc' => $lopHoc->buoiHocs->where('trangThai', BuoiHoc::TRANG_THAI_DA_HOAN_THANH)->count(),
             'soBuoiChuaHoc' => $lopHoc->buoiHocs->where('trangThai', '!=', BuoiHoc::TRANG_THAI_DA_HOAN_THANH)->count(),
+            'mergeEligible' => $mergeEligibility['eligible'],
+            'mergeBlockers' => $mergeEligibility['blockers'],
+            'mergeCandidates' => $mergeEligibility['eligible'] ? $this->findMergeCandidates($lopHoc) : collect(),
+            'mergeStats' => [
+                'transferCount' => $this->countBlockingRegistrations($lopHoc),
+                'cancelSessionsCount' => $lopHoc->buoiHocs->whereIn('trangThai', [BuoiHoc::TRANG_THAI_SAP_DIEN_RA, BuoiHoc::TRANG_THAI_DOI_LICH])->count(),
+            ],
         ]);
     }
 
@@ -1142,5 +1150,199 @@ class LopHocService implements LopHocServiceInterface
         }
 
         return $candidate;
+    }
+
+    public function mergeClass(string $sourceSlug, int $targetLopHocId): array
+    {
+        return \DB::transaction(function () use ($sourceSlug, $targetLopHocId) {
+            $source = LopHoc::with(['dangKyLopHocs', 'buoiHocs'])
+                ->where('slug', $sourceSlug)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $target = LopHoc::with(['dangKyLopHocs', 'chinhSachGia.dotThus'])
+                ->where('lopHocId', $targetLopHocId)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $sourceEligibility = $this->evaluateMergeSourceEligibility($source);
+            if (!$sourceEligibility['eligible']) {
+                throw new \RuntimeException('Lớp nguồn không đủ điều kiện gộp: ' . implode(', ', $sourceEligibility['blockers']));
+            }
+
+            $transferCount = $this->countBlockingRegistrations($source);
+            $this->assertTargetEligibleForMerge($source, $target, $transferCount);
+
+            // 1. Chuyển đăng ký hiệu lực
+            $registrationsToTransfer = $source->dangKyLopHocs()
+                ->blockingSeat()
+                ->get();
+            
+            foreach ($registrationsToTransfer as $reg) {
+                $reg->update(['lopHocId' => $target->lopHocId]);
+            }
+
+            // 2. Hủy các buổi học chưa diễn ra của lớp nguồn
+            $sessionsToCancel = $source->buoiHocs()
+                ->whereIn('trangThai', [BuoiHoc::TRANG_THAI_SAP_DIEN_RA, BuoiHoc::TRANG_THAI_DOI_LICH])
+                ->get();
+                
+            foreach ($sessionsToCancel as $session) {
+                $session->update(['trangThai' => BuoiHoc::TRANG_THAI_DA_HUY]);
+            }
+
+            // 3. Cập nhật trạng thái lớp nguồn
+            $source->update(['trangThai' => LopHoc::TRANG_THAI_DA_HUY]);
+
+            // 4. Đồng bộ lại trạng thái lớp đích (an toàn)
+            $this->syncRegistrationStatuses($target->fresh());
+
+            return [
+                'source' => $source,
+                'target' => $target,
+                'transferredCount' => $registrationsToTransfer->count(),
+                'cancelledSessionsCount' => $sessionsToCancel->count(),
+            ];
+        }, 3);
+    }
+
+    private function evaluateMergeSourceEligibility(LopHoc $source): array
+    {
+        $blockers = [];
+
+        if (!in_array((int) $source->trangThai, [
+            LopHoc::TRANG_THAI_SAP_MO,
+            LopHoc::TRANG_THAI_DANG_TUYEN_SINH,
+            LopHoc::TRANG_THAI_CHOT_DANH_SACH,
+        ])) {
+            $blockers[] = 'Trạng thái lớp không cho phép gộp (chỉ cho phép lớp Sắp mở, Đang tuyển sinh, Chốt danh sách)';
+        }
+
+        $today = Carbon::today();
+        $ngayBatDau = Carbon::parse($source->ngayBatDau);
+        if ($ngayBatDau->lt($today) || $ngayBatDau->gt($today->copy()->addDays(30))) {
+            $blockers[] = 'Ngày bắt đầu phải nằm trong khoảng từ hôm nay đến 30 ngày tới';
+        }
+
+        if ($source->soHocVienToiDa <= 0) {
+            $blockers[] = 'Lớp chưa cấu hình sĩ số tối đa';
+        } else {
+            $currentRegistrations = $this->countBlockingRegistrations($source);
+            if ($currentRegistrations >= $source->soHocVienToiDa * 0.5) {
+                $blockers[] = 'Sĩ số hiện tại đã đạt hoặc vượt 50% sĩ số tối đa';
+            }
+        }
+
+        if ($source->buoiHocs()->where('trangThai', BuoiHoc::TRANG_THAI_DA_HOAN_THANH)->exists()) {
+            $blockers[] = 'Lớp đã có buổi học hoàn thành';
+        }
+
+        return [
+            'eligible' => empty($blockers),
+            'blockers' => $blockers,
+        ];
+    }
+
+    private function findMergeCandidates(LopHoc $source): Collection
+    {
+        $transferCount = $this->countBlockingRegistrations($source);
+        
+        return LopHoc::with(['dangKyLopHocs', 'chinhSachGia.dotThus'])
+            ->where('lopHocId', '!=', $source->lopHocId)
+            ->where('khoaHocId', $source->khoaHocId)
+            ->where('coSoId', $source->coSoId)
+            ->whereIn('trangThai', [
+                LopHoc::TRANG_THAI_SAP_MO,
+                LopHoc::TRANG_THAI_DANG_TUYEN_SINH,
+                LopHoc::TRANG_THAI_CHOT_DANH_SACH,
+            ])
+            ->get()
+            ->filter(function (LopHoc $target) use ($source, $transferCount) {
+                // Kiểm tra sức chứa
+                $targetCurrent = $this->countBlockingRegistrations($target);
+                if ($targetCurrent + $transferCount > $target->soHocVienToiDa) {
+                    return false;
+                }
+
+                // Kiểm tra tương thích chính sách giá
+                return $this->hasEquivalentPricingPolicy($source, $target);
+            })
+            ->values();
+    }
+
+    private function assertTargetEligibleForMerge(LopHoc $source, LopHoc $target, int $transferCount): void
+    {
+        if ($target->lopHocId === $source->lopHocId) {
+            throw new \RuntimeException('Lớp đích không được trùng với lớp nguồn');
+        }
+
+        if ($target->khoaHocId !== $source->khoaHocId) {
+            throw new \RuntimeException('Lớp đích phải thuộc cùng khóa học');
+        }
+
+        if ($target->coSoId !== $source->coSoId) {
+            throw new \RuntimeException('Lớp đích phải thuộc cùng cơ sở');
+        }
+
+        if (!in_array((int) $target->trangThai, [
+            LopHoc::TRANG_THAI_SAP_MO,
+            LopHoc::TRANG_THAI_DANG_TUYEN_SINH,
+            LopHoc::TRANG_THAI_CHOT_DANH_SACH,
+        ])) {
+            throw new \RuntimeException('Trạng thái lớp đích không hợp lệ');
+        }
+
+        $targetCurrent = $this->countBlockingRegistrations($target);
+        if ($targetCurrent + $transferCount > $target->soHocVienToiDa) {
+            throw new \RuntimeException("Lớp đích đã đủ chỗ. Hiện có $targetCurrent, chuyển thêm $transferCount sẽ vượt sức chứa ($target->soHocVienToiDa)");
+        }
+
+        if (!$this->hasEquivalentPricingPolicy($source, $target)) {
+            throw new \RuntimeException('Chính sách giá lớp đích không tương thích với lớp nguồn');
+        }
+    }
+
+    private function countBlockingRegistrations(LopHoc $class): int
+    {
+        return $class->dangKyLopHocs()->blockingSeat()->count();
+    }
+
+    private function hasEquivalentPricingPolicy(LopHoc $source, LopHoc $target): bool
+    {
+        $sourceP = $source->chinhSachGia;
+        $targetP = $target->chinhSachGia;
+
+        if (!$sourceP || !$targetP) {
+            return false;
+        }
+
+        // 1. So khớp thông tin chính
+        if ($sourceP->loaiThu !== $targetP->loaiThu ||
+            (float)$sourceP->hocPhiNiemYet !== (float)$targetP->hocPhiNiemYet ||
+            $sourceP->soBuoiCamKet !== $targetP->soBuoiCamKet) {
+            return false;
+        }
+
+        // 2. Nếu thu theo đợt, so khớp chi tiết đợt thu
+        if ($sourceP->loaiThu === LopHocChinhSachGia::LOAI_THU_THEO_DOT) {
+            $sourceDots = $sourceP->dotThus->sortBy('thuTu')->values();
+            $targetDots = $targetP->dotThus->sortBy('thuTu')->values();
+
+            if ($sourceDots->count() !== $targetDots->count()) {
+                return false;
+            }
+
+            foreach ($sourceDots as $i => $sDot) {
+                $tDot = $targetDots[$i];
+                if ($sDot->thuTu !== $tDot->thuTu ||
+                    (float)$sDot->soTien !== (float)$tDot->soTien ||
+                    $sDot->hanThanhToan !== $tDot->hanThanhToan ||
+                    $sDot->batBuoc !== $tDot->batBuoc) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 }

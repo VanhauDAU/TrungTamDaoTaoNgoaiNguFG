@@ -101,6 +101,22 @@
             color: #fff;
         }
 
+        .lh-hero-merge {
+            background: #f59e0b;
+            color: #fff;
+        }
+
+        .lh-hero-merge:hover {
+            background: #d97706;
+            color: #fff;
+        }
+
+        .lh-hero-merge:disabled {
+            background: rgba(245, 158, 11, .4);
+            cursor: not-allowed;
+            opacity: .7;
+        }
+
         /* ── Summary cards ─────────────────────────────── */
         .lh-summary-grid {
             display: grid;
@@ -373,6 +389,137 @@
             background: #fff7ed;
             color: #c2410c;
         }
+
+        /* ── Modern Modal ───────────────────────────────── */
+        .kf-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, .6);
+            backdrop-filter: blur(4px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            padding: 20px;
+        }
+
+        .kf-modal {
+            background: #fff;
+            border-radius: 16px;
+            width: 100%;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            animation: modalFadeIn .3s ease-out;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .kf-modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #f1f5f9;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #fff;
+        }
+
+        .kf-modal-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0;
+        }
+
+        .kf-modal-close {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            color: #64748b;
+            background: #f1f5f9;
+            border: none;
+            cursor: pointer;
+            font-size: 1.25rem;
+            transition: all .2s;
+        }
+
+        .kf-modal-close:hover {
+            background: #e2e8f0;
+            color: #1e293b;
+        }
+
+        .kf-modal-body {
+            padding: 24px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .kf-modal-footer {
+            padding: 16px 24px;
+            background: #f8fafc;
+            border-top: 1px solid #f1f5f9;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .kf-btn {
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: .875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid transparent;
+        }
+
+        .kf-btn-outline {
+            background: #fff;
+            color: #64748b;
+            border-color: #e2e8f0;
+        }
+
+        .kf-btn-outline:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+        }
+
+        .kf-btn-primary {
+            background: #7c3aed;
+            color: #fff;
+        }
+
+        .kf-btn-primary:hover {
+            background: #6d28d9;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
+        }
+
+        .merge-candidate-item:hover {
+            background: #f5f3ff !important;
+        }
+
+        .merge-candidate-item input[type="radio"]:checked + div {
+            color: #7c3aed !important;
+        }
+
+        .merge-candidate-item input[type="radio"]:checked {
+            accent-color: #7c3aed;
+        }
     </style>
 @endsection
 
@@ -438,6 +585,12 @@
             <a href="{{ route('admin.lop-hoc.edit', $lopHoc->slug) }}" class="lh-hero-btn lh-hero-edit">
                 <i class="fas fa-pen"></i> Chỉnh sửa
             </a>
+
+            <button type="button" class="lh-hero-btn lh-hero-merge" id="btnOpenMergeModal"
+                {{ !$mergeEligible ? 'disabled' : '' }}
+                title="{{ !$mergeEligible ? implode('. ', $mergeBlockers) : 'Gộp lớp này vào lớp khác' }}">
+                <i class="fas fa-object-group"></i> Gộp lớp
+            </button>
             @if ($lopHoc->khoaHoc)
                 <a href="{{ route('admin.khoa-hoc.show', $lopHoc->khoaHoc->slug) }}" class="lh-hero-btn lh-hero-kh">
                     <i class="fas fa-graduation-cap"></i> Xem khóa học
@@ -1256,5 +1409,162 @@
                     Swal.fire('Lỗi', error.message || 'Không thể cập nhật buổi học.', 'error');
                 });
         }
+    </script>
+
+    {{-- ── MERGE CLASS MODAL ────────────────────────────────── --}}
+    <div id="mergeClassModal" class="kf-modal-overlay">
+        <div class="kf-modal" style="max-width:600px">
+            <div class="kf-modal-header">
+                <h3 class="kf-modal-title">Gộp lớp học</h3>
+                <button type="button" class="kf-modal-close" onclick="closeMergeModal()">&times;</button>
+            </div>
+            <div class="kf-modal-body">
+                <div
+                    style="background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:12px 14px;color:#92400e;font-size:.84rem;margin-bottom:16px">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Thao tác này sẽ chuyển toàn bộ học viên có đăng ký hiệu lực sang lớp đích và hủy các buổi học chưa diễn
+                    ra của lớp hiện tại. <strong>Hành động không thể hoàn tác.</strong>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+                    <div style="background:#f8fafc;padding:12px;border-radius:8px;border:1px solid #e2e8f0">
+                        <label style="font-size:.7rem;font-weight:700;color:#64748b;text-transform:uppercase">Lớp nguồn
+                            (Hiện tại)</label>
+                        <div style="font-size:.9rem;font-weight:700;color:#1e293b;margin-top:2px">
+                            {{ $lopHoc->tenLopHoc }}
+                        </div>
+                        <div style="font-size:.75rem;color:#7c3aed;margin-top:4px">
+                            <i class="fas fa-users"></i> {{ $mergeStats['transferCount'] }} đăng ký sẽ chuyển
+                        </div>
+                    </div>
+                    <div style="background:#f5f3ff;padding:12px;border-radius:8px;border:1px solid #ddd6fe">
+                        <label style="font-size:.7rem;font-weight:700;color:#64748b;text-transform:uppercase">Tác động hủy
+                            bỏ</label>
+                        <div style="font-size:.9rem;font-weight:700;color:#1e293b;margin-top:2px">
+                            {{ $mergeStats['cancelSessionsCount'] }} buổi học
+                        </div>
+                        <div style="font-size:.75rem;color:#dc2626;margin-top:4px">
+                            Sẽ được chuyển sang "Đã hủy"
+                        </div>
+                    </div>
+                </div>
+
+                @if ($mergeCandidates->isEmpty())
+                    <div style="text-align:center;padding:30px 20px;background:#f8fafc;border-radius:8px;color:#94a3b8">
+                        <i class="fas fa-search" style="font-size:2rem;margin-bottom:10px;display:block;opacity:.3"></i>
+                        Không tìm thấy lớp học đích phù hợp.<br>
+                        <small>Yêu cầu: Cùng khóa học, cùng cơ sở, cùng chính sách giá và còn đủ chỗ.</small>
+                    </div>
+                @else
+                    <form id="mergeClassForm" action="{{ route('admin.lop-hoc.merge', $lopHoc->slug) }}" method="POST">
+                        @csrf
+                        @method('PATCH')
+                        <label
+                            style="font-size:.84rem;font-weight:700;color:#1e293b;display:block;margin-bottom:10px">Chọn lớp
+                            đích sẽ tiếp nhận học viên:</label>
+                        <div style="max-height:280px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:8px">
+                            @foreach ($mergeCandidates as $candidate)
+                                <label
+                                    style="display:block;padding:12px 14px;border-bottom:1px solid #f1f5f9;cursor:pointer;margin:0;transition:background .2s"
+                                    class="merge-candidate-item">
+                                    <div style="display:flex;align-items:flex-start;gap:12px">
+                                        <input type="radio" name="targetLopHocId" value="{{ $candidate->lopHocId }}"
+                                            style="margin-top:4px" required>
+                                        <div style="flex:1">
+                                            <div style="font-size:.875rem;font-weight:700;color:#1e293b">
+                                                [{{ $candidate->maLopHoc }}] {{ $candidate->tenLopHoc }}
+                                            </div>
+                                            <div style="font-size:.75rem;color:#64748b;margin-top:3px">
+                                                <i class="fas fa-calendar-alt"></i> Bắt đầu:
+                                                {{ \Carbon\Carbon::parse($candidate->ngayBatDau)->format('d/m/Y') }}
+                                                <span style="margin:0 6px">|</span>
+                                                <i class="fas fa-users"></i> Sĩ số:
+                                                {{ $candidate->dangKyLopHocs->count() }}/{{ $candidate->soHocVienToiDa }}
+                                            </div>
+                                            @php
+                                                $newTotal = $candidate->dangKyLopHocs->count() + $mergeStats['transferCount'];
+                                                $remaining = $candidate->soHocVienToiDa - $candidate->dangKyLopHocs->count();
+                                                $needed = $mergeStats['transferCount'];
+                                            @endphp
+                                            <div style="font-size:.72rem;margin-top:5px;font-weight:600">
+                                                @if ($newTotal <= $candidate->soHocVienToiDa)
+                                                    <span style="color:#16a34a"><i class="fas fa-check"></i> Sau gộp:
+                                                        {{ $newTotal }}/{{ $candidate->soHocVienToiDa }} (Dư
+                                                        {{ $candidate->soHocVienToiDa - $newTotal }} chỗ)</span>
+                                                @else
+                                                    <span style="color:#dc2626"><i class="fas fa-times"></i> Thiếu
+                                                        {{ $newTotal - $candidate->soHocVienToiDa }} chỗ</span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </div>
+                                </label>
+                            @endforeach
+                        </div>
+                    </form>
+                @endif
+            </div>
+            <div class="kf-modal-footer">
+                <button type="button" class="kf-btn kf-btn-outline" onclick="closeMergeModal()">Đóng</button>
+                @if ($mergeCandidates->isNotEmpty())
+                    <button type="button" class="kf-btn kf-btn-primary" id="btnConfirmMerge"
+                        style="background:#f59e0b;border-color:#d97706">
+                        <i class="fas fa-check me-1"></i> Xác nhận gộp
+                    </button>
+                @endif
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openMergeModal() {
+            const m = document.getElementById('mergeClassModal');
+            m.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeMergeModal() {
+            const m = document.getElementById('mergeClassModal');
+            m.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const btnOpen = document.getElementById('btnOpenMergeModal');
+            if (btnOpen) {
+                btnOpen.addEventListener('click', openMergeModal);
+            }
+
+            const btnConfirm = document.getElementById('btnConfirmMerge');
+            if (btnConfirm) {
+                btnConfirm.addEventListener('click', function() {
+                    const selected = document.querySelector('input[name="targetLopHocId"]:checked');
+                    if (!selected) {
+                        Swal.fire('Thông báo', 'Vui lòng chọn một lớp học đích.', 'info');
+                        return;
+                    }
+
+                    Swal.fire({
+                        title: 'Xác nhận gộp lớp?',
+                        text: "Hành động này sẽ chuyển học viên sang lớp mới và HỦY các buổi học của lớp này. Không thể hoàn tác!",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Tôi đồng ý, tiến hành gộp',
+                        cancelButtonText: 'Hủy',
+                        confirmButtonColor: '#f59e0b',
+                        reverseButtons: true
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            document.getElementById('mergeClassForm').submit();
+                        }
+                    });
+                });
+            }
+
+            // Backdrop click close
+            document.getElementById('mergeClassModal').addEventListener('click', function(e) {
+                if (e.target === this) closeMergeModal();
+            });
+        });
     </script>
 @endsection
