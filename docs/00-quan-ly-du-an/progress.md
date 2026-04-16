@@ -1,6 +1,6 @@
 # TIEN DO DU AN - Trung Tam Dao Tao Ngoai Ngu Five Genius
 
-> Cập nhật lần cuối: 2026-04-12 10:10
+> Cập nhật lần cuối: 2026-04-15 13:30
 
 ## ✅ Đã hoàn thành
 
@@ -34,7 +34,10 @@
 - [x] Danh muc khoa hoc dang cay de quy vo han cap
 - [x] Quan ly Khoa hoc (CRUD, anh, soft delete)
 - [x] Ap dung component upload anh dung chung cho form tao/sua khoa hoc
-- [x] Quan ly Lop hoc (gan giao vien, phong, ca, co so)
+- [x] Quan ly Lop hoc (gan giao vien, phong, co so, ca hoc, lich hoc)
+- [x] Kiem tra xung dot lich phong hoc realtime khi them/sua lop
+- [x] Ngay ket thuc lop bat buoc nhap tay, validate >= ngay bat dau (server + client)
+- [x] Bo so buoi du kien va so buoi cam ket khoi form them/sua lop
 - [x] Chinh sach gia theo lop hoc, khong con goi hoc phi theo khoa hoc
 - [x] Loai bo `thu theo thang` khoi runtime billing moi
 - [x] Snapshot hoc phi khi hoc vien dang ky lop
@@ -42,7 +45,7 @@
 - [x] Them `ngayHetHanGiuCho` cho dang ky cho thanh toan
 - [x] Job tu dong huy giu cho qua han
 - [x] Quan ly Buoi hoc (tu dong sinh theo ca hoc)
-- [x] Dong bo ngay ket thuc lop theo buoi hoc cuoi cung
+- [x] Dong bo ngay ket thuc lop theo buoi hoc cuoi cung (fallback khi khong nhap tay)
 - [x] Chuyen trang thai lop hoc nhanh bang AJAX tai trang index
 - [x] Ma tran chuyen trang thai lop hoc + validation server
 - [x] Ca hoc (CRUD, toggle active)
@@ -123,6 +126,7 @@
 - [x] Feature test `NhanSuWorkflowTest` cho luồng hồ sơ nhân sự
 - [x] Feature test `FinanceDocumentWorkflowTest` cho in PDF / gui email hoa don, phiếu thu o admin
 - [x] README / README_vi / upload security checklist được đồng bộ theo kiến trúc upload ảnh dùng chung
+- [x] Changelog, progress, docs cap nhat theo thay doi module lop hoc 2026-04-15
 
 ---
 

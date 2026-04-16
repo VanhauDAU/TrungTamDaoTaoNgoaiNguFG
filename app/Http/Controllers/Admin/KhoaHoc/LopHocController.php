@@ -118,4 +118,31 @@ class LopHocController extends Controller
     {
         return response()->json($this->lopHocService->previewSchedulingConflicts($request));
     }
+
+    public function merge(Request $request, string $slug)
+    {
+        $payload = $request->validate([
+            'targetLopHocId' => 'required|integer|exists:lophoc,lopHocId',
+        ], [
+            'targetLopHocId.required' => 'Vui lòng chọn lớp học đích.',
+            'targetLopHocId.exists' => 'Lớp học đích không tồn tại.',
+        ]);
+
+        try {
+            $result = $this->lopHocService->mergeClass($slug, (int) $payload['targetLopHocId']);
+            
+            return redirect()->route('admin.lop-hoc.show', $result['target']->slug)
+                ->with('success', sprintf(
+                    'Đã gộp thành công lớp «%s» vào «%s». Đã chuyển %d đăng ký và hủy %d buổi học.',
+                    $result['source']->tenLopHoc,
+                    $result['target']->tenLopHoc,
+                    $result['transferredCount'],
+                    $result['cancelledSessionsCount']
+                ));
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Lỗi khi gộp lớp: ' . $e->getMessage());
+        }
+    }
 }

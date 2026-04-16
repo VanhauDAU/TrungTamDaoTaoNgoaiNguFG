@@ -211,26 +211,23 @@
             </div>
 
             <div class="kf-card">
-                <div class="kf-card-title"><i class="fas fa-clock"></i> Thời gian & Số buổi</div>
+                <div class="kf-card-title"><i class="fas fa-clock"></i> Thời gian</div>
                 <div class="kf-form-row">
                     <div class="kf-form-group">
                         <label>Ngày bắt đầu <span class="req">*</span></label>
-                        <input type="date" name="ngayBatDau"
+                        <input type="date" name="ngayBatDau" id="ngayBatDauInput"
                             value="{{ old('ngayBatDau', $lopHoc->ngayBatDau ? \Carbon\Carbon::parse($lopHoc->ngayBatDau)->format('Y-m-d') : '') }}"
                             >
                     </div>
                     <div class="kf-form-group">
-                        <label>Số buổi dự kiến</label>
-                        <input type="number" name="soBuoiDuKien" id="soBuoiInput"
-                            value="{{ old('soBuoiDuKien', $lopHoc->soBuoiDuKien) }}" min="1">
-                        @error('soBuoiDuKien')
+                        <label>Ngày kết thúc <span class="req">*</span></label>
+                        <input type="date" name="ngayKetThuc" id="ngayKetThucInput"
+                            value="{{ old('ngayKetThuc', $lopHoc->ngayKetThuc ? \Carbon\Carbon::parse($lopHoc->ngayKetThuc)->format('Y-m-d') : '') }}"
+                            class="{{ $errors->has('ngayKetThuc') ? 'is-invalid' : '' }}">
+                        @error('ngayKetThuc')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
-                        <div class="form-hint">Dùng cho kế hoạch đào tạo và tính năng tự động sinh buổi học.</div>
                     </div>
-                </div>
-                <div class="form-hint" style="margin-top:10px">
-                    Ngày kết thúc được tự đồng bộ từ buổi học cuối cùng còn hiệu lực của lớp, không chỉnh trực tiếp ở form này.
                 </div>
             </div>
 
@@ -246,7 +243,7 @@
                 </div>
 
                 <div id="scheduleConflictHint" class="form-hint" style="margin-bottom:16px">
-                    Hoàn tất cơ sở, ca học, lịch học, ngày bắt đầu và số buổi dự kiến để bật kiểm tra xung đột realtime.
+                    Hoàn tất cơ sở, ca học, lịch học, ngày bắt đầu và ngày kết thúc để bật kiểm tra xung đột phòng học realtime.
                 </div>
 
                 <div class="kf-form-row">
@@ -275,7 +272,6 @@
                                 </optgroup>
                             @endif
                         </select>
-                        <div id="giaoVienConflictFeedback" class="form-hint"></div>
                         @error('taiKhoanId')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
@@ -422,9 +418,13 @@
                                             </div>
                                             <div class="dot-thu-field">
                                                 <label>Số tiền</label>
-                                                <input type="number" name="dotThu[{{ $index }}][soTien]"
-                                                    value="{{ $dotThu['soTien'] ?? '' }}" min="0" step="1000"
-                                                    oninput="previewPricing()" class="form-control">
+                                                <input type="hidden" name="dotThu[{{ $index }}][soTien]"
+                                                    value="{{ $dotThu['soTien'] ?? '' }}" class="dot-thu-amount-hidden">
+                                                <input type="text" inputmode="numeric"
+                                                    value="{{ isset($dotThu['soTien']) && $dotThu['soTien'] !== '' ? number_format((int)$dotThu['soTien'], 0, '', ',') : '' }}"
+                                                    class="form-control dot-thu-amount-display"
+                                                    placeholder="VD: 2,000,000"
+                                                    oninput="syncDotThuAmount(this)">
                                             </div>
                                             <div class="dot-thu-field">
                                                 <label>Hạn thanh toán</label>
@@ -471,7 +471,7 @@
                                     <div class="pricing-preview-card">
                                         <div class="pricing-preview-label">Tổng công nợ dự kiến</div>
                                         <div class="pricing-preview-value" id="prev-total">0 đ</div>
-                                        <div class="pricing-preview-note" id="prev-camket">Theo số buổi dự kiến</div>
+                                        <div class="pricing-preview-note" id="prev-camket">—</div>
                                     </div>
                                 </div>
                             </div>
@@ -717,9 +717,12 @@
             if (tinhSel && tinhSel.value) {
                 loadPhuongXa(tinhSel.value);
             }
+            initHocPhiDisplay();
             previewPricing();
             updateLichHoc();
             updateSucChuaHint();
+            validateDateRange();
+            updatePhongHocAvailability();
             triggerConflictPreview();
         });
 
@@ -773,8 +776,66 @@
             preferredPhong = ps.value || '';
             preferredGV = gs.value || '';
 
+            updatePhongHocAvailability();
             updateSucChuaHint();
             triggerConflictPreview();
+        }
+
+        function updatePhongHocAvailability() {
+            const phongSel = document.getElementById('phongHocSel');
+            const ngayBD = document.getElementById('ngayBatDauInput')?.value || '';
+            const ngayKT = document.getElementById('ngayKetThucInput')?.value || '';
+            const coSoId = document.getElementById('coSoSel')?.value || '';
+
+            if (!coSoId) {
+                phongSel.disabled = true;
+                return;
+            }
+
+            if (!ngayBD || !ngayKT) {
+                phongSel.disabled = true;
+                phongSel.title = 'Vui lòng chọn đầy đủ ngày bắt đầu và ngày kết thúc trước';
+                return;
+            }
+
+            phongSel.disabled = false;
+            phongSel.title = '';
+        }
+
+        function formatThousands(value) {
+            const num = String(value).replace(/[^\d]/g, '');
+            return num.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        }
+
+        function syncHocPhiFromDisplay(displayInput) {
+            const raw = String(displayInput.value).replace(/[^\d]/g, '');
+            document.getElementById('hocPhiNiemYetInput').value = raw;
+            const pos = displayInput.selectionStart;
+            const oldLen = displayInput.value.length;
+            displayInput.value = formatThousands(raw);
+            const newLen = displayInput.value.length;
+            displayInput.setSelectionRange(pos + (newLen - oldLen), pos + (newLen - oldLen));
+            previewPricing();
+        }
+
+        function syncDotThuAmount(displayInput) {
+            const raw = String(displayInput.value).replace(/[^\d]/g, '');
+            const hidden = displayInput.parentElement.querySelector('.dot-thu-amount-hidden');
+            if (hidden) hidden.value = raw;
+            const pos = displayInput.selectionStart;
+            const oldLen = displayInput.value.length;
+            displayInput.value = formatThousands(raw);
+            const newLen = displayInput.value.length;
+            displayInput.setSelectionRange(pos + (newLen - oldLen), pos + (newLen - oldLen));
+            previewPricing();
+        }
+
+        function initHocPhiDisplay() {
+            const hidden = document.getElementById('hocPhiNiemYetInput');
+            const display = document.getElementById('hocPhiNiemYetDisplay');
+            if (hidden && display && hidden.value) {
+                display.value = formatThousands(hidden.value);
+            }
         }
 
         function setConflictSummary(status, message) {
@@ -812,7 +873,6 @@
         }
 
         function clearConflictFeedback() {
-            setFieldConflictFeedback('giaoVien', null);
             setFieldConflictFeedback('phongHoc', null);
             setConflictSummary('', '');
         }
@@ -823,24 +883,22 @@
         }
 
         async function previewSchedulingConflicts() {
-            const teacherId = document.getElementById('giaoVienSel')?.value || '';
             const roomId = document.getElementById('phongHocSel')?.value || '';
 
-            if (!teacherId && !roomId) {
+            if (!roomId) {
                 clearConflictFeedback();
                 setConflictSummary('', '');
                 document.getElementById('scheduleConflictHint').textContent =
-                    'Chọn giáo viên hoặc phòng học để bắt đầu kiểm tra xung đột realtime.';
+                    'Chọn phòng học để bắt đầu kiểm tra xung đột realtime.';
                 return;
             }
 
             const params = new URLSearchParams({
                 coSoId: document.getElementById('coSoSel')?.value || '',
                 caHocId: document.querySelector('[name="caHocId"]')?.value || '',
-                taiKhoanId: teacherId,
                 phongHocId: roomId,
                 ngayBatDau: document.querySelector('[name="ngayBatDau"]')?.value || '',
-                soBuoiDuKien: document.querySelector('[name="soBuoiDuKien"]')?.value || '',
+                ngayKetThuc: document.querySelector('[name="ngayKetThuc"]')?.value || '',
                 lichHoc: document.getElementById('lichHocInput')?.value || '',
                 excludeSlug: document.getElementById('conflictExcludeSlug')?.value || '',
             });
@@ -862,7 +920,6 @@
                     return;
                 }
 
-                setFieldConflictFeedback('giaoVien', result.fieldStates?.taiKhoanId || null);
                 setFieldConflictFeedback('phongHoc', result.fieldStates?.phongHocId || null);
                 setConflictSummary(result.ok ? 'ok' : 'error', result.message || '');
             } catch (error) {
@@ -901,11 +958,31 @@
         });
         document.getElementById('giaoVienSel')?.addEventListener('change', function() {
             preferredGV = this.value || '';
-            triggerConflictPreview();
         });
         document.querySelector('[name="caHocId"]')?.addEventListener('change', triggerConflictPreview);
-        document.querySelector('[name="ngayBatDau"]')?.addEventListener('change', triggerConflictPreview);
-        document.querySelector('[name="soBuoiDuKien"]')?.addEventListener('input', triggerConflictPreview);
+        document.querySelector('[name="ngayBatDau"]')?.addEventListener('change', function() {
+            validateDateRange();
+            updatePhongHocAvailability();
+            triggerConflictPreview();
+        });
+        document.querySelector('[name="ngayKetThuc"]')?.addEventListener('change', function() {
+            validateDateRange();
+            updatePhongHocAvailability();
+            triggerConflictPreview();
+        });
+
+        function validateDateRange() {
+            const ngayBatDau = document.getElementById('ngayBatDauInput');
+            const ngayKetThuc = document.getElementById('ngayKetThucInput');
+            if (!ngayBatDau || !ngayKetThuc) return;
+
+            if (ngayBatDau.value) {
+                ngayKetThuc.min = ngayBatDau.value;
+            }
+            if (ngayBatDau.value && ngayKetThuc.value && ngayKetThuc.value < ngayBatDau.value) {
+                ngayKetThuc.value = ngayBatDau.value;
+            }
+        }
 
         document.querySelector('form')?.addEventListener('submit', function(e) {
             const ps = document.getElementById('phongHocSel');
@@ -925,7 +1002,7 @@
         }
 
         function parseMoneyInputValue(value) {
-            const normalized = String(value || '').trim().replace(',', '.');
+            const normalized = String(value || '').trim().replace(/,/g, '').replace('.', '.');
             const parsed = Number.parseFloat(normalized);
             return Number.isFinite(parsed) ? parsed : 0;
         }
@@ -949,7 +1026,6 @@
         function getPricingInputs() {
             return {
                 hocPhi: parseMoneyInputValue(document.getElementById('hocPhiNiemYetInput')?.value || 0),
-                soBuoiCamKet: String(document.getElementById('soBuoiCamKetInput')?.value || '').trim(),
                 ghiChu: String(document.querySelector('[name="ghiChuChinhSach"]')?.value || '').trim(),
                 hanThanhToanHocPhi: String(document.getElementById('hanThanhToanHocPhiInput')?.value || '').trim(),
             };
@@ -958,12 +1034,11 @@
         function hasPricingConfiguration() {
             const {
                 hocPhi,
-                soBuoiCamKet,
                 ghiChu,
                 hanThanhToanHocPhi
             } = getPricingInputs();
 
-            return hocPhi > 0 || Boolean(soBuoiCamKet) || Boolean(ghiChu) || Boolean(hanThanhToanHocPhi) || getDotThuRows()
+            return hocPhi > 0 || Boolean(ghiChu) || Boolean(hanThanhToanHocPhi) || getDotThuRows()
                 .length > 0;
         }
 
@@ -1035,9 +1110,15 @@
 
                 if (amountInput) {
                     amountInput.setCustomValidity('');
-                    if (isTheoDot && parseMoneyInputValue(amountInput.value) <= 0) {
+                    const amountVal = parseMoneyInputValue(amountInput.value);
+                    if (isTheoDot && amountVal <= 0) {
                         amountInput.setCustomValidity('Số tiền đợt thu phải lớn hơn 0.');
+                        const displayInput = row.querySelector('.dot-thu-amount-display');
+                        if (displayInput) displayInput.classList.add('is-invalid');
                         hasError = true;
+                    } else {
+                        const displayInput = row.querySelector('.dot-thu-amount-display');
+                        if (displayInput) displayInput.classList.remove('is-invalid');
                     }
                 }
 
@@ -1162,8 +1243,7 @@
 
         function previewPricing() {
             const {
-                hocPhi,
-                soBuoiCamKet
+                hocPhi
             } = getPricingInputs();
             const loaiThuSelect = document.getElementById('loaiThuInput');
             const preview = document.getElementById('pricingPreview');
@@ -1187,8 +1267,7 @@
             document.getElementById('prev-hocphi').textContent = hocPhi > 0 ? fmtMoney(hocPhi) : 'Chưa nhập';
             document.getElementById('prev-phuphi').textContent = fmtMoney(defaultTotal);
             document.getElementById('prev-total').textContent = fmtMoney(hocPhi + defaultTotal);
-            document.getElementById('prev-camket').textContent = soBuoiCamKet ? `${soBuoiCamKet} buổi cam kết` :
-                'Theo số buổi dự kiến';
+            document.getElementById('prev-camket').textContent = '—';
             document.getElementById('prev-loaithu').textContent = loaiThuSelect?.options[loaiThuSelect.selectedIndex]
                 ?.text || '—';
             preview.style.display = 'block';
@@ -1262,7 +1341,8 @@
                 </div>
                 <div class="dot-thu-field">
                     <label>Số tiền</label>
-                    <input type="number" name="dotThu[${dotThuIndex}][soTien]" min="0" step="1000" oninput="previewPricing()" class="form-control">
+                    <input type="hidden" name="dotThu[${dotThuIndex}][soTien]" class="dot-thu-amount-hidden">
+                    <input type="text" inputmode="numeric" class="form-control dot-thu-amount-display" placeholder="VD: 2,000,000" oninput="syncDotThuAmount(this)">
                 </div>
                 <div class="dot-thu-field">
                     <label>Hạn thanh toán</label>
