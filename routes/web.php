@@ -335,6 +335,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
         Route::put('/{slug}', [AdminLopHocController::class, 'update'])->name('update');
         Route::delete('/{slug}', [AdminLopHocController::class, 'destroy'])->name('destroy');
         Route::patch('/{slug}/khoi-phuc', [AdminLopHocController::class, 'restore'])->name('restore');
+        Route::patch('/{slug}/gop', [AdminLopHocController::class, 'merge'])->name('merge');
     });
 
     // ── Buổi Học ──────────────────────────────────────────────────────────────
