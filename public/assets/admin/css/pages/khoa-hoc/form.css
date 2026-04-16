@@ -134,6 +134,67 @@
     margin-top: 4px;
     line-height: 1.4;
 }
+
+/* ── Help Tooltips ────────────────────────────────────────── */
+.kf-help-trigger {
+    color: var(--kf-primary);
+    font-size: .75rem;
+    margin-left: 6px;
+    cursor: help;
+    display: inline-flex;
+    align-items: center;
+    position: relative;
+    opacity: 0.7;
+    transition: opacity .2s;
+}
+.kf-help-trigger:hover { opacity: 1; }
+
+/* Tooltip container */
+.kf-help-trigger::before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 150%;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background: #1e293b; /* Sleek dark theme */
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: .75rem;
+    font-weight: 400;
+    width: 200px; /* Standard description width */
+    line-height: 1.5;
+    text-align: center;
+    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3);
+    opacity: 0;
+    visibility: hidden;
+    transition: all .2s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 9999;
+}
+
+/* Tooltip arrow */
+.kf-help-trigger::after {
+    content: "";
+    position: absolute;
+    bottom: 150%;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    border: 6px solid transparent;
+    border-top-color: #1e293b;
+    margin-bottom: -11px;
+    opacity: 0;
+    visibility: hidden;
+    transition: all .2s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 9999;
+}
+
+.kf-help-trigger:hover::before,
+.kf-help-trigger:hover::after {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+
 .kf-form-group label .req { color: #dc2626; margin-left: 2px; }
 .kf-form-group input,
 .kf-form-group select,

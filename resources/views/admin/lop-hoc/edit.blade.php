@@ -321,21 +321,25 @@
 
                             <div class="pricing-field-grid">
                                 <div class="kf-form-group">
-                                    <label>Học phí niêm yết (VNĐ)</label>
+                                    <label>
+                                        Học phí niêm yết (VNĐ)
+                                        <i class="fas fa-info-circle kf-help-trigger" data-tooltip="Đây là mức học phí niêm yết dùng để xác định quyền học của học viên."></i>
+                                    </label>
                                     <div class="kf-input-with-prefix">
                                         <span class="kf-input-prefix">₫</span>
                                         <input type="number" name="hocPhiNiemYet" id="hocPhiNiemYetInput"
                                             value="{{ old('hocPhiNiemYet', $existingPolicy?->hocPhiNiemYet) }}" min="0" step="1000" oninput="previewPricing()"
                                             class="form-control" placeholder="Ví dụ: 5.000.000">
                                     </div>
-                                    <span class="form-hint">Đây là mức học phí niêm yết dùng để xác định quyền học của học viên.</span>
                                 </div>
                                 <div class="kf-form-group">
-                                    <label>Số buổi cam kết</label>
+                                    <label>
+                                        Số buổi cam kết
+                                        <i class="fas fa-info-circle kf-help-trigger" data-tooltip="Để trống nếu giống số buổi dự kiến của lớp."></i>
+                                    </label>
                                     <input type="number" name="soBuoiCamKet" id="soBuoiCamKetInput"
                                         value="{{ old('soBuoiCamKet', $existingPolicy?->soBuoiCamKet) }}" min="1" oninput="previewPricing()"
                                         class="form-control">
-                                    <span class="form-hint">Để trống nếu giống số buổi dự kiến của lớp.</span>
                                 </div>
                                 <div class="kf-form-group">
                                     <label>Cách thu học phí</label>
@@ -352,7 +356,10 @@
                                     <input type="hidden" name="loaiThu" id="loaiThuInput" value="{{ old('loaiThu', $existingPolicy?->loaiThu ?? 0) }}">
                                 </div>
                                 <div class="kf-form-group">
-                                    <label>Trạng thái chính sách giá</label>
+                                    <label>
+                                        Trạng thái chính sách giá
+                                        <i class="fas fa-info-circle kf-help-trigger" data-tooltip="&quot;Tạm ngưng&quot; sẽ giữ nguyên dữ liệu nhưng không sinh công nợ mới."></i>
+                                    </label>
                                     <div class="kf-segmented" data-input-id="trangThaiChinhSachGiaInput">
                                         @php
                                             $currPolicyState = (string) old('trangThaiChinhSachGia', (string) ($existingPolicy?->trangThai ?? 1));
@@ -365,17 +372,18 @@
                                         </div>
                                     </div>
                                     <input type="hidden" name="trangThaiChinhSachGia" id="trangThaiChinhSachGiaInput" value="{{ $currPolicyState }}">
-                                    <span class="form-hint">"Tạm ngưng" sẽ giữ nguyên dữ liệu nhưng không sinh công nợ mới.</span>
                                 </div>
                             </div>
 
                             <div class="pricing-one-col" id="mainDueGroup">
                                 <div class="kf-form-group">
-                                    <label>Hạn thanh toán học phí</label>
+                                    <label>
+                                        Hạn thanh toán học phí
+                                        <i class="fas fa-info-circle kf-help-trigger" data-tooltip="Dùng khi thu học phí một lần. Hạn này áp dụng cho toàn bộ học phí chính."></i>
+                                    </label>
                                     <input type="date" name="hanThanhToanHocPhi" id="hanThanhToanHocPhiInput"
                                         value="{{ old('hanThanhToanHocPhi', optional($existingPolicy?->hanThanhToanHocPhi)->format('Y-m-d')) }}"
                                         oninput="previewPricing()" class="form-control">
-                                    <span class="form-hint">Dùng khi thu học phí một lần. Hạn này áp dụng cho toàn bộ học phí chính.</span>
                                 </div>
                             </div>
 
@@ -566,14 +574,19 @@
                 <div class="kf-card-title"><i class="fas fa-cog"></i> Cài đặt vận hành & Hiển thị</div>
                 <div class="kf-form-row">
                     <div class="kf-form-group">
-                        <label>Sĩ số học viên tối đa</label>
+                        <label>
+                            Sĩ số học viên tối đa
+                            <i class="fas fa-info-circle kf-help-trigger" data-tooltip="Số lượng học viên tối đa cho phép. Không vượt quá sức chứa phòng học."></i>
+                        </label>
                         <input type="number" name="soHocVienToiDa"
                             value="{{ old('soHocVienToiDa', $lopHoc->soHocVienToiDa) }}" min="1"
                             placeholder="VD: 20" class="form-control">
-                        <span class="form-hint">Số lượng học viên tối đa cho phép. Không vượt quá sức chứa phòng học.</span>
                     </div>
                     <div class="kf-form-group">
-                        <label>Trạng thái lớp <span class="req">*</span></label>
+                        <label>
+                            Trạng thái lớp <span class="req">*</span>
+                            <i class="fas fa-info-circle kf-help-trigger" data-tooltip="Xác định lớp đang mở đăng ký, đang học hay đã kết thúc."></i>
+                        </label>
                         <select name="trangThai" class="form-select">
                             @php $cur = (string) old('trangThai', $lopHoc->trangThai); @endphp
                             @foreach (\App\Models\Education\LopHoc::trangThaiOptions() as $value => $label)
@@ -582,15 +595,16 @@
                                 </option>
                             @endforeach
                         </select>
-                        <span class="form-hint">Xác định lớp đang mở đăng ký, đang học hay đã kết thúc.</span>
                     </div>
                 </div>
                 <div class="kf-form-group mt-3">
-                    <label>Ghi chú chính sách hiển thị</label>
+                    <label>
+                        Ghi chú chính sách hiển thị
+                        <i class="fas fa-info-circle kf-help-trigger" data-tooltip="Thông tin này sẽ hiển thị công khai cho học viên và phụ huynh."></i>
+                    </label>
                     <textarea name="ghiChuChinhSach" rows="3"
                         placeholder="Ví dụ: Học phí chưa bao gồm giáo trình quốc tế..."
                         class="form-control">{{ old('ghiChuChinhSach', $existingPolicy?->ghiChuChinhSach) }}</textarea>
-                    <span class="form-hint">Thông tin này sẽ hiển thị công khai cho học viên và phụ huynh.</span>
                 </div>
             </div>
         </div>
