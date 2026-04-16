@@ -24,9 +24,11 @@ Muc tieu:
 
 ### 2.1 `lophoc`
 
-- Quan ly van hanh lop: giao vien, phong hoc, co so, ca hoc, lich hoc, ngay bat dau, so buoi du kien, trang thai.
-- `ngayKetThuc` khong nhap tay trong form.
-- `ngayKetThuc` duoc dong bo theo buoi hoc cuoi cung con hieu luc.
+- Quan ly van hanh lop: giao vien, phong hoc, co so, ca hoc, lich hoc, ngay bat dau, ngay ket thuc, trang thai.
+- `ngayKetThuc` bat buoc nhap trong form them/sua lop.
+- `ngayKetThuc` khong duoc nho hon `ngayBatDau` (server validate `after_or_equal` + client validate JS).
+- `soBuoiDuKien` van ton tai trong DB nhung da bi bo khoi form them/sua lop. Du lieu cu van giu nguyen.
+- He thong khong con kiem tra xung dot lich day giao vien khi them/sua lop; chi kiem tra xung dot phong hoc.
 
 ### 2.2 `lophoc_chinhsachgia`
 
@@ -129,15 +131,15 @@ Y nghia `ngayHetHanGiuCho`:
 
 ### 4.2 Tao lop hoc
 
-- Tao `lophoc` voi giao vien, phong, co so, ca hoc, lich hoc, ngay bat dau
+- Tao `lophoc` voi giao vien, phong, co so, ca hoc, lich hoc, ngay bat dau, ngay ket thuc
 - Lop o trang thai nhap co the chua co gia
+- He thong chi kiem tra xung dot phong hoc (khong kiem tra xung dot giao vien)
 
 ### 4.3 Cau hinh chinh sach gia
 
 Tai form tao/sua lop:
 
 - Nhap `hocPhiNiemYet`
-- Nhap `soBuoiCamKet` neu can
 - Chon:
   - `Mot lan`
   - `Chia dot hoc phi`

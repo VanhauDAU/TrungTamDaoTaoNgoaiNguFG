@@ -37,8 +37,12 @@ class LopHocService implements LopHocServiceInterface
     public function getList(Request $request): array
     {
         $query = LopHoc::with([
-            'khoaHoc', 'coSo', 'caHoc', 'chinhSachGia',
-            'taiKhoan.hoSoNguoiDung', 'dangKyLopHocs',
+            'khoaHoc',
+            'coSo',
+            'caHoc',
+            'chinhSachGia',
+            'taiKhoan.hoSoNguoiDung',
+            'dangKyLopHocs',
         ]);
 
         if ($search = $request->q) {
@@ -95,8 +99,12 @@ class LopHocService implements LopHocServiceInterface
     public function getTrashList(Request $request): array
     {
         $query = LopHoc::onlyTrashed()->with([
-            'khoaHoc', 'coSo', 'caHoc', 'chinhSachGia',
-            'taiKhoan.hoSoNguoiDung', 'dangKyLopHocs',
+            'khoaHoc',
+            'coSo',
+            'caHoc',
+            'chinhSachGia',
+            'taiKhoan.hoSoNguoiDung',
+            'dangKyLopHocs',
         ]);
 
         if ($search = $request->q) {
@@ -130,11 +138,16 @@ class LopHocService implements LopHocServiceInterface
     public function getDetail(string $slug): array
     {
         $lopHoc = LopHoc::with([
-            'khoaHoc', 'coSo', 'caHoc', 'phongHoc',
+            'khoaHoc',
+            'coSo',
+            'caHoc',
+            'phongHoc',
             'taiKhoan.hoSoNguoiDung',
             'chinhSachGia.dotThus',
             'phuPhis',
-            'buoiHocs.caHoc', 'buoiHocs.phongHoc', 'buoiHocs.taiKhoan.hoSoNguoiDung',
+            'buoiHocs.caHoc',
+            'buoiHocs.phongHoc',
+            'buoiHocs.taiKhoan.hoSoNguoiDung',
             'dangKyLopHocs.taiKhoan.hoSoNguoiDung',
         ])->where('slug', $slug)->firstOrFail();
 
@@ -316,22 +329,20 @@ class LopHocService implements LopHocServiceInterface
         $payload = $request->validate([
             'coSoId' => 'nullable|exists:cosodaotao,coSoId',
             'caHocId' => 'nullable|exists:cahoc,caHocId',
-            'taiKhoanId' => 'nullable|exists:taikhoan,taiKhoanId',
             'phongHocId' => 'nullable|exists:phonghoc,phongHocId',
             'ngayBatDau' => 'nullable|date',
-            'soBuoiDuKien' => 'nullable|integer|min:1',
+            'ngayKetThuc' => 'nullable|date',
             'lichHoc' => 'nullable|string|max:20',
             'excludeSlug' => 'nullable|string',
         ]);
 
-        $hasTeacher = !empty($payload['taiKhoanId']);
         $hasRoom = !empty($payload['phongHocId']);
 
-        if (!$hasTeacher && !$hasRoom) {
+        if (!$hasRoom) {
             return [
                 'ready' => false,
                 'ok' => true,
-                'message' => 'Chọn giáo viên hoặc phòng học để bắt đầu kiểm tra xung đột.',
+                'message' => 'Chọn phòng học để bắt đầu kiểm tra xung đột.',
                 'fieldStates' => [],
                 'missingFields' => [],
             ];
@@ -360,33 +371,17 @@ class LopHocService implements LopHocServiceInterface
             $newSchedule = $this->buildScheduleEnvelopeFromPayload($payload);
             $newCaHoc = CaHoc::findOrFail($payload['caHocId']);
 
-            if ($hasTeacher) {
-                $teacherConflict = $this->findClassConflict(
-                    $existingClass,
-                    $newSchedule,
-                    $newCaHoc,
-                    'taiKhoanId',
-                    (int) $payload['taiKhoanId']
-                );
+            $roomConflict = $this->findClassConflict(
+                $existingClass,
+                $newSchedule,
+                $newCaHoc,
+                'phongHocId',
+                (int) $payload['phongHocId']
+            );
 
-                $fieldStates['taiKhoanId'] = $teacherConflict
-                    ? ['status' => 'error', 'message' => $teacherConflict]
-                    : ['status' => 'ok', 'message' => 'Giáo viên hiện chưa bị trùng lịch với lớp khác.'];
-            }
-
-            if ($hasRoom) {
-                $roomConflict = $this->findClassConflict(
-                    $existingClass,
-                    $newSchedule,
-                    $newCaHoc,
-                    'phongHocId',
-                    (int) $payload['phongHocId']
-                );
-
-                $fieldStates['phongHocId'] = $roomConflict
-                    ? ['status' => 'error', 'message' => $roomConflict]
-                    : ['status' => 'ok', 'message' => 'Phòng học hiện chưa bị trùng lịch với lớp khác.'];
-            }
+            $fieldStates['phongHocId'] = $roomConflict
+                ? ['status' => 'error', 'message' => $roomConflict]
+                : ['status' => 'ok', 'message' => 'Phòng học hiện chưa bị trùng lịch với lớp khác.'];
         } catch (ValidationException $e) {
             foreach ($e->errors() as $field => $messages) {
                 $fieldStates[$field] = [
@@ -402,8 +397,8 @@ class LopHocService implements LopHocServiceInterface
             'ready' => true,
             'ok' => !$hasErrors,
             'message' => $hasErrors
-                ? 'Đã phát hiện xung đột cần xử lý trước khi lưu lớp.'
-                : 'Chưa phát hiện xung đột giáo viên hoặc phòng học.',
+                ? 'Đã phát hiện xung đột phòng học cần xử lý trước khi lưu lớp.'
+                : 'Chưa phát hiện xung đột phòng học.',
             'fieldStates' => $fieldStates,
             'missingFields' => [],
         ];
@@ -419,12 +414,11 @@ class LopHocService implements LopHocServiceInterface
             'taiKhoanId' => 'nullable|exists:taikhoan,taiKhoanId',
             'phongHocId' => 'nullable|exists:phonghoc,phongHocId',
             'ngayBatDau' => 'required|date',
-            'soBuoiDuKien' => 'nullable|integer|min:1',
+            'ngayKetThuc' => 'required|date|after_or_equal:ngayBatDau',
             'soHocVienToiDa' => 'nullable|integer|min:1',
             'lichHoc' => 'nullable|string|max:20',
             'trangThai' => ['required', Rule::in(array_map('strval', array_keys(LopHoc::trangThaiLabels())))],
             'hocPhiNiemYet' => 'nullable|numeric|min:0',
-            'soBuoiCamKet' => 'nullable|integer|min:1',
             'hanThanhToanHocPhi' => 'nullable|date',
             'loaiThu' => ['nullable', Rule::in(array_map('strval', array_keys(LopHocChinhSachGia::loaiThuOptions())))],
             'ghiChuChinhSach' => 'nullable|string',
@@ -436,9 +430,11 @@ class LopHocService implements LopHocServiceInterface
             'coSoId.required' => 'Vui lòng chọn cơ sở.',
             'caHocId.required' => 'Vui lòng chọn ca học.',
             'ngayBatDau.required' => 'Vui lòng chọn ngày bắt đầu.',
-            'soBuoiDuKien.min' => 'Số buổi dự kiến phải tối thiểu là 1.',
+            'ngayBatDau.date' => 'Ngày bắt đầu không hợp lệ.',
+            'ngayKetThuc.required' => 'Vui lòng chọn ngày kết thúc.',
+            'ngayKetThuc.date' => 'Ngày kết thúc không hợp lệ.',
+            'ngayKetThuc.after_or_equal' => 'Ngày kết thúc không được nhỏ hơn ngày bắt đầu.',
             'hocPhiNiemYet.min' => 'Học phí niêm yết không được âm.',
-            'soBuoiCamKet.min' => 'Số buổi cam kết phải tối thiểu là 1.',
         ]);
     }
 
@@ -452,7 +448,7 @@ class LopHocService implements LopHocServiceInterface
             'taiKhoanId',
             'phongHocId',
             'ngayBatDau',
-            'soBuoiDuKien',
+            'ngayKetThuc',
             'soHocVienToiDa',
             'lichHoc',
             'trangThai',
@@ -462,8 +458,6 @@ class LopHocService implements LopHocServiceInterface
     private function buildMainTuitionPayload(Request $request, array $validatedData): array
     {
         $hocPhiNiemYet = $validatedData['hocPhiNiemYet'] ?? null;
-        $soBuoiCamKet = $validatedData['soBuoiCamKet'] ?? null;
-        $soBuoiDuKien = isset($validatedData['soBuoiDuKien']) ? (int) $validatedData['soBuoiDuKien'] : null;
         $hanThanhToanHocPhi = $validatedData['hanThanhToanHocPhi'] ?? null;
         $loaiThu = isset($validatedData['loaiThu']) && $validatedData['loaiThu'] !== ''
             ? (int) $validatedData['loaiThu']
@@ -473,7 +467,6 @@ class LopHocService implements LopHocServiceInterface
         $dotThus = $this->normalizeDotThuRows($request->input('dotThu', []), $loaiThu);
 
         $hasAnyPricingInput = $hocPhiNiemYet !== null
-            || $soBuoiCamKet !== null
             || !empty($hanThanhToanHocPhi)
             || $ghiChuChinhSach !== ''
             || !empty($dotThus)
@@ -515,17 +508,10 @@ class LopHocService implements LopHocServiceInterface
             }
         }
 
-        if ($soBuoiCamKet !== null) {
-            $soBuoiCamKet = (int) $soBuoiCamKet;
-            if ($soBuoiDuKien !== null && $soBuoiCamKet === $soBuoiDuKien) {
-                $soBuoiCamKet = null;
-            }
-        }
-
         return [
             'loaiThu' => $loaiThu,
             'hocPhiNiemYet' => (float) $hocPhiNiemYet,
-            'soBuoiCamKet' => $soBuoiCamKet,
+            'soBuoiCamKet' => null,
             'hanThanhToanHocPhi' => $loaiThu === LopHocChinhSachGia::LOAI_THU_TRON_GOI ? $hanThanhToanHocPhi : null,
             'ghiChuChinhSach' => $ghiChuChinhSach !== '' ? $ghiChuChinhSach : null,
             'trangThai' => $trangThai,
@@ -765,7 +751,7 @@ class LopHocService implements LopHocServiceInterface
     {
         $this->ensureSelectedResourcesAreValid($lopHocData);
 
-        if (empty($lopHocData['taiKhoanId']) && empty($lopHocData['phongHocId'])) {
+        if (empty($lopHocData['phongHocId'])) {
             return;
         }
 
@@ -774,36 +760,18 @@ class LopHocService implements LopHocServiceInterface
         $newSchedule = $this->buildScheduleEnvelopeFromPayload($lopHocData);
         $newCaHoc = CaHoc::findOrFail($lopHocData['caHocId']);
 
-        if (!empty($lopHocData['taiKhoanId'])) {
-            $teacherConflict = $this->findClassConflict(
-                $existingClass,
-                $newSchedule,
-                $newCaHoc,
-                'taiKhoanId',
-                (int) $lopHocData['taiKhoanId']
-            );
+        $roomConflict = $this->findClassConflict(
+            $existingClass,
+            $newSchedule,
+            $newCaHoc,
+            'phongHocId',
+            (int) $lopHocData['phongHocId']
+        );
 
-            if ($teacherConflict !== null) {
-                throw ValidationException::withMessages([
-                    'taiKhoanId' => $teacherConflict,
-                ]);
-            }
-        }
-
-        if (!empty($lopHocData['phongHocId'])) {
-            $roomConflict = $this->findClassConflict(
-                $existingClass,
-                $newSchedule,
-                $newCaHoc,
-                'phongHocId',
-                (int) $lopHocData['phongHocId']
-            );
-
-            if ($roomConflict !== null) {
-                throw ValidationException::withMessages([
-                    'phongHocId' => $roomConflict,
-                ]);
-            }
+        if ($roomConflict !== null) {
+            throw ValidationException::withMessages([
+                'phongHocId' => $roomConflict,
+            ]);
         }
     }
 
@@ -818,7 +786,7 @@ class LopHocService implements LopHocServiceInterface
                 ]);
             }
 
-            if (! $room->isOperational()) {
+            if (!$room->isOperational()) {
                 throw ValidationException::withMessages([
                     'phongHocId' => 'Phòng học đang bảo trì hoặc không sẵn sàng để xếp lớp.',
                 ]);
@@ -846,13 +814,7 @@ class LopHocService implements LopHocServiceInterface
     {
         if (empty($lopHocData['lichHoc'])) {
             throw ValidationException::withMessages([
-                'lichHoc' => 'Cần chọn lịch học trong tuần để kiểm tra trùng phòng và trùng giáo viên.',
-            ]);
-        }
-
-        if (empty($lopHocData['soBuoiDuKien'])) {
-            throw ValidationException::withMessages([
-                'soBuoiDuKien' => 'Cần nhập số buổi dự kiến để hệ thống kiểm tra xung đột lịch lớp.',
+                'lichHoc' => 'Cần chọn lịch học trong tuần để kiểm tra trùng phòng học.',
             ]);
         }
     }
@@ -870,11 +832,11 @@ class LopHocService implements LopHocServiceInterface
         if (empty($lopHocData['ngayBatDau'])) {
             $missing[] = 'ngày bắt đầu';
         }
+        if (empty($lopHocData['ngayKetThuc'])) {
+            $missing[] = 'ngày kết thúc';
+        }
         if (empty($lopHocData['lichHoc'])) {
             $missing[] = 'lịch học';
-        }
-        if (empty($lopHocData['soBuoiDuKien'])) {
-            $missing[] = 'số buổi dự kiến';
         }
 
         return $missing;
@@ -900,12 +862,12 @@ class LopHocService implements LopHocServiceInterface
             ->get();
 
         foreach ($conflictingClasses as $class) {
-            if (! $class->caHoc || ! $this->caTimesOverlap($newCaHoc, $class->caHoc)) {
+            if (!$class->caHoc || !$this->caTimesOverlap($newCaHoc, $class->caHoc)) {
                 continue;
             }
 
             $existingSchedule = $this->buildScheduleEnvelopeFromClass($class);
-            if (! $this->scheduleWindowsOverlap($newSchedule, $existingSchedule)) {
+            if (!$this->scheduleWindowsOverlap($newSchedule, $existingSchedule)) {
                 continue;
             }
 
@@ -945,12 +907,27 @@ class LopHocService implements LopHocServiceInterface
     private function buildScheduleEnvelopeFromPayload(array $lopHocData): array
     {
         $start = Carbon::parse($lopHocData['ngayBatDau'])->startOfDay();
+        $end = !empty($lopHocData['ngayKetThuc'])
+            ? Carbon::parse($lopHocData['ngayKetThuc'])->startOfDay()
+            : $start;
         $days = $this->normalizeBusinessDays($lopHocData['lichHoc'] ?? null);
-        $dates = $this->projectSessionDates($start, $days, (int) $lopHocData['soBuoiDuKien']);
+
+        // Project dates between start and end using schedule days
+        $dates = [];
+        if ($days !== []) {
+            $targetWeekdays = array_values(array_unique(array_map(fn(string $day) => self::THU_MAP[$day], $days)));
+            $cursor = $start->copy();
+            while ($cursor->lte($end)) {
+                if (in_array($cursor->dayOfWeek, $targetWeekdays, true)) {
+                    $dates[] = $cursor->toDateString();
+                }
+                $cursor->addDay();
+            }
+        }
 
         return [
             'start' => $start,
-            'end' => Carbon::parse(end($dates) ?: $start->toDateString())->startOfDay(),
+            'end' => $end,
             'days' => $days,
             'dates' => $dates,
         ];

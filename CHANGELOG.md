@@ -2,6 +2,26 @@
 
 Tất cả thay đổi đáng chú ý của dự án sẽ được ghi tại đây.
 
+## [2026-04-15] - Cải thiện module quản lý lớp học: xung đột lịch, ngày kết thúc, bỏ số buổi khỏi form
+
+### Changed
+
+- Bỏ kiểm tra xung đột lịch dạy giáo viên khi thêm/sửa lớp học; chỉ còn kiểm tra xung đột phòng học.
+- Bỏ realtime preview xung đột giáo viên trên form thêm/sửa lớp; realtime preview phòng học vẫn hoạt động.
+- Trường `ngayKetThuc` giờ là bắt buộc và được nhập trực tiếp trên form thay vì tự đồng bộ từ buổi học cuối.
+- Thêm validation server: `ngayKetThuc` không được nhỏ hơn `ngayBatDau` (`after_or_equal`).
+- Thêm validation client: JS tự set `min` cho ô ngày kết thúc và auto-correct khi ngày bắt đầu thay đổi.
+- Xóa trường `soBuoiDuKien` và `soBuoiCamKet` khỏi form thêm/sửa lớp (dữ liệu cũ trong DB vẫn giữ nguyên).
+- Card "Thời gian & Số buổi" đổi thành "Thời gian".
+- Kiểm tra xung đột phòng giờ dùng khoảng `ngayBatDau – ngayKetThuc` thay vì `ngayBatDau + soBuoiDuKien`.
+- Preview chính sách giá không còn hiển thị "N buổi cam kết" hay "Theo số buổi dự kiến".
+
+### Affected Files
+
+- `app/Services/Admin/KhoaHoc/LopHocService.php`
+- `resources/views/admin/lop-hoc/create.blade.php`
+- `resources/views/admin/lop-hoc/edit.blade.php`
+
 ## [2026-04-12] - Hoàn thiện xuất PDF và gửi email cho hóa đơn, phiếu thu ở admin
 
 ### Added
