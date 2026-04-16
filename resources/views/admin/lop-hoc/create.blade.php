@@ -227,6 +227,8 @@
                     Hoàn tất cơ sở, ca học, lịch học, ngày bắt đầu và số buổi dự kiến để bật kiểm tra xung đột realtime.
                 </div>
 
+
+
                 <div class="kf-form-row">
                     <div class="kf-form-group">
                         <label>Giáo viên <span class="hint-text text-muted" style="font-weight:normal;font-size:12px;">(Ưu
@@ -276,9 +278,14 @@
                             <div class="pricing-field-grid">
                                 <div class="kf-form-group">
                                     <label>Học phí niêm yết (VNĐ)</label>
-                                    <input type="number" name="hocPhiNiemYet" id="hocPhiNiemYetInput"
-                                        value="{{ old('hocPhiNiemYet') }}" min="0" step="1000"
-                                        oninput="previewPricing()" class="form-control">
+                                    <div class="kf-input-with-prefix">
+                                        <span class="kf-input-prefix">₫</span>
+                                        <input type="number" name="hocPhiNiemYet" id="hocPhiNiemYetInput"
+                                            value="{{ old('hocPhiNiemYet') }}" min="0" step="1000"
+                                            oninput="previewPricing()" class="form-control"
+                                            placeholder="Ví dụ: 5.000.000">
+                                    </div>
+                                    <span class="form-hint">Đây là mức học phí niêm yết dùng để xác định quyền học của học viên.</span>
                                 </div>
                                 <div class="kf-form-group">
                                     <label>Số buổi cam kết</label>
@@ -289,40 +296,43 @@
                                 </div>
                                 <div class="kf-form-group">
                                     <label>Cách thu học phí</label>
-                                    <select name="loaiThu" id="loaiThuInput" onchange="previewPricing()"
-                                        class="form-select">
+                                    <div class="kf-segmented" data-input-id="loaiThuInput">
                                         @foreach ($loaiThuOptions as $value => $label)
-                                            <option value="{{ $value }}"
-                                                {{ (string) old('loaiThu', 0) === (string) $value ? 'selected' : '' }}>
-                                                {{ $label }}
-                                            </option>
+                                            @php
+                                                $isActive = (string) old('loaiThu', 0) === (string) $value;
+                                            @endphp
+                                            <div class="kf-segment-item {{ $isActive ? 'active' : '' }}" data-value="{{ $value }}">
+                                                <i class="fas {{ $value == 0 ? 'fa-wallet' : 'fa-calendar-alt' }}"></i> {{ $label }}
+                                            </div>
                                         @endforeach
-                                    </select>
+                                    </div>
+                                    <input type="hidden" name="loaiThu" id="loaiThuInput" value="{{ old('loaiThu', 0) }}">
                                 </div>
                                 <div class="kf-form-group">
                                     <label>Trạng thái chính sách giá</label>
-                                    <select name="trangThaiChinhSachGia" class="form-select">
-                                        <option value="1"
-                                            {{ old('trangThaiChinhSachGia', '1') === '1' ? 'selected' : '' }}>Đang áp dụng
-                                        </option>
-                                        <option value="0"
-                                            {{ old('trangThaiChinhSachGia') === '0' ? 'selected' : '' }}>Tạm ngưng</option>
-                                    </select>
+                                    <div class="kf-segmented" data-input-id="trangThaiChinhSachGiaInput">
+                                        @php
+                                            $currPolicy = (string) old('trangThaiChinhSachGia', '1');
+                                        @endphp
+                                        <div class="kf-segment-item {{ $currPolicy === '1' ? 'active' : '' }}" data-value="1">
+                                            <i class="fas fa-check-circle"></i> Đang áp dụng
+                                        </div>
+                                        <div class="kf-segment-item {{ $currPolicy === '0' ? 'active' : '' }}" data-value="0">
+                                            <i class="fas fa-pause-circle"></i> Tạm ngưng
+                                        </div>
+                                    </div>
+                                    <input type="hidden" name="trangThaiChinhSachGia" id="trangThaiChinhSachGiaInput" value="{{ $currPolicy }}">
+                                    <span class="form-hint">"Tạm ngưng" sẽ giữ nguyên dữ liệu nhưng không sinh công nợ mới.</span>
                                 </div>
                             </div>
 
-                            <div class="pricing-inline-grid">
-                                <div class="kf-form-group" id="mainDueGroup">
+                            <div class="pricing-one-col" id="mainDueGroup">
+                                <div class="kf-form-group">
                                     <label>Hạn thanh toán học phí</label>
                                     <input type="date" name="hanThanhToanHocPhi" id="hanThanhToanHocPhiInput"
                                         value="{{ old('hanThanhToanHocPhi') }}" oninput="previewPricing()"
                                         class="form-control">
-                                    <span class="form-hint">Dùng khi thu học phí một lần.</span>
-                                </div>
-                                <div class="kf-form-group pricing-note-field">
-                                    <label>Ghi chú chính sách</label>
-                                    <textarea name="ghiChuChinhSach" rows="3" placeholder="Ví dụ: học phí chưa bao gồm tài liệu hoặc phí thi thử."
-                                        class="form-control">{{ old('ghiChuChinhSach') }}</textarea>
+                                    <span class="form-hint">Chỉ dùng khi chọn "Thu một lần". Hạn này sẽ áp dụng cho toàn bộ học phí chính.</span>
                                 </div>
                             </div>
 
@@ -509,8 +519,7 @@
                                         </div>
                                     </div>
                                 @empty
-                                    <div class="form-hint phu-phi-empty" id="phuPhiEmptyHint">Chưa có khoản bổ sung nào.
-                                    </div>
+                                    <div class="form-hint phu-phi-empty" id="phuPhiEmptyHint">Chưa có khoản bổ sung nào.</div>
                                 @endforelse
                             </div>
                         </div>
@@ -518,24 +527,18 @@
                 </div>
             </div>
 
-            <div class="pricing-secondary-grid">
-                <div class="kf-card">
-                    <div class="kf-card-title"><i class="fas fa-users"></i> Vận hành lớp</div>
-
-                    <div class="kf-form-row">
-                        <div class="kf-form-group">
-                            <label>Sĩ số học viên tối đa</label>
-                            <input type="number" name="soHocVienToiDa" value="{{ old('soHocVienToiDa') }}"
-                                placeholder="VD: 20" min="1">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="kf-card">
-                    <div class="kf-card-title"><i class="fas fa-sliders-h"></i> Trạng thái lớp</div>
+            <div class="kf-card">
+                <div class="kf-card-title"><i class="fas fa-cog"></i> Cài đặt vận hành & Hiển thị</div>
+                <div class="kf-form-row">
                     <div class="kf-form-group">
-                        <label>Trạng thái <span class="req">*</span></label>
-                        <select name="trangThai">
+                        <label>Sĩ số học viên tối đa</label>
+                        <input type="number" name="soHocVienToiDa" value="{{ old('soHocVienToiDa') }}"
+                            placeholder="VD: 20" min="1" class="form-control">
+                        <span class="form-hint">Số lượng học viên tối đa cho phép. Không vượt quá sức chứa phòng học.</span>
+                    </div>
+                    <div class="kf-form-group">
+                        <label>Trạng thái lớp <span class="req">*</span></label>
+                        <select name="trangThai" class="form-select">
                             @php
                                 $selectedTrangThai = (string) old(
                                     'trangThai',
@@ -543,13 +546,19 @@
                                 );
                             @endphp
                             @foreach (\App\Models\Education\LopHoc::trangThaiOptions() as $value => $label)
-                                <option value="{{ $value }}"
-                                    {{ $selectedTrangThai === (string) $value ? 'selected' : '' }}>
+                                <option value="{{ $value }}" {{ $selectedTrangThai === (string) $value ? 'selected' : '' }}>
                                     {{ $label }}
                                 </option>
                             @endforeach
                         </select>
+                        <span class="form-hint">Xác định lớp đang mở đăng ký, đang học hay đã kết thúc.</span>
                     </div>
+                </div>
+                <div class="kf-form-group mt-3">
+                    <label>Ghi chú chính sách hiển thị</label>
+                    <textarea name="ghiChuChinhSach" rows="3" placeholder="Ví dụ: Học phí chưa bao gồm giáo trình quốc tế..."
+                        class="form-control">{{ old('ghiChuChinhSach') }}</textarea>
+                    <span class="form-hint">Thông tin này sẽ hiển thị công khai cho học viên và phụ huynh.</span>
                 </div>
             </div>
         </div>
@@ -577,6 +586,32 @@
                 document.querySelectorAll('.kf-tab-panel').forEach(p => p.classList.remove('active'));
                 btn.classList.add('active');
                 document.getElementById(btn.dataset.tab).classList.add('active');
+            });
+        });
+
+        // Toggle Segmented Control
+        document.querySelectorAll('.kf-segmented .kf-segment-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const container = this.closest('.kf-segmented');
+                const inputId = container.dataset.inputId;
+                const input = document.getElementById(inputId);
+                const value = this.dataset.value;
+
+                // Update UI
+                container.querySelectorAll('.kf-segment-item').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+
+                // Update Input & Trigger Preview
+                if (input) {
+                    input.value = value;
+                    // Trigger native events for consistency
+                    input.dispatchEvent(new Event('change', { bubbles: true }));
+                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+
+                if (typeof previewPricing === 'function') {
+                    previewPricing();
+                }
             });
         });
 
