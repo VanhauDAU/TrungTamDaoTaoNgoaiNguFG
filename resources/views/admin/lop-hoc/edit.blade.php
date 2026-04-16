@@ -318,9 +318,12 @@
                             <div class="pricing-field-grid">
                                 <div class="kf-form-group">
                                     <label>Học phí niêm yết (VNĐ)</label>
-                                    <input type="number" name="hocPhiNiemYet" id="hocPhiNiemYetInput"
-                                        value="{{ old('hocPhiNiemYet', $existingPolicy?->hocPhiNiemYet) }}" min="0" step="1000" oninput="previewPricing()"
-                                        class="form-control">
+                                    <input type="hidden" name="hocPhiNiemYet" id="hocPhiNiemYetInput"
+                                        value="{{ old('hocPhiNiemYet', $existingPolicy?->hocPhiNiemYet) }}">
+                                    <input type="text" id="hocPhiNiemYetDisplay" inputmode="numeric"
+                                        placeholder="VD: 5,000,000"
+                                        class="form-control"
+                                        oninput="syncHocPhiFromDisplay(this)">
                                 </div>
                                 <div class="kf-form-group">
                                     <label>Cách thu học phí</label>
@@ -401,9 +404,13 @@
                                             </div>
                                             <div class="dot-thu-field">
                                                 <label>Số tiền</label>
-                                                <input type="number" name="dotThu[{{ $index }}][soTien]"
-                                                    value="{{ $dotThu['soTien'] ?? '' }}" min="0" step="1000"
-                                                    oninput="previewPricing()" class="form-control">
+                                                <input type="hidden" name="dotThu[{{ $index }}][soTien]"
+                                                    value="{{ $dotThu['soTien'] ?? '' }}" class="dot-thu-amount-hidden">
+                                                <input type="text" inputmode="numeric"
+                                                    value="{{ isset($dotThu['soTien']) && $dotThu['soTien'] !== '' ? number_format((int)$dotThu['soTien'], 0, '', ',') : '' }}"
+                                                    class="form-control dot-thu-amount-display"
+                                                    placeholder="VD: 2,000,000"
+                                                    oninput="syncDotThuAmount(this)">
                                             </div>
                                             <div class="dot-thu-field">
                                                 <label>Hạn thanh toán</label>
@@ -669,9 +676,12 @@
             if (tinhSel && tinhSel.value) {
                 loadPhuongXa(tinhSel.value);
             }
+            initHocPhiDisplay();
             previewPricing();
             updateLichHoc();
             updateSucChuaHint();
+            validateDateRange();
+            updatePhongHocAvailability();
             triggerConflictPreview();
         });
 
@@ -725,8 +735,66 @@
             preferredPhong = ps.value || '';
             preferredGV = gs.value || '';
 
+            updatePhongHocAvailability();
             updateSucChuaHint();
             triggerConflictPreview();
+        }
+
+        function updatePhongHocAvailability() {
+            const phongSel = document.getElementById('phongHocSel');
+            const ngayBD = document.getElementById('ngayBatDauInput')?.value || '';
+            const ngayKT = document.getElementById('ngayKetThucInput')?.value || '';
+            const coSoId = document.getElementById('coSoSel')?.value || '';
+
+            if (!coSoId) {
+                phongSel.disabled = true;
+                return;
+            }
+
+            if (!ngayBD || !ngayKT) {
+                phongSel.disabled = true;
+                phongSel.title = 'Vui lòng chọn đầy đủ ngày bắt đầu và ngày kết thúc trước';
+                return;
+            }
+
+            phongSel.disabled = false;
+            phongSel.title = '';
+        }
+
+        function formatThousands(value) {
+            const num = String(value).replace(/[^\d]/g, '');
+            return num.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        }
+
+        function syncHocPhiFromDisplay(displayInput) {
+            const raw = String(displayInput.value).replace(/[^\d]/g, '');
+            document.getElementById('hocPhiNiemYetInput').value = raw;
+            const pos = displayInput.selectionStart;
+            const oldLen = displayInput.value.length;
+            displayInput.value = formatThousands(raw);
+            const newLen = displayInput.value.length;
+            displayInput.setSelectionRange(pos + (newLen - oldLen), pos + (newLen - oldLen));
+            previewPricing();
+        }
+
+        function syncDotThuAmount(displayInput) {
+            const raw = String(displayInput.value).replace(/[^\d]/g, '');
+            const hidden = displayInput.parentElement.querySelector('.dot-thu-amount-hidden');
+            if (hidden) hidden.value = raw;
+            const pos = displayInput.selectionStart;
+            const oldLen = displayInput.value.length;
+            displayInput.value = formatThousands(raw);
+            const newLen = displayInput.value.length;
+            displayInput.setSelectionRange(pos + (newLen - oldLen), pos + (newLen - oldLen));
+            previewPricing();
+        }
+
+        function initHocPhiDisplay() {
+            const hidden = document.getElementById('hocPhiNiemYetInput');
+            const display = document.getElementById('hocPhiNiemYetDisplay');
+            if (hidden && display && hidden.value) {
+                display.value = formatThousands(hidden.value);
+            }
         }
 
         function setConflictSummary(status, message) {
@@ -853,10 +921,12 @@
         document.querySelector('[name="caHocId"]')?.addEventListener('change', triggerConflictPreview);
         document.querySelector('[name="ngayBatDau"]')?.addEventListener('change', function() {
             validateDateRange();
+            updatePhongHocAvailability();
             triggerConflictPreview();
         });
         document.querySelector('[name="ngayKetThuc"]')?.addEventListener('change', function() {
             validateDateRange();
+            updatePhongHocAvailability();
             triggerConflictPreview();
         });
 
@@ -891,7 +961,7 @@
         }
 
         function parseMoneyInputValue(value) {
-            const normalized = String(value || '').trim().replace(',', '.');
+            const normalized = String(value || '').trim().replace(/,/g, '').replace('.', '.');
             const parsed = Number.parseFloat(normalized);
             return Number.isFinite(parsed) ? parsed : 0;
         }
@@ -999,9 +1069,15 @@
 
                 if (amountInput) {
                     amountInput.setCustomValidity('');
-                    if (isTheoDot && parseMoneyInputValue(amountInput.value) <= 0) {
+                    const amountVal = parseMoneyInputValue(amountInput.value);
+                    if (isTheoDot && amountVal <= 0) {
                         amountInput.setCustomValidity('Số tiền đợt thu phải lớn hơn 0.');
+                        const displayInput = row.querySelector('.dot-thu-amount-display');
+                        if (displayInput) displayInput.classList.add('is-invalid');
                         hasError = true;
+                    } else {
+                        const displayInput = row.querySelector('.dot-thu-amount-display');
+                        if (displayInput) displayInput.classList.remove('is-invalid');
                     }
                 }
 
@@ -1224,7 +1300,8 @@
                 </div>
                 <div class="dot-thu-field">
                     <label>Số tiền</label>
-                    <input type="number" name="dotThu[${dotThuIndex}][soTien]" min="0" step="1000" oninput="previewPricing()" class="form-control">
+                    <input type="hidden" name="dotThu[${dotThuIndex}][soTien]" class="dot-thu-amount-hidden">
+                    <input type="text" inputmode="numeric" class="form-control dot-thu-amount-display" placeholder="VD: 2,000,000" oninput="syncDotThuAmount(this)">
                 </div>
                 <div class="dot-thu-field">
                     <label>Hạn thanh toán</label>
