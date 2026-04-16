@@ -642,6 +642,14 @@
                     // Trigger native events for consistency
                     input.dispatchEvent(new Event('change', { bubbles: true }));
                     input.dispatchEvent(new Event('input', { bubbles: true }));
+
+                    // Auto-add first row for "Chia đợt" if empty
+                    if (value == LOAI_THU_THEO_DOT) {
+                        const rows = document.querySelectorAll('.dot-thu-row');
+                        if (rows.length === 0 && typeof addDotThuRow === 'function') {
+                            addDotThuRow();
+                        }
+                    }
                 }
 
                 if (typeof previewPricing === 'function') {
