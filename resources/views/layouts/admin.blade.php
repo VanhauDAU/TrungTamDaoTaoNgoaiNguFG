@@ -39,18 +39,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', $portalMeta['label']) — {{ config('app.name', 'Five Genius') }}</title>
+    <script>
+        (function() {
+            try {
+                if (localStorage.getItem('internal-sidebar-collapsed') === '1') {
+                    document.documentElement.classList.add('sidebar-collapsed');
+                }
+            } catch (e) {}
+            document.documentElement.classList.add('sidebar-booting');
+        })();
+    </script>
 
     <style>
         /* Critical shell styles to avoid first-paint white flash before layout.css loads. */
         html {
             min-height: 100%;
-            background: #0f1923;
+            background: #08111b;
         }
 
         body {
             min-height: 100vh;
             margin: 0;
-            background: #f0f4f8;
+            background:
+                radial-gradient(circle at top left, rgba(39, 196, 181, 0.12), transparent 28%),
+                linear-gradient(180deg, #edf3f8 0%, #eef4f8 48%, #e7eef5 100%);
             color: #1a2b3c;
         }
 
@@ -58,24 +70,33 @@
             position: fixed;
             top: 0;
             left: 0;
-            width: 260px;
+            width: 288px;
             min-height: 100vh;
-            background: #0f1923;
+            background: linear-gradient(180deg, #07131e 0%, #0c1722 52%, #111d2a 100%);
         }
 
         .main-wrapper {
             min-height: 100vh;
-            margin-left: 260px;
-            background: #f0f4f8;
+            margin-left: 288px;
+            background: transparent;
+        }
+
+        html.sidebar-collapsed .sidebar {
+            width: 96px;
+        }
+
+        html.sidebar-collapsed .main-wrapper {
+            margin-left: 96px;
         }
 
         @media (max-width: 991.98px) {
             html {
-                background: #f0f4f8;
+                background: #eaf0f5;
             }
 
             .sidebar {
                 transform: translateX(-100%);
+                width: min(88vw, 320px);
             }
 
             .main-wrapper {
@@ -348,7 +369,7 @@
     @yield('stylesheet')
 </head>
 
-<body>
+<body data-internal-portal="{{ $internalPortal }}">
     {{-- Global Admin Page Loader --}}
     <div id="admin-global-loader" class="admin-global-loader">
         <div class="loader-content">
@@ -359,6 +380,7 @@
 
     {{-- ──────────────────────── SIDEBAR ──────────────────────── --}}
     @include($portalMeta['sidebar'])
+    <button class="sidebar-overlay" id="sidebarOverlay" type="button" aria-label="Đóng menu"></button>
 
     {{-- ──────────────────────── MAIN ──────────────────────── --}}
     <div class="main-wrapper">
@@ -366,6 +388,9 @@
         <header class="topbar">
             <button class="topbar-icon d-lg-none" id="sidebarToggle">
                 <i class="fas fa-bars"></i>
+            </button>
+            <button class="topbar-icon d-none d-lg-inline-flex" id="sidebarDesktopToggle" type="button" title="Thu gọn sidebar">
+                <i class="fas fa-bars-staggered"></i>
             </button>
             <div>
                 <div class="topbar-title">@yield('page-title', 'Dashboard ' . $portalMeta['label'])</div>
@@ -460,8 +485,30 @@
         // Toggle sidebar trên mobile
         const sidebarToggle = document.getElementById('sidebarToggle');
         const sidebar = document.getElementById('sidebar');
-        if (sidebarToggle) {
-            sidebarToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        const sidebarDesktopToggle = document.getElementById('sidebarDesktopToggle');
+        const rootElement = document.documentElement;
+        if (sidebarToggle && sidebar) {
+            sidebarToggle.addEventListener('click', () => {
+                sidebar.classList.toggle('open');
+                sidebarOverlay?.classList.toggle('open', sidebar.classList.contains('open'));
+            });
+        }
+
+        if (sidebarOverlay && sidebar) {
+            sidebarOverlay.addEventListener('click', () => {
+                sidebar.classList.remove('open');
+                sidebarOverlay.classList.remove('open');
+            });
+        }
+
+        if (sidebarDesktopToggle) {
+            sidebarDesktopToggle.addEventListener('click', () => {
+                rootElement.classList.toggle('sidebar-collapsed');
+                try {
+                    localStorage.setItem('internal-sidebar-collapsed', rootElement.classList.contains('sidebar-collapsed') ? '1' : '0');
+                } catch (e) {}
+            });
         }
 
         // Xử lý Tree-view Sidebar
@@ -469,27 +516,29 @@
             header.addEventListener('click', () => {
                 const group = header.parentElement;
                 const isOpen = group.classList.contains('open');
+                const isDesktopCollapsed = window.matchMedia('(min-width: 1025px)').matches && rootElement.classList.contains('sidebar-collapsed');
+
+                if (isDesktopCollapsed) {
+                    rootElement.classList.remove('sidebar-collapsed');
+                    try {
+                        localStorage.setItem('internal-sidebar-collapsed', '0');
+                    } catch (e) {}
+                }
 
                 // Accordion: chỉ mở 1 nhóm để tránh sidebar quá dài
                 document.querySelectorAll('.nav-group').forEach(g => {
                     if (g !== group) g.classList.remove('open');
+                    g.querySelector('.nav-group-header')?.setAttribute('aria-expanded', 'false');
                 });
 
                 if (!isOpen) {
                     group.classList.add('open');
+                    header.setAttribute('aria-expanded', 'true');
                 } else {
                     group.classList.remove('open');
+                    header.setAttribute('aria-expanded', 'false');
                 }
             });
-        });
-
-        // Tự động mở group chứa link active
-        document.addEventListener('DOMContentLoaded', () => {
-            const activeLink = document.querySelector('.nav-sub-item.active');
-            if (activeLink) {
-                const group = activeLink.closest('.nav-group');
-                if (group) group.classList.add('open');
-            }
         });
 
         // Toggle nhóm con "Nghiệp vụ nâng cao" trong menu đào tạo
@@ -550,13 +599,17 @@
         });
 
         // Ẩn loader khi trang load xong
-        window.addEventListener('load', hideLoader);
+        window.addEventListener('load', () => {
+            hideLoader();
+            rootElement.classList.remove('sidebar-booting');
+        });
 
         // Đề phòng user back lại bằng browser thì tắt loader (safari bfcache)
         window.addEventListener('pageshow', function (event) {
             if (event.persisted) {
                 hideLoader();
             }
+            rootElement.classList.remove('sidebar-booting');
         });
 
         // ── BELL DROPDOWN ──────────────────────────────────────────

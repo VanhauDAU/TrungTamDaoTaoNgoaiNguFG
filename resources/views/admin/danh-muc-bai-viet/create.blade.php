@@ -1,5 +1,9 @@
 @extends('layouts.admin')
 
+@php
+    $portalRouteBase = request()->routeIs('staff.*') ? 'staff' : 'admin';
+@endphp
+
 @section('title', 'Thêm danh mục bài viết')
 @section('page-title', 'Danh Mục Bài Viết')
 @section('breadcrumb', 'Nội dung · Danh mục · Thêm mới')
@@ -14,7 +18,7 @@
     <div class="dm-page-header">
         <div>
             <div class="dm-breadcrumb">
-                <a href="{{ route('admin.danh-muc-bai-viet.index') }}"><i class="fas fa-folder-open me-1"></i> Danh mục bài
+                <a href="{{ route($portalRouteBase . '.danh-muc-bai-viet.index') }}"><i class="fas fa-folder-open me-1"></i> Danh mục bài
                     viết</a>
                 <span style="margin:0 6px;color:#cbd5e1">/</span> Thêm mới
             </div>
@@ -23,7 +27,7 @@
                 Thêm danh mục mới
             </div>
         </div>
-        <a href="{{ route('admin.danh-muc-bai-viet.index') }}" class="dm-btn dm-btn-secondary">
+        <a href="{{ route($portalRouteBase . '.danh-muc-bai-viet.index') }}" class="dm-btn dm-btn-secondary">
             <i class="fas fa-arrow-left"></i> Quay lại
         </a>
     </div>
@@ -43,7 +47,7 @@
         </div>
     @endif
 
-    <form action="{{ route('admin.danh-muc-bai-viet.store') }}" method="POST">
+    <form action="{{ route($portalRouteBase . '.danh-muc-bai-viet.store') }}" method="POST">
         @csrf
 
         <div class="dm-card">
@@ -84,7 +88,7 @@
         </div>
 
         <div class="dm-action-bar">
-            <a href="{{ route('admin.danh-muc-bai-viet.index') }}" class="dm-btn dm-btn-secondary">
+            <a href="{{ route($portalRouteBase . '.danh-muc-bai-viet.index') }}" class="dm-btn dm-btn-secondary">
                 <i class="fas fa-times"></i> Hủy
             </a>
             <button type="submit" class="dm-btn dm-btn-primary">

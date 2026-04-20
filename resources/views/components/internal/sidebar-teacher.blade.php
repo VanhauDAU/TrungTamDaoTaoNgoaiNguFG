@@ -1,42 +1,33 @@
-<aside class="sidebar" id="sidebar">
-    <a href="{{ route('teacher.dashboard') }}" class="sidebar-brand">
-        <img src="{{ asset('assets/images/logo.png') }}" alt="Logo">
-        <span>Five Genius</span>
-    </a>
+@php
+    $sections = [
+        [
+            'title' => 'Không gian giảng dạy',
+            'groups' => [
+                [
+                    'label' => 'Công việc hằng ngày',
+                    'hint' => 'Lớp học và tương tác',
+                    'icon' => 'fas fa-chalkboard-teacher',
+                    'active' => ['teacher.dashboard', 'teacher.profile', 'teacher.classes.*', 'teacher.schedule.*', 'teacher.notifications.*', 'teacher.materials.*', 'teacher.evaluations.*', 'teacher.attendance.*'],
+                    'open' => true,
+                    'items' => [
+                        ['label' => 'Dashboard', 'hint' => 'Tổng quan dạy học', 'icon' => 'fas fa-compass', 'route' => 'teacher.dashboard', 'active' => ['teacher.dashboard']],
+                        ['label' => 'Hồ sơ', 'hint' => 'Thông tin cá nhân', 'icon' => 'fas fa-id-card', 'route' => 'teacher.profile', 'active' => ['teacher.profile']],
+                        ['label' => 'Lớp học của tôi', 'hint' => 'Danh sách lớp phụ trách', 'icon' => 'fas fa-people-roof', 'route' => 'teacher.classes.index', 'active' => ['teacher.classes.*']],
+                        ['label' => 'Lịch dạy', 'hint' => 'Ca dạy sắp tới', 'icon' => 'fas fa-calendar-days', 'route' => 'teacher.schedule.index', 'active' => ['teacher.schedule.*']],
+                        ['label' => 'Thông báo', 'hint' => 'Tin nhắn và thông tin', 'icon' => 'fas fa-bell', 'route' => 'teacher.notifications.index', 'active' => ['teacher.notifications.*']],
+                        ['label' => 'Tài liệu', 'hint' => 'Học liệu lớp học', 'icon' => 'fas fa-folder-open', 'route' => 'teacher.materials.index', 'active' => ['teacher.materials.*']],
+                        ['label' => 'Nhận xét', 'hint' => 'Đánh giá học viên', 'icon' => 'fas fa-comment-dots', 'route' => 'teacher.evaluations.index', 'active' => ['teacher.evaluations.*']],
+                        ['label' => 'Điểm danh', 'hint' => 'Theo buổi học', 'icon' => 'fas fa-user-check', 'route' => 'teacher.attendance.index', 'active' => ['teacher.attendance.*']],
+                    ],
+                ],
+            ],
+        ],
+    ];
+@endphp
 
-    <nav class="sidebar-nav">
-        <div class="sidebar-section">Teacher Portal</div>
-        <div class="nav-group open">
-            <div class="nav-group-header">
-                <i class="fas fa-chalkboard-teacher"></i> <span>Không gian giảng dạy</span>
-                <i class="fas fa-chevron-right"></i>
-            </div>
-            <div class="nav-sub">
-                <a href="{{ route('teacher.dashboard') }}" class="nav-sub-item {{ request()->routeIs('teacher.dashboard') ? 'active' : '' }}">Dashboard</a>
-                <a href="{{ route('teacher.profile') }}" class="nav-sub-item {{ request()->routeIs('teacher.profile') ? 'active' : '' }}">Hồ sơ</a>
-                <a href="{{ route('teacher.classes.index') }}" class="nav-sub-item {{ request()->routeIs('teacher.classes.*') ? 'active' : '' }}">Lớp học của tôi</a>
-                <a href="{{ route('teacher.schedule.index') }}" class="nav-sub-item {{ request()->routeIs('teacher.schedule.*') ? 'active' : '' }}">Lịch dạy</a>
-                <a href="{{ route('teacher.notifications.index') }}" class="nav-sub-item {{ request()->routeIs('teacher.notifications.*') ? 'active' : '' }}">Thông báo</a>
-                <a href="{{ route('teacher.materials.index') }}" class="nav-sub-item {{ request()->routeIs('teacher.materials.*') ? 'active' : '' }}">Tài liệu</a>
-                <a href="{{ route('teacher.evaluations.index') }}" class="nav-sub-item {{ request()->routeIs('teacher.evaluations.*') ? 'active' : '' }}">Nhận xét</a>
-                <a href="{{ route('teacher.attendance.index') }}" class="nav-sub-item {{ request()->routeIs('teacher.attendance.*') ? 'active' : '' }}">Điểm danh</a>
-            </div>
-        </div>
-    </nav>
-
-    <div class="sidebar-footer">
-        <div class="user-card">
-            <div class="user-avatar">{{ strtoupper(substr(auth()->user()->taiKhoan, 0, 1)) }}</div>
-            <div class="user-info">
-                <div class="user-name">{{ auth()->user()->hoSoNguoiDung?->hoTen ?? auth()->user()->taiKhoan }}</div>
-                <div class="user-role">{{ auth()->user()->getRoleLabel() }}</div>
-            </div>
-            <form id="internal-logout-form" action="{{ route('logout') }}" method="POST">
-                @csrf
-                <button type="button" class="btn-logout" id="btn-logout-internal" title="Đăng xuất">
-                    <i class="fas fa-sign-out-alt"></i>
-                </button>
-            </form>
-        </div>
-    </div>
-</aside>
+<x-internal.sidebar-shell
+    portal-label="Teacher Portal"
+    portal-short-label="TC"
+    portal-home-route="teacher.dashboard"
+    portal-accent="teacher"
+    :sections="$sections" />

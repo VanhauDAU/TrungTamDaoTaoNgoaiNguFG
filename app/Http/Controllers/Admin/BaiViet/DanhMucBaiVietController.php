@@ -74,7 +74,7 @@ class DanhMucBaiVietController extends Controller
 
         DanhMucBaiViet::create($data);
 
-        return redirect()->route('admin.danh-muc-bai-viet.index')
+        return redirect()->route($this->portalRouteBase() . '.danh-muc-bai-viet.index')
             ->with('success', 'Đã thêm danh mục «' . $request->tenDanhMuc . '» thành công.');
     }
 
@@ -106,7 +106,7 @@ class DanhMucBaiVietController extends Controller
 
         $danhMuc->update($data);
 
-        return redirect()->route('admin.danh-muc-bai-viet.index')
+        return redirect()->route($this->portalRouteBase() . '.danh-muc-bai-viet.index')
             ->with('success', 'Đã cập nhật danh mục «' . $danhMuc->tenDanhMuc . '» thành công.');
     }
 
@@ -118,7 +118,7 @@ class DanhMucBaiVietController extends Controller
 
             if ($danhMuc->bai_viets_count > 0) {
                 return redirect()
-                    ->route('admin.danh-muc-bai-viet.index')
+                    ->route($this->portalRouteBase() . '.danh-muc-bai-viet.index')
                     ->with('error', "Không thể xóa «{$danhMuc->tenDanhMuc}» — còn {$danhMuc->bai_viets_count} bài viết thuộc danh mục này.");
             }
 
@@ -126,14 +126,19 @@ class DanhMucBaiVietController extends Controller
             $danhMuc->delete();
 
             return redirect()
-                ->route('admin.danh-muc-bai-viet.index')
+                ->route($this->portalRouteBase() . '.danh-muc-bai-viet.index')
                 ->with('success', "Đã xóa danh mục «{$ten}» thành công.");
 
         } catch (\Exception $e) {
             return redirect()
-                ->route('admin.danh-muc-bai-viet.index')
+                ->route($this->portalRouteBase() . '.danh-muc-bai-viet.index')
                 ->with('error', 'Đã xảy ra lỗi: ' . $e->getMessage());
         }
+    }
+
+    private function portalRouteBase(): string
+    {
+        return request()->routeIs('staff.*') ? 'staff' : 'admin';
     }
 
     /** Tạo slug duy nhất */

@@ -1,40 +1,32 @@
-<aside class="sidebar" id="sidebar">
-    <a href="{{ route('staff.dashboard') }}" class="sidebar-brand">
-        <img src="{{ asset('assets/images/logo.png') }}" alt="Logo">
-        <span>Five Genius</span>
-    </a>
+@php
+    $sections = [
+        [
+            'title' => 'Vận hành đào tạo',
+            'groups' => [
+                [
+                    'label' => 'Nghiệp vụ chính',
+                    'hint' => 'Học viên, lớp học, học phí, nội dung',
+                    'icon' => 'fas fa-briefcase',
+                    'active' => ['staff.dashboard', 'staff.hoc-vien.*', 'staff.dang-ky.*', 'staff.lop-hoc.*', 'staff.buoi-hoc.*', 'staff.hoa-don.*', 'staff.bai-viet.*', 'staff.danh-muc-bai-viet.*', 'staff.notifications.*'],
+                    'open' => true,
+                    'items' => [
+                        ['label' => 'Dashboard', 'hint' => 'Hiệu suất vận hành', 'icon' => 'fas fa-chart-pie', 'route' => 'staff.dashboard', 'active' => ['staff.dashboard']],
+                        ['label' => 'Học viên', 'hint' => 'Hồ sơ và quản lý', 'icon' => 'fas fa-user-graduate', 'route' => 'staff.hoc-vien.index', 'active' => ['staff.hoc-vien.*']],
+                        ['label' => 'Đăng ký học', 'hint' => 'Ghi danh và điều chuyển', 'icon' => 'fas fa-file-circle-plus', 'route' => 'staff.dang-ky.index', 'active' => ['staff.dang-ky.*']],
+                        ['label' => 'Lớp học', 'hint' => 'Mở lớp và xếp lịch', 'icon' => 'fas fa-chalkboard', 'route' => 'staff.lop-hoc.index', 'active' => ['staff.lop-hoc.*', 'staff.buoi-hoc.*']],
+                        ['label' => 'Hóa đơn & phiếu thu', 'hint' => 'Theo dõi thanh toán', 'icon' => 'fas fa-receipt', 'route' => 'staff.hoa-don.index', 'active' => ['staff.hoa-don.*']],
+                        ['label' => 'Bài viết', 'hint' => 'Tin tức và landing', 'icon' => 'fas fa-newspaper', 'route' => 'staff.bai-viet.index', 'active' => ['staff.bai-viet.*', 'staff.danh-muc-bai-viet.*']],
+                        ['label' => 'Thông báo', 'hint' => 'Trao đổi nội bộ', 'icon' => 'fas fa-bell', 'route' => 'staff.notifications.index', 'active' => ['staff.notifications.*']],
+                    ],
+                ],
+            ],
+        ],
+    ];
+@endphp
 
-    <nav class="sidebar-nav">
-        <div class="sidebar-section">Staff Portal</div>
-        <div class="nav-group open">
-            <div class="nav-group-header">
-                <i class="fas fa-briefcase"></i> <span>Vận hành đào tạo</span>
-                <i class="fas fa-chevron-right"></i>
-            </div>
-            <div class="nav-sub">
-                <a href="{{ route('staff.dashboard') }}" class="nav-sub-item {{ request()->routeIs('staff.dashboard') ? 'active' : '' }}">Dashboard</a>
-                <a href="{{ route('staff.hoc-vien.index') }}" class="nav-sub-item {{ request()->routeIs('staff.hoc-vien.*') ? 'active' : '' }}">Học viên</a>
-                <a href="{{ route('staff.dang-ky.index') }}" class="nav-sub-item {{ request()->routeIs('staff.dang-ky.*') ? 'active' : '' }}">Đăng ký học</a>
-                <a href="{{ route('staff.lop-hoc.index') }}" class="nav-sub-item {{ request()->routeIs('staff.lop-hoc.*', 'staff.buoi-hoc.*') ? 'active' : '' }}">Lớp học</a>
-                <a href="{{ route('staff.hoa-don.index') }}" class="nav-sub-item {{ request()->routeIs('staff.hoa-don.*') ? 'active' : '' }}">Hóa đơn & phiếu thu</a>
-                <a href="{{ route('staff.notifications.index') }}" class="nav-sub-item {{ request()->routeIs('staff.notifications.*') ? 'active' : '' }}">Thông báo</a>
-            </div>
-        </div>
-    </nav>
-
-    <div class="sidebar-footer">
-        <div class="user-card">
-            <div class="user-avatar">{{ strtoupper(substr(auth()->user()->taiKhoan, 0, 1)) }}</div>
-            <div class="user-info">
-                <div class="user-name">{{ auth()->user()->hoSoNguoiDung?->hoTen ?? auth()->user()->taiKhoan }}</div>
-                <div class="user-role">{{ auth()->user()->getRoleLabel() }}</div>
-            </div>
-            <form id="internal-logout-form" action="{{ route('logout') }}" method="POST">
-                @csrf
-                <button type="button" class="btn-logout" id="btn-logout-internal" title="Đăng xuất">
-                    <i class="fas fa-sign-out-alt"></i>
-                </button>
-            </form>
-        </div>
-    </div>
-</aside>
+<x-internal.sidebar-shell
+    portal-label="Staff Portal"
+    portal-short-label="ST"
+    portal-home-route="staff.dashboard"
+    portal-accent="staff"
+    :sections="$sections" />
