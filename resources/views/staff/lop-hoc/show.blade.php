@@ -377,7 +377,9 @@
 @endsection
 
 @section('content')
-    @php($portalRouteBase = request()->routeIs('staff.*') ? 'staff' : 'admin')
+    @php
+        $portalRouteBase = request()->routeIs('staff.*') ? 'staff' : 'admin';
+    @endphp
 
     {{-- ── Hero ──────────────────────────────────────────────── --}}
     <div class="lh-show-hero">

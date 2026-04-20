@@ -100,7 +100,9 @@
 @endsection
 
 @section('content')
-    @php($portalRouteBase = request()->routeIs('staff.*') ? 'staff' : 'admin')
+    @php
+        $portalRouteBase = request()->routeIs('staff.*') ? 'staff' : 'admin';
+    @endphp
 
     <div class="lh-trash-banner">
         <div class="lh-trash-banner-icon"><i class="fas fa-trash-can"></i></div>

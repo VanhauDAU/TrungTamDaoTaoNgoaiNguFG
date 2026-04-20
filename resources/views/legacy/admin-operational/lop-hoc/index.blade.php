@@ -126,7 +126,9 @@
 @endsection
 
 @section('content')
-    @php($portalRouteBase = request()->routeIs('staff.*') ? 'staff' : 'admin')
+    @php
+        $portalRouteBase = request()->routeIs('staff.*') ? 'staff' : 'admin';
+    @endphp
 
     {{-- ── Page header ──────────────────────────────────────────── --}}
     <div class="lh-page-header">

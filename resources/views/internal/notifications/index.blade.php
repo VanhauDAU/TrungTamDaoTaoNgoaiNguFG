@@ -26,7 +26,9 @@
                 @else
                     <div class="list-group list-group-flush">
                         @foreach ($notifications as $notification)
-                            @php($item = $notification->thongBao)
+                            @php
+                                $item = $notification->thongBao;
+                            @endphp
                             <div class="list-group-item px-0 py-3">
                                 <div class="d-flex flex-wrap justify-content-between gap-3">
                                     <div>

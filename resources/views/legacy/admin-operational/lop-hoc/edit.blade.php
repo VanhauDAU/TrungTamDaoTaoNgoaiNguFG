@@ -10,7 +10,9 @@
 @endsection
 
 @section('content')
-    @php($portalRouteBase = request()->routeIs('staff.*') ? 'staff' : 'admin')
+    @php
+        $portalRouteBase = request()->routeIs('staff.*') ? 'staff' : 'admin';
+    @endphp
     <div class="kf-page-header">
         <div>
             <div class="kf-breadcrumb">

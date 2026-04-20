@@ -8,7 +8,9 @@
             return;
         }
 
-        @php($portalRouteBase = request()->routeIs('staff.*') ? 'staff' : 'admin')
+        @php
+            $portalRouteBase = request()->routeIs('staff.*') ? 'staff' : 'admin';
+        @endphp
         const endpoint = @json(route($portalRouteBase . '.hoc-vien.lookup-citizen'));
         const csrfToken = @json(csrf_token());
         let debounceTimer = null;

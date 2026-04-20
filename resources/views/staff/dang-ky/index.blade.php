@@ -5,7 +5,9 @@
 @section('breadcrumb', 'Quản lý học viên / Đăng ký học')
 
 @section('content')
-    @php($portalRouteBase = request()->routeIs('staff.*') ? 'staff' : 'admin')
+    @php
+        $portalRouteBase = request()->routeIs('staff.*') ? 'staff' : 'admin';
+    @endphp
     <div class="container-fluid px-0">
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
             <div>

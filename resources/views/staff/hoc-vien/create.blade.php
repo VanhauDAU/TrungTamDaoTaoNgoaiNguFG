@@ -9,7 +9,9 @@
 @endsection
 
 @section('content')
-    @php($portalRouteBase = request()->routeIs('staff.*') ? 'staff' : 'admin')
+    @php
+        $portalRouteBase = request()->routeIs('staff.*') ? 'staff' : 'admin';
+    @endphp
 
     <form action="{{ route($portalRouteBase . '.hoc-vien.store') }}" method="POST" id="hv-create-form" class="needs-validation" novalidate data-joi-schema="hocVien" autocomplete="off" enctype="multipart/form-data">
         @csrf
