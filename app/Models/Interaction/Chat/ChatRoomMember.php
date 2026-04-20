@@ -23,6 +23,7 @@ class ChatRoomMember extends Model
         'lastReadMessageId',
         'lastSeenAt',
         'isMuted',
+        'hiddenAt',
         'roiAt',
     ];
 
@@ -33,6 +34,7 @@ class ChatRoomMember extends Model
         'joinedAt' => 'datetime',
         'joinedByPasswordAt' => 'datetime',
         'lastSeenAt' => 'datetime',
+        'hiddenAt' => 'datetime',
         'roiAt' => 'datetime',
         'isMuted' => 'boolean',
     ];

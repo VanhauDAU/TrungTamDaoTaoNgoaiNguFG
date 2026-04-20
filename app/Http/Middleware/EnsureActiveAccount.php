@@ -38,8 +38,8 @@ class EnsureActiveAccount
     {
         return match ((int) $user->role) {
             TaiKhoan::ROLE_GIAO_VIEN => 'teacher.login',
-            TaiKhoan::ROLE_NHAN_VIEN,
-            TaiKhoan::ROLE_ADMIN => 'staff.login',
+            TaiKhoan::ROLE_NHAN_VIEN => 'staff.login',
+            TaiKhoan::ROLE_ADMIN => 'admin.login',
             default => 'login',
         };
     }

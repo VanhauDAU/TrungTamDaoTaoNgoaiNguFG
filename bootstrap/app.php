@@ -13,6 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'isAdmin' => \App\Http\Middleware\IsAdmin::class,
+            'portal' => \App\Http\Middleware\EnsurePortalAccess::class,
             'permission' => \App\Http\Middleware\CheckPermission::class,
             'verified.student' => \App\Http\Middleware\EnsureStudentEmailIsVerified::class,
         ]);

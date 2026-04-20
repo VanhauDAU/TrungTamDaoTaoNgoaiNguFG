@@ -1,5 +1,7 @@
 # THIẾT KẾ LUỒNG XÁC THỰC NGƯỜI DÙNG
 
+> Cập nhật: 2026-04-20
+
 | Thông tin | Chi tiết |
 |---|---|
 | **Tên dự án** | Nghiên cứu Laravel xây dựng hệ thống Website Trung tâm Đào tạo Ngoại ngữ |
@@ -15,8 +17,9 @@
 |----------|--------|-------|--------------|----------|
 | `/register` | POST | Đăng ký tài khoản học viên mới | `name` (string, no digits), `email` (string, unique), `phone` (string, 10 digits), `password` (string, min:8), `password_confirmation` (string), `recaptcha_token` (string), `_token` (CSRF) | **Thành công**: Redirect `/email/verify` + session flash success. **Lỗi**: Redirect back + `$errors` (422) |
 | `/login` | POST | Đăng nhập học viên | `taiKhoan` (string — email hoặc mã tài khoản), `password` (string, min:8), `remember` (boolean), `recaptcha_token` (string), `_token` (CSRF) | **Thành công**: Redirect `/hoc-vien` + set session cookie. **Lỗi**: Redirect back + `$errors` (message + số lần thử còn lại). **Lockout**: Redirect back + countdown timer |
-| `/teacher/login` | POST | Đăng nhập giảng viên | `taiKhoan`, `password`, `remember`, `_token` | **Thành công**: Redirect `/admin/dashboard`. **Lỗi**: tương tự `/login` |
-| `/staff/login` | POST | Đăng nhập nhân viên/admin | `taiKhoan`, `password`, `remember`, `_token` | **Thành công**: Redirect `/admin/dashboard`. **Lỗi**: tương tự `/login` |
+| `/teacher/login` | POST | Đăng nhập giảng viên | `taiKhoan`, `password`, `remember`, `_token` | **Thành công**: Redirect `teacher.dashboard`. **Lỗi**: tương tự `/login` |
+| `/staff/login` | POST | Đăng nhập nhân viên | `taiKhoan`, `password`, `remember`, `_token` | **Thành công**: Redirect `staff.dashboard`. **Lỗi**: tương tự `/login` |
+| `/admin/login` | POST | Đăng nhập quản trị | `taiKhoan`, `password`, `remember`, `_token` | **Thành công**: Redirect `admin.dashboard`. **Lỗi**: tương tự `/login` |
 | `/logout` | POST | Đăng xuất | `_token` (CSRF) | Revoke device session → invalidate session → regenerate CSRF → redirect login page theo role |
 | `/hoc-vien` | GET | Lấy hồ sơ học viên | — | Render view `profile/index` (middleware: `auth`, `verified.student`) |
 | `/hoc-vien/doi-mat-khau` | POST | Đổi mật khẩu học viên | `current_password`, `new_password`, `new_password_confirmation`, `_token` | Redirect back + flash success/errors |
@@ -34,7 +37,7 @@ Dự án sử dụng **Laravel Session Authentication** (không phải JWT):
 |-----|---------|
 | **Loại xác thực** | Session-based (cookie `laravel_session`) |
 | **Session driver** | `database` (bảng `sessions` trong MySQL) |
-| **Session chứa** | ☑ `taiKhoanId` (user ID) · ☑ `auth_portal` (student/teacher/staff) · ☑ `auth_login_method` (password/google) · ☑ `auth_remembered` (boolean) |
+| **Session chứa** | ☑ `taiKhoanId` (user ID) · ☑ `auth_portal` (student/teacher/staff/admin) · ☑ `auth_login_method` (password/google) · ☑ `auth_remembered` (boolean) |
 | **Thời hạn session** | ☑ **120 phút** (2 giờ) — `SESSION_LIFETIME=120` trong `.env` |
 | **Lưu trữ phía client** | ☑ **Cookie** — `laravel_session` (encrypted, HttpOnly, SameSite=Lax) |
 | **CSRF Protection** | `_token` hidden field trong form + `X-CSRF-TOKEN` header cho AJAX |
@@ -48,9 +51,9 @@ Dự án sử dụng **Laravel Session Authentication** (không phải JWT):
 
 | Vai trò | Role ID | Quyền hạn | Trang được truy cập |
 |---------|---------|-----------|---------------------|
-| **Admin** | `3` | Toàn quyền hệ thống, bypass hoàn toàn kiểm tra phân quyền. Quản lý tài khoản, nhóm quyền, tất cả module | `/admin/*` (dashboard, học viên, giáo viên, nhân viên, khóa học, lớp học, cơ sở, tài chính, bài viết, thông báo, phân quyền, tài khoản) |
-| **Nhân viên** | `2` | Quyền theo nhóm quyền được gán (RBAC): xem/thêm/sửa/xóa theo từng tính năng (khóa học, lớp học, học viên, tài chính…). Kiểm tra qua `CheckPermission` middleware | `/admin/*` (các trang được phép theo nhóm quyền), không truy cập phân quyền |
-| **Giáo viên** | `1` | Quyền theo nhóm quyền được gán. Truy cập khu vực admin hạn chế | `/admin/*` (các trang được phép theo nhóm quyền) |
+| **Admin** | `3` | Toàn quyền hệ thống và cổng quản trị. Portal gating không phụ thuộc RBAC chức năng | `/admin/*` |
+| **Nhân viên** | `2` | Vận hành học viên, đăng ký, lớp học, buổi học, hóa đơn trong staff portal | `/staff/*` |
+| **Giáo viên** | `1` | Dùng cổng giáo viên riêng cho dashboard, hồ sơ, lớp dạy, lịch dạy và các module lớp học phase sau | `/teacher/*` |
 | **Học viên** | `0` | Xem/sửa hồ sơ cá nhân, đăng ký lớp, xem lịch học, thanh toán học phí, chat, thông báo. Yêu cầu xác thực email | `/hoc-vien/*`, `/khoa-hoc/*`, `/lop-hoc/*`, `/thong-bao/*`, `/api/chat/*` |
 | **Khách** | — | Chỉ xem trang công khai, đăng ký, đăng nhập, quên mật khẩu, gửi form tư vấn | `/`, `/khoa-hoc`, `/blog`, `/lien-he`, `/ve-chung-toi`, `/login`, `/register`, `/password/*` |
 
@@ -67,10 +70,12 @@ flowchart TD
         A["Người dùng truy cập trang Đăng nhập"] --> B{"Chọn portal"}
         B -->|"Học viên"| C1["POST /login"]
         B -->|"Giảng viên"| C2["POST /teacher/login"]
-        B -->|"Nhân viên/Admin"| C3["POST /staff/login"]
+        B -->|"Nhân viên"| C3["POST /staff/login"]
+        B -->|"Admin"| C4["POST /admin/login"]
         C1 --> D["Gửi: taiKhoan + password + CSRF token"]
         C2 --> D
         C3 --> D
+        C4 --> D
         D --> E{"Validate input + reCAPTCHA"}
         E -->|"Fail"| ERR1["Trả lỗi validation"]
         ERR1 --> A
@@ -102,7 +107,7 @@ flowchart TD
     P -->|"Có"| P1["Redirect /doi-mat-khau-bat-buoc"]
     P -->|"Không"| Q{"Học viên chưa verify email?"}
     Q -->|"Chưa"| Q1["Redirect /email/verify"]
-    Q -->|"Rồi hoặc Staff"| R["Redirect trang chính theo role"]
+    Q -->|"Rồi hoặc portal nội bộ"| R["Redirect trang chính theo role"]
 
     %% ========== GIAI ĐOẠN 3: GỌI API ==========
     subgraph GOI_API["3 - GỌI API - REQUEST"]
@@ -122,9 +127,9 @@ flowchart TD
         X -->|"OK"| Y{"MW 4: ForceChangePassword"}
         Y -->|"Phải đổi MK"| YE["Redirect /doi-mat-khau-bat-buoc"]
         Y -->|"OK"| Z{"MW 5: TrackDeviceSession"}
-        Z --> AA{"MW 6: isAdmin - nếu route admin"}
-        AA -->|"Không phải staff"| AAE["403 Forbidden"]
-        AA -->|"Là staff"| BB{"MW 7: CheckPermission - nếu có"}
+        Z --> AA{"MW 6: portal:* - nếu route nội bộ"}
+        AA -->|"Sai portal"| AAE["Redirect mềm về đúng portal"]
+        AA -->|"Đúng portal"| BB{"MW 7: CheckPermission - nếu module legacy còn dùng"}
         BB -->|"Không có quyền"| BBE["403 Forbidden"]
         BB -->|"Có quyền"| CC["PASS - Chuyển đến Controller"]
         Z --> DD{"MW 6: verified.student - nếu route học viên"}

@@ -173,7 +173,7 @@ class AppServiceProvider extends ServiceProvider
             if ($user->isStaff()) {
                 $loginService = $this->app->make(LoginServiceInterface::class);
 
-                return route($loginService->staffDashboardRouteFor($user));
+                return route($loginService->landingRouteForUser($user));
             }
 
             return route('home.student.index');
@@ -195,7 +195,8 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('auth-login', function (Request $request) {
             $portal = match ($request->route()?->getName()) {
                 'teacher.login.submit' => 'teacher',
-                'staff.login.submit', 'admin.login.submit' => 'staff',
+                'staff.login.submit' => 'staff',
+                'admin.login.submit' => 'admin',
                 default => 'student',
             };
 

@@ -232,9 +232,10 @@ Ghi chú:
 ### Staff login
 
 - mở `/teacher/login` và thử tài khoản giáo viên
-- mở `/staff/login` và thử tài khoản nhân viên/admin
+- mở `/staff/login` và thử tài khoản nhân viên
+- mở `/admin/login` và thử tài khoản admin
 - thử dùng tài khoản học viên ở các cổng nội bộ và xác nhận bị từ chối
-- thử remembered login ở cả `/teacher/login` và `/staff/login`
+- thử remembered login ở cả `/teacher/login`, `/staff/login`, `/admin/login`
 
 ### Registration
 

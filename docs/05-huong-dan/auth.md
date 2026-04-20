@@ -1,6 +1,6 @@
 # Auth Module Guide
 
-> Cập nhật: 2026-03-22
+> Cập nhật: 2026-04-20
 
 Tài liệu này là điểm vào chính cho module Auth sau đợt nâng cấp.
 
@@ -8,7 +8,7 @@ Tài liệu này là điểm vào chính cho module Auth sau đợt nâng cấp.
 
 Module Auth hiện bao gồm:
 - đăng nhập học viên
-- đăng nhập nhân sự
+- đăng nhập 3 portal nội bộ
 - rate limit chống spam cho login/register/check-email
 - ghi nhớ đăng nhập
 - quản lý thiết bị đã đăng nhập
@@ -40,17 +40,18 @@ Module Auth hiện bao gồm:
 - `GET /auth/google/redirect`
 - `GET /auth/google/callback`
 
-### Staff
+### Internal portals
 
 - `GET /teacher/login`
 - `POST /teacher/login`
 - `GET /staff/login`
 - `POST /staff/login`
-- `GET /admin/login` là đường dẫn cũ, hiện redirect sang `/staff/login`
+- `GET /admin/login`
+- `POST /admin/login`
 
 ### Auth utility
 
-- `GET /auth/session-status?context=student|staff`
+- `GET /auth/session-status?context=student|teacher|staff|admin`
 
 ### Protected student area
 
@@ -61,7 +62,7 @@ Các route học viên yêu cầu:
 
 ### Redirect khi đã đăng nhập nhưng vào lại route guest
 
-Các route guest auth như `/login`, `/register`, `/teacher/login`, `/staff/login` sẽ không còn rơi vào `/home` mặc định của Laravel.
+Các route guest auth như `/login`, `/register`, `/teacher/login`, `/staff/login`, `/admin/login` sẽ không còn rơi vào `/home` mặc định của Laravel.
 
 Hệ thống hiện redirect theo trạng thái thực của tài khoản:
 - học viên đã xác thực email về `home.student.index`
@@ -111,6 +112,7 @@ Ví dụ:
 
 - `app/Http/Middleware/EnsureStudentEmailIsVerified.php`
 - `app/Http/Middleware/ForceChangePassword.php`
+- `app/Http/Middleware/EnsurePortalAccess.php`
 - `app/Http/Middleware/IsAdmin.php`
 
 ### Model
@@ -162,14 +164,19 @@ Ví dụ:
   - lần sai thứ 7: khóa 10 phút
   - các lần sau tăng thêm 5 phút mỗi lần
 
-### Đăng nhập staff
+### Đăng nhập nội bộ
 
 - Giảng viên dùng `/teacher/login`.
-- Nhân viên và admin dùng `/staff/login`.
+- Nhân viên dùng `/staff/login`.
+- Admin dùng `/admin/login`.
 - Không dùng Google login ở các cổng nội bộ.
 - Có chung rate limit middleware với login học viên nhưng key được tách theo portal.
 - Vẫn hỗ trợ checkbox `Ghi nhớ đăng nhập`.
-- Hiện tại sau đăng nhập vẫn vào khu nội bộ `/admin/*`; sau này có thể tách `teacher.dashboard` và `staff.dashboard` mà không cần đổi core auth.
+- Landing route sau đăng nhập đã tách rõ:
+  - giáo viên về `teacher.dashboard`
+  - nhân viên về `staff.dashboard`
+  - admin về `admin.dashboard`
+- Portal gating mới đi theo role cố định, không phụ thuộc `nhomquyen/phanquyen` để quyết định người dùng có được vào cổng `teacher`, `staff`, `admin` hay không.
 - Trong cùng một trình duyệt, hệ thống chỉ hỗ trợ một portal hợp lệ tại một thời điểm.
 - Nếu tab khác đăng nhập portal còn lại, tab cũ sẽ bị đánh dấu stale và được chuyển hướng mềm về đúng portal còn hiệu lực thay vì để phát sinh `403` hoặc `419`.
 
@@ -251,6 +258,11 @@ Ví dụ:
 ### Portal session guard
 
 - Giao diện admin và client dùng endpoint `GET /auth/session-status` để kiểm tra phiên hiện tại theo `context`.
+- Các context hợp lệ hiện tại:
+  - `student`
+  - `teacher`
+  - `staff`
+  - `admin`
 - Response trả về các trường chính:
   - `authenticated`
   - `allowed`

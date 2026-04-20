@@ -126,6 +126,17 @@
             background: rgba(239, 68, 68, .5);
         }
 
+        .kh-hero-btn-muted {
+            background: rgba(255, 255, 255, .14);
+            color: rgba(255, 255, 255, .92);
+            cursor: default;
+        }
+
+        .kh-hero-btn-muted:hover {
+            background: rgba(255, 255, 255, .14);
+            color: rgba(255, 255, 255, .92);
+        }
+
         .kh-info-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -266,10 +277,9 @@
                 <a href="{{ route('admin.khoa-hoc.edit', $khoaHoc->slug) }}" class="kh-hero-btn kh-hero-btn-edit">
                     <i class="fas fa-pen"></i> Chỉnh sửa
                 </a>
-                <a href="{{ route('admin.lop-hoc.create', ['khoaHocId' => $khoaHoc->khoaHocId]) }}"
-                    class="kh-hero-btn kh-hero-btn-add">
-                    <i class="fas fa-plus"></i> Thêm lớp học
-                </a>
+                <span class="kh-hero-btn kh-hero-btn-muted" title="Lớp học được vận hành tại cổng Nhân viên">
+                    <i class="fas fa-briefcase"></i> Lớp học tại Staff portal
+                </span>
                 <a href="{{ route('admin.khoa-hoc.index') }}" class="kh-hero-btn kh-hero-btn-edit">
                     <i class="fas fa-arrow-left"></i> Danh sách
                 </a>
@@ -342,18 +352,18 @@
     <div class="kf-card">
         <div class="kf-card-title" style="justify-content:space-between">
             <span><i class="fas fa-chalkboard"></i> Danh sách lớp học ({{ $tongLop }})</span>
-            <a href="{{ route('admin.lop-hoc.create', ['khoaHocId' => $khoaHoc->khoaHocId]) }}"
-                style="font-size:.82rem;background:#f0fdfa;color:#0f766e;padding:5px 12px;border-radius:6px;text-decoration:none;font-weight:600">
-                <i class="fas fa-plus"></i> Thêm lớp
-            </a>
+            <span
+                style="font-size:.82rem;background:#f8fafc;color:#475569;padding:5px 12px;border-radius:6px;font-weight:600">
+                <i class="fas fa-briefcase"></i> Vận hành lớp tại Staff portal
+            </span>
         </div>
 
         @if ($khoaHoc->lopHoc->isEmpty())
             <div class="kh-empty" style="padding:30px">
                 <i class="fas fa-chalkboard" style="font-size:2rem"></i>
-                <p>Chưa có lớp học nào. <a
-                        href="{{ route('admin.lop-hoc.create', ['khoaHocId' => $khoaHoc->khoaHocId]) }}"
-                        style="color:#0f766e">Tạo lớp đầu tiên</a></p>
+                <p>Chưa có lớp học nào cho khóa này.</p>
+                <p style="font-size:.82rem;color:#64748b;margin-top:8px">Khi cần mở lớp, nhân viên vận hành thực hiện ở
+                    Staff portal.</p>
             </div>
         @else
             <div style="overflow-x:auto">
@@ -375,16 +385,16 @@
                             <tr>
                                 <td style="color:#94a3b8;font-size:.78rem">{{ $i + 1 }}</td>
                                 <td>
-                                    <a href="{{ route('admin.lop-hoc.show', $lop->slug) }}"
-                                        style="font-weight:600;color:#134e4a;text-decoration:none">
-                                        {{ $lop->tenLopHoc }}
-                                    </a>
+                                    <div style="font-weight:600;color:#134e4a">{{ $lop->tenLopHoc }}</div>
                                     @if ($lop->lichHoc)
                                         <div style="font-size:.72rem;color:#94a3b8;margin-top:2px">
                                             <i class="fas fa-calendar-days"></i> Thứ
                                             {{ implode(', ', explode(',', $lop->lichHoc)) }}
                                         </div>
                                     @endif
+                                    <div style="font-size:.72rem;color:#94a3b8;margin-top:4px">
+                                        Chi tiết vận hành được quản lý tại Staff portal.
+                                    </div>
                                 </td>
                                 <td style="font-size:.83rem">
                                     {{ $lop->taiKhoan?->hoSoNguoiDung?->hoTen ?? '—' }}
@@ -398,15 +408,11 @@
                                     <span class="tt-badge tt-{{ $lop->trangThai }}">{{ $lop->trangThaiLabel }}</span>
                                 </td>
                                 <td>
-                                    <div style="display:flex;gap:5px;justify-content:center">
-                                        <a href="{{ route('admin.lop-hoc.show', $lop->slug) }}"
-                                            class="kh-btn-action kh-btn-view" title="Xem">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        <a href="{{ route('admin.lop-hoc.edit', $lop->slug) }}"
-                                            class="kh-btn-action kh-btn-edit" title="Sửa">
-                                            <i class="fas fa-pen"></i>
-                                        </a>
+                                    <div style="display:flex;justify-content:center">
+                                        <span
+                                            style="display:inline-flex;align-items:center;padding:5px 10px;border-radius:999px;background:#f8fafc;color:#64748b;font-size:.72rem;font-weight:600">
+                                            Staff portal
+                                        </span>
                                     </div>
                                 </td>
                             </tr>

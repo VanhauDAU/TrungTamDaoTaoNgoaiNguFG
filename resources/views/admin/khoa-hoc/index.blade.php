@@ -18,10 +18,10 @@
             <span>{{ $khoaHocs->total() }} kết quả</span>
         </div>
         <div style="display:flex;gap:10px;align-items:center">
-            <a href="{{ route('admin.lop-hoc.index') }}" class="btn-add-kh"
-                style="background:linear-gradient(135deg,#7c3aed,#a78bfa)">
-                <i class="fas fa-chalkboard"></i> Quản lý lớp học
-            </a>
+            <span class="btn-add-kh" style="background:linear-gradient(135deg,#7c3aed,#a78bfa);cursor:default"
+                title="Lớp học được vận hành tại cổng Nhân viên">
+                <i class="fas fa-chalkboard"></i> Lớp học tại Staff portal
+            </span>
             <a href="{{ route('admin.khoa-hoc.create') }}" class="btn-add-kh">
                 <i class="fas fa-plus"></i> Thêm khóa học
             </a>

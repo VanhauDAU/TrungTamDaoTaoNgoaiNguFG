@@ -25,7 +25,7 @@ class HocVienController extends Controller
 
     public function index(Request $request)
     {
-        return view('admin.hoc-vien.index', $this->hocVienService->getList($request));
+        return view($this->viewPrefix() . '.index', $this->hocVienService->getList($request));
     }
 
     public function export(Request $request)
@@ -37,7 +37,7 @@ class HocVienController extends Controller
         $state = $this->queuedExportService->get('hoc-vien.export', $request->query());
         if (($state['status'] ?? null) === 'queued') {
             return redirect()
-                ->route('admin.hoc-vien.index', $request->query())
+                ->route($this->portalRoute('hoc-vien.index'), $request->query())
                 ->with('info', 'File Excel đang được tạo ở nền. Tải lại sau ít phút để nhận file.');
         }
 
@@ -50,27 +50,27 @@ class HocVienController extends Controller
         GenerateHocVienExportJob::dispatch($request->query(), $fileName)->afterCommit();
 
         return redirect()
-            ->route('admin.hoc-vien.index', $request->query())
+            ->route($this->portalRoute('hoc-vien.index'), $request->query())
             ->with('success', 'Đã đưa file Excel vào hàng chờ xuất. Worker queue sẽ tạo file ở nền.');
     }
 
     public function create()
     {
-        return view('admin.hoc-vien.create');
+        return view($this->viewPrefix() . '.create');
     }
 
     public function store(Request $request)
     {
         $taiKhoan = $this->hocVienService->store($request);
 
-        return redirect()->route('admin.hoc-vien.index')
+        return redirect()->route($this->portalRoute('hoc-vien.index'))
             ->with('success', 'Đã tạo học viên «' . $request->hoTen . '» thành công.');
     }
 
     public function edit(string $taiKhoan)
     {
         $hocVien = $this->hocVienService->findByUsername($taiKhoan);
-        return view('admin.hoc-vien.edit', compact('hocVien'));
+        return view($this->viewPrefix() . '.edit', compact('hocVien'));
     }
 
     public function update(Request $request, string $taiKhoan)
@@ -78,20 +78,20 @@ class HocVienController extends Controller
         $hocVien = $this->hocVienService->findByUsername($taiKhoan);
         $this->hocVienService->update($request, $hocVien);
 
-        return redirect()->route('admin.hoc-vien.index')
+        return redirect()->route($this->portalRoute('hoc-vien.index'))
             ->with('success', 'Đã cập nhật thông tin học viên thành công.');
     }
 
     public function trash(Request $request)
     {
-        return view('admin.hoc-vien.trash', $this->hocVienService->getTrashList($request));
+        return view($this->viewPrefix() . '.trash', $this->hocVienService->getTrashList($request));
     }
 
     public function restore(string $taiKhoan)
     {
         $hoTen = $this->hocVienService->restore($taiKhoan);
 
-        return redirect()->route('admin.hoc-vien.trash')
+        return redirect()->route($this->portalRoute('hoc-vien.trash'))
             ->with('success', "Đã khôi phục học viên «{$hoTen}» thành công.");
     }
 
@@ -99,7 +99,7 @@ class HocVienController extends Controller
     {
         $hoTen = $this->hocVienService->destroy($taiKhoan);
 
-        return redirect()->route('admin.hoc-vien.index')
+        return redirect()->route($this->portalRoute('hoc-vien.index'))
             ->with('success', "Đã xóa học viên «{$hoTen}».");
     }
 
@@ -125,5 +125,15 @@ class HocVienController extends Controller
         return response()->json(
             $citizenLookupService->lookupCitizen($validated['cccd'], $validated['hoTen'])
         );
+    }
+
+    private function portalRoute(string $suffix): string
+    {
+        return request()->routeIs('staff.*') ? 'staff.' . $suffix : 'admin.' . $suffix;
+    }
+
+    protected function viewPrefix(): string
+    {
+        return 'legacy.admin-operational.hoc-vien';
     }
 }

@@ -44,7 +44,7 @@ Giáo viên theo cơ sở.
 
 API tiện ích cho giao diện Auth/Admin/Client kiểm tra trạng thái phiên hiện tại theo portal.
 
-**Query:** `?context=student` hoặc `?context=staff`
+**Query:** `?context=student|teacher|staff|admin`
 
 **Mô tả:**
 

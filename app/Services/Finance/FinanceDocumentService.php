@@ -90,7 +90,7 @@ class FinanceDocumentService
         $code = $invoice->maHoaDon ?: 'HD-' . str_pad((string) $invoice->hoaDonId, 6, '0', STR_PAD_LEFT);
 
         return $this->renderPdfArtifact(
-            'admin.hoa-don.pdf.invoice',
+            'staff.hoa-don.pdf.invoice',
             [
                 'invoice' => $invoice,
                 'code' => $code,
@@ -104,7 +104,7 @@ class FinanceDocumentService
         $code = $receipt->maPhieuThu ?: 'PT-' . str_pad((string) $receipt->phieuThuId, 6, '0', STR_PAD_LEFT);
 
         return $this->renderPdfArtifact(
-            'admin.hoa-don.pdf.receipt',
+            'staff.hoa-don.pdf.receipt',
             [
                 'receipt' => $receipt,
                 'invoice' => $receipt->hoaDon,

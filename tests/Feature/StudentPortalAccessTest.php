@@ -36,7 +36,7 @@ class StudentPortalAccessTest extends TestCase
 
         $this->actingAs($teacher)
             ->get('/__test__/student-only')
-            ->assertRedirect(route('admin.dashboard'))
+            ->assertRedirect(route('teacher.dashboard'))
             ->assertSessionHas('warning', 'Phiên học viên không còn hợp lệ vì trình duyệt hiện đang dùng cổng nội bộ ở tab khác.');
     }
 

@@ -1,13 +1,17 @@
 # TIEN DO DU AN - Trung Tam Dao Tao Ngoai Ngu Five Genius
 
-> Cập nhật lần cuối: 2026-04-15 13:30
+> Cập nhật lần cuối: 2026-04-21
 
 ## ✅ Đã hoàn thành
 
 ### Auth & User Management
 
 - [x] Đăng nhập / Đăng xuất (Laravel Auth)
-- [x] Tách cổng đăng nhập học viên `/login`, giảng viên `/teacher/login`, nhân viên-admin `/staff/login`
+- [x] Tách 4 cổng đăng nhập rõ ràng:
+  - học viên `/login`
+  - giảng viên `/teacher/login`
+  - nhân viên `/staff/login`
+  - admin `/admin/login`
 - [x] Phân quyền: Admin, Giáo viên, Nhân viên, Học viên
 - [x] Quản lý tài khoản hệ thống (bật/tắt, đặt lại mật khẩu)
 - [x] Hồ sơ người dùng (ảnh đại diện, thông tin cá nhân)
@@ -18,6 +22,19 @@
 - [x] Ghi nhớ đăng nhập + rotate remember token khi đổi/reset mật khẩu
 - [x] Học viên tự xem và thu hồi thiết bị đã đăng nhập
 - [x] Audit log nền cho phiên đăng nhập và token rotation
+- [x] Chuẩn hóa auth/session theo 4 context `student|teacher|staff|admin`
+- [x] Tách landing route, logout redirect và session guard đúng theo từng portal
+- [x] Teacher portal, Staff portal, Admin portal có layout/sidebar/menu riêng
+- [x] Tách controller theo namespace portal để staff/teacher không còn đi trực tiếp qua action `Admin\*`
+- [x] Thêm redirect mềm từ URL `/admin/*` cũ của các module vận hành sang `staff/*`
+- [x] Tổ chức lại `resources/views` theo ownership portal:
+  - `admin/*` chỉ giữ view quản trị và dữ liệu nền
+  - `staff/*` giữ view vận hành
+  - `teacher/*` giữ view giáo viên
+  - `legacy/admin-operational/*` giữ lớp tương thích cho admin routes cũ
+- [x] Dọn component sidebar admin cũ không còn dùng; `components/internal/sidebar-*.blade.php` là nguồn sidebar thật
+- [x] Sửa các link `<a>` sai portal còn sót ở màn admin khóa học/ca học
+- [x] Fix flash trắng của sidebar khi reload bằng critical CSS ở layout nội bộ
 - [x] **Upload avatar học viên** — validate MIME thực (không chỉ extension), tên file UUID ngẫu nhiên, lưu ngoài webroot, giới hạn 2MB, yêu cầu xác thực `auth + verified.student`
 - [x] **Giao diện upload avatar** — preview thay vào avatar hiện tại, nút Xác nhận/Hủy dưới avatar, thanh tiến trình cột trái, feedback có icon, AJAX không reload trang
 - [x] **Upload ảnh dùng chung** — service backend `ImageUploadService`, preset cấu hình `config/uploads.php`, API `POST /api/uploads/images`
@@ -123,8 +140,14 @@
 - [x] Changelog được cập nhật theo mốc auth, lớp học, tài chính, hồ sơ nhân sự
 - [x] Hướng dẫn vận hành tổng hợp cho auth, học phí lớp, đăng ký và hồ sơ nhân sự
 - [x] Tài liệu database được cập nhật thêm mô hình nhân sự mở rộng
+- [x] Tài liệu handoff phase 1 cho nhánh `codex/phase1-4-portals-foundation`
 - [x] Feature test `NhanSuWorkflowTest` cho luồng hồ sơ nhân sự
 - [x] Feature test `FinanceDocumentWorkflowTest` cho in PDF / gui email hoa don, phiếu thu o admin
+- [x] Bộ test auth/portal nền đang xanh:
+  - `LoginServiceTest`
+  - `SessionPortalGuardTest`
+  - `StudentPortalAccessTest`
+  - `InternalPortalAccessTest`
 - [x] README / README_vi / upload security checklist được đồng bộ theo kiến trúc upload ảnh dùng chung
 - [x] Changelog, progress, docs cap nhat theo thay doi module lop hoc 2026-04-15
 
@@ -132,6 +155,14 @@
 
 ## Dang phat trien
 
+- [ ] Hoàn thiện nghiệp vụ thật cho teacher portal:
+  - lớp học của tôi
+  - lịch dạy
+  - tài liệu
+  - nhận xét
+  - điểm danh
+- [ ] Hoàn thiện staff portal để thay hẳn các màn vận hành cũ dưới `/admin/*`
+- [ ] Dọn tài liệu phụ còn mô tả mô hình portal cũ nếu phát sinh thêm trong các sprint sau
 - [ ] Bảng điểm học viên
 - [ ] Đánh giá giáo viên sau khóa học
 - [ ] Báo cáo doanh thu chi tiết (admin)
@@ -150,6 +181,9 @@
 
 ## Ke hoach
 
+- [ ] Phase 2: tài liệu lớp học cho teacher/student
+- [ ] Phase 3: nhận xét học viên, điểm danh và thông báo trạng thái đi học
+- [ ] Phase 4: workflow gộp lớp/chuyển lớp ổn định hơn ở staff portal
 - [ ] Gui email tu dong (dang ky lop, nhac hoc phi)
 - [ ] Export bao cao Excel/PDF doanh thu tong hop
 - [ ] App mobile (React Native hoac Flutter)
