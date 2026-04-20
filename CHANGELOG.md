@@ -2,6 +2,81 @@
 
 Tất cả thay đổi đáng chú ý của dự án sẽ được ghi tại đây.
 
+## [2026-04-20] - Chuẩn hóa nền tảng 4 portal `hoc-vien`, `teacher`, `staff`, `admin`
+
+### Added
+
+- Thêm middleware `EnsurePortalAccess` và alias `portal:*` để kiểm tra quyền vào cổng theo role cố định:
+  - `portal:teacher`
+  - `portal:staff`
+  - `portal:admin`
+- Thêm route group riêng cho:
+  - `teacher.*`
+  - `staff.*`
+  - `admin.*`
+- Thêm portal controller và view nền cho:
+  - giáo viên
+  - nhân viên
+  - quản trị
+- Thêm sidebar nội bộ tách riêng theo portal:
+  - `resources/views/components/internal/sidebar-teacher.blade.php`
+  - `resources/views/components/internal/sidebar-staff.blade.php`
+  - `resources/views/components/internal/sidebar-admin.blade.php`
+- Thêm test `InternalPortalAccessTest` để khóa behavior truy cập đúng/sai cổng nội bộ.
+- Thêm tài liệu handoff phase 1:
+  - `docs/00-quan-ly-du-an/phase1-4-portals-foundation.md`
+
+### Changed
+
+- `LoginService` được nâng từ mô hình `student|staff` sang 4 context đầy đủ:
+  - `student`
+  - `teacher`
+  - `staff`
+  - `admin`
+- `GET /admin/login` không còn redirect sang `/staff/login`; admin có cổng đăng nhập riêng và landing route riêng.
+- Session guard `/auth/session-status` và các cảnh báo portal mismatch nay làm việc theo đúng 4 portal thay vì gộp admin vào staff.
+- Layout nội bộ `resources/views/layouts/admin.blade.php` được refactor thành layout dùng chung cho `teacher`, `staff`, `admin`, nhưng menu và endpoint thông báo được chọn động theo portal hiện tại.
+- Các module vận hành đang được chuẩn hóa ownership sang `staff/*`:
+  - học viên
+  - đăng ký học
+  - lớp học
+  - buổi học
+  - hóa đơn
+- Các URL cũ dưới `/admin/*` của nhóm module vận hành được giữ bằng redirect mềm sang `staff/*` để giảm gãy flow cũ.
+- Dashboard admin được thu gọn về scope quản trị hệ thống và dữ liệu nền; không còn ôm toàn bộ nghiệp vụ vận hành như trước.
+- `nhomquyen` và `phanquyen` bị đóng băng cho kiến trúc portal mới:
+  - không mở rộng thêm trong phase này
+  - không dùng làm cổng kiểm tra truy cập teacher/staff/admin
+  - bị ẩn khỏi điều hướng admin chính
+
+### Fixed
+
+- Sửa lệch luồng đăng nhập trước đây khiến admin vẫn bị xem như staff khi xác định portal, logout redirect và session status.
+- Sửa guard nội bộ để giáo viên không còn đi qua `/admin/*` như một cổng mặc định.
+- Cập nhật tài liệu hệ thống để phản ánh đúng kiến trúc 4 portal, tránh nhầm với mô hình cũ `nhân viên/admin` dùng chung một cổng.
+
+## [2026-04-21] - Dọn ổn định `resources/views` theo ownership portal
+
+### Changed
+
+- Thu gọn `resources/views/admin/*` về đúng scope quản trị; các view vận hành cũ được render từ:
+  - `resources/views/legacy/admin-operational/hoc-vien/*`
+  - `resources/views/legacy/admin-operational/dang-ky/*`
+  - `resources/views/legacy/admin-operational/lop-hoc/*`
+  - `resources/views/legacy/admin-operational/hoa-don/*`
+- Controller admin cho các module vận hành legacy được đổi `viewPrefix()` sang `legacy.admin-operational.*` để staff/admin không còn trỏ nhầm vào folder ownership mới.
+- Gỡ component sidebar admin cũ không còn dùng `resources/views/components/admin/sidebar.blade.php`; `components/internal/sidebar-*.blade.php` là nguồn dùng thật cho 3 portal nội bộ.
+- Các màn admin dữ liệu nền như khóa học và ca học được đổi CTA liên quan tới lớp học sang trạng thái read-only thay vì điều hướng sang route vận hành.
+
+### Fixed
+
+- Sửa các thẻ `<a>` bị gãy hoặc sai portal còn sót lại trên:
+  - `resources/views/admin/khoa-hoc/index.blade.php`
+  - `resources/views/admin/khoa-hoc/show.blade.php`
+  - `resources/views/admin/ca-hoc/index.blade.php`
+- Sửa include legacy sau khi tách folder `hoc-vien` để admin routes cũ không bị vỡ view partial.
+- Thêm critical CSS vào `resources/views/layouts/admin.blade.php` để sidebar không còn chớp nền trắng khi reload hoặc hard refresh.
+
 ## [2026-04-12] - Hoàn thiện xuất PDF và gửi email cho hóa đơn, phiếu thu ở admin
 
 ### Added

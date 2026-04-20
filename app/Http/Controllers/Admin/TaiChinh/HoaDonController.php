@@ -21,18 +21,18 @@ class HoaDonController extends Controller
 
     public function index(Request $request)
     {
-        return view('admin.hoa-don.index', $this->hoaDonService->getList($request));
+        return view($this->viewPrefix() . '.index', $this->hoaDonService->getList($request));
     }
 
     public function show(int $id)
     {
-        return view('admin.hoa-don.show', $this->hoaDonService->getDetail($id));
+        return view($this->viewPrefix() . '.show', $this->hoaDonService->getDetail($id));
     }
 
     public function update(Request $request, int $id)
     {
         $this->hoaDonService->update($request, $id);
-        return redirect()->route('admin.hoa-don.show', $id)
+        return redirect()->route($this->portalRoute('hoa-don.show'), $id)
             ->with('success', 'Đã cập nhật hóa đơn thành công.');
     }
 
@@ -40,7 +40,7 @@ class HoaDonController extends Controller
     {
         $phieuThu = $this->hoaDonService->storePhieuThu($request, $hoaDonId);
 
-        $redirect = redirect()->route('admin.hoa-don.show', $hoaDonId)
+        $redirect = redirect()->route($this->portalRoute('hoa-don.show'), $hoaDonId)
             ->with('success', 'Đã tạo phiếu thu thành công.');
 
         if ($request->input('afterAction') === 'print') {
@@ -53,7 +53,7 @@ class HoaDonController extends Controller
     public function destroyPhieuThu(int $id)
     {
         $hoaDonId = $this->hoaDonService->destroyPhieuThu($id);
-        return redirect()->route('admin.hoa-don.show', $hoaDonId)
+        return redirect()->route($this->portalRoute('hoa-don.show'), $hoaDonId)
             ->with('success', 'Đã hủy phiếu thu thành công.');
     }
 
@@ -113,5 +113,15 @@ class HoaDonController extends Controller
         }
 
         return [$email, $data['message'] ?? null];
+    }
+
+    private function portalRoute(string $suffix): string
+    {
+        return request()->routeIs('staff.*') ? 'staff.' . $suffix : 'admin.' . $suffix;
+    }
+
+    protected function viewPrefix(): string
+    {
+        return 'legacy.admin-operational.hoa-don';
     }
 }

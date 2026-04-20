@@ -1,11 +1,88 @@
 <!DOCTYPE html>
 <html lang="vi">
 
+@php
+    $internalPortal = request()->routeIs('teacher.*')
+        ? 'teacher'
+        : (request()->routeIs('staff.*') ? 'staff' : 'admin');
+
+    $portalMeta = match ($internalPortal) {
+        'teacher' => [
+            'label' => 'Giáo viên',
+            'sidebar' => 'components.internal.sidebar-teacher',
+            'notificationIndexRoute' => 'teacher.notifications.index',
+            'notificationDropdownRoute' => 'teacher.api.notifications.dropdown',
+            'notificationMarkAllRoute' => 'teacher.api.notifications.mark-all-read',
+            'notificationMarkReadRoute' => 'teacher.api.notifications.mark-read',
+        ],
+        'staff' => [
+            'label' => 'Nhân viên',
+            'sidebar' => 'components.internal.sidebar-staff',
+            'notificationIndexRoute' => 'staff.notifications.index',
+            'notificationDropdownRoute' => 'staff.api.notifications.dropdown',
+            'notificationMarkAllRoute' => 'staff.api.notifications.mark-all-read',
+            'notificationMarkReadRoute' => 'staff.api.notifications.mark-read',
+        ],
+        default => [
+            'label' => 'Admin',
+            'sidebar' => 'components.internal.sidebar-admin',
+            'notificationIndexRoute' => 'admin.thong-bao.index',
+            'notificationDropdownRoute' => 'admin.api.thong-bao.dropdown',
+            'notificationMarkAllRoute' => 'admin.api.thong-bao.mark-all-read',
+            'notificationMarkReadRoute' => 'admin.api.thong-bao.mark-read',
+        ],
+    };
+@endphp
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Quản trị') — {{ config('app.name', 'Five Genius') }}</title>
+    <title>@yield('title', $portalMeta['label']) — {{ config('app.name', 'Five Genius') }}</title>
+
+    <style>
+        /* Critical shell styles to avoid first-paint white flash before layout.css loads. */
+        html {
+            min-height: 100%;
+            background: #0f1923;
+        }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            background: #f0f4f8;
+            color: #1a2b3c;
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 260px;
+            min-height: 100vh;
+            background: #0f1923;
+        }
+
+        .main-wrapper {
+            min-height: 100vh;
+            margin-left: 260px;
+            background: #f0f4f8;
+        }
+
+        @media (max-width: 991.98px) {
+            html {
+                background: #f0f4f8;
+            }
+
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .main-wrapper {
+                margin-left: 0;
+            }
+        }
+    </style>
 
     {{-- Google Fonts --}}
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -281,7 +358,7 @@
     </div>
 
     {{-- ──────────────────────── SIDEBAR ──────────────────────── --}}
-    <x-admin.sidebar />
+    @include($portalMeta['sidebar'])
 
     {{-- ──────────────────────── MAIN ──────────────────────── --}}
     <div class="main-wrapper">
@@ -291,8 +368,8 @@
                 <i class="fas fa-bars"></i>
             </button>
             <div>
-                <div class="topbar-title">@yield('page-title', 'Dashboard')</div>
-                <div class="topbar-breadcrumb">@yield('breadcrumb', 'Trang chủ quản trị')</div>
+                <div class="topbar-title">@yield('page-title', 'Dashboard ' . $portalMeta['label'])</div>
+                <div class="topbar-breadcrumb">@yield('breadcrumb', 'Trang chủ ' . $portalMeta['label'])</div>
             </div>
             <div class="topbar-right">
                 <a href="{{ route('home.index') }}" class="topbar-icon" title="Xem trang khách hàng" target="_blank">
@@ -317,7 +394,7 @@
                             <div class="bd-loading"><i class="fas fa-spinner fa-spin me-1"></i> Đang tải…</div>
                         </div>
                         <div class="bd-footer">
-                            <a href="{{ route('admin.thong-bao.index') }}">Xem tất cả thông báo →</a>
+                            <a href="{{ route($portalMeta['notificationIndexRoute']) }}">Xem tất cả thông báo →</a>
                         </div>
                     </div>
                 </div>
@@ -338,10 +415,10 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     @include('partials.auth.session-guard', [
-        'sessionGuardContext' => 'staff',
-        'sessionGuardLogoutButtonId' => 'btn-logout-admin',
-        'sessionGuardLogoutFormId' => 'admin-logout-form',
-        'sessionGuardStaleTitle' => 'Phiên nội bộ đã thay đổi',
+        'sessionGuardContext' => $internalPortal,
+        'sessionGuardLogoutButtonId' => 'btn-logout-internal',
+        'sessionGuardLogoutFormId' => 'internal-logout-form',
+        'sessionGuardStaleTitle' => 'Phiên ' . mb_strtolower($portalMeta['label']) . ' đã thay đổi',
     ])
 
     <script>
@@ -525,7 +602,7 @@
 
         async function refreshBell() {
             try {
-                const resp = await fetch('{{ route('admin.api.thong-bao.dropdown') }}');
+                const resp = await fetch(@json(route($portalMeta['notificationDropdownRoute'])));
                 const data = await resp.json();
 
                 // Update badge
@@ -546,7 +623,7 @@
                 bdList.innerHTML = data.notifications.map(n => {
                     const map = loaiIconMap[n.loaiGui] ?? loaiIconMap[0];
                     const time = n.ngayGui ? timeAgo(n.ngayGui) : '';
-                    return `<a href="/admin/thong-bao/${n.thongBaoId}" class="bd-item ${n.daDoc ? '' : 'unread'}"
+                    return `<a href="${@json(route($portalMeta['notificationIndexRoute']))}?thong_bao=${n.thongBaoId}" class="bd-item ${n.daDoc ? '' : 'unread'}"
                                 onclick="markRead(event, ${n.thongBaoId}, ${n.thongBaoNguoiDungId}, this)">
                         <div class="bd-icon ${map.cls}"><i class="fas ${map.icon}"></i></div>
                         <div class="bd-text" style="flex:1;min-width:0;">
@@ -583,7 +660,7 @@
             // Don't prevent navigation, just fire async
             el.classList.remove('unread');
             el.querySelector('.bd-item::before');
-            fetch(`/admin/api/thong-bao/${thongBaoId}/da-doc`, {
+            fetch(@json(route($portalMeta['notificationMarkReadRoute'], ['id' => '__ID__'])).replace('__ID__', thongBaoId), {
                 method: 'PATCH',
                 headers: {
                     'X-CSRF-TOKEN': CSRF_TOKEN
@@ -595,7 +672,7 @@
         // Mark all read
         if (markAllBtn) {
             markAllBtn.addEventListener('click', async function () {
-                await fetch('{{ route('admin.api.thong-bao.mark-all-read') }}', {
+                await fetch(@json(route($portalMeta['notificationMarkAllRoute'])), {
                     method: 'PATCH',
                     headers: {
                         'X-CSRF-TOKEN': CSRF_TOKEN

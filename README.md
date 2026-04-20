@@ -1,4 +1,4 @@
-# DACNCNPM - Hệ Thống Quản Lý Trung Tâm Ngoại Ngữ
+# DACNCNPM - Hệ Thống Quản Lý Trung Tâm Ngoại Ngữ (Bản Tiếng Việt)
 
 [![Laravel](https://img.shields.io/badge/Laravel-12.x-red)](https://laravel.com)
 [![PHP](https://img.shields.io/badge/PHP-8.3%2B-blue)](https://www.php.net/)
@@ -7,119 +7,138 @@
 
 Monolith Laravel phục vụ quản lý vận hành trung tâm ngoại ngữ: khóa học, lớp học, học viên, giáo viên, tài chính, bài viết, thông báo và liên hệ khách hàng.
 
-Tai lieu:
-- Vietnamese (co dau): [README_vi.md](README_vi.md)
+## Mục lục
+- [1. Tổng quan](#1-tổng-quan)
+- [2. Sơ đồ luồng hệ thống](#2-sơ-đồ-luồng-hệ-thống)
+- [3. Tính năng chính](#3-tính-năng-chính)
+- [4. Công nghệ sử dụng](#4-công-nghệ-sử-dụng)
+- [5. Cấu trúc dự án](#5-cấu-trúc-dự-án)
+- [6. Upload ảnh dùng chung](#6-upload-ảnh-dùng-chung)
+- [7. Cài đặt môi trường local](#7-cài-đặt-môi-trường-local)
+- [8. Chạy dự án](#8-chạy-dự-án)
+- [9. Biến môi trường quan trọng](#9-biến-môi-trường-quan-trọng)
+- [10. Mô hình học phí hiện tại](#10-mô-hình-học-phí-hiện-tại)
+- [11. Lệnh hữu ích](#11-lệnh-hữu-ích)
+- [12. Test và chất lượng mã nguồn](#12-test-và-chất-lượng-mã-nguồn)
+- [13. Lưu ý dữ liệu và migration](#13-lưu-ý-dữ-liệu-và-migration)
+- [14. Tài liệu Auth và Nhân sự](#14-tài-liệu-auth-và-nhân-sự)
+- [15. Quy trình phát triển](#15-quy-trình-phát-triển)
+- [16. Hỗ trợ](#16-hỗ-trợ)
 
-## Muc luc
-- [1. Tong quan](#1-tong-quan)
-- [2. Tinh nang chinh](#2-tinh-nang-chinh)
-- [3. Cong nghe su dung](#3-cong-nghe-su-dung)
-- [4. Cau truc du an](#4-cau-truc-du-an)
-- [5. Upload anh dung chung](#5-upload-anh-dung-chung)
-- [6. Cai dat moi truong local](#6-cai-dat-moi-truong-local)
-- [7. Chay du an](#7-chay-du-an)
-- [8. Bien moi truong quan trong](#8-bien-moi-truong-quan-trong)
-- [9. Mo hinh hoc phi hien tai](#9-mo-hinh-hoc-phi-hien-tai)
-- [10. Tai lieu Auth va Nhan su](#10-tai-lieu-auth-va-nhan-su)
-- [11. Lenh huu ich](#11-lenh-huu-ich)
-- [12. Test va chat luong ma nguon](#12-test-va-chat-luong-ma-nguon)
-- [13. Luu y du lieu va migration](#13-luu-y-du-lieu-va-migration)
-- [14. Quy trinh phat trien](#14-quy-trinh-phat-trien)
-- [15. Ho tro](#15-ho-tro)
-
-## 1. Tong quan
-- Nganh: He thong thong tin quan ly trung tam ngoai ngu.
-- Kien truc: Laravel + Blade + MySQL.
-- Doi tuong su dung:
-  - Khach/nguoi hoc: xem khoa hoc, dang ky tu van, theo doi thong tin ca nhan.
-  - Nhan su/Admin: van hanh dao tao, tai chinh, noi dung, thong bao, lien he.
-- Route chinh:
+## 1. Tổng quan
+- Ngành: Hệ thống thông tin quản lý trung tâm ngoại ngữ.
+- Kiến trúc: Laravel + Blade + MySQL.
+- Đối tượng sử dụng:
+  - Khách/người học: xem khóa học, đăng ký tư vấn, theo dõi thông tin cá nhân.
+  - Nhân sự/Admin: vận hành đào tạo, tài chính, nội dung, thông báo, liên hệ.
+- Route chính:
   - `web client`: `/`
-  - `dang nhap hoc vien`: `/login`
-  - `dang nhap giang vien`: `/teacher/login`
-  - `dang nhap nhan vien/admin`: `/staff/login`
-  - `khu noi bo`: `/admin` (yeu cau dang nhap + middleware staff)
+  - `đăng nhập học viên`: `/login`
+  - `đăng nhập giảng viên`: `/teacher/login`
+  - `đăng nhập nhân viên`: `/staff/login`
+  - `đăng nhập admin`: `/admin/login`
+  - `khu nội bộ`: `/teacher`, `/staff`, `/admin`
 
-## 2. Tinh nang chinh
+## 2. Sơ đồ luồng hệ thống
+```mermaid
+flowchart LR
+    A["Người dùng Client"] --> B["Routes Client (/ , /khoa-hoc, /lien-he, /hoc-vien)"]
+    C["Nhân sự/Admin"] --> D["Routes Admin (/admin/...)"]
+    B --> E["Client Controllers"]
+    D --> F["Admin Controllers"]
+    E --> G["Services"]
+    F --> G
+    E --> H["Models (Domain)"]
+    F --> H
+    G --> H
+    H --> I["MySQL Database"]
+    E --> J["Blade Views Client"]
+    F --> K["Blade Views Admin"]
+    J --> L["Browser UI"]
+    K --> L
+```
+
+## 3. Tính năng chính
 ### Client
-- Trang chu, gioi thieu, blog, danh sach/chi tiet khoa hoc.
-- Dang ky lop hoc va checkout.
-- Trang lien he, form dang ky tu van.
-- Khu vuc hoc vien: profile, doi mat khau, lich hoc, lop hoc, hoa don.
-- Auth hoc vien: dang ky, xac thuc email, quen/dat lai mat khau, dang nhap Google, reCAPTCHA, ghi nho dang nhap.
-- Thong bao realtime cho hoc vien (dropdown + stream API).
+- Trang chủ, giới thiệu, blog, danh sách/chi tiết khóa học.
+- Đăng ký lớp học và checkout.
+- Trang liên hệ, form đăng ký tư vấn.
+- Khu vực học viên: profile, đổi mật khẩu, lịch học, lớp học, hóa đơn.
+- Auth học viên: đăng ký, xác thực email, quên/đặt lại mật khẩu, đăng nhập Google, reCAPTCHA, ghi nhớ đăng nhập.
+- Thông báo realtime cho học viên (dropdown + stream API).
 
 ### Admin
-- Dashboard thong ke tong quan.
-- Quan ly hoc vien, giao vien, nhan vien.
-- Ho so nhan su chi tiet, ban giao tai khoan, tai lieu nhan su private.
-- Quan ly dao tao: danh muc khoa hoc, khoa hoc, lop hoc, buoi hoc, ca hoc, chinh sach gia lop.
-- Quan ly tai chinh: hoa don, phieu thu, cap nhat trang thai.
-- Goi luong nhan su va tai lieu handoff payroll/Figma.
-- Quan ly noi dung: bai viet, danh muc bai viet, tag.
-- Quan ly thong bao noi bo.
-- Quan ly lien he/lead (co ho tro thung rac va thao tac loat).
-- Cau hinh co so dao tao, phong hoc, dia chi theo tinh/phuong.
-- Upload anh dung chung cho avatar hoc vien, bai viet va khoa hoc.
-- Cong noi bo tach theo portal:
-  - `/teacher/login` cho giang vien
-  - `/staff/login` cho nhan vien va admin
+- Dashboard thống kê tổng quan.
+- Quản lý học viên, giáo viên, nhân viên.
+- Hồ sơ nhân sự chi tiết, bàn giao tài khoản, tài liệu nhân sự private.
+- Quản lý đào tạo: danh mục khóa học, khóa học, lớp học, buổi học, ca học, chính sách giá lớp.
+- Quản lý tài chính: hóa đơn, phiếu thu, cập nhật trạng thái.
+- Gói lương nhân sự và tài liệu handoff payroll/Figma.
+- Quản lý nội dung: bài viết, danh mục bài viết, tag.
+- Quản lý thông báo nội bộ.
+- Quản lý liên hệ/lead (có hỗ trợ thùng rác và thao tác loạt).
+- Cấu hình cơ sở đào tạo, phòng học, địa chỉ theo tỉnh/phường.
+- Upload ảnh dùng chung cho avatar học viên, bài viết và khóa học.
+- Cổng nội bộ tách theo portal:
+  - `/teacher/login` cho giảng viên
+  - `/staff/login` cho nhân viên
+  - `/admin/login` cho admin
 
-## 3. Cong nghe su dung
+## 4. Công nghệ sử dụng
 - Backend: Laravel 12, PHP 8.3+
-- Frontend: Blade, Bootstrap 5, JS, Vite
+- Frontend: Blade, Bootstrap 5, JavaScript, Vite
 - Database: MySQL 8.x
 - Cache/Redis client: Predis 3.x
 - Build tool: Vite
 - Test: PHPUnit (Laravel test runner)
 
-## 4. Cau truc du an
+## 5. Cấu trúc dự án
 ```text
 app/
   Http/Controllers/
-    Client/        # Controller cho giao dien nguoi hoc
-    Admin/         # Controller khu vuc quan tri
-  Models/          # Domain model theo nhom: Auth, Course, Education, Finance...
+    Client/        # Controller cho giao diện người học
+    Admin/         # Controller khu vực quản trị
+  Models/          # Domain model theo nhóm: Auth, Course, Education, Finance...
   Services/        # DashboardService, ThongBaoService...
 resources/views/
   clients/         # View client
   admin/           # View admin
-  components/      # Blade components, gom ca x-upload.image
+  components/      # Blade components, gồm cả x-upload.image
 resources/js/components/
-  image-upload.js  # Logic upload anh dung chung (preview, drag-drop, progress)
+  image-upload.js  # Logic upload ảnh dùng chung (preview, drag-drop, progress)
 app/Services/Support/Uploads/
-  ImageUploadService.php   # Backend upload anh dung chung
+  ImageUploadService.php   # Backend upload ảnh dùng chung
 routes/
-  web.php          # Toan bo route web + admin
+  web.php          # Toàn bộ route web + admin
 database/
   migrations/      # Migration
   seeders/         # Seeder
 public/assets/     # Static assets css/js/image
 ```
 
-## 5. Upload anh dung chung
-- Backend dung `ImageUploadService` + preset trong `config/uploads.php`.
-- API upload anh dung chung: `POST /api/uploads/images`.
-- Blade component dung chung: `x-upload.image`.
-- Co 2 che do:
-  - `instant`: upload AJAX ngay, dung cho avatar hoc vien.
-  - `deferred`: chi preview/chon file, gui kem form cha khi submit, dung cho bai viet va khoa hoc.
-- Da ap dung san tai:
+## 6. Upload ảnh dùng chung
+- Backend dùng `ImageUploadService` + preset trong `config/uploads.php`.
+- API upload ảnh dùng chung: `POST /api/uploads/images`.
+- Blade component dùng chung: `x-upload.image`.
+- Có 2 chế độ:
+  - `instant`: upload AJAX ngay, dùng cho avatar học viên.
+  - `deferred`: chỉ preview/chọn file, gửi kèm form cha khi submit, dùng cho bài viết và khóa học.
+- Đã áp dụng sẵn tại:
   - `clients/hoc-vien/profile/index.blade.php`
   - `admin/bai-viet/create.blade.php`
   - `admin/bai-viet/edit.blade.php`
   - `admin/khoa-hoc/create.blade.php`
   - `admin/khoa-hoc/edit.blade.php`
 
-## 6. Cai dat moi truong local
-### 6.1 Yeu cau
+## 7. Cài đặt môi trường local
+### 7.1 Yêu cầu
 - PHP 8.3+
 - Composer 2+
-- Node.js 18+ va npm
+- Node.js 18+ và npm
 - MySQL 8.x
-- Redis 7+ neu muon bat cache Redis cho cac chuc nang realtime
+- Redis 7+ nếu muốn bật cache Redis cho các chức năng realtime
 
-### 6.2 Clone va cai dat
+### 7.2 Clone và cài đặt
 ```bash
 git clone <repo-url>
 cd DACNCNPM_TrungTamNN
@@ -129,12 +148,12 @@ cp .env.example .env
 php artisan key:generate
 ```
 
-Luu y moi truong:
-- Dependency hien tai yeu cau runtime PHP `>= 8.3`.
-- Neu may dang co ca XAMPP PHP 8.2 va Homebrew PHP 8.5, hay dung `php`, `composer`, `artisan` theo PHP Homebrew de chay local.
-- XAMPP van co the dung cho MySQL/Apache neu PHP di kem da duoc nang cap; neu khong, nen chay app bang `php artisan serve`.
+Lưu ý môi trường:
+- Dependency hiện tại yêu cầu runtime PHP `>= 8.3`.
+- Nếu máy đang có cả XAMPP PHP 8.2 và Homebrew PHP 8.5, hãy dùng `php`, `composer`, `artisan` theo PHP Homebrew để chạy local.
+- XAMPP vẫn có thể dùng cho MySQL/Apache nếu phiên bản PHP đi kèm đã được nâng lên phù hợp; nếu không, nên chạy app bằng `php artisan serve`.
 
-### 6.3 Cau hinh `.env` (MySQL)
+### 7.3 Cấu hình `.env` (MySQL)
 ```env
 APP_NAME="DACNCNPM TrungTamNN"
 APP_ENV=local
@@ -167,7 +186,7 @@ REGISTER_EMAIL_CHECK_CACHE_STORE=redis
 REGISTER_EMAIL_CHECK_CACHE_TTL=60
 ```
 
-Neu bat Redis local:
+Nếu bật Redis local:
 ```bash
 brew tap redis/redis
 brew install --cask redis
@@ -175,169 +194,164 @@ redis-server /opt/homebrew/etc/redis.conf
 redis-cli PING
 ```
 
-Neu Redis tra `PONG`, cai client PHP cho Laravel:
+Nếu Redis trả `PONG`, cài client PHP cho Laravel:
 ```bash
 composer require predis/predis
 php artisan optimize:clear
 ```
 
-Neu may local can chay mail queue, gui thong bao hang loat hoac export nen bang Redis:
+Nếu máy local cần chạy mail queue, gửi thông báo hàng loạt hoặc export nền bằng Redis:
 ```env
 QUEUE_CONNECTION=redis
 REDIS_QUEUE_CONNECTION=default
 REDIS_QUEUE=default
 ```
 
-Worker Redis cua project hien can nghe cac queue:
-- `notifications` cho gui thong bao hang loat
+Worker Redis của project hiện cần nghe các queue:
+- `notifications` cho gửi thông báo hàng loạt
 - `exports` cho export Excel/PDF
-- `maintenance` cho batch job hoa don qua han va huy giu cho qua han
+- `maintenance` cho batch job hóa đơn quá hạn và hủy giữ chỗ quá hạn
 
-## 7. Chay du an
-### Cach 1: Chay dong thoi server + queue + vite (khuyen nghi)
+## 8. Chạy dự án
+### Cách 1: Chạy đồng thời server + queue + vite (khuyến nghị)
 ```bash
 composer dev
 ```
 
-### Cach 2: Tu chay tung tien trinh
+### Cách 2: Tự chạy từng tiến trình
 ```bash
 php artisan serve
 composer queue:redis
 npm run dev
 ```
 
-### Cach 3: Build static assets cho production
+### Cách 3: Build static assets cho production
 ```bash
 npm run build
 ```
 
-Neu dung XAMPP/Apache:
-- Dat project trong `htdocs`.
-- Truy cap qua virtual host hoac `/public` theo cau hinh Apache.
-- Chi dung XAMPP de chay web khi PHP cua XAMPP dat `>= 8.3`; neu XAMPP con PHP 8.2 thi `artisan` va ung dung se bi chan boi Composer platform check.
+Nếu dùng XAMPP/Apache:
+- Đặt project trong `htdocs`.
+- Truy cập qua virtual host hoặc `/public` theo cấu hình Apache.
+- Chỉ dùng XAMPP để chạy web khi PHP của XAMPP đạt `>= 8.3`; nếu XAMPP còn PHP 8.2 thì `artisan` và ứng dụng sẽ bị chặn bởi Composer platform check.
 
-## 8. Bien moi truong quan trong
-- `APP_URL`: URL goc ung dung.
-- `DB_*`: ket noi CSDL.
-- `QUEUE_CONNECTION`: nen de `redis` neu may local can chay mail queue, gui thong bao hang loat hoac export nen.
-- `REDIS_*`: cau hinh ket noi Redis.
-- `RATE_LIMITER_STORE`: cache store dung cho Laravel rate limiter, mac dinh `redis`.
-- `PUBLIC_LIST_CACHE_STORE`: store dung cho cache danh sach public nhu khoa hoc/blog/footer.
-- `PUBLIC_LIST_CACHE_TTL`: thoi gian cache danh sach public, mac dinh 300 giay.
-- `AUTH_LOGIN_RATE_LIMIT_*`: nguong chan spam cho login theo tai khoan/IP.
-- `AUTH_REGISTER_RATE_LIMIT_*`: nguong chan spam cho submit dang ky.
-- `AUTH_EMAIL_CHECK_RATE_LIMIT_*`: nguong chan spam cho kiem tra email realtime.
-- `REGISTER_EMAIL_CHECK_CACHE_STORE`: store dung cho cache kiem tra email realtime.
-- `REGISTER_EMAIL_CHECK_CACHE_TTL`: thoi gian cache ket qua check email, mac dinh 60 giay.
-- `MAIL_*`: cau hinh gui mail.
-- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`: dang nhap Google cho hoc vien.
-- `RECAPTCHA_*`: reCAPTCHA v3 cho login/register/quen mat khau public.
-- `GEMINI_API_KEY`, `GEMINI_MODEL`: khoa/mode AI (neu kich hoat tinh nang lien quan).
+## 9. Biến môi trường quan trọng
+- `APP_URL`: URL gốc ứng dụng.
+- `DB_*`: kết nối CSDL.
+- `QUEUE_CONNECTION`: nên để `redis` nếu máy local cần chạy mail queue, gửi thông báo hàng loạt hoặc export nền.
+- `REDIS_*`: cấu hình kết nối Redis.
+- `RATE_LIMITER_STORE`: cache store dùng cho Laravel rate limiter, mặc định `redis`.
+- `PUBLIC_LIST_CACHE_STORE`: store dùng cho cache danh sách public như khóa học/blog/footer.
+- `PUBLIC_LIST_CACHE_TTL`: thời gian cache danh sách public, mặc định 300 giây.
+- `AUTH_LOGIN_RATE_LIMIT_*`: ngưỡng chặn spam cho login theo tài khoản/IP.
+- `AUTH_REGISTER_RATE_LIMIT_*`: ngưỡng chặn spam cho submit đăng ký.
+- `AUTH_EMAIL_CHECK_RATE_LIMIT_*`: ngưỡng chặn spam cho kiểm tra email realtime.
+- `REGISTER_EMAIL_CHECK_CACHE_STORE`: store dùng cho cache kiểm tra email realtime.
+- `REGISTER_EMAIL_CHECK_CACHE_TTL`: thời gian cache kết quả check email, mặc định 60 giây.
+- `MAIL_*`: cấu hình gửi mail.
+- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`: đăng nhập Google cho học viên.
+- `RECAPTCHA_*`: reCAPTCHA v3 cho login/register/quên mật khẩu public.
+- `GEMINI_API_KEY`, `GEMINI_MODEL`: khóa/mode AI (nếu kích hoạt tính năng liên quan).
 
-## 9. Mo hinh hoc phi hien tai
-- Hoc phi duoc quan ly o cap `lop hoc`, khong con o cap `khoa hoc`.
-- `khoahoc` chi mo ta san pham dao tao; gia ban va cach thu tien nam o `lophoc_chinhsachgia`.
-- `lophoc` co the tao truoc khi nhap hoc phi, nhung phai co chinh sach gia hop le truoc khi chuyen sang trang thai tuyen sinh/van hanh.
-- `ngayKetThuc` cua lop khong nhap tay trong flow moi; he thong dong bo theo buoi hoc cuoi cung.
-- Khi hoc vien dang ky, he thong chup `snapshot` hoc phi vao `dangkylophoc` de khoa gia tai thoi diem dang ky.
-- `hieuLucTu` / `hieuLucDen` la khoang thoi gian chinh sach gia duoc phep ap dung cho dang ky moi, khong phai ngay hoc cua lop.
-- Bang `lophoc_dotthu` duoc dung de luu ke hoach thu theo dot; runtime hien tai van tao 1 hoa don tong cho moi dang ky va de san nen cho billing tach dot ve sau.
-- Huong dan van hanh tong hop: `docs/05-huong-dan/huong-dan.md`.
+## 10. Mô hình học phí hiện tại
+- Học phí được quản lý ở cấp `lớp học`, không còn ở cấp `khóa học`.
+- `Khóa học` chỉ mô tả chương trình đào tạo; giá bán và cách thu tiền nằm ở `lophoc_chinhsachgia`.
+- `Lớp học` có thể được tạo trước khi nhập học phí, nhưng phải có chính sách giá hợp lệ trước khi chuyển sang trạng thái tuyển sinh hoặc đang học.
+- `ngày kết thúc` của lớp không nhập tay trong flow mới; hệ thống đồng bộ theo buổi học cuối cùng.
+- Khi học viên đăng ký, hệ thống chụp `snapshot` học phí vào `dangkylophoc` để không bị ảnh hưởng khi lớp thay đổi giá sau này.
+- Hệ thống hiện chỉ hỗ trợ `một lần` hoặc `theo đợt`; `theo tháng` đã bị loại khỏi runtime mới.
+- `lophoc_dotthu` dùng để lưu kế hoạch thu theo đợt; runtime hiện tại đã sinh nhiều hóa đơn học phí khi lớp cấu hình thu theo đợt.
+- Đăng ký `Chờ thanh toán` có `ngày hết hạn giữ chỗ`; job hệ thống sẽ tự hủy giữ chỗ quá hạn nếu chưa phát sinh thu tiền.
+- Hóa đơn quá hạn khi lớp đang học sẽ được job hệ thống xử lý để chuyển đăng ký sang trạng thái nợ học phí.
+- Hồ sơ giáo viên và nhân viên hiện có luồng create/edit/show hoàn chỉnh, xuất PDF hồ sơ và phiếu bàn giao tài khoản.
+- Hướng dẫn vận hành tổng hợp: `docs/05-huong-dan/huong-dan.md`.
+- Hướng dẫn chi tiết:
+  - `docs/05-huong-dan/hoc-phi-lop-hoc.md`
+  - `docs/05-huong-dan/dang-ky-thanh-toan-va-phieu-thu.md`
+  - `docs/05-huong-dan/nhan-su-ho-so-va-ban-giao-tai-khoan.md`
+  - `docs/05-huong-dan/luong-nhan-su-va-payroll.md`
 
-## 10. Tai lieu Auth va Nhan su
-- Portal dang nhap hien tai:
-  - Hoc vien: `/login`
-  - Giang vien: `/teacher/login`
-  - Nhan vien/Admin: `/staff/login`
-- Giao dien login su dung dock chuyen portal co dinh o day man hinh de doi nhanh giua cac cong dang nhap.
-- Trong cung mot trinh duyet, he thong chi nen duoc su dung voi 1 portal dang nhap tai 1 thoi diem. Neu can test song song admin va hoc vien, hay dung trinh duyet khac hoac cua so an danh.
-- Tong quan module Auth: `docs/05-huong-dan/auth.md`
-- Kien truc va quyet dinh: `docs/01-phan-tich/auth-kien-truc-va-quyet-dinh.md`
-- Cau hinh va trien khai: `docs/05-huong-dan/auth-cau-hinh-va-trien-khai.md`
-- Van hanh va kiem thu: `docs/05-huong-dan/auth-van-hanh-va-kiem-thu.md`
-- Joi validation phia client: `docs/05-huong-dan/auth-joi-validation.md`
-- Ho so nhan su, ban giao tai khoan, CV, PDF: `docs/05-huong-dan/nhan-su-ho-so-va-ban-giao-tai-khoan.md`
-- Luong nhan su va payroll: `docs/05-huong-dan/luong-nhan-su-va-payroll.md`
-- Figma handoff payroll: `docs/05-huong-dan/figma-luong-handoff.md`
-- Thay doi theo moc: `CHANGELOG.md`
-
-## 11. Lenh huu ich
+## 11. Lệnh hữu ích
 ```bash
-# Chay test
+# Chạy test
 php artisan test
 
 # Clear cache
 php artisan optimize:clear
 
-# Kiem tra Redis
+# Kiểm tra Redis
 redis-cli PING
 php artisan tinker
 
-# Chay worker Redis cho mail/thong bao/export
+# Chạy worker Redis cho mail/thông báo/export
 composer queue:redis
 
-# Tao symlink storage
+# Tạo symlink storage
 php artisan storage:link
 
-# Kiem tra hoa don qua han (thu cong)
+# Kiểm tra hóa đơn quá hạn (thủ công)
 php artisan invoice:check-overdue
 php artisan invoice:check-overdue --dry-run
+
+# Kiểm tra và hủy giữ chỗ quá hạn (thủ công)
+php artisan registration:expire-holds
+php artisan registration:expire-holds --dry-run
 ```
 
-Trong `tinker` co the kiem tra nhanh:
+Trong `tinker` có thể kiểm tra nhanh:
 ```php
 Cache::store('redis')->put('redis_test', 'ok', 60);
 Cache::store('redis')->get('redis_test');
 ```
 
-### Redis dang lam gi trong project
-- Cache ket qua `GET /register/check-email` de giam query MySQL lap lai khi nguoi dung go email dang ky.
-- Lam store cho Laravel rate limiter cua `login`, `register` va `check-email`.
-- Cache cac danh sach public doc nhieu:
+### Redis đang làm gì trong project
+- Cache kết quả `GET /register/check-email` để giảm query MySQL lặp lại khi người dùng gõ email đăng ký.
+- Làm store cho Laravel rate limiter của `login`, `register` và `check-email`.
+- Cache các danh sách public đọc nhiều:
   - `/khoa-hoc`
-  - danh sach lop public trong `/khoa-hoc/{slug}`
+  - danh sách lớp public trong `/khoa-hoc/{slug}`
   - `/blog`
-  - block public o trang chu
-  - footer va `register-advice`
-- Chay queue cho:
+  - block public ở trang chủ
+  - footer và `register-advice`
+- Chạy queue cho:
   - mail auth
-  - gui thong bao hang loat
+  - gửi thông báo hàng loạt
   - export Excel/PDF
   - batch `invoice:check-overdue`
   - batch `registration:expire-holds`
-- Chat typing/presence hien dung Laravel `Cache`; phan nay chi chay tren Redis neu ban cau hinh store cache phu hop cho chat.
+- Chat typing/presence hiện dùng Laravel `Cache`; phần này chỉ chạy trên Redis nếu bạn cấu hình store cache phù hợp cho chat.
 
-Muon quan sat cache public bang Redis:
+Muốn quan sát cache public bằng Redis:
 ```bash
 redis-cli MONITOR
 ```
 
-Sau do mo mot trong cac trang:
+Sau đó mở một trong các trang:
 - `/khoa-hoc`
 - `/blog`
 - `/`
 
-Hoac scan key:
+Hoặc scan key:
 ```bash
 redis-cli --scan --pattern '*public-content*'
 ```
 
-Muon quan sat Redis dang duoc hit khi nhap email o form dang ky:
+Muốn quan sát Redis đang được hit khi nhập email ở form đăng ký:
 ```bash
 redis-cli MONITOR
 ```
 
-Sau do mo `/register` va nhap email. Ban se thay key dang `auth:register:email-check:<sha1>` duoc `GET`/`SETEX`.
+Sau đó mở `/register` và nhập email. Bạn sẽ thấy key dạng `auth:register:email-check:<sha1>` được `GET`/`SETEX`.
 
-Muon quan sat rate limit Redis cua Auth:
-- nhap login qua nhanh hoac goi lap `/register/check-email`
-- tren `redis-cli MONITOR` ban se thay cac key limiter duoc doc/ghi truoc khi request vao sau controller
-- cac route nay hien co limiter rieng:
+Muốn quan sát rate limit Redis của Auth:
+- nhập login quá nhanh hoặc gọi lặp `/register/check-email`
+- trên `redis-cli MONITOR` bạn sẽ thấy các key limiter được đọc/ghi trước khi request vào sâu controller
+- các route này hiện có limiter riêng:
   - `auth-login`
   - `auth-register`
   - `auth-email-check`
 
-Sau khi `git pull` code moi tu team, nen chay lai toi thieu:
+Sau khi `git pull` code mới từ team, nên chạy lại tối thiểu:
 ```bash
 composer install
 npm install
@@ -345,15 +359,15 @@ php artisan optimize:clear
 php artisan migrate
 ```
 
-Neu pull co thay doi `.env.example`, hay cap nhat `.env` thu cong truoc khi chay app.
+Nếu pull có thay đổi `.env.example`, hãy cập nhật `.env` thủ công trước khi chạy app.
 
-Neu may do dung Redis local, chay them:
+Nếu máy đó dùng Redis local, chạy thêm:
 ```bash
 redis-cli PING
 composer queue:redis
 ```
 
-## 12. Test va chat luong ma nguon
+## 12. Test và chất lượng mã nguồn
 ```bash
 # Test full
 composer test
@@ -362,43 +376,63 @@ composer test
 ./vendor/bin/pint
 ```
 
-Thu muc test hien co:
+Thư mục test hiện có:
 - `tests/Feature`
 - `tests/Unit`
 
-## 13. Luu y du lieu va migration
-- Du an hien co nhieu bang domain custom (`taikhoan`, `lienhe`, `hoadon`, ...).
-- Thu muc migration trong repo chu yeu la migration bo sung/cap nhat.
-- Neu khoi tao moi tren may sach, can dam bao da co schema nen tu team (hoac bo migration day du) truoc khi chay du an toan phan.
-- Migration `2026_03_14_150000_refactor_class_pricing_to_lophoc_chinhsachgia.php` chuyen hoc phi tu mo hinh cu (`hocphi`, `lophoc.hocPhiId`) sang mo hinh moi theo lop hoc.
-- Migration `2026_03_15_200000` -> `2026_03_15_200400` bo sung ho so nhan su, goi luong, tai lieu nhan su va backfill du lieu cu.
+## 13. Lưu ý dữ liệu và migration
+- Dự án hiện có nhiều bảng domain custom (`taikhoan`, `lienhe`, `hoadon`, ...).
+- Thư mục migration trong repo chủ yếu là migration bổ sung/cập nhật.
+- Nếu khởi tạo mới trên máy sạch, cần đảm bảo đã có schema nền từ team (hoặc bộ migration đầy đủ) trước khi chạy dự án toàn phần.
+- Migration `2026_03_14_150000_refactor_class_pricing_to_lophoc_chinhsachgia.php` chuyển học phí từ mô hình cũ (`hocphi`, `lophoc.hocPhiId`) sang mô hình mới theo lớp học.
+- Migration `2026_03_15_200000` -> `2026_03_15_200400` bổ sung hồ sơ nhân sự, gói lương, tài liệu nhân sự và backfill dữ liệu cũ.
 
-Luu y import dump SQL:
-- Khong nen phuc hoi du lieu bang cach tat `FOREIGN_KEY_CHECKS` roi bo qua orphan record.
-- Cac bang nhu `lophoc`, `lophoc_chinhsachgia`, `buoihoc`, `chat_rooms` phai dong bo khoa ngoai truoc khi them constraint.
-- Neu gap loi `#1452`, can soat lai dump de dam bao ban ghi cha ton tai truoc ban ghi con.
+Lưu ý import dump SQL:
 
-Lenh migrate co ban:
+- Không nên phục hồi dữ liệu bằng cách tắt `FOREIGN_KEY_CHECKS` rồi bỏ qua orphan record.
+- Các bảng như `lophoc`, `lophoc_chinhsachgia`, `buoihoc`, `chat_rooms` phải đồng bộ khóa ngoại trước khi thêm constraint.
+- Nếu gặp lỗi `#1452`, cần soát lại file dump để đảm bảo bản ghi cha tồn tại trước bản ghi con.
+
+Lệnh migrate cơ bản:
 ```bash
 php artisan migrate
 ```
 
-## 14. Quy trinh phat trien
-- Khong push truc tiep vao `main`.
-- Tao branch theo chuc nang, mo Pull Request de review.
-- Viet commit message ro rang theo muc dich:
-  - `feat:` them tinh nang
-  - `fix:` sua loi
-  - `refactor:` tai cau truc
-  - `docs:` cap nhat tai lieu
-  - `chore:` viec he thong/cau hinh
+## 14. Tài liệu Auth và Nhân sự
+- Portal đăng nhập hiện tại:
+  - Học viên: `/login`
+  - Giảng viên: `/teacher/login`
+  - Nhân viên: `/staff/login`
+  - Admin: `/admin/login`
+- Giao diện login sử dụng dock chuyển portal cố định ở đáy màn hình để đổi nhanh giữa các cổng đăng nhập.
+- Trong cùng một trình duyệt, hệ thống chỉ nên được sử dụng với 1 portal đăng nhập tại một thời điểm. Nếu cần test song song admin và học viên, hãy dùng trình duyệt khác hoặc cửa sổ ẩn danh.
+- Tổng quan module Auth: `docs/05-huong-dan/auth.md`
+- Kiến trúc và quyết định: `docs/01-phan-tich/auth-kien-truc-va-quyet-dinh.md`
+- Handoff phase 1 chuẩn hóa portal: `docs/00-quan-ly-du-an/phase1-4-portals-foundation.md`
+- Cấu hình và triển khai: `docs/05-huong-dan/auth-cau-hinh-va-trien-khai.md`
+- Vận hành và kiểm thử: `docs/05-huong-dan/auth-van-hanh-va-kiem-thu.md`
+- Joi validation phía client: `docs/05-huong-dan/auth-joi-validation.md`
+- Hồ sơ nhân sự, bàn giao tài khoản, CV, PDF: `docs/05-huong-dan/nhan-su-ho-so-va-ban-giao-tai-khoan.md`
+- Lương nhân sự và payroll: `docs/05-huong-dan/luong-nhan-su-va-payroll.md`
+- Figma handoff payroll: `docs/05-huong-dan/figma-luong-handoff.md`
+- Thay đổi theo mốc: `CHANGELOG.md`
 
-## 15. Ho tro
-- Neu gap loi khi setup, tao issue trong repository va kem:
-  - log loi
-  - buoc tai hien
-  - moi truong (OS, PHP, Node, MySQL)
+## 15. Quy trình phát triển
+- Không push trực tiếp vào `main`.
+- Tạo branch theo chức năng, mở Pull Request để review.
+- Viết commit message rõ ràng theo mục đích:
+  - `feat:` thêm tính năng
+  - `fix:` sửa lỗi
+  - `refactor:` tái cấu trúc
+  - `docs:` cập nhật tài liệu
+  - `chore:` việc hệ thống/cấu hình
+
+## 16. Hỗ trợ
+- Nếu gặp lỗi khi setup, tạo issue trong repository và kèm:
+  - log lỗi
+  - bước tái hiện
+  - môi trường (OS, PHP, Node, MySQL)
 
 ---
 
-Cap nhat README gan day: dong bo mo hinh hoc phi theo lop hoc, bo sung link van hanh hoc phi va luu y migration refactor pricing.
+Tài liệu này ưu tiên cho onboarding thành viên mới và demo nghiệp vụ với stakeholder.

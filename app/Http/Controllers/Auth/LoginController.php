@@ -41,7 +41,7 @@ class LoginController extends Controller
 
     public function showAdminLoginForm()
     {
-        return redirect()->route('staff.login');
+        return view('auth.login', $this->loginService->getLoginViewData('admin'));
     }
 
     public function showTeacherLoginForm()
@@ -66,7 +66,7 @@ class LoginController extends Controller
 
     public function adminLogin(Request $request)
     {
-        $request->attributes->set('login_portal', 'staff');
+        $request->attributes->set('login_portal', 'admin');
         return $this->traitLogin($request);
     }
 
@@ -179,7 +179,7 @@ class LoginController extends Controller
     public function sessionStatus(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'context' => ['required', 'in:student,staff'],
+            'context' => ['required', 'in:student,teacher,staff,admin'],
         ]);
 
         return response()

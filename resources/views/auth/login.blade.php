@@ -364,6 +364,14 @@
                     'url' => route('staff.login'),
                     'active' => ($portal ?? 'student') === 'staff',
                 ],
+                [
+                    'label' => 'Đăng nhập quản trị viên',
+                    'short_label' => 'Admin',
+                    'description' => 'Quản trị hệ thống, dữ liệu nền và cấu hình.',
+                    'icon' => 'fas fa-shield-halved',
+                    'url' => route('admin.login'),
+                    'active' => ($portal ?? 'student') === 'admin',
+                ],
             ]);
             $currentPortalLink = $portalLinks->firstWhere('active', true) ?? $portalLinks->first();
         @endphp

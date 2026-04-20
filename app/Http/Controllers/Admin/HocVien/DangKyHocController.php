@@ -20,12 +20,12 @@ class DangKyHocController extends Controller
 
     public function index(Request $request)
     {
-        return view('admin.dang-ky.index', $this->dangKyHocService->getList($request));
+        return view($this->viewPrefix() . '.index', $this->dangKyHocService->getList($request));
     }
 
     public function create()
     {
-        return view('admin.dang-ky.create', $this->dangKyHocService->getCreateFormData());
+        return view($this->viewPrefix() . '.create', $this->dangKyHocService->getCreateFormData());
     }
 
     public function store(Request $request)
@@ -33,7 +33,7 @@ class DangKyHocController extends Controller
         $registration = $this->dangKyHocService->store($request);
 
         return redirect()
-            ->route('admin.dang-ky.index')
+            ->route($this->portalRoute('dang-ky.index'))
             ->with('success', 'Đã tạo đăng ký cho học viên «' . ($registration->taiKhoan?->hoSoNguoiDung?->hoTen ?? $registration->taiKhoan?->taiKhoan ?? '—') . '».');
     }
 
@@ -42,7 +42,7 @@ class DangKyHocController extends Controller
         $this->dangKyHocService->confirm($id);
 
         return redirect()
-            ->route('admin.dang-ky.index')
+            ->route($this->portalRoute('dang-ky.index'))
             ->with('success', 'Đã xác nhận đăng ký học.');
     }
 
@@ -51,7 +51,7 @@ class DangKyHocController extends Controller
         $this->dangKyHocService->cancel($id);
 
         return redirect()
-            ->route('admin.dang-ky.index')
+            ->route($this->portalRoute('dang-ky.index'))
             ->with('success', 'Đã hủy đăng ký học.');
     }
 
@@ -60,7 +60,7 @@ class DangKyHocController extends Controller
         $this->dangKyHocService->hold($id);
 
         return redirect()
-            ->route('admin.dang-ky.index')
+            ->route($this->portalRoute('dang-ky.index'))
             ->with('success', 'Đã chuyển đăng ký sang trạng thái bảo lưu.');
     }
 
@@ -69,7 +69,7 @@ class DangKyHocController extends Controller
         $this->dangKyHocService->restore($id);
 
         return redirect()
-            ->route('admin.dang-ky.index')
+            ->route($this->portalRoute('dang-ky.index'))
             ->with('success', 'Đã khôi phục đăng ký học.');
     }
 
@@ -79,14 +79,24 @@ class DangKyHocController extends Controller
             $newRegistration = $this->dangKyHocService->transfer($request, $id);
 
             return redirect()
-                ->route('admin.dang-ky.index')
+                ->route($this->portalRoute('dang-ky.index'))
                 ->with('success', 'Đã điều chuyển học viên sang lớp «' . ($newRegistration->lopHoc?->tenLopHoc ?? '—') . '».');
         } catch (ValidationException $exception) {
             return redirect()
-                ->route('admin.dang-ky.index')
+                ->route($this->portalRoute('dang-ky.index'))
                 ->withErrors($exception->errors())
                 ->withInput()
                 ->with('error', collect($exception->errors())->flatten()->first() ?: 'Không thể điều chuyển đăng ký.');
         }
+    }
+
+    private function portalRoute(string $suffix): string
+    {
+        return request()->routeIs('staff.*') ? 'staff.' . $suffix : 'admin.' . $suffix;
+    }
+
+    protected function viewPrefix(): string
+    {
+        return 'legacy.admin-operational.dang-ky';
     }
 }

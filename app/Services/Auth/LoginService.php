@@ -34,27 +34,36 @@ class LoginService implements LoginServiceInterface
         $submitRoute = match ($portal) {
             'teacher' => route('teacher.login.submit'),
             'staff' => route('staff.login.submit'),
+            'admin' => route('admin.login.submit'),
             default => route('login'),
         };
 
         $alternateRoute = match ($portal) {
             'teacher' => route('staff.login'),
-            'staff' => route('teacher.login'),
+            'staff' => route('admin.login'),
+            'admin' => route('staff.login'),
             default => route('staff.login'),
         };
 
         $alternateLabel = match ($portal) {
             'teacher' => 'Đăng nhập nhân viên',
-            'staff' => 'Đăng nhập giảng viên',
+            'staff' => 'Đăng nhập quản trị viên',
+            'admin' => 'Đăng nhập nhân viên',
             default => 'Đăng nhập nhân viên',
         };
 
         $secondaryAlternateRoute = match ($portal) {
+            'teacher' => route('admin.login'),
+            'staff' => route('teacher.login'),
+            'admin' => route('teacher.login'),
             'student' => route('teacher.login'),
             default => route('login'),
         };
 
         $secondaryAlternateLabel = match ($portal) {
+            'teacher' => 'Đăng nhập quản trị viên',
+            'staff' => 'Đăng nhập giảng viên',
+            'admin' => 'Đăng nhập giảng viên',
             'student' => 'Đăng nhập giảng viên',
             default => 'Đăng nhập học viên',
         };
@@ -156,7 +165,7 @@ class LoginService implements LoginServiceInterface
         }
 
         if ($user->isStaff()) {
-            return redirect()->route($this->staffDashboardRouteFor($user));
+            return redirect()->route($this->dashboardRouteForUser($user));
         }
 
         return redirect()->route('home.student.index');
@@ -187,7 +196,8 @@ class LoginService implements LoginServiceInterface
         $conLai = max(0, self::FIRST_LOCKOUT_ATTEMPTS - $soLanSai);
         $message = match ($portal) {
             'teacher' => "Tài khoản giảng viên hoặc mật khẩu không chính xác. Bạn còn {$conLai} lần thử.",
-            'staff', 'admin' => "Tài khoản nhân viên hoặc mật khẩu không chính xác. Bạn còn {$conLai} lần thử.",
+            'staff' => "Tài khoản nhân viên hoặc mật khẩu không chính xác. Bạn còn {$conLai} lần thử.",
+            'admin' => "Tài khoản quản trị viên hoặc mật khẩu không chính xác. Bạn còn {$conLai} lần thử.",
             default => "Tài khoản, email hoặc mật khẩu không chính xác. Bạn còn {$conLai} lần thử.",
         };
 
@@ -244,7 +254,7 @@ class LoginService implements LoginServiceInterface
         $user->rotateRememberToken('force_password_change', (string) $request->session()->getId());
 
         if ($user->isStaff()) {
-            return redirect()->route($this->staffDashboardRouteFor($user))
+            return redirect()->route($this->dashboardRouteForUser($user))
                 ->with('success', 'Đổi mật khẩu thành công! Chào mừng bạn đến hệ thống.');
         }
 
@@ -265,28 +275,43 @@ class LoginService implements LoginServiceInterface
     {
         return match ($portal) {
             'teacher' => $user->role === TaiKhoan::ROLE_GIAO_VIEN,
-            'staff' => in_array($user->role, [TaiKhoan::ROLE_NHAN_VIEN, TaiKhoan::ROLE_ADMIN], true),
+            'staff' => $user->role === TaiKhoan::ROLE_NHAN_VIEN,
+            'admin' => $user->role === TaiKhoan::ROLE_ADMIN,
             default => $user->role === TaiKhoan::ROLE_HOC_VIEN,
         };
     }
+
     public function staffDashboardRouteFor(TaiKhoan $user): string
     {
-        if ($user->role === TaiKhoan::ROLE_GIAO_VIEN && Route::has('teacher.dashboard')) {
-            return 'teacher.dashboard';
-        }
+        return $this->dashboardRouteForUser($user);
+    }
 
-        if (in_array($user->role, [TaiKhoan::ROLE_NHAN_VIEN, TaiKhoan::ROLE_ADMIN], true) && Route::has('staff.dashboard')) {
-            return 'staff.dashboard';
-        }
+    public function dashboardRouteForUser(TaiKhoan $user): string
+    {
+        return match ((int) $user->role) {
+            TaiKhoan::ROLE_GIAO_VIEN => Route::has('teacher.dashboard') ? 'teacher.dashboard' : 'teacher.login',
+            TaiKhoan::ROLE_NHAN_VIEN => Route::has('staff.dashboard') ? 'staff.dashboard' : 'staff.login',
+            TaiKhoan::ROLE_ADMIN => Route::has('admin.dashboard') ? 'admin.dashboard' : 'admin.login',
+            default => 'home.student.index',
+        };
+    }
 
-        return 'admin.dashboard';
+    public function loginRouteForPortal(string $portal): string
+    {
+        return match ($portal) {
+            'teacher' => 'teacher.login',
+            'staff' => 'staff.login',
+            'admin' => 'admin.login',
+            default => 'login',
+        };
     }
 
     public function logoutRedirectRouteFor(TaiKhoan $user): string
     {
         return match ($user->role) {
             TaiKhoan::ROLE_GIAO_VIEN => 'teacher.login',
-            TaiKhoan::ROLE_NHAN_VIEN, TaiKhoan::ROLE_ADMIN => 'staff.login',
+            TaiKhoan::ROLE_NHAN_VIEN => 'staff.login',
+            TaiKhoan::ROLE_ADMIN => 'admin.login',
             default => 'login',
         };
     }
@@ -303,10 +328,8 @@ class LoginService implements LoginServiceInterface
                 'actualPortal' => null,
                 'actualContext' => null,
                 'reason' => 'logged_out',
-                'message' => $expectedContext === 'staff'
-                    ? 'Phiên đăng nhập nội bộ đã hết hạn hoặc đã được thay thế ở tab khác.'
-                    : 'Phiên đăng nhập học viên đã hết hạn hoặc đã được thay thế ở tab khác.',
-                'redirectUrl' => route($expectedContext === 'staff' ? 'staff.login' : 'login'),
+                'message' => $this->loggedOutMessageForPortal($expectedContext),
+                'redirectUrl' => route($this->loginRouteForPortal($expectedContext)),
                 'csrfToken' => csrf_token(),
             ];
         }
@@ -336,9 +359,7 @@ class LoginService implements LoginServiceInterface
                 'actualPortal' => $actualPortal,
                 'actualContext' => $actualContext,
                 'reason' => 'portal_mismatch',
-                'message' => $expectedContext === 'staff'
-                    ? 'Tab nội bộ này không còn hợp lệ vì trình duyệt hiện đang đăng nhập ở cổng học viên.'
-                    : 'Tab học viên này không còn hợp lệ vì trình duyệt hiện đang đăng nhập ở cổng nội bộ.',
+                'message' => $this->portalMismatchMessage($expectedContext, $actualContext),
                 'redirectUrl' => route($this->landingRouteForUser($user)),
                 'csrfToken' => csrf_token(),
             ];
@@ -360,7 +381,7 @@ class LoginService implements LoginServiceInterface
     public function landingRouteForUser(TaiKhoan $user): string
     {
         return $user->isStaff()
-            ? $this->staffDashboardRouteFor($user)
+            ? $this->dashboardRouteForUser($user)
             : 'home.student.index';
     }
 
@@ -374,15 +395,43 @@ class LoginService implements LoginServiceInterface
 
         return match ((int) $user->role) {
             TaiKhoan::ROLE_GIAO_VIEN => 'teacher',
-            TaiKhoan::ROLE_NHAN_VIEN,
-            TaiKhoan::ROLE_ADMIN => 'staff',
+            TaiKhoan::ROLE_NHAN_VIEN => 'staff',
+            TaiKhoan::ROLE_ADMIN => 'admin',
             default => 'student',
         };
     }
 
     public function contextForPortal(string $portal): string
     {
-        return $portal === 'student' ? 'student' : 'staff';
+        return $portal;
+    }
+
+    private function loggedOutMessageForPortal(string $portal): string
+    {
+        return match ($portal) {
+            'teacher' => 'Phiên đăng nhập giảng viên đã hết hạn hoặc đã được thay thế ở tab khác.',
+            'staff' => 'Phiên đăng nhập nhân viên đã hết hạn hoặc đã được thay thế ở tab khác.',
+            'admin' => 'Phiên đăng nhập quản trị viên đã hết hạn hoặc đã được thay thế ở tab khác.',
+            default => 'Phiên đăng nhập học viên đã hết hạn hoặc đã được thay thế ở tab khác.',
+        };
+    }
+
+    private function portalMismatchMessage(string $expectedPortal, string $actualPortal): string
+    {
+        $expectedLabel = $this->portalLabel($expectedPortal);
+        $actualLabel = $this->portalLabel($actualPortal);
+
+        return "Tab {$expectedLabel} không còn hợp lệ vì trình duyệt hiện đang đăng nhập ở cổng {$actualLabel}.";
+    }
+
+    private function portalLabel(string $portal): string
+    {
+        return match ($portal) {
+            'teacher' => 'giảng viên',
+            'staff' => 'nhân viên',
+            'admin' => 'quản trị viên',
+            default => 'học viên',
+        };
     }
 
     private function consecutiveFailedAttempts(string $loginInput, string $ip): int

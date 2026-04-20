@@ -1,6 +1,6 @@
 # Auth - Vận Hành Và Kiểm Thử
 
-> Cập nhật: 2026-03-22
+> Cập nhật: 2026-04-20
 
 ## 1. Luồng nghiệp vụ chuẩn
 
@@ -26,11 +26,15 @@
 ### 1.3 Giáo viên / Nhân viên / Admin
 
 1. Giảng viên truy cập `/teacher/login`
-2. Nhân viên hoặc admin truy cập `/staff/login`
-3. Nhập email hoặc mã tài khoản
-4. Đăng nhập thành công
-5. Nếu là tài khoản mới tạo thì bị ép đổi mật khẩu
-6. Hiện tại đều đi vào khu nội bộ `/admin/dashboard`
+2. Nhân viên truy cập `/staff/login`
+3. Admin truy cập `/admin/login`
+4. Nhập email hoặc mã tài khoản
+5. Đăng nhập thành công
+6. Nếu là tài khoản mới tạo thì bị ép đổi mật khẩu
+7. Hệ thống chuyển tới dashboard đúng portal:
+   - giáo viên: `teacher.dashboard`
+   - nhân viên: `staff.dashboard`
+   - admin: `admin.dashboard`
 
 ### 1.4 Google login cho học viên
 
@@ -65,14 +69,15 @@
 - [ ] Tài khoản chưa verify bị chuyển tới `/email/verify`
 - [ ] Trang `/hoc-vien/thiet-bi-dang-nhap` hiển thị đúng thiết bị hiện tại
 
-### 2.2 Admin login
+### 2.2 Internal portal login
 
 - [ ] Giáo viên vào được `/teacher/login`
 - [ ] Nhân viên vào được `/staff/login`
-- [ ] Admin vào được `/staff/login`
+- [ ] Admin vào được `/admin/login`
 - [ ] Học viên không vào được các cổng nội bộ
 - [ ] Tick `Ghi nhớ đăng nhập` ở `/teacher/login` hoạt động đúng
 - [ ] Tick `Ghi nhớ đăng nhập` ở `/staff/login` hoạt động đúng
+- [ ] Tick `Ghi nhớ đăng nhập` ở `/admin/login` hoạt động đúng
 
 ### 2.3 Registration
 
@@ -123,6 +128,7 @@
 ### 2.8 Portal switching trong cùng trình duyệt
 
 - [ ] Đăng nhập `/staff/login` ở tab A, sau đó đăng nhập `/login` ở tab B cùng trình duyệt thì tab A không còn thao tác được như tab nội bộ hợp lệ
+- [ ] Đăng nhập `/admin/login` ở tab A, sau đó đăng nhập `/login` hoặc `/staff/login` ở tab B cùng trình duyệt thì tab A stale đúng portal
 - [ ] Khi quay lại tab A, hệ thống hiện cảnh báo phiên nội bộ đã bị thay thế và chuyển hướng mềm thay vì render `403` thô
 - [ ] Từ tab admin stale, bấm `Đăng xuất` không còn bị `419`
 - [ ] Đăng nhập học viên trước rồi đăng nhập staff ở tab khác thì tab học viên cũ cũng bị phát hiện tương tự
@@ -161,8 +167,8 @@ Kiểm tra:
 ### Staff báo không vào được admin
 
 Kiểm tra:
-1. có đang login đúng cổng `/teacher/login` hoặc `/staff/login` không
-2. role có phải `1`, `2`, `3` không
+1. có đang login đúng cổng `/teacher/login`, `/staff/login` hoặc `/admin/login` không
+2. role có khớp portal đang dùng không
 3. tài khoản có bị khóa hoặc bị tắt không
 4. có vừa đăng nhập cổng học viên ở tab khác cùng trình duyệt không
 
@@ -251,7 +257,7 @@ Kiểm tra:
 
 ## 6. Khuyến nghị backlog tiếp theo
 
-- thêm 2FA cho `/teacher/login` và `/staff/login`
+- thêm 2FA cho `/teacher/login`, `/staff/login`, `/admin/login`
 - thêm trang profile staff để tự đổi mật khẩu
 - thêm audit log cho link/unlink Google
 - thêm test feature riêng cho Auth khi repo có migration nền đầy đủ

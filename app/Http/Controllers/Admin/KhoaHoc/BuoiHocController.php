@@ -17,7 +17,7 @@ class BuoiHocController extends Controller
         $result = $this->buoiHocService->store($request);
 
         return redirect()
-            ->route('admin.lop-hoc.show', $result['lopHocSlug'])
+            ->route($this->portalRoute('lop-hoc.show'), $result['lopHocSlug'])
             ->with($result['flashType'], $result['message']);
     }
 
@@ -30,7 +30,7 @@ class BuoiHocController extends Controller
         }
 
         return redirect()
-            ->route('admin.lop-hoc.show', $result['lopHocSlug'])
+            ->route($this->portalRoute('lop-hoc.show'), $result['lopHocSlug'])
             ->with('success', $result['message']);
     }
 
@@ -43,7 +43,7 @@ class BuoiHocController extends Controller
         }
 
         return redirect()
-            ->route('admin.lop-hoc.show', $result['lopHocSlug'])
+            ->route($this->portalRoute('lop-hoc.show'), $result['lopHocSlug'])
             ->with('success', $result['message']);
     }
 
@@ -52,7 +52,12 @@ class BuoiHocController extends Controller
         $result = $this->buoiHocService->autoGenerate($request, $lopHocId);
 
         return redirect()
-            ->route('admin.lop-hoc.show', $result['lopHocSlug'])
+            ->route($this->portalRoute('lop-hoc.show'), $result['lopHocSlug'])
             ->with($result['flashType'], $result['message']);
+    }
+
+    private function portalRoute(string $suffix): string
+    {
+        return request()->routeIs('staff.*') ? 'staff.' . $suffix : 'admin.' . $suffix;
     }
 }
