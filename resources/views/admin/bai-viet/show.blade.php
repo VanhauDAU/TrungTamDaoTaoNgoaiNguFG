@@ -1,5 +1,9 @@
 @extends('layouts.admin')
 
+@php
+    $portalRouteBase = request()->routeIs('staff.*') ? 'staff' : 'admin';
+@endphp
+
 @section('title', $baiViet->tieuDe)
 @section('page-title', 'Bài Viết / Blog')
 @section('breadcrumb', 'Nội dung · Bài viết · Chi tiết')
@@ -14,7 +18,7 @@
     <div class="bs-page-header">
         <div>
             <div class="bs-breadcrumb">
-                <a href="{{ route('admin.bai-viet.index') }}"><i class="fas fa-newspaper me-1"></i> Bài viết</a>
+                <a href="{{ route($portalRouteBase . '.bai-viet.index') }}"><i class="fas fa-newspaper me-1"></i> Bài viết</a>
                 <span style="margin:0 6px;color:#cbd5e1">/</span> Chi tiết
             </div>
             <div class="bs-page-title" style="margin-top:4px">
@@ -22,13 +26,13 @@
             </div>
         </div>
         <div class="bs-header-actions">
-            <a href="{{ route('admin.bai-viet.edit', $baiViet->baiVietId) }}" class="bs-btn bs-btn-primary">
+            <a href="{{ route($portalRouteBase . '.bai-viet.edit', $baiViet->baiVietId) }}" class="bs-btn bs-btn-primary">
                 <i class="fas fa-pen"></i> Chỉnh sửa
             </a>
             <a href="{{ route('home.blog.show', $baiViet->slug) }}" class="bs-btn bs-btn-warning" target="_blank">
                 <i class="fas fa-external-link-alt"></i> Xem trên web
             </a>
-            <a href="{{ route('admin.bai-viet.index') }}" class="bs-btn bs-btn-secondary">
+            <a href="{{ route($portalRouteBase . '.bai-viet.index') }}" class="bs-btn bs-btn-secondary">
                 <i class="fas fa-arrow-left"></i> Quay lại
             </a>
         </div>
@@ -179,7 +183,7 @@
             <div class="bs-card">
                 <div class="bs-card-title"><i class="fas fa-cog"></i> Thao tác</div>
                 <div style="display:flex;flex-direction:column;gap:8px">
-                    <a href="{{ route('admin.bai-viet.edit', $baiViet->baiVietId) }}" class="bs-btn bs-btn-primary"
+                    <a href="{{ route($portalRouteBase . '.bai-viet.edit', $baiViet->baiVietId) }}" class="bs-btn bs-btn-primary"
                         style="justify-content:center">
                         <i class="fas fa-pen"></i> Chỉnh sửa
                     </a>
@@ -195,7 +199,7 @@
 @endsection
 
 {{-- Hidden delete form --}}
-<form id="delete-bv-form" action="{{ route('admin.bai-viet.destroy', $baiViet->baiVietId) }}" method="POST"
+<form id="delete-bv-form" action="{{ route($portalRouteBase . '.bai-viet.destroy', $baiViet->baiVietId) }}" method="POST"
     style="display:none">
     @csrf
     @method('DELETE')

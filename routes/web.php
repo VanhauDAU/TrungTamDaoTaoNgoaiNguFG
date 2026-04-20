@@ -259,8 +259,40 @@ Route::prefix('staff')->name('staff.')->middleware(['auth', 'portal:staff'])->gr
         Route::delete('/phieu-thu/{id}', [StaffHoaDonController::class, 'destroyPhieuThu'])->name('phieu-thu.destroy');
     });
 
+    Route::prefix('bai-viet')->name('bai-viet.')->group(function () {
+        Route::get('/', [AdminBaiVietController::class, 'index'])->name('index');
+        Route::get('/tao-moi', [AdminBaiVietController::class, 'create'])->name('create');
+        Route::post('/', [AdminBaiVietController::class, 'store'])->name('store');
+        Route::get('/thung-rac', [AdminBaiVietController::class, 'trash'])->name('trash');
+        Route::post('/xoa-nhieu', [AdminBaiVietController::class, 'bulkDestroy'])->name('bulk-destroy');
+        Route::post('/khoi-phuc-nhieu', [AdminBaiVietController::class, 'bulkRestore'])->name('bulk-restore');
+        Route::get('/{id}', [AdminBaiVietController::class, 'show'])->name('show');
+        Route::get('/{id}/sua', [AdminBaiVietController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [AdminBaiVietController::class, 'update'])->name('update');
+        Route::delete('/{id}', [AdminBaiVietController::class, 'destroy'])->name('destroy');
+        Route::patch('/{id}/toggle-status', [AdminBaiVietController::class, 'toggleStatus'])->name('toggle-status');
+        Route::post('/upload-image', [AdminBaiVietController::class, 'uploadImage'])->name('upload-image');
+        Route::post('/{id}/khoi-phuc', [AdminBaiVietController::class, 'restore'])->name('restore');
+        Route::delete('/{id}/xoa-vinh-vien', [AdminBaiVietController::class, 'forceDestroy'])->name('force-destroy');
+    });
+
+    Route::prefix('danh-muc-bai-viet')->name('danh-muc-bai-viet.')->group(function () {
+        Route::get('/', [AdminDanhMucBaiVietController::class, 'index'])->name('index');
+        Route::get('/tao-moi', [AdminDanhMucBaiVietController::class, 'create'])->name('create');
+        Route::post('/', [AdminDanhMucBaiVietController::class, 'store'])->name('store');
+        Route::get('/{id}/sua', [AdminDanhMucBaiVietController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [AdminDanhMucBaiVietController::class, 'update'])->name('update');
+        Route::delete('/{id}', [AdminDanhMucBaiVietController::class, 'destroy'])->name('destroy');
+    });
+
     Route::prefix('thong-bao')->name('notifications.')->group(function () {
         Route::get('/', [StaffThongBaoController::class, 'index'])->name('index');
+    });
+
+    Route::prefix('api/tags')->name('api.tags.')->group(function () {
+        Route::get('/', [AdminTagController::class, 'index'])->name('index');
+        Route::post('/', [AdminTagController::class, 'store'])->name('store');
+        Route::delete('/{id}', [AdminTagController::class, 'destroy'])->name('destroy');
     });
 
     Route::prefix('api/notifications')->name('api.notifications.')->group(function () {

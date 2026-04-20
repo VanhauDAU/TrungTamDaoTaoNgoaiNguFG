@@ -1,5 +1,9 @@
 @extends('layouts.admin')
 
+@php
+    $portalRouteBase = request()->routeIs('staff.*') ? 'staff' : 'admin';
+@endphp
+
 @section('title', 'Quản lý Danh Mục Bài Viết')
 @section('page-title', 'Danh Mục Bài Viết')
 @section('breadcrumb', 'Nội dung · Danh mục bài viết')
@@ -18,11 +22,11 @@
             <span>{{ $danhMucs->total() }} kết quả</span>
         </div>
         <div style="display:flex;gap:10px;align-items:center">
-            <a href="{{ route('admin.bai-viet.index') }}" class="btn-add-dm"
+            <a href="{{ route($portalRouteBase . '.bai-viet.index') }}" class="btn-add-dm"
                 style="background:linear-gradient(135deg,#7c3aed,#a78bfa)">
                 <i class="fas fa-newspaper"></i> Bài viết
             </a>
-            <a href="{{ route('admin.danh-muc-bai-viet.create') }}" class="btn-add-dm">
+            <a href="{{ route($portalRouteBase . '.danh-muc-bai-viet.create') }}" class="btn-add-dm">
                 <i class="fas fa-plus"></i> Thêm danh mục
             </a>
         </div>
@@ -62,7 +66,7 @@
     </div>
 
     {{-- ── Filter bar ──────────────────────────────────────────── --}}
-    <form action="{{ route('admin.danh-muc-bai-viet.index') }}" method="GET" class="dm-filter-bar" id="dm-filter-form">
+    <form action="{{ route($portalRouteBase . '.danh-muc-bai-viet.index') }}" method="GET" class="dm-filter-bar" id="dm-filter-form">
         <div class="search-wrap">
             <i class="fas fa-search"></i>
             <input type="text" name="q" class="search-input" placeholder="Tìm theo tên danh mục..."
@@ -86,7 +90,7 @@
         <button type="submit" class="dm-btn-filter dm-btn-filter-primary">
             <i class="fas fa-filter"></i> Lọc
         </button>
-        <a href="{{ route('admin.danh-muc-bai-viet.index') }}" class="dm-btn-filter dm-btn-filter-reset">
+        <a href="{{ route($portalRouteBase . '.danh-muc-bai-viet.index') }}" class="dm-btn-filter dm-btn-filter-reset">
             <i class="fas fa-times"></i> Đặt lại
         </a>
     </form>
@@ -136,7 +140,7 @@
                             </td>
                             <td>
                                 <div class="dm-actions">
-                                    <a href="{{ route('admin.danh-muc-bai-viet.edit', $dm->danhMucId) }}"
+                                    <a href="{{ route($portalRouteBase . '.danh-muc-bai-viet.edit', $dm->danhMucId) }}"
                                         class="dm-btn-action dm-btn-edit" title="Sửa">
                                         <i class="fas fa-pen"></i>
                                     </a>

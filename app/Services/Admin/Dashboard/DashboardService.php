@@ -125,7 +125,7 @@ class DashboardService
     /** Đăng ký sắp tới / gần đây: 5 đăng ký mới nhất có lớp + học viên */
     public function getUpcomingRegistrations(int $limit = 5)
     {
-        return DangKyLopHoc::with(['lopHoc.khoaHoc', 'taiKhoan'])
+        return DangKyLopHoc::with(['lopHoc.khoaHoc', 'taiKhoan.hoSoNguoiDung'])
             ->orderByDesc('ngayDangKy')
             ->limit($limit)
             ->get();
