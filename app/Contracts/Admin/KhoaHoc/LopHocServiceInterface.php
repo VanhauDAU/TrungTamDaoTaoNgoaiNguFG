@@ -77,4 +77,9 @@ interface LopHocServiceInterface
      * Preview xung đột giáo viên / phòng học theo dữ liệu đang nhập trên form.
      */
     public function previewSchedulingConflicts(Request $request): array;
+
+    /**
+     * Gộp lớp học (merge class).
+     */
+    public function mergeClass(string $sourceSlug, int $targetLopHocId): array;
 }

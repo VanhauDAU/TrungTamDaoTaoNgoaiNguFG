@@ -118,7 +118,6 @@ class LopHocController extends Controller
     {
         return response()->json($this->lopHocService->previewSchedulingConflicts($request));
     }
-
     private function portalRoute(string $suffix): string
     {
         return request()->routeIs('staff.*') ? 'staff.' . $suffix : 'admin.' . $suffix;
@@ -127,5 +126,6 @@ class LopHocController extends Controller
     protected function viewPrefix(): string
     {
         return 'legacy.admin-operational.lop-hoc';
+
     }
 }

@@ -435,7 +435,6 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'portal:admin'])->gr
         Route::delete('/{slug}', [AdminKhoaHocController::class, 'destroy'])->name('destroy');
         Route::patch('/{slug}/khoi-phuc', [AdminKhoaHocController::class, 'restore'])->name('restore');
     });
-
     // ── Ca Học ────────────────────────────────────────────────────────────
     Route::prefix('ca-hoc')->name('ca-hoc.')->group(function () {
         Route::get('/', [AdminCaHocController::class, 'index'])->name('index');

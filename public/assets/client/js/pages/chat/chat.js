@@ -828,6 +828,7 @@
                 method: "DELETE",
             });
 
+
             // Remove from state
             state.rooms = state.rooms.filter(
                 (r) => Number(r.id) !== Number(roomId),
@@ -856,6 +857,7 @@
             }
 
             renderRoomList();
+
             notice(
                 "success",
                 data.message ||

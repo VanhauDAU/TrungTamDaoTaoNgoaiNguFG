@@ -1,0 +1,30 @@
+﻿4f3b673 - merge: update dev with latest changes
+9102432 - feat: add Joi validation for user forms (create/update) (#136)
+32cda4d - Fix/upload avatar teacher (#143)
+8287c1f - feat: ho├án th├ánh chß╗⌐c n─âng upload avatar hß╗ìc vi├¬n (#142)
+9ba53a6 - Employee account management (#139)
+c64bc68 - Employee account management (#138)
+b2ae4d9 - Dev (#137)
+35bb6d9 - Dev (#133)
+810a83c - Merge branch 'main' into dev
+24342e7 - update blog admin and client
+16c588e - Dev (#132)
+a039f57 - docs: sync upload architecture documentation
+b89e0f5 - Dev (#131)
+60b48a4 - Dev (#129)
+97deb38 - Merge branch 'main' into dev
+695de13 - Feature/apply upload component admin forms (#130)
+3b68d30 - Feature/reusable upload component (#128)
+fa694ee - Dev (#127)
+49013c3 - Merge branch 'main' into dev
+ea4a590 - update t├¡nh n─âng cß║¡p nhß║¡t ß║únh ─æß║íi diß╗çn cß╗ºa hß╗ìc vi├¬n. (#126)
+d6fdc28 - Codex/fix register redirect flow (#125)
+0cd77d0 - fix bug file ContactController
+9378924 - Plan ß╗òn ─æß╗ïnh phi├¬n ─æ─âng nhß║¡p portal (#124)
+9925cc0 - create note API
+8873b52 - Feature register user (#123)
+00960ab - update and f─⌐ bug page Course, CategoryCourse, Classes,... (#122)
+c0bf4cc - Merge pull request #121 from VanhauDAU/feature_validationLogin_Register
+b71a988 - Update: dung JOI bat loi Login, Register
+43caa6d - link button main page
+f7ad792 - sß╗¡a lß║íi validate ─æß║ºu v├áo cho th├¬m ph├▓ng hß╗ìc v├á sß╗¡ dß╗Ñng th╞░ viß╗çn joi ─æß╗â th├¬m (#119)

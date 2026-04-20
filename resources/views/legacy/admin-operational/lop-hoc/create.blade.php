@@ -123,17 +123,20 @@
                 <div class="kf-form-row">
                     <div class="kf-form-group">
                         <label>Tỉnh / Thành phố <span class="req">*</span></label>
-                        <select id="tinhThanhSel" onchange="loadPhuongXa(this.value)">
+                        <select id="tinhThanhSel" onchange="document.getElementById('hiddenTinhThanhId').value=this.value; loadPhuongXa(this.value)">
                             <option value="">-- Chọn tỉnh --</option>
                             @foreach ($tinhThanhs as $tt)
-                                <option value="{{ $tt->tinhThanhId }}">{{ $tt->tenTinhThanh }}</option>
+                                <option value="{{ $tt->tinhThanhId }}"
+                                    {{ old('_tinhThanhId') == $tt->tinhThanhId ? 'selected' : '' }}>
+                                    {{ $tt->tenTinhThanh }}
+                                </option>
                             @endforeach
                         </select>
                     </div>
 
                     <div class="kf-form-group">
                         <label>Phường / Xã <span class="req">*</span></label>
-                        <select id="phuongXaSel" onchange="loadCoSo()" disabled>
+                        <select id="phuongXaSel" onchange="document.getElementById('hiddenPhuongXaId').value=this.value; loadCoSo()" disabled>
                             <option value="">-- Chọn tỉnh trước --</option>
                         </select>
                     </div>
@@ -189,29 +192,24 @@
             </div>
 
             <div class="kf-card">
-                <div class="kf-card-title"><i class="fas fa-clock"></i> Thời gian & Số buổi</div>
+                <div class="kf-card-title"><i class="fas fa-clock"></i> Thời gian</div>
                 <div class="kf-form-row">
                     <div class="kf-form-group">
                         <label>Ngày bắt đầu <span class="req">*</span></label>
-                        <input type="date" name="ngayBatDau" value="{{ old('ngayBatDau') }}"
+                        <input type="date" name="ngayBatDau" id="ngayBatDauInput" value="{{ old('ngayBatDau') }}"
                             class="{{ $errors->has('ngayBatDau') ? 'is-invalid' : '' }}">
                         @error('ngayBatDau')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
                     <div class="kf-form-group">
-                        <label>Số buổi dự kiến</label>
-                        <input type="number" name="soBuoiDuKien" id="soBuoiInput" value="{{ old('soBuoiDuKien') }}"
-                            min="1" placeholder="VD: 24">
-                        @error('soBuoiDuKien')
+                        <label>Ngày kết thúc <span class="req">*</span></label>
+                        <input type="date" name="ngayKetThuc" id="ngayKetThucInput" value="{{ old('ngayKetThuc') }}"
+                            class="{{ $errors->has('ngayKetThuc') ? 'is-invalid' : '' }}">
+                        @error('ngayKetThuc')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
-                        <div class="form-hint">Dùng cho kế hoạch đào tạo và tính năng tự động sinh buổi học.</div>
                     </div>
-                </div>
-                <div class="form-hint" style="margin-top:10px">
-                    Ngày kết thúc không nhập tay trong form lớp. Hệ thống sẽ tự đồng bộ theo buổi học cuối cùng còn hiệu
-                    lực.
                 </div>
             </div>
 
@@ -225,8 +223,10 @@
                 </div>
 
                 <div id="scheduleConflictHint" class="form-hint" style="margin-bottom:16px">
-                    Hoàn tất cơ sở, ca học, lịch học, ngày bắt đầu và số buổi dự kiến để bật kiểm tra xung đột realtime.
+                    Hoàn tất cơ sở, ca học, lịch học, ngày bắt đầu và ngày kết thúc để bật kiểm tra xung đột phòng học realtime.
                 </div>
+
+
 
                 <div class="kf-form-row">
                     <div class="kf-form-group">
@@ -235,7 +235,6 @@
                         <select name="taiKhoanId" id="giaoVienSel">
                             <option value="">-- Chọn cơ sở trước --</option>
                         </select>
-                        <div id="giaoVienConflictFeedback" class="form-hint"></div>
                         @error('taiKhoanId')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
@@ -243,7 +242,7 @@
 
                     <div class="kf-form-group">
                         <label>Phòng học</label>
-                        <select name="phongHocId" id="phongHocSel">
+                        <select name="phongHocId" id="phongHocSel" disabled>
                             <option value="">-- Chọn cơ sở trước --</option>
                         </select>
                         <div id="phongHocConflictFeedback" class="form-hint"></div>
@@ -277,9 +276,14 @@
                             <div class="pricing-field-grid">
                                 <div class="kf-form-group">
                                     <label>Học phí niêm yết (VNĐ)</label>
-                                    <input type="number" name="hocPhiNiemYet" id="hocPhiNiemYetInput"
-                                        value="{{ old('hocPhiNiemYet') }}" min="0" step="1000"
-                                        oninput="previewPricing()" class="form-control">
+                                    <div class="kf-input-with-prefix">
+                                        <span class="kf-input-prefix">₫</span>
+                                        <input type="number" name="hocPhiNiemYet" id="hocPhiNiemYetInput"
+                                            value="{{ old('hocPhiNiemYet') }}" min="0" step="1000"
+                                            oninput="previewPricing()" class="form-control"
+                                            placeholder="Ví dụ: 5.000.000">
+                                    </div>
+                                    <span class="form-hint">Đây là mức học phí niêm yết dùng để xác định quyền học của học viên.</span>
                                 </div>
                                 <div class="kf-form-group">
                                     <label>Số buổi cam kết</label>
@@ -290,40 +294,43 @@
                                 </div>
                                 <div class="kf-form-group">
                                     <label>Cách thu học phí</label>
-                                    <select name="loaiThu" id="loaiThuInput" onchange="previewPricing()"
-                                        class="form-select">
+                                    <div class="kf-segmented" data-input-id="loaiThuInput">
                                         @foreach ($loaiThuOptions as $value => $label)
-                                            <option value="{{ $value }}"
-                                                {{ (string) old('loaiThu', 0) === (string) $value ? 'selected' : '' }}>
-                                                {{ $label }}
-                                            </option>
+                                            @php
+                                                $isActive = (string) old('loaiThu', 0) === (string) $value;
+                                            @endphp
+                                            <div class="kf-segment-item {{ $isActive ? 'active' : '' }}" data-value="{{ $value }}">
+                                                <i class="fas {{ $value == 0 ? 'fa-wallet' : 'fa-calendar-alt' }}"></i> {{ $label }}
+                                            </div>
                                         @endforeach
-                                    </select>
+                                    </div>
+                                    <input type="hidden" name="loaiThu" id="loaiThuInput" value="{{ old('loaiThu', 0) }}">
                                 </div>
                                 <div class="kf-form-group">
                                     <label>Trạng thái chính sách giá</label>
-                                    <select name="trangThaiChinhSachGia" class="form-select">
-                                        <option value="1"
-                                            {{ old('trangThaiChinhSachGia', '1') === '1' ? 'selected' : '' }}>Đang áp dụng
-                                        </option>
-                                        <option value="0"
-                                            {{ old('trangThaiChinhSachGia') === '0' ? 'selected' : '' }}>Tạm ngưng</option>
-                                    </select>
+                                    <div class="kf-segmented" data-input-id="trangThaiChinhSachGiaInput">
+                                        @php
+                                            $currPolicy = (string) old('trangThaiChinhSachGia', '1');
+                                        @endphp
+                                        <div class="kf-segment-item {{ $currPolicy === '1' ? 'active' : '' }}" data-value="1">
+                                            <i class="fas fa-check-circle"></i> Đang áp dụng
+                                        </div>
+                                        <div class="kf-segment-item {{ $currPolicy === '0' ? 'active' : '' }}" data-value="0">
+                                            <i class="fas fa-pause-circle"></i> Tạm ngưng
+                                        </div>
+                                    </div>
+                                    <input type="hidden" name="trangThaiChinhSachGia" id="trangThaiChinhSachGiaInput" value="{{ $currPolicy }}">
+                                    <span class="form-hint">"Tạm ngưng" sẽ giữ nguyên dữ liệu nhưng không sinh công nợ mới.</span>
                                 </div>
                             </div>
 
-                            <div class="pricing-inline-grid">
-                                <div class="kf-form-group" id="mainDueGroup">
+                            <div class="pricing-one-col" id="mainDueGroup">
+                                <div class="kf-form-group">
                                     <label>Hạn thanh toán học phí</label>
                                     <input type="date" name="hanThanhToanHocPhi" id="hanThanhToanHocPhiInput"
                                         value="{{ old('hanThanhToanHocPhi') }}" oninput="previewPricing()"
                                         class="form-control">
-                                    <span class="form-hint">Dùng khi thu học phí một lần.</span>
-                                </div>
-                                <div class="kf-form-group pricing-note-field">
-                                    <label>Ghi chú chính sách</label>
-                                    <textarea name="ghiChuChinhSach" rows="3" placeholder="Ví dụ: học phí chưa bao gồm tài liệu hoặc phí thi thử."
-                                        class="form-control">{{ old('ghiChuChinhSach') }}</textarea>
+                                    <span class="form-hint">Chỉ dùng khi chọn "Thu một lần". Hạn này sẽ áp dụng cho toàn bộ học phí chính.</span>
                                 </div>
                             </div>
 
@@ -373,9 +380,13 @@
                                             </div>
                                             <div class="dot-thu-field">
                                                 <label>Số tiền</label>
-                                                <input type="number" name="dotThu[{{ $index }}][soTien]"
-                                                    value="{{ $dotThu['soTien'] ?? '' }}" min="0" step="1000"
-                                                    oninput="previewPricing()" class="form-control">
+                                                <input type="hidden" name="dotThu[{{ $index }}][soTien]"
+                                                    value="{{ $dotThu['soTien'] ?? '' }}" class="dot-thu-amount-hidden">
+                                                <input type="text" inputmode="numeric"
+                                                    value="{{ isset($dotThu['soTien']) && $dotThu['soTien'] !== '' ? number_format((int)$dotThu['soTien'], 0, '', ',') : '' }}"
+                                                    class="form-control dot-thu-amount-display"
+                                                    placeholder="VD: 2,000,000"
+                                                    oninput="syncDotThuAmount(this)">
                                             </div>
                                             <div class="dot-thu-field">
                                                 <label>Hạn thanh toán</label>
@@ -423,7 +434,7 @@
                                     <div class="pricing-preview-card">
                                         <div class="pricing-preview-label">Tổng công nợ dự kiến</div>
                                         <div class="pricing-preview-value" id="prev-total">0 đ</div>
-                                        <div class="pricing-preview-note" id="prev-camket">Theo số buổi dự kiến</div>
+                                        <div class="pricing-preview-note" id="prev-camket">—</div>
                                     </div>
                                 </div>
                             </div>
@@ -510,8 +521,7 @@
                                         </div>
                                     </div>
                                 @empty
-                                    <div class="form-hint phu-phi-empty" id="phuPhiEmptyHint">Chưa có khoản bổ sung nào.
-                                    </div>
+                                    <div class="form-hint phu-phi-empty" id="phuPhiEmptyHint">Chưa có khoản bổ sung nào.</div>
                                 @endforelse
                             </div>
                         </div>
@@ -519,24 +529,18 @@
                 </div>
             </div>
 
-            <div class="pricing-secondary-grid">
-                <div class="kf-card">
-                    <div class="kf-card-title"><i class="fas fa-users"></i> Vận hành lớp</div>
-
-                    <div class="kf-form-row">
-                        <div class="kf-form-group">
-                            <label>Sĩ số học viên tối đa</label>
-                            <input type="number" name="soHocVienToiDa" value="{{ old('soHocVienToiDa') }}"
-                                placeholder="VD: 20" min="1">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="kf-card">
-                    <div class="kf-card-title"><i class="fas fa-sliders-h"></i> Trạng thái lớp</div>
+            <div class="kf-card">
+                <div class="kf-card-title"><i class="fas fa-cog"></i> Cài đặt vận hành & Hiển thị</div>
+                <div class="kf-form-row">
                     <div class="kf-form-group">
-                        <label>Trạng thái <span class="req">*</span></label>
-                        <select name="trangThai">
+                        <label>Sĩ số học viên tối đa</label>
+                        <input type="number" name="soHocVienToiDa" value="{{ old('soHocVienToiDa') }}"
+                            placeholder="VD: 20" min="1" class="form-control">
+                        <span class="form-hint">Số lượng học viên tối đa cho phép. Không vượt quá sức chứa phòng học.</span>
+                    </div>
+                    <div class="kf-form-group">
+                        <label>Trạng thái lớp <span class="req">*</span></label>
+                        <select name="trangThai" class="form-select">
                             @php
                                 $selectedTrangThai = (string) old(
                                     'trangThai',
@@ -544,13 +548,19 @@
                                 );
                             @endphp
                             @foreach (\App\Models\Education\LopHoc::trangThaiOptions() as $value => $label)
-                                <option value="{{ $value }}"
-                                    {{ $selectedTrangThai === (string) $value ? 'selected' : '' }}>
+                                <option value="{{ $value }}" {{ $selectedTrangThai === (string) $value ? 'selected' : '' }}>
                                     {{ $label }}
                                 </option>
                             @endforeach
                         </select>
+                        <span class="form-hint">Xác định lớp đang mở đăng ký, đang học hay đã kết thúc.</span>
                     </div>
+                </div>
+                <div class="kf-form-group mt-3">
+                    <label>Ghi chú chính sách hiển thị</label>
+                    <textarea name="ghiChuChinhSach" rows="3" placeholder="Ví dụ: Học phí chưa bao gồm giáo trình quốc tế..."
+                        class="form-control">{{ old('ghiChuChinhSach') }}</textarea>
+                    <span class="form-hint">Thông tin này sẽ hiển thị công khai cho học viên và phụ huynh.</span>
                 </div>
             </div>
         </div>
@@ -578,6 +588,32 @@
                 document.querySelectorAll('.kf-tab-panel').forEach(p => p.classList.remove('active'));
                 btn.classList.add('active');
                 document.getElementById(btn.dataset.tab).classList.add('active');
+            });
+        });
+
+        // Toggle Segmented Control
+        document.querySelectorAll('.kf-segmented .kf-segment-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const container = this.closest('.kf-segmented');
+                const inputId = container.dataset.inputId;
+                const input = document.getElementById(inputId);
+                const value = this.dataset.value;
+
+                // Update UI
+                container.querySelectorAll('.kf-segment-item').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+
+                // Update Input & Trigger Preview
+                if (input) {
+                    input.value = value;
+                    // Trigger native events for consistency
+                    input.dispatchEvent(new Event('change', { bubbles: true }));
+                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+
+                if (typeof previewPricing === 'function') {
+                    previewPricing();
+                }
             });
         });
 
@@ -614,8 +650,11 @@
             const res = await fetch(`/admin/api/phuong-xa-co-so/${tinhThanhId}`).then(r => r.json());
             if (res.success && res.phuongXas.length) {
                 pSel.innerHTML = '<option value="">-- Chọn phường/xã --</option>' +
-                    res.phuongXas.map(p => `<option value="${p.maPhuongXa}">${p.tenPhuongXa}</option>`).join('');
+                    res.phuongXas.map(p =>
+                        `<option value="${p.maPhuongXa}" ${String(p.maPhuongXa) === oldPhuongXa ? 'selected' : ''}>${p.tenPhuongXa}</option>`
+                    ).join('');
                 pSel.disabled = false;
+                if (oldPhuongXa && pSel.value) loadCoSo();
             } else {
                 pSel.innerHTML = '<option value="">Không có phường/xã nào có cơ sở</option>';
             }
@@ -636,9 +675,10 @@
             if (res.success && res.coSos.length) {
                 cSel.innerHTML = '<option value="">-- Chọn cơ sở --</option>' +
                     res.coSos.map(c =>
-                        `<option value="${c.coSoId}">${c.tenCoSo}${c.tenPhuongXa ? ' — ' + c.tenPhuongXa : ''}</option>`
+                        `<option value="${c.coSoId}" ${String(c.coSoId) === oldCoSoId ? 'selected' : ''}>${c.tenCoSo}${c.tenPhuongXa ? ' — ' + c.tenPhuongXa : ''}</option>`
                     ).join('');
                 cSel.disabled = false;
+                if (cSel.value) loadPhongVaGV(cSel.value);
             } else {
                 cSel.innerHTML = '<option value="">Không tìm thấy cơ sở</option>';
             }
@@ -648,6 +688,8 @@
         let preferredGV = "{{ old('taiKhoanId') }}";
         let conflictPreviewTimer = null;
         let conflictPreviewVersion = 0;
+        const oldPhuongXa = "{{ old('_phuongXaId') }}";
+        const oldCoSoId = "{{ old('coSoId') }}";
 
         async function loadPhongVaGV(coSoId) {
             const phongSel = document.getElementById('phongHocSel');
@@ -660,6 +702,7 @@
 
             if (!coSoId) {
                 phongSel.innerHTML = '<option value="">-- Chọn cơ sở trước --</option>';
+                phongSel.disabled = true;
                 gvSel.innerHTML = '<option value="">-- Chọn cơ sở trước --</option>';
                 preferredPhong = '';
                 preferredGV = '';
@@ -698,8 +741,66 @@
             preferredPhong = phongSel.value || '';
             preferredGV = gvSel.value || '';
 
+            updatePhongHocAvailability();
             updateSucChuaHint();
             triggerConflictPreview();
+        }
+
+        function updatePhongHocAvailability() {
+            const phongSel = document.getElementById('phongHocSel');
+            const ngayBD = document.getElementById('ngayBatDauInput')?.value || '';
+            const ngayKT = document.getElementById('ngayKetThucInput')?.value || '';
+            const coSoId = document.getElementById('coSoSel')?.value || '';
+
+            if (!coSoId) {
+                phongSel.disabled = true;
+                return;
+            }
+
+            if (!ngayBD || !ngayKT) {
+                phongSel.disabled = true;
+                phongSel.title = 'Vui lòng chọn đầy đủ ngày bắt đầu và ngày kết thúc trước';
+                return;
+            }
+
+            phongSel.disabled = false;
+            phongSel.title = '';
+        }
+
+        function formatThousands(value) {
+            const num = String(value).replace(/[^\d]/g, '');
+            return num.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        }
+
+        function syncHocPhiFromDisplay(displayInput) {
+            const raw = String(displayInput.value).replace(/[^\d]/g, '');
+            document.getElementById('hocPhiNiemYetInput').value = raw;
+            const pos = displayInput.selectionStart;
+            const oldLen = displayInput.value.length;
+            displayInput.value = formatThousands(raw);
+            const newLen = displayInput.value.length;
+            displayInput.setSelectionRange(pos + (newLen - oldLen), pos + (newLen - oldLen));
+            previewPricing();
+        }
+
+        function syncDotThuAmount(displayInput) {
+            const raw = String(displayInput.value).replace(/[^\d]/g, '');
+            const hidden = displayInput.parentElement.querySelector('.dot-thu-amount-hidden');
+            if (hidden) hidden.value = raw;
+            const pos = displayInput.selectionStart;
+            const oldLen = displayInput.value.length;
+            displayInput.value = formatThousands(raw);
+            const newLen = displayInput.value.length;
+            displayInput.setSelectionRange(pos + (newLen - oldLen), pos + (newLen - oldLen));
+            previewPricing();
+        }
+
+        function initHocPhiDisplay() {
+            const hidden = document.getElementById('hocPhiNiemYetInput');
+            const display = document.getElementById('hocPhiNiemYetDisplay');
+            if (hidden && display && hidden.value) {
+                display.value = formatThousands(hidden.value);
+            }
         }
 
         function setConflictSummary(status, message) {
@@ -737,7 +838,6 @@
         }
 
         function clearConflictFeedback() {
-            setFieldConflictFeedback('giaoVien', null);
             setFieldConflictFeedback('phongHoc', null);
             setConflictSummary('', '');
         }
@@ -748,24 +848,22 @@
         }
 
         async function previewSchedulingConflicts() {
-            const teacherId = document.getElementById('giaoVienSel')?.value || '';
             const roomId = document.getElementById('phongHocSel')?.value || '';
 
-            if (!teacherId && !roomId) {
+            if (!roomId) {
                 clearConflictFeedback();
                 setConflictSummary('', '');
                 document.getElementById('scheduleConflictHint').textContent =
-                    'Chọn giáo viên hoặc phòng học để bắt đầu kiểm tra xung đột realtime.';
+                    'Chọn phòng học để bắt đầu kiểm tra xung đột realtime.';
                 return;
             }
 
             const params = new URLSearchParams({
                 coSoId: document.getElementById('coSoSel')?.value || '',
                 caHocId: document.querySelector('[name="caHocId"]')?.value || '',
-                taiKhoanId: teacherId,
                 phongHocId: roomId,
                 ngayBatDau: document.querySelector('[name="ngayBatDau"]')?.value || '',
-                soBuoiDuKien: document.querySelector('[name="soBuoiDuKien"]')?.value || '',
+                ngayKetThuc: document.querySelector('[name="ngayKetThuc"]')?.value || '',
                 lichHoc: document.getElementById('lichHocInput')?.value || '',
             });
 
@@ -787,7 +885,6 @@
                     return;
                 }
 
-                setFieldConflictFeedback('giaoVien', result.fieldStates?.taiKhoanId || null);
                 setFieldConflictFeedback('phongHoc', result.fieldStates?.phongHocId || null);
                 setConflictSummary(result.ok ? 'ok' : 'error', result.message || '');
             } catch (error) {
@@ -826,11 +923,31 @@
         });
         document.getElementById('giaoVienSel')?.addEventListener('change', function() {
             preferredGV = this.value || '';
-            triggerConflictPreview();
         });
         document.querySelector('[name="caHocId"]')?.addEventListener('change', triggerConflictPreview);
-        document.querySelector('[name="ngayBatDau"]')?.addEventListener('change', triggerConflictPreview);
-        document.querySelector('[name="soBuoiDuKien"]')?.addEventListener('input', triggerConflictPreview);
+        document.querySelector('[name="ngayBatDau"]')?.addEventListener('change', function() {
+            validateDateRange();
+            updatePhongHocAvailability();
+            triggerConflictPreview();
+        });
+        document.querySelector('[name="ngayKetThuc"]')?.addEventListener('change', function() {
+            validateDateRange();
+            updatePhongHocAvailability();
+            triggerConflictPreview();
+        });
+
+        function validateDateRange() {
+            const ngayBatDau = document.getElementById('ngayBatDauInput');
+            const ngayKetThuc = document.getElementById('ngayKetThucInput');
+            if (!ngayBatDau || !ngayKetThuc) return;
+
+            if (ngayBatDau.value) {
+                ngayKetThuc.min = ngayBatDau.value;
+            }
+            if (ngayBatDau.value && ngayKetThuc.value && ngayKetThuc.value < ngayBatDau.value) {
+                ngayKetThuc.value = ngayBatDau.value;
+            }
+        }
 
         document.querySelector('form')?.addEventListener('submit', function(e) {
             const ps = document.getElementById('phongHocSel');
@@ -854,7 +971,7 @@
         }
 
         function parseMoneyInputValue(value) {
-            const normalized = String(value || '').trim().replace(',', '.');
+            const normalized = String(value || '').trim().replace(/,/g, '').replace('.', '.');
             const parsed = Number.parseFloat(normalized);
             return Number.isFinite(parsed) ? parsed : 0;
         }
@@ -878,7 +995,6 @@
         function getPricingInputs() {
             return {
                 hocPhi: parseMoneyInputValue(document.getElementById('hocPhiNiemYetInput')?.value || 0),
-                soBuoiCamKet: String(document.getElementById('soBuoiCamKetInput')?.value || '').trim(),
                 ghiChu: String(document.querySelector('[name="ghiChuChinhSach"]')?.value || '').trim(),
                 hanThanhToanHocPhi: String(document.getElementById('hanThanhToanHocPhiInput')?.value || '').trim(),
             };
@@ -887,12 +1003,11 @@
         function hasPricingConfiguration() {
             const {
                 hocPhi,
-                soBuoiCamKet,
                 ghiChu,
                 hanThanhToanHocPhi
             } = getPricingInputs();
 
-            return hocPhi > 0 || Boolean(soBuoiCamKet) || Boolean(ghiChu) || Boolean(hanThanhToanHocPhi) || getDotThuRows()
+            return hocPhi > 0 || Boolean(ghiChu) || Boolean(hanThanhToanHocPhi) || getDotThuRows()
                 .length > 0;
         }
 
@@ -964,9 +1079,16 @@
 
                 if (amountInput) {
                     amountInput.setCustomValidity('');
-                    if (isTheoDot && parseMoneyInputValue(amountInput.value) <= 0) {
+                    const amountVal = parseMoneyInputValue(amountInput.value);
+                    if (isTheoDot && amountVal <= 0) {
                         amountInput.setCustomValidity('Số tiền đợt thu phải lớn hơn 0.');
+                        // Also mark the display input for visual feedback
+                        const displayInput = row.querySelector('.dot-thu-amount-display');
+                        if (displayInput) displayInput.classList.add('is-invalid');
                         hasError = true;
+                    } else {
+                        const displayInput = row.querySelector('.dot-thu-amount-display');
+                        if (displayInput) displayInput.classList.remove('is-invalid');
                     }
                 }
 
@@ -1091,8 +1213,7 @@
 
         function previewPricing() {
             const {
-                hocPhi,
-                soBuoiCamKet
+                hocPhi
             } = getPricingInputs();
             const loaiThuSelect = document.getElementById('loaiThuInput');
             const preview = document.getElementById('pricingPreview');
@@ -1116,8 +1237,7 @@
             document.getElementById('prev-hocphi').textContent = hocPhi > 0 ? fmtMoney(hocPhi) : 'Chưa nhập';
             document.getElementById('prev-phuphi').textContent = fmtMoney(defaultTotal);
             document.getElementById('prev-total').textContent = fmtMoney(hocPhi + defaultTotal);
-            document.getElementById('prev-camket').textContent = soBuoiCamKet ? `${soBuoiCamKet} buổi cam kết` :
-                'Theo số buổi dự kiến';
+            document.getElementById('prev-camket').textContent = '—';
             document.getElementById('prev-loaithu').textContent = loaiThuSelect?.options[loaiThuSelect.selectedIndex]
                 ?.text || '—';
             preview.style.display = 'block';
@@ -1192,7 +1312,8 @@
                 </div>
                 <div class="dot-thu-field">
                     <label>Số tiền</label>
-                    <input type="number" name="dotThu[${dotThuIndex}][soTien]" min="0" step="1000" oninput="previewPricing()" class="form-control">
+                    <input type="hidden" name="dotThu[${dotThuIndex}][soTien]" class="dot-thu-amount-hidden">
+                    <input type="text" inputmode="numeric" class="form-control dot-thu-amount-display" placeholder="VD: 2,000,000" oninput="syncDotThuAmount(this)">
                 </div>
                 <div class="dot-thu-field">
                     <label>Hạn thanh toán</label>
@@ -1295,8 +1416,18 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             updateLichHoc();
+            initHocPhiDisplay();
             previewPricing();
             updateSucChuaHint();
+            validateDateRange();
+            updatePhongHocAvailability();
+
+            // Restore location cascade when form has old() values (validation error)
+            const tinhSel = document.getElementById('tinhThanhSel');
+            if (tinhSel && tinhSel.value) {
+                loadPhuongXa(tinhSel.value);
+            }
+
             triggerConflictPreview();
         });
 
