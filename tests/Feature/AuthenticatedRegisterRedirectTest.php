@@ -49,11 +49,13 @@ class AuthenticatedRegisterRedirectTest extends TestCase
     {
         Schema::disableForeignKeyConstraints();
 
-        foreach ([
-            'password_reset_tokens',
-            'sessions',
-            'taikhoan',
-        ] as $table) {
+        foreach (
+            [
+                'password_reset_tokens',
+                'sessions',
+                'taikhoan',
+            ] as $table
+        ) {
             Schema::dropIfExists($table);
         }
 

@@ -207,7 +207,7 @@ class ClientChatController extends Controller
 
         return response()->json([
             'message' => $room->isDirect()
-                ? 'Đã xóa đoạn chat.'
+                ? 'Đã ẩn đoạn chat.'
                 : 'Đã rời khỏi nhóm chat lớp học.',
         ]);
     }

@@ -5,6 +5,7 @@
     const root = document.getElementById("chat-app");
     const POLL_MS = 1500;
     const ROOM_MS = 5000;
+    const HISTORY_TOP_LOAD_THRESHOLD = 96;
     const MOBILE_BREAKPOINT = 991.98;
     const WEEKDAY_LABELS = [
         "Chủ Nhật",
@@ -104,6 +105,8 @@
     let typingStopTimer = null;
     let typingActive = false;
     let highlightTimer = null;
+    let historyScrollFrame = null;
+    const reactionRequestVersions = new Map();
 
     function esc(v) {
         return String(v ?? "")
@@ -126,6 +129,18 @@
         return (
             state.rooms.find((room) => Number(room.id) === Number(id)) || null
         );
+    }
+
+    function roomListSignature(rooms) {
+        return (Array.isArray(rooms) ? rooms : [])
+            .map((room) => {
+                const id = room?.id ?? "";
+                const unread = room?.unreadCount ?? 0;
+                const preview = room?.lastMessagePreview ?? "";
+                const updatedAt = room?.updatedAt ?? "";
+                return `${id}|${unread}|${preview}|${updatedAt}`;
+            })
+            .join("||");
     }
 
     function initialsFromText(value, fallback = "CH") {
@@ -343,6 +358,22 @@
                              </div>`
                 }
             </div>`;
+    }
+
+    function syncMessageSearchUi() {
+        const resultsWrap = document.getElementById("chat-search-results-wrap");
+        if (resultsWrap) {
+            resultsWrap.innerHTML = messageSearchResultsHtml();
+        }
+
+        const clearButtons = root.querySelectorAll("[data-clear-message-search]");
+        clearButtons.forEach((button) => {
+            const inResultsHead = button.classList.contains(
+                "chat-search-results-close",
+            );
+            if (inResultsHead) return;
+            button.hidden = !String(state.messageSearchQuery || "").trim();
+        });
     }
 
     function nearBottom() {
@@ -740,9 +771,9 @@
         const isDirect = room.type === "direct";
         const title = isDirect ? "Xóa đoạn chat?" : "Rời nhóm chat?";
         const body = isDirect
-            ? `Đoạn chat với <strong>${esc(room.name || "người dùng")}</strong> sẽ bị xóa vĩnh viễn khỏi cơ sở dữ liệu. Bạn không thể hoàn tác hành động này.`
+            ? `Đoạn chat với <strong>${esc(room.name || "người dùng")}</strong> sẽ được ẩn khỏi danh sách chat của bạn. Bạn có thể mở lại từ danh sách thành viên lớp hoặc khi có tin nhắn mới.`
             : `Bạn sẽ rời khỏi nhóm chat lớp <strong>${esc(room.name || "lớp học")}</strong>. Bạn có thể tham gia lại sau.`;
-        const confirmLabel = isDirect ? "Xóa vĩnh viễn" : "Rời nhóm";
+        const confirmLabel = isDirect ? "Ẩn đoạn chat" : "Rời nhóm";
 
         // Remove existing modal if any
         document.getElementById("chat-delete-confirm-modal")?.remove();
@@ -792,7 +823,10 @@
         if (!roomId) return;
 
         try {
-            await api(ep(BS.endpoints.leave, roomId), { method: "DELETE" });
+            const room = roomById(roomId);
+            const data = await api(ep(BS.endpoints.leave, roomId), {
+                method: "DELETE",
+            });
 
             // Remove from state
             state.rooms = state.rooms.filter(
@@ -822,7 +856,13 @@
             }
 
             renderRoomList();
-            notice("success", "Đã xóa đoạn chat thành công.");
+            notice(
+                "success",
+                data.message ||
+                    (room?.type === "direct"
+                        ? "Đã ẩn đoạn chat."
+                        : "Đã rời khỏi nhóm chat."),
+            );
         } catch (error) {
             notice("error", error.payload?.message || error.message);
         }
@@ -1133,6 +1173,31 @@
         return true;
     }
 
+    function replaceMessageRow(messageId) {
+        const numericId = Number(messageId);
+        if (!numericId) return false;
+
+        const index = state.messages.findIndex(
+            (message) => Number(message.id) === numericId,
+        );
+        if (index < 0) return false;
+
+        const list = root.querySelector(".chat-message-list");
+        if (!list) return false;
+
+        const currentRow = list.querySelector(
+            `[data-message-id="${CSS.escape(String(numericId))}"]`,
+        );
+        if (!currentRow) return false;
+
+        const replacement = buildMessageEl(
+            state.messages[index],
+            shouldShowMessageTime(index),
+        );
+        currentRow.replaceWith(replacement);
+        return true;
+    }
+
     function firstUnreadIncomingMessageId() {
         const markerId = Number(state.unreadMarkerMessageId);
         if (!Number.isFinite(markerId) || markerId <= 0) return null;
@@ -1245,24 +1310,26 @@
 
         state.messageSearchOpen = true;
         renderMainHeader();
+        syncMessageSearchUi();
         document.getElementById("chat-message-search")?.focus();
     }
 
     async function performMessageSearch(query) {
         const keyword = String(query || "").trim();
         state.messageSearchQuery = keyword;
+        syncMessageSearchUi();
 
         clearTimeout(messageSearchTimer);
 
         if (!state.selectedRoom || !state.selectedRoom.canAccess || keyword.length < 2) {
             state.messageSearchResults = [];
             state.messageSearchLoading = false;
-            renderMainHeader();
+            syncMessageSearchUi();
             return;
         }
 
         state.messageSearchLoading = true;
-        renderMainHeader();
+        syncMessageSearchUi();
 
         const roomId = Number(state.selectedRoom.id);
         messageSearchTimer = setTimeout(async () => {
@@ -1295,7 +1362,7 @@
             } finally {
                 if (state.messageSearchQuery === keyword) {
                     state.messageSearchLoading = false;
-                    renderMainHeader();
+                    syncMessageSearchUi();
                 }
             }
         }, 220);
@@ -1447,7 +1514,7 @@
                 <div class="chat-room-empty">
                     <i class="fas fa-comments"></i>
                     <h4>Chưa có phòng chat</h4>
-                    <p>Bạn chưa có lớp học phù hợp để tham gia trao đổi.</p>
+                    <p>Bạn chưa có lớp học phù hợp để tham gia trao đổi. Nếu đã ẩn một đoạn chat riêng, hãy mở lại từ danh sách thành viên lớp.</p>
                 </div>`;
             return;
         }
@@ -1591,18 +1658,14 @@
                                                 placeholder="Tìm theo nội dung, người gửi hoặc tên tệp"
                                                 value="${esc(state.messageSearchQuery)}"
                                             >
-                                            ${
-                                                state.messageSearchQuery
-                                                    ? `<button type="button" class="chat-main-search-clear" data-clear-message-search aria-label="Xóa tìm kiếm">
-                                                            <i class="fas fa-xmark"></i>
-                                                       </button>`
-                                                    : ""
-                                            }
+                                            <button type="button" class="chat-main-search-clear" data-clear-message-search aria-label="Xóa tìm kiếm" ${state.messageSearchQuery ? "" : "hidden"}>
+                                                <i class="fas fa-xmark"></i>
+                                           </button>
                                         </label>
                                   </div>`
                                : ""
                        }
-                       ${messageSearchResultsHtml()}`
+                       <div id="chat-search-results-wrap">${messageSearchResultsHtml()}</div>`
                     : ""
             }`;
 
@@ -2295,8 +2358,7 @@
     async function loadSelectedRoomMessages(roomId, opts = {}) {
         const { preservePosition = false, before = null } = opts;
         const board = document.getElementById("chat-message-board");
-        const previousHeight =
-            before && board ? board.scrollHeight : 0;
+        const previousHeight = before && board ? board.scrollHeight : 0;
         const previousTop = before && board ? board.scrollTop : 0;
         const distanceFromBottom = board
             ? Math.max(
@@ -2334,13 +2396,13 @@
             syncMessagesState(messages);
         }
 
-        renderMainHeader();
         renderMessageBoard();
-        renderComposer();
-        renderRoomList();
-        renderInfoPanel();
 
         if (!before) {
+            renderMainHeader();
+            renderComposer();
+            renderRoomList();
+            renderInfoPanel();
             await loadRoomMembers(roomId);
         }
 
@@ -2485,7 +2547,7 @@
         }
 
         state.loadingOlderMessages = true;
-        renderMessageBoard();
+        syncHistoryStatus();
 
         try {
             const oldestMessage = state.messages[0];
@@ -2634,22 +2696,8 @@
                 });
 
                 const nextRooms = Array.isArray(data.rooms) ? data.rooms : [];
-                const prevSnapshot = JSON.stringify(
-                    state.rooms.map((room) => ({
-                        id: room.id,
-                        unreadCount: room.unreadCount,
-                        lastMessagePreview: room.lastMessagePreview,
-                        updatedAt: room.updatedAt,
-                    })),
-                );
-                const nextSnapshot = JSON.stringify(
-                    nextRooms.map((room) => ({
-                        id: room.id,
-                        unreadCount: room.unreadCount,
-                        lastMessagePreview: room.lastMessagePreview,
-                        updatedAt: room.updatedAt,
-                    })),
-                );
+                const prevSnapshot = roomListSignature(state.rooms);
+                const nextSnapshot = roomListSignature(nextRooms);
 
                 if (prevSnapshot !== nextSnapshot) {
                     const previousSelectedRoom = state.selectedRoom
@@ -2924,6 +2972,9 @@
         try {
             closeMessageMenu();
             closeReactionPicker();
+            const nextVersion =
+                (reactionRequestVersions.get(Number(messageId)) || 0) + 1;
+            reactionRequestVersions.set(Number(messageId), nextVersion);
 
             const data = await api(
                 BS.endpoints.react.replace("__MESSAGE__", messageId),
@@ -2936,6 +2987,12 @@
                 },
             );
 
+            if (
+                reactionRequestVersions.get(Number(messageId)) !== nextVersion
+            ) {
+                return;
+            }
+
             replaceMessageInState(data.chatMessage);
             syncRoomInList({ ...data.room, unreadCount: 0 });
             state.selectedRoom = {
@@ -2944,9 +3001,10 @@
                 unreadCount: 0,
             };
 
-            renderMessageBoard();
+            if (!replaceMessageRow(messageId)) {
+                renderMessageBoard();
+            }
             renderRoomList();
-            renderMainHeader();
             renderInfoPanel();
             notice("", "");
         } catch (error) {
@@ -3037,7 +3095,6 @@
             state.replyingTo = null;
             attachments.forEach(releaseDraftAttachment);
 
-            renderMessageBoard();
             renderComposer();
             renderRoomList();
             renderMainHeader();
@@ -3347,12 +3404,16 @@
     root.addEventListener(
         "scroll",
         (event) => {
-            if (
-                event.target.id === "chat-message-board" &&
-                event.target.scrollTop <= 80
-            ) {
+            if (event.target.id !== "chat-message-board") return;
+
+            if (event.target.scrollTop > HISTORY_TOP_LOAD_THRESHOLD) return;
+
+            if (historyScrollFrame !== null) return;
+
+            historyScrollFrame = window.requestAnimationFrame(() => {
+                historyScrollFrame = null;
                 loadOlderMessages();
-            }
+            });
         },
         true,
     );
