@@ -166,6 +166,7 @@ Route::prefix('teacher')->name('teacher.')->middleware(['auth', 'portal:teacher'
 
     Route::prefix('lop-hoc-cua-toi')->name('classes.')->group(function () {
         Route::get('/', [TeacherLopHocController::class, 'index'])->name('index');
+        Route::get('/{slug}', [TeacherLopHocController::class, 'show'])->name('show');
     });
 
     Route::prefix('lich-day')->name('schedule.')->group(function () {
