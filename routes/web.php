@@ -196,6 +196,10 @@ Route::prefix('teacher')->name('teacher.')->middleware(['auth', 'portal:teacher'
 
     Route::prefix('diem-danh')->name('attendance.')->group(function () {
         Route::get('/', [TeacherDiemDanhController::class, 'index'])->name('index');
+        Route::get('/classes', [TeacherDiemDanhController::class, 'classes'])->name('classes');
+        Route::get('/sessions', [TeacherDiemDanhController::class, 'sessions'])->name('sessions');
+        Route::post('/{buoiHocId}', [TeacherDiemDanhController::class, 'store'])->name('store');
+        Route::get('/{buoiHocId}/xuat-danh-sach', [TeacherDiemDanhController::class, 'export'])->name('export');
     });
 
     Route::prefix('api/notifications')->name('api.notifications.')->group(function () {
