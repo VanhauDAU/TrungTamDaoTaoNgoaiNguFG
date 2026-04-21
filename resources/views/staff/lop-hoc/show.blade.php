@@ -373,6 +373,218 @@
             background: #fff7ed;
             color: #c2410c;
         }
+
+        .enrollment-hub {
+            display: grid;
+            grid-template-columns: 1.15fr .95fr;
+            gap: 18px;
+            margin-bottom: 22px;
+        }
+
+        .enrollment-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 18px 20px;
+            box-shadow: 0 1px 4px rgba(15, 23, 42, .06);
+        }
+
+        .enrollment-card h3 {
+            margin: 0 0 6px;
+            font-size: 1rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .enrollment-card p {
+            margin: 0 0 14px;
+            font-size: .83rem;
+            color: #64748b;
+        }
+
+        .enrollment-search {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .enrollment-search input,
+        .enrollment-card select {
+            width: 100%;
+            min-height: 42px;
+            border-radius: 10px;
+            border: 1px solid #cbd5e1;
+            padding: 0 12px;
+            font-size: .85rem;
+        }
+
+        .enrollment-result-list,
+        .promotion-student-list {
+            display: grid;
+            gap: 10px;
+            max-height: 320px;
+            overflow-y: auto;
+        }
+
+        .enrollment-result-item,
+        .promotion-student-item {
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 12px 14px;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            background: #f8fafc;
+        }
+
+        .enrollment-result-item button {
+            margin-left: auto;
+            border: none;
+            background: #ede9fe;
+            color: #6d28d9;
+            border-radius: 999px;
+            padding: 7px 12px;
+            font-size: .78rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .selected-student-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 12px 0;
+        }
+
+        .selected-student-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #eef2ff;
+            color: #4338ca;
+            border-radius: 999px;
+            padding: 7px 12px;
+            font-size: .8rem;
+            font-weight: 700;
+        }
+
+        .selected-student-chip button {
+            border: none;
+            background: transparent;
+            color: inherit;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .enrollment-form-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-top: 14px;
+        }
+
+        .btn-enroll-primary {
+            min-height: 42px;
+            border: none;
+            border-radius: 10px;
+            padding: 0 16px;
+            background: linear-gradient(135deg, #4338ca, #7c3aed);
+            color: #fff;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .promotion-toolbar {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .hint-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #f8fafc;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+            border-radius: 999px;
+            padding: 6px 10px;
+            font-size: .76rem;
+            font-weight: 700;
+        }
+
+        .hub-feedback {
+            margin-top: 12px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            font-size: .8rem;
+        }
+
+        .inline-create-card {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px dashed #cbd5e1;
+        }
+
+        .inline-create-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .inline-create-grid .full {
+            grid-column: 1 / -1;
+        }
+
+        .inline-create-grid input,
+        .inline-create-grid select,
+        .inline-create-grid textarea {
+            width: 100%;
+            min-height: 42px;
+            border-radius: 10px;
+            border: 1px solid #cbd5e1;
+            padding: 10px 12px;
+            font-size: .84rem;
+        }
+
+        .inline-create-grid textarea {
+            min-height: 92px;
+            resize: vertical;
+        }
+
+        .inline-create-label {
+            display: block;
+            font-size: .78rem;
+            font-weight: 700;
+            color: #334155;
+            margin-bottom: 6px;
+        }
+
+        .inline-create-note {
+            margin: 10px 0 0;
+            font-size: .78rem;
+            color: #64748b;
+        }
+
+        .hub-feedback.warning {
+            background: #fff7ed;
+            border: 1px solid #fdba74;
+            color: #9a3412;
+        }
+
+        @media(max-width: 992px) {
+            .enrollment-hub {
+                grid-template-columns: 1fr;
+            }
+
+            .inline-create-grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 @endsection
 
@@ -458,6 +670,234 @@
     @if (session('error'))
         <div class="kf-alert-error"><i class="fas fa-exclamation-circle"></i> {{ session('error') }}</div>
     @endif
+    @if (session('registrationErrors'))
+        <div class="hub-feedback warning">
+            <strong>Một số học viên chưa được thêm:</strong>
+            {{ collect(session('registrationErrors'))->pluck('message')->filter()->implode(' • ') }}
+        </div>
+    @endif
+    @if (session('promotionErrors'))
+        <div class="hub-feedback warning">
+            <strong>Một số học viên chưa được lên lớp tiếp theo:</strong>
+            {{ collect(session('promotionErrors'))->pluck('message')->filter()->implode(' • ') }}
+        </div>
+    @endif
+
+    <div class="enrollment-hub">
+        <div class="enrollment-card">
+            <div class="promotion-toolbar">
+                <div>
+                    <h3>Ghi danh nhanh vào lớp</h3>
+                    <p>Tìm học viên theo tên, tài khoản, email hoặc số điện thoại rồi thêm thẳng vào lớp hiện tại mà không cần đi qua màn đăng ký rời.</p>
+                </div>
+                <a href="{{ route($portalRouteBase . '.dang-ky.create', ['lopHocId' => $lopHoc->lopHocId]) }}" class="hint-badge">
+                    <i class="fas fa-up-right-from-square"></i> Mở form đầy đủ
+                </a>
+            </div>
+
+            <div class="enrollment-search">
+                <input type="search" id="studentSearchInput" placeholder="Nhập tên, tài khoản, email hoặc số điện thoại học viên...">
+                <button type="button" class="btn-enroll-primary" onclick="searchEligibleStudents()">
+                    <i class="fas fa-magnifying-glass"></i> Tìm
+                </button>
+            </div>
+
+            <div class="enrollment-result-list" id="studentSearchResults">
+                <div style="padding:18px;border:1px dashed #cbd5e1;border-radius:12px;color:#64748b;text-align:center">
+                    Bắt đầu tìm kiếm để hiện danh sách học viên có thể thêm vào lớp.
+                </div>
+            </div>
+
+            <form action="{{ route($portalRouteBase . '.lop-hoc.quick-add-students', $lopHoc->slug) }}" method="POST" id="quickEnrollForm">
+                @csrf
+                <div class="selected-student-list" id="selectedStudentsList"></div>
+                <div class="enrollment-form-actions">
+                    <select name="payment_method" required style="max-width:220px">
+                        <option value="">Chọn hình thức thanh toán</option>
+                        @foreach ($paymentMethods as $methodValue => $methodLabel)
+                            <option value="{{ $methodValue }}">{{ $methodLabel }}</option>
+                        @endforeach
+                    </select>
+                    <button type="submit" class="btn-enroll-primary">
+                        <i class="fas fa-user-plus"></i> Thêm học viên đã chọn
+                    </button>
+                    <span class="hint-badge"><i class="fas fa-sparkles"></i> Hệ thống tự bỏ qua học viên trùng lịch, trùng lớp hoặc vượt sĩ số.</span>
+                </div>
+            </form>
+
+            <div class="inline-create-card">
+                <div class="promotion-toolbar">
+                    <div>
+                        <h3>Tạo học viên mới và ghi danh ngay</h3>
+                        <p>Tạo tài khoản tự động theo logic học viên, đồng thời mở phiếu hợp đồng để in ngay sau khi ghi danh.</p>
+                    </div>
+                    <span class="hint-badge"><i class="fas fa-file-pdf"></i> Mở phiếu in sau khi lưu</span>
+                </div>
+
+                <form action="{{ route($portalRouteBase . '.lop-hoc.create-student-and-enroll', $lopHoc->slug) }}" method="POST" target="_blank">
+                    @csrf
+                    <div class="inline-create-grid">
+                        <div class="full">
+                            <label class="inline-create-label" for="inline_hoTen">Họ và tên học viên</label>
+                            <input type="text" id="inline_hoTen" name="hoTen" value="{{ old('hoTen') }}"
+                                placeholder="Nhập họ tên học viên" required>
+                        </div>
+                        <div>
+                            <label class="inline-create-label" for="inline_cccd">CCCD / CMND</label>
+                            <input type="text" id="inline_cccd" name="cccd" value="{{ old('cccd') }}"
+                                placeholder="Dùng làm mật khẩu tạm nếu đủ 8 ký tự">
+                        </div>
+                        <div>
+                            <label class="inline-create-label" for="inline_soDienThoai">Số điện thoại</label>
+                            <input type="text" id="inline_soDienThoai" name="soDienThoai" value="{{ old('soDienThoai') }}"
+                                placeholder="0901234567">
+                        </div>
+                        <div>
+                            <label class="inline-create-label" for="inline_email">Email</label>
+                            <input type="email" id="inline_email" name="email" value="{{ old('email') }}"
+                                placeholder="Có thể để trống, hệ thống sẽ tự tạo email nội bộ">
+                        </div>
+                        <div>
+                            <label class="inline-create-label" for="inline_payment_method">Hình thức thanh toán</label>
+                            <select name="payment_method" id="inline_payment_method" required>
+                                <option value="">Chọn hình thức thanh toán</option>
+                                @foreach ($paymentMethods as $methodValue => $methodLabel)
+                                    <option value="{{ $methodValue }}" @selected(old('payment_method') == (string) $methodValue)>{{ $methodLabel }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="inline-create-label" for="inline_ngaySinh">Ngày sinh</label>
+                            <input type="date" id="inline_ngaySinh" name="ngaySinh" value="{{ old('ngaySinh') }}">
+                        </div>
+                        <div>
+                            <label class="inline-create-label" for="inline_gioiTinh">Giới tính</label>
+                            <select name="gioiTinh" id="inline_gioiTinh">
+                                <option value="">Chọn giới tính</option>
+                                <option value="1" @selected(old('gioiTinh') === '1')>Nam</option>
+                                <option value="0" @selected(old('gioiTinh') === '0')>Nữ</option>
+                                <option value="2" @selected(old('gioiTinh') === '2')>Khác</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="inline-create-label" for="inline_nguoiGiamHo">Người giám hộ</label>
+                            <input type="text" id="inline_nguoiGiamHo" name="nguoiGiamHo" value="{{ old('nguoiGiamHo') }}"
+                                placeholder="Nếu học viên chưa đủ tuổi">
+                        </div>
+                        <div>
+                            <label class="inline-create-label" for="inline_sdtGuardian">SĐT giám hộ</label>
+                            <input type="text" id="inline_sdtGuardian" name="sdtGuardian" value="{{ old('sdtGuardian') }}"
+                                placeholder="0912345678">
+                        </div>
+                        <div>
+                            <label class="inline-create-label" for="inline_moiQuanHe">Mối quan hệ</label>
+                            <input type="text" id="inline_moiQuanHe" name="moiQuanHe" value="{{ old('moiQuanHe') }}"
+                                placeholder="Bố, mẹ, anh, chị...">
+                        </div>
+                        <div class="full">
+                            <label class="inline-create-label" for="inline_diaChi">Địa chỉ</label>
+                            <input type="text" id="inline_diaChi" name="diaChi" value="{{ old('diaChi') }}"
+                                placeholder="Địa chỉ liên hệ">
+                        </div>
+                        <div>
+                            <label class="inline-create-label" for="inline_trinhDoHienTai">Trình độ hiện tại</label>
+                            <input type="text" id="inline_trinhDoHienTai" name="trinhDoHienTai" value="{{ old('trinhDoHienTai') }}"
+                                placeholder="Beginner, Intermediate...">
+                        </div>
+                        <div>
+                            <label class="inline-create-label" for="inline_ngonNguMucTieu">Ngôn ngữ mục tiêu</label>
+                            <input type="text" id="inline_ngonNguMucTieu" name="ngonNguMucTieu" value="{{ old('ngonNguMucTieu') }}"
+                                placeholder="Tiếng Anh, Nhật, Hàn...">
+                        </div>
+                        <div class="full">
+                            <label class="inline-create-label" for="inline_ghiChu">Ghi chú</label>
+                            <textarea id="inline_ghiChu" name="ghiChu"
+                                placeholder="Ghi chú thêm nếu cần">{{ old('ghiChu') }}</textarea>
+                        </div>
+                    </div>
+
+                    <div class="enrollment-form-actions">
+                        <button type="submit" class="btn-enroll-primary">
+                            <i class="fas fa-user-plus"></i> Tạo học viên, ghi danh và mở phiếu in
+                        </button>
+                    </div>
+                    <p class="inline-create-note">
+                        Mật khẩu tạm sẽ lấy theo CCCD nếu đủ 8 ký tự, nếu không hệ thống dùng mặc định <strong>12345678</strong>.
+                    </p>
+                </form>
+            </div>
+        </div>
+
+        <div class="enrollment-card">
+            <div class="promotion-toolbar">
+                <div>
+                    <h3>Lên lớp tiếp theo theo nhóm</h3>
+                    <p>Chọn lớp đích rồi tick những học viên cần lên lớp. Phù hợp cho các lớp đã học xong và cần đẩy sang lớp nâng cấp.</p>
+                </div>
+                <span class="hint-badge"><i class="fas fa-people-arrows"></i> Luồng nâng cấp hàng loạt</span>
+            </div>
+
+            <form action="{{ route($portalRouteBase . '.lop-hoc.promote-students', $lopHoc->slug) }}" method="POST">
+                @csrf
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+                    <select name="target_lop_hoc_id" required>
+                        <option value="">Chọn lớp đích</option>
+                        @foreach ($promotionTargetClasses as $candidate)
+                            <option value="{{ $candidate->lopHocId }}">
+                                [{{ $candidate->maLopHoc }}] {{ $candidate->tenLopHoc }}
+                                • {{ $candidate->khoaHoc?->tenKhoaHoc ?? '—' }}
+                                • {{ $candidate->ngayBatDau ? \Carbon\Carbon::parse($candidate->ngayBatDau)->format('d/m/Y') : 'Chưa có ngày' }}
+                            </option>
+                        @endforeach
+                    </select>
+                    <select name="payment_method" required>
+                        <option value="">Hình thức thanh toán</option>
+                        @foreach ($paymentMethods as $methodValue => $methodLabel)
+                            <option value="{{ $methodValue }}">{{ $methodLabel }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="promotion-toolbar">
+                    <label style="font-size:.82rem;font-weight:700;color:#334155;display:flex;gap:8px;align-items:center">
+                        <input type="checkbox" id="selectAllPromotionStudents">
+                        Chọn tất cả học viên trong danh sách dưới
+                    </label>
+                    <span class="hint-badge"><i class="fas fa-filter"></i> Chỉ nên chọn các học viên đủ điều kiện tiếp tục khóa mới.</span>
+                </div>
+
+                <div class="promotion-student-list">
+                    @forelse ($lopHoc->dangKyLopHocs as $dk)
+                        <label class="promotion-student-item">
+                            <input type="checkbox" name="registration_ids[]" value="{{ $dk->dangKyLopHocId }}" class="promotion-student-checkbox">
+                            <div style="flex:1">
+                                <div style="font-size:.86rem;font-weight:700;color:#1e293b">
+                                    {{ $dk->taiKhoan?->hoSoNguoiDung?->hoTen ?? ($dk->taiKhoan?->taiKhoan ?? '—') }}
+                                </div>
+                                <div style="font-size:.74rem;color:#64748b;margin-top:3px">
+                                    {{ $dk->taiKhoan?->taiKhoan ?? '—' }}
+                                    @if ($dk->taiKhoan?->email)
+                                        • {{ $dk->taiKhoan->email }}
+                                    @endif
+                                </div>
+                            </div>
+                            <span class="hint-badge">{{ $dk->trangThaiLabel }}</span>
+                        </label>
+                    @empty
+                        <div style="padding:18px;border:1px dashed #cbd5e1;border-radius:12px;color:#64748b;text-align:center">
+                            Chưa có đăng ký nào để thực hiện lên lớp tiếp theo.
+                        </div>
+                    @endforelse
+                </div>
+
+                <div class="enrollment-form-actions">
+                    <button type="submit" class="btn-enroll-primary">
+                        <i class="fas fa-arrow-trend-up"></i> Tạo đăng ký lớp tiếp theo
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     {{-- ── Summary stats ─────────────────────────────────────── --}}
     <div class="lh-summary-grid">
@@ -1081,9 +1521,98 @@
     <script>
         const BUOI_HOC_UPDATE_URL_TEMPLATE = @js(route($portalRouteBase . '.buoi-hoc.update', ['id' => '__ID__']));
         const BUOI_HOC_DELETE_URL_TEMPLATE = @js(route($portalRouteBase . '.buoi-hoc.destroy', ['id' => '__ID__']));
+        const SEARCH_STUDENTS_URL = @js(route($portalRouteBase . '.lop-hoc.search-students', $lopHoc->slug));
+        const selectedStudentIds = new Map();
 
         function getBuoiHocActionUrl(template, id) {
             return template.replace('__ID__', String(id));
+        }
+
+        async function searchEligibleStudents() {
+            const keyword = document.getElementById('studentSearchInput')?.value?.trim() || '';
+            const resultBox = document.getElementById('studentSearchResults');
+            resultBox.innerHTML =
+                '<div style="padding:18px;border:1px dashed #cbd5e1;border-radius:12px;color:#64748b;text-align:center">Đang tải danh sách học viên phù hợp...</div>';
+
+            try {
+                const url = new URL(SEARCH_STUDENTS_URL, window.location.origin);
+                if (keyword) {
+                    url.searchParams.set('q', keyword);
+                }
+
+                const response = await fetch(url.toString(), {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                const data = await response.json();
+                const students = data.students || [];
+
+                if (!students.length) {
+                    resultBox.innerHTML =
+                        '<div style="padding:18px;border:1px dashed #cbd5e1;border-radius:12px;color:#64748b;text-align:center">Không tìm thấy học viên phù hợp với lớp này.</div>';
+                    return;
+                }
+
+                resultBox.innerHTML = students.map(student => `
+                    <div class="enrollment-result-item">
+                        <div style="width:40px;height:40px;border-radius:50%;background:#ede9fe;color:#6d28d9;display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0">
+                            ${(student.hoTen || student.taiKhoan || '?').charAt(0).toUpperCase()}
+                        </div>
+                        <div style="min-width:0">
+                            <div style="font-size:.86rem;font-weight:700;color:#1e293b">${student.hoTen || student.taiKhoan}</div>
+                            <div style="font-size:.74rem;color:#64748b;margin-top:2px">${student.taiKhoan}${student.soDienThoai ? ` • ${student.soDienThoai}` : ''}</div>
+                            <div style="font-size:.72rem;color:#94a3b8">${student.email || ''}</div>
+                        </div>
+                        <button type="button" onclick="addStudentToSelection(${student.taiKhoanId}, '${(student.hoTen || student.taiKhoan).replace(/'/g, "\\'")}', '${student.taiKhoan}')">
+                            <i class="fas fa-plus"></i> Chọn
+                        </button>
+                    </div>
+                `).join('');
+            } catch (error) {
+                resultBox.innerHTML =
+                    '<div style="padding:18px;border:1px dashed #fecaca;border-radius:12px;color:#b91c1c;text-align:center">Không thể tải danh sách học viên. Vui lòng thử lại.</div>';
+            }
+        }
+
+        function addStudentToSelection(id, name, account) {
+            selectedStudentIds.set(String(id), {
+                id: String(id),
+                name,
+                account
+            });
+            renderSelectedStudents();
+        }
+
+        function removeSelectedStudent(id) {
+            selectedStudentIds.delete(String(id));
+            renderSelectedStudents();
+        }
+
+        function renderSelectedStudents() {
+            const container = document.getElementById('selectedStudentsList');
+            const form = document.getElementById('quickEnrollForm');
+            form.querySelectorAll('input[name="student_ids[]"]').forEach(input => input.remove());
+
+            if (!selectedStudentIds.size) {
+                container.innerHTML = '<span class="hint-badge"><i class="fas fa-users"></i> Chưa chọn học viên nào.</span>';
+                return;
+            }
+
+            container.innerHTML = Array.from(selectedStudentIds.values()).map(student => `
+                <span class="selected-student-chip">
+                    ${student.name} <small style="opacity:.75">${student.account}</small>
+                    <button type="button" onclick="removeSelectedStudent('${student.id}')">&times;</button>
+                </span>
+            `).join('');
+
+            selectedStudentIds.forEach(student => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'student_ids[]';
+                input.value = student.id;
+                form.appendChild(input);
+            });
         }
 
         function bindBuoiHocActionButtons() {
@@ -1196,8 +1725,20 @@
         // Đóng modal khi click backdrop
         document.addEventListener('DOMContentLoaded', function() {
             bindBuoiHocActionButtons();
+            renderSelectedStudents();
             document.getElementById('editBuoiHocModal').addEventListener('click', function(e) {
                 if (e.target === this) closeEditModal();
+            });
+            document.getElementById('studentSearchInput')?.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    searchEligibleStudents();
+                }
+            });
+            document.getElementById('selectAllPromotionStudents')?.addEventListener('change', function() {
+                document.querySelectorAll('.promotion-student-checkbox').forEach(checkbox => {
+                    checkbox.checked = this.checked;
+                });
             });
         });
 

@@ -682,7 +682,7 @@
                         <div class="bd-text" style="flex:1;min-width:0;">
                             <div class="bd-tb-title">${n.tieuDe}</div>
                             <div class="bd-tb-preview">${n.tomTat}</div>
-                            <div class="bd-tb-time">${time}</div>
+                            <div class="bd-tb-time">${n.nguoiGui} • ${n.loaiLabel} • ${time}${n.tepDinhCount ? ` • ${n.tepDinhCount} tệp` : ''}</div>
                         </div>
                     </a>`;
                 }).join('');

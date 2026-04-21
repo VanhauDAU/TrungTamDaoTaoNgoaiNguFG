@@ -3,6 +3,7 @@
 namespace App\Services\Admin\TaiChinh;
 
 use App\Contracts\Admin\TaiChinh\HoaDonServiceInterface;
+use App\Models\Auth\TaiKhoan;
 use App\Models\Facility\CoSoDaoTao;
 use App\Models\Finance\HoaDon;
 use App\Models\Finance\PhieuThu;
@@ -115,6 +116,85 @@ class HoaDonService implements HoaDonServiceInterface
         ];
     }
 
+    public function getDebtLookupData(Request $request): array
+    {
+        $search = trim((string) $request->get('q', ''));
+        $selectedTaiKhoanId = (int) $request->get('taiKhoanId', 0);
+
+        $matches = collect();
+        if ($search !== '') {
+            $matches = TaiKhoan::query()
+                ->where('role', TaiKhoan::ROLE_HOC_VIEN)
+                ->with('hoSoNguoiDung')
+                ->where(function ($query) use ($search) {
+                    $query->where('taiKhoan', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%")
+                        ->orWhereHas('hoSoNguoiDung', function ($profileQuery) use ($search) {
+                            $profileQuery->where('hoTen', 'like', "%{$search}%")
+                                ->orWhere('soDienThoai', 'like', "%{$search}%");
+                        });
+
+                    if (ctype_digit($search)) {
+                        $query->orWhere('taiKhoanId', (int) $search);
+                    }
+                })
+                ->orderBy('taiKhoanId')
+                ->limit(12)
+                ->get();
+        }
+
+        $selectedStudent = null;
+        if ($selectedTaiKhoanId > 0) {
+            $selectedStudent = TaiKhoan::query()
+                ->where('role', TaiKhoan::ROLE_HOC_VIEN)
+                ->with('hoSoNguoiDung')
+                ->find($selectedTaiKhoanId);
+        } elseif ($matches->count() === 1) {
+            $selectedStudent = $matches->first();
+            $selectedTaiKhoanId = (int) $selectedStudent->taiKhoanId;
+        }
+
+        $outstandingInvoices = collect();
+        $summary = [
+            'invoiceCount' => 0,
+            'outstandingTotal' => 0.0,
+            'paidTotal' => 0.0,
+            'overdueCount' => 0,
+            'dueSoonCount' => 0,
+        ];
+
+        if ($selectedStudent) {
+            $outstandingInvoices = HoaDon::with([
+                'coSo',
+                'dangKyLopHoc.lopHoc.khoaHoc',
+                'lopHocDotThu',
+                'dangKyLopHocPhuPhi',
+            ])
+                ->where('taiKhoanId', $selectedStudent->taiKhoanId)
+                ->whereIn('trangThai', [HoaDon::TRANG_THAI_CHUA_TT, HoaDon::TRANG_THAI_MOT_PHAN])
+                ->orderByRaw('CASE WHEN ngayHetHan IS NULL THEN 1 ELSE 0 END')
+                ->orderBy('ngayHetHan')
+                ->orderBy('ngayLap')
+                ->get();
+
+            $summary = [
+                'invoiceCount' => $outstandingInvoices->count(),
+                'outstandingTotal' => (float) $outstandingInvoices->sum(fn(HoaDon $invoice) => (float) $invoice->conNo),
+                'paidTotal' => (float) $outstandingInvoices->sum(fn(HoaDon $invoice) => (float) $invoice->daTra),
+                'overdueCount' => $outstandingInvoices->filter(fn(HoaDon $invoice) => $invoice->isQuaHan)->count(),
+                'dueSoonCount' => $outstandingInvoices->filter(fn(HoaDon $invoice) => $invoice->isSapHetHan)->count(),
+            ];
+        }
+
+        return [
+            'searchTerm' => $search,
+            'studentMatches' => $matches,
+            'selectedStudent' => $selectedStudent,
+            'outstandingInvoices' => $outstandingInvoices,
+            'studentDebtSummary' => $summary,
+        ];
+    }
+
     public function update(Request $request, int $id): HoaDon
     {
         $hoaDon = HoaDon::findOrFail($id);
@@ -193,6 +273,89 @@ class HoaDonService implements HoaDonServiceInterface
         }
 
         return $phieuThu->fresh(['hoaDon', 'taiKhoan.hoSoNguoiDung', 'nguoiDuyet.hoSoNguoiDung']);
+    }
+
+    public function settleAllStudentDebts(Request $request): array
+    {
+        $data = $request->validate([
+            'taiKhoanId' => 'required|integer|exists:taikhoan,taiKhoanId',
+            'hoaDonIds' => 'required|array|min:1',
+            'hoaDonIds.*' => 'integer',
+            'ngayThu' => 'required|date',
+            'phuongThucThanhToan' => 'required|in:1,2,3',
+            'ghiChu' => 'nullable|string|max:500',
+        ], [
+            'hoaDonIds.required' => 'Vui lòng chọn ít nhất một hóa đơn để thanh toán.',
+            'hoaDonIds.min' => 'Vui lòng chọn ít nhất một hóa đơn để thanh toán.',
+        ]);
+
+        $student = TaiKhoan::query()
+            ->where('role', TaiKhoan::ROLE_HOC_VIEN)
+            ->findOrFail((int) $data['taiKhoanId']);
+
+        $invoices = HoaDon::query()
+            ->where('taiKhoanId', $student->taiKhoanId)
+            ->whereIn('hoaDonId', $data['hoaDonIds'])
+            ->whereIn('trangThai', [HoaDon::TRANG_THAI_CHUA_TT, HoaDon::TRANG_THAI_MOT_PHAN])
+            ->orderByRaw('CASE WHEN ngayHetHan IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('ngayHetHan')
+            ->orderBy('ngayLap')
+            ->get();
+
+        if ($invoices->isEmpty()) {
+            throw ValidationException::withMessages([
+                'hoaDonIds' => ['Các hóa đơn được chọn hiện không còn công nợ hợp lệ để thanh toán.'],
+            ]);
+        }
+
+        $createdReceiptIds = [];
+        $totalCollected = 0.0;
+
+        DB::transaction(function () use ($data, $invoices, &$createdReceiptIds, &$totalCollected) {
+            $user = Auth::user();
+
+            foreach ($invoices as $invoice) {
+                $remainingDebt = (float) $invoice->conNo;
+                if ($remainingDebt <= 0) {
+                    continue;
+                }
+
+                $receipt = PhieuThu::create([
+                    'maPhieuThu' => PhieuThu::generateMaPhieuThu(),
+                    'hoaDonId' => $invoice->hoaDonId,
+                    'soTien' => $remainingDebt,
+                    'ngayThu' => $data['ngayThu'],
+                    'phuongThucThanhToan' => $data['phuongThucThanhToan'],
+                    'taiKhoanId' => $invoice->taiKhoanId,
+                    'nguoiDuyetId' => $user?->taiKhoanId,
+                    'ghiChu' => $data['ghiChu'] ?? 'Thanh toán gộp toàn bộ công nợ của học viên.',
+                    'trangThai' => PhieuThu::TRANG_THAI_HOP_LE,
+                ]);
+
+                $invoice->recalculate();
+                $createdReceiptIds[] = $receipt->phieuThuId;
+                $totalCollected += $remainingDebt;
+            }
+        });
+
+        $createdReceipts = PhieuThu::with(['hoaDon', 'taiKhoan.hoSoNguoiDung', 'nguoiDuyet.hoSoNguoiDung'])
+            ->whereIn('phieuThuId', $createdReceiptIds)
+            ->get();
+
+        foreach ($createdReceipts as $receipt) {
+            try {
+                $this->receiptNotificationService->sendReceiptCreatedNotification($receipt);
+            } catch (Throwable $exception) {
+                report($exception);
+            }
+        }
+
+        return [
+            'student' => $student->load('hoSoNguoiDung'),
+            'receipts' => $createdReceipts,
+            'receiptCount' => $createdReceipts->count(),
+            'totalCollected' => $totalCollected,
+        ];
     }
 
     public function destroyPhieuThu(int $id): int

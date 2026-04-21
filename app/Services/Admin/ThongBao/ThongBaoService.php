@@ -93,12 +93,22 @@ class ThongBaoService implements ThongBaoServiceInterface
      */
     public function getRecentNotifications(int $taiKhoanId, int $limit = 8): Collection
     {
-        return ThongBaoNguoiDung::with(['thongBao.nguoiGui.hoSoNguoiDung', 'thongBao.nguoiGui.nhanSu'])
+        $notifications = ThongBaoNguoiDung::with(['thongBao.nguoiGui.hoSoNguoiDung', 'thongBao.nguoiGui.nhanSu', 'thongBao.tepDinhs'])
             ->where('taiKhoanId', $taiKhoanId)
             ->whereHas('thongBao', fn($q) => $q->whereNull('deleted_at'))
             ->orderByDesc('created_at')
-            ->limit($limit)
             ->get()
+            ->groupBy(fn($item) => (int) optional($item->thongBao)->loaiGui)
+            ->pipe(function (Collection $grouped) {
+                $financeItems = $grouped->pull(ThongBao::LOAI_TAI_CHINH, collect())->take(2);
+
+                return $grouped
+                    ->flatten(1)
+                    ->concat($financeItems)
+                    ->sortByDesc('created_at')
+                    ->values();
+            })
+            ->take($limit)
             ->map(function ($item) {
             $tb = $item->thongBao;
             if (!$tb)
@@ -114,14 +124,19 @@ class ThongBaoService implements ThongBaoServiceInterface
                 'tomTat' => mb_substr(strip_tags($tb->noiDung), 0, 80) . '...',
                 'nguoiGui' => $tenNguoiGui,
                 'loaiGui' => $tb->loaiGui,
+                'loaiLabel' => $tb->getLoaiLabel(),
                 'uuTien' => $tb->uuTien,
+                'uuTienLabel' => $tb->getUuTienLabel(),
                 'daDoc' => $item->daDoc,
                 'ngayGui' => $tb->ngayGui ?? $tb->created_at,
                 'badgeClass' => $tb->getLoaiBadgeClass(),
+                'tepDinhCount' => $tb->tepDinhs->count(),
             ];
         })
             ->filter()
             ->values();
+
+        return $notifications;
     }
 
     /**

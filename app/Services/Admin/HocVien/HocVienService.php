@@ -15,6 +15,8 @@ use Illuminate\Validation\Rule;
 
 class HocVienService implements HocVienServiceInterface
 {
+    private const DEFAULT_TEMPORARY_PASSWORD = '12345678';
+
     public function getList(Request $request): array
     {
         $hocViens = $this->buildIndexQuery($request)->paginate(15)->withQueryString();
@@ -76,77 +78,53 @@ class HocVienService implements HocVienServiceInterface
 
     public function store(Request $request): TaiKhoan
     {
-        $request->validate([
-            'email' => 'required|email|max:100|unique:taikhoan,email',
-            'matKhau' => 'required|string|min:8|confirmed',
-            'hoTen' => ['required', 'string', 'max:100', 'regex:/^[^0-9]*$/'],
-            'anhDaiDien' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
-            'soDienThoai' => ['nullable', 'string', 'regex:/^[0-9]{10}$/'],
-            'zalo' => ['nullable', 'string', 'regex:/^[0-9]{10}$/'],
-            'ngaySinh' => 'nullable|date',
-            'gioiTinh' => 'nullable|in:0,1,2',
-            'diaChi' => 'nullable|string|max:255',
-            'cccd' => 'nullable|string|max:20|unique:hosonguoidung,cccd',
-            'nguoiGiamHo' => 'nullable|string|max:100',
-            'sdtGuardian' => ['nullable', 'string', 'regex:/^[0-9]{10}$/'],
-            'moiQuanHe' => 'nullable|string|max:50',
-            'trinhDoHienTai' => 'nullable|string|max:30',
-            'ngonNguMucTieu' => 'nullable|string|max:50',
-            'nguonBietDen' => 'nullable|string|max:50',
-            'ghiChu' => 'nullable|string',
-        ], [
-            'email.required' => 'Vui lòng nhập email.',
-            'email.unique' => 'Email đã được sử dụng.',
-            'matKhau.required' => 'Vui lòng nhập mật khẩu.',
-            'matKhau.min' => 'Mật khẩu phải ít nhất 8 ký tự.',
-            'matKhau.confirmed' => 'Xác nhận mật khẩu không khớp.',
-            'hoTen.required' => 'Vui lòng nhập họ và tên.',
-            'hoTen.regex' => 'Họ và tên không được chứa chữ số.',
-            'soDienThoai.regex' => 'Số điện thoại phải có đúng 10 chữ số.',
-            'zalo.regex' => 'Số Zalo phải có đúng 10 chữ số.',
-            'sdtGuardian.regex' => 'Số điện thoại người giám hộ phải có đúng 10 chữ số.',
-            'cccd.unique' => 'CCCD/CMND này đã được đăng ký.',
-            'anhDaiDien.image' => 'File đại diện phải là ảnh.',
-            'anhDaiDien.mimes' => 'Chỉ chấp nhận định dạng JPG, PNG, WEBP.',
-            'anhDaiDien.max' => 'Ảnh đại diện không được vượt quá 2MB.',
-        ]);
+        $request->validate($this->studentCreationRules(withAvatar: true), $this->studentCreationMessages());
 
         return DB::transaction(function () use ($request) {
-            $taiKhoan = TaiKhoan::create([
-                'taiKhoan' => TaiKhoan::generateTemporaryUsername(TaiKhoan::ROLE_HOC_VIEN),
-                'email' => $request->email,
-                'matKhau' => Hash::make($request->matKhau),
-                'role' => TaiKhoan::ROLE_HOC_VIEN,
-                'trangThai' => 1,
-                'phaiDoiMatKhau' => 1,
-                'auth_provider' => 'local',
-                'email_verified_at' => now(),
-            ]);
-
-            $taiKhoan->assignSystemUsername();
-
-            HoSoNguoiDung::create([
-                'taiKhoanId' => $taiKhoan->taiKhoanId,
-                'hoTen' => $request->hoTen,
-                'soDienThoai' => $request->soDienThoai,
-                'zalo' => $request->zalo,
-                'ngaySinh' => $request->ngaySinh ?: null,
-                'gioiTinh' => $request->gioiTinh,
-                'diaChi' => $request->diaChi,
-                'cccd' => $request->cccd,
-                'nguoiGiamHo' => $request->nguoiGiamHo,
-                'sdtGuardian' => $request->sdtGuardian,
-                'moiQuanHe' => $request->moiQuanHe,
-                'trinhDoHienTai' => $request->trinhDoHienTai,
-                'ngonNguMucTieu' => $request->ngonNguMucTieu,
-                'nguonBietDen' => $request->nguonBietDen,
-                'ghiChu' => $request->ghiChu,
-            ]);
-
-            $this->handleAvatarUpload($request, $taiKhoan);
+            $taiKhoan = $this->createStudentRecord(
+                $request->only([
+                    'email',
+                    'matKhau',
+                    'hoTen',
+                    'soDienThoai',
+                    'zalo',
+                    'ngaySinh',
+                    'gioiTinh',
+                    'diaChi',
+                    'cccd',
+                    'nguoiGiamHo',
+                    'sdtGuardian',
+                    'moiQuanHe',
+                    'trinhDoHienTai',
+                    'ngonNguMucTieu',
+                    'nguonBietDen',
+                    'ghiChu',
+                ]),
+                (string) $request->input('matKhau'),
+                $request
+            );
 
             return $taiKhoan;
         });
+    }
+
+    public function createForEnrollment(array $payload): array
+    {
+        $validator = Validator::make(
+            $payload,
+            $this->studentCreationRules(withAvatar: false, requireEmail: false, requirePassword: false),
+            $this->studentCreationMessages()
+        );
+
+        $validated = $validator->validate();
+        $temporaryPassword = $this->resolveTemporaryPassword($validated['cccd'] ?? null);
+
+        $student = $this->createStudentRecord($validated, $temporaryPassword);
+
+        return [
+            'student' => $student,
+            'temporaryPassword' => $temporaryPassword,
+        ];
     }
 
     public function findByUsername(string $taiKhoan): TaiKhoan
@@ -264,5 +242,114 @@ class HocVienService implements HocVienServiceInterface
             ['taiKhoanId' => $taiKhoan->taiKhoanId],
             ['anhDaiDien' => $path]
         );
+    }
+
+    private function studentCreationRules(
+        bool $withAvatar = true,
+        bool $requireEmail = true,
+        bool $requirePassword = true
+    ): array {
+        return [
+            'email' => array_filter([
+                $requireEmail ? 'required' : 'nullable',
+                'email',
+                'max:100',
+                Rule::unique('taikhoan', 'email'),
+            ]),
+            'matKhau' => array_filter([
+                $requirePassword ? 'required' : 'nullable',
+                'string',
+                'min:8',
+                $requirePassword ? 'confirmed' : null,
+            ]),
+            'hoTen' => ['required', 'string', 'max:100', 'regex:/^[^0-9]*$/'],
+            'anhDaiDien' => $withAvatar ? ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'] : ['nullable'],
+            'soDienThoai' => ['nullable', 'string', 'regex:/^[0-9]{10}$/'],
+            'zalo' => ['nullable', 'string', 'regex:/^[0-9]{10}$/'],
+            'ngaySinh' => 'nullable|date',
+            'gioiTinh' => 'nullable|in:0,1,2',
+            'diaChi' => 'nullable|string|max:255',
+            'cccd' => 'nullable|string|max:20|unique:hosonguoidung,cccd',
+            'nguoiGiamHo' => 'nullable|string|max:100',
+            'sdtGuardian' => ['nullable', 'string', 'regex:/^[0-9]{10}$/'],
+            'moiQuanHe' => 'nullable|string|max:50',
+            'trinhDoHienTai' => 'nullable|string|max:30',
+            'ngonNguMucTieu' => 'nullable|string|max:50',
+            'nguonBietDen' => 'nullable|string|max:50',
+            'ghiChu' => 'nullable|string',
+        ];
+    }
+
+    private function studentCreationMessages(): array
+    {
+        return [
+            'email.required' => 'Vui lòng nhập email.',
+            'email.unique' => 'Email đã được sử dụng.',
+            'matKhau.required' => 'Vui lòng nhập mật khẩu.',
+            'matKhau.min' => 'Mật khẩu phải ít nhất 8 ký tự.',
+            'matKhau.confirmed' => 'Xác nhận mật khẩu không khớp.',
+            'hoTen.required' => 'Vui lòng nhập họ và tên.',
+            'hoTen.regex' => 'Họ và tên không được chứa chữ số.',
+            'soDienThoai.regex' => 'Số điện thoại phải có đúng 10 chữ số.',
+            'zalo.regex' => 'Số Zalo phải có đúng 10 chữ số.',
+            'sdtGuardian.regex' => 'Số điện thoại người giám hộ phải có đúng 10 chữ số.',
+            'cccd.unique' => 'CCCD/CMND này đã được đăng ký.',
+            'anhDaiDien.image' => 'File đại diện phải là ảnh.',
+            'anhDaiDien.mimes' => 'Chỉ chấp nhận định dạng JPG, PNG, WEBP.',
+            'anhDaiDien.max' => 'Ảnh đại diện không được vượt quá 2MB.',
+        ];
+    }
+
+    private function resolveTemporaryPassword(?string $cccd): string
+    {
+        $cccd = trim((string) $cccd);
+
+        return mb_strlen($cccd) >= 8 ? $cccd : self::DEFAULT_TEMPORARY_PASSWORD;
+    }
+
+    private function createStudentRecord(array $payload, string $password, ?Request $request = null): TaiKhoan
+    {
+        $email = trim((string) ($payload['email'] ?? ''));
+
+        if ($email === '') {
+            $email = 'hv.' . now()->format('YmdHis') . '.' . substr((string) str()->ulid(), -6) . '@student.local';
+        }
+
+        $taiKhoan = TaiKhoan::create([
+            'taiKhoan' => TaiKhoan::generateTemporaryUsername(TaiKhoan::ROLE_HOC_VIEN),
+            'email' => $email,
+            'matKhau' => Hash::make($password),
+            'role' => TaiKhoan::ROLE_HOC_VIEN,
+            'trangThai' => 1,
+            'phaiDoiMatKhau' => 1,
+            'auth_provider' => 'local',
+            'email_verified_at' => now(),
+        ]);
+
+        $taiKhoan->assignSystemUsername();
+
+        HoSoNguoiDung::create([
+            'taiKhoanId' => $taiKhoan->taiKhoanId,
+            'hoTen' => $payload['hoTen'],
+            'soDienThoai' => $payload['soDienThoai'] ?? null,
+            'zalo' => $payload['zalo'] ?? null,
+            'ngaySinh' => !empty($payload['ngaySinh']) ? $payload['ngaySinh'] : null,
+            'gioiTinh' => $payload['gioiTinh'] ?? null,
+            'diaChi' => $payload['diaChi'] ?? null,
+            'cccd' => $payload['cccd'] ?? null,
+            'nguoiGiamHo' => $payload['nguoiGiamHo'] ?? null,
+            'sdtGuardian' => $payload['sdtGuardian'] ?? null,
+            'moiQuanHe' => $payload['moiQuanHe'] ?? null,
+            'trinhDoHienTai' => $payload['trinhDoHienTai'] ?? null,
+            'ngonNguMucTieu' => $payload['ngonNguMucTieu'] ?? null,
+            'nguonBietDen' => $payload['nguonBietDen'] ?? null,
+            'ghiChu' => $payload['ghiChu'] ?? null,
+        ]);
+
+        if ($request !== null && $request->hasFile('anhDaiDien')) {
+            $this->handleAvatarUpload($request, $taiKhoan);
+        }
+
+        return $taiKhoan->fresh('hoSoNguoiDung');
     }
 }

@@ -29,6 +29,13 @@ interface HocVienServiceInterface
     public function store(Request $request): TaiKhoan;
 
     /**
+     * Tạo nhanh học viên cho luồng ghi danh tại lớp và trả về mật khẩu tạm đã cấp.
+     *
+     * @return array{student: TaiKhoan, temporaryPassword: string}
+     */
+    public function createForEnrollment(array $payload): array;
+
+    /**
      * Lấy học viên theo tên đăng nhập.
      */
     public function findByUsername(string $taiKhoan): TaiKhoan;

@@ -36,6 +36,9 @@
                 </div>
 
                 <div class="d-flex flex-wrap gap-2">
+                    <a href="{{ route($portalRouteBase . '.hoa-don.debt-lookup') }}" class="btn btn-primary rounded-3">
+                        <i class="fas fa-layer-group me-1"></i> Thu gộp công nợ
+                    </a>
                     <span class="badge rounded-pill text-bg-light border px-3 py-2 fw-semibold">
                         <i class="fas fa-file-invoice me-1 text-primary"></i>
                         {{ number_format($hoaDons->total()) }} hóa đơn
