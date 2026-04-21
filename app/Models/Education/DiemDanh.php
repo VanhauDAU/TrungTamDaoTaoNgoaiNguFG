@@ -10,13 +10,7 @@ class DiemDanh extends Model
     // ── Trạng thái điểm danh ────────────────────────────────────────
     const VANG_KHONG_PHEP = 0; // Absent without excuse
     const CO_MAT          = 1; // Present
-    const DI_TRE          = 2; // Late
-    const CO_PHEP         = 3; // Excused absence
-    const BI_KHOA_NO_HP   = 4; // Suspended – overdue tuition
-
-    // ── Hình thức học ────────────────────────────────────────────────
-    const HINH_THUC_TRUC_TIEP = 0;
-    const HINH_THUC_ONLINE    = 1;
+    const BI_KHOA_NO_HP   = 2; // Suspended – overdue tuition
 
     protected $table      = 'diemDanh';
     protected $primaryKey = 'diemDanhId';
@@ -26,21 +20,14 @@ class DiemDanh extends Model
         'taiKhoanId',
         'dangKyLopHocId',
         'trangThai',
-        'coMat',
-        'phutDiTre',
-        'lyDo',
-        'hinhThuc',
         'nguoiDiemDanhId',
-        'thoiGianDiemDanh',
         'ghiChu',
     ];
 
     protected $casts = [
-        'trangThai'        => 'integer',
-        'coMat'            => 'boolean',
-        'phutDiTre'        => 'integer',
-        'hinhThuc'         => 'integer',
-        'thoiGianDiemDanh' => 'datetime',
+        'trangThai' => 'integer',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
     /* ── Relationships ──────────────────────────────────────────────── */
@@ -73,8 +60,6 @@ class DiemDanh extends Model
         return match ((int) $this->trangThai) {
             self::VANG_KHONG_PHEP => 'Vắng không phép',
             self::CO_MAT          => 'Có mặt',
-            self::DI_TRE          => 'Đi trễ',
-            self::CO_PHEP         => 'Vắng có phép',
             self::BI_KHOA_NO_HP   => '⏸ Bị khóa – Nợ học phí',
             default               => 'Không xác định',
         };
@@ -86,8 +71,6 @@ class DiemDanh extends Model
         return match ((int) $this->trangThai) {
             self::VANG_KHONG_PHEP => 'badge-danger',
             self::CO_MAT          => 'badge-success',
-            self::DI_TRE          => 'badge-warning',
-            self::CO_PHEP         => 'badge-info',
             self::BI_KHOA_NO_HP   => 'badge-secondary',
             default               => 'badge-light',
         };
@@ -107,7 +90,6 @@ class DiemDanh extends Model
     {
         return in_array((int) $this->trangThai, [
             self::CO_MAT,
-            self::DI_TRE,
         ]);
     }
 
@@ -116,7 +98,7 @@ class DiemDanh extends Model
     /** Chỉ lấy điểm danh của học viên có mặt */
     public function scopeCoMat($query)
     {
-        return $query->whereIn('trangThai', [self::CO_MAT, self::DI_TRE]);
+        return $query->where('trangThai', self::CO_MAT);
     }
 
     /** Chỉ lấy điểm danh của học viên bị khóa do nợ HP */
