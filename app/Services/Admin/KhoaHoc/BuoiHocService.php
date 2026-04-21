@@ -7,6 +7,8 @@ use App\Models\Education\BuoiHoc;
 use App\Models\Education\LopHoc;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 
 class BuoiHocService implements BuoiHocServiceInterface
 {
@@ -34,7 +36,6 @@ class BuoiHocService implements BuoiHocServiceInterface
         }
 
         BuoiHoc::create($data);
-        $this->syncClassTimingFromSessions($data['lopHocId']);
 
         return [
             'lopHocSlug' => $lopHoc->slug,
@@ -46,10 +47,9 @@ class BuoiHocService implements BuoiHocServiceInterface
     public function update(Request $request, int $id): array
     {
         $buoiHoc = BuoiHoc::with('lopHoc:lopHocId,slug')->findOrFail($id);
-        $data = $this->validateUpdatePayload($request);
+        $data = $this->validateUpdatePayload($request, $buoiHoc);
         $data = BuoiHoc::normalizeStatePayload($data, $buoiHoc);
         $buoiHoc->update($data);
-        $this->syncClassTimingFromSessions($buoiHoc->lopHocId);
 
         return [
             'lopHocSlug' => $buoiHoc->lopHoc?->slug,
@@ -62,9 +62,7 @@ class BuoiHocService implements BuoiHocServiceInterface
     {
         $buoiHoc = BuoiHoc::with('lopHoc:lopHocId,slug')->findOrFail($id);
         $lopHocSlug = $buoiHoc->lopHoc?->slug;
-        $lopHocId = $buoiHoc->lopHocId;
         $buoiHoc->delete();
-        $this->syncClassTimingFromSessions($lopHocId);
 
         return [
             'lopHocSlug' => $lopHocSlug,
@@ -77,10 +75,10 @@ class BuoiHocService implements BuoiHocServiceInterface
     {
         $lopHoc = LopHoc::with('caHoc')->findOrFail($lopHocId);
 
-        if (empty($lopHoc->lichHoc) || empty($lopHoc->ngayBatDau) || empty($lopHoc->soBuoiDuKien)) {
+        if (empty($lopHoc->lichHoc) || empty($lopHoc->ngayBatDau) || empty($lopHoc->ngayKetThuc)) {
             return [
                 'lopHocSlug' => $lopHoc->slug,
-                'message' => 'Lớp học chưa thiết lập đầy đủ lịch học, ngày bắt đầu hoặc số buổi dự kiến.',
+                'message' => 'Lớp học chưa thiết lập đầy đủ lịch học, ngày bắt đầu hoặc ngày kết thúc.',
                 'flashType' => 'error',
             ];
         }
@@ -111,15 +109,25 @@ class BuoiHocService implements BuoiHocServiceInterface
         }
 
         $start = Carbon::parse($lopHoc->ngayBatDau);
+        $end = Carbon::parse($lopHoc->ngayKetThuc);
+
+        if ($end->lt($start)) {
+            return [
+                'lopHocSlug' => $lopHoc->slug,
+                'message' => 'Ngày kết thúc lớp học đang nhỏ hơn ngày bắt đầu, chưa thể tự động tạo buổi học.',
+                'flashType' => 'error',
+            ];
+        }
+
         $count = 0;
-        $targetSessions = max(1, (int) $lopHoc->soBuoiDuKien);
-        $soBuoi = BuoiHoc::where('lopHocId', $lopHocId)
+        $skipped = 0;
+        $current = $start->copy();
+        $safetyLimit = 0;
+        $sessionNumber = BuoiHoc::where('lopHocId', $lopHocId)
             ->whereNotIn('trangThai', [BuoiHoc::TRANG_THAI_DA_HUY, BuoiHoc::TRANG_THAI_DOI_LICH])
             ->count();
 
-        $current = $start->copy();
-        $safetyLimit = 0;
-        while ($soBuoi < $targetSessions && $safetyLimit < 3660) {
+        while ($current->lte($end) && $safetyLimit < 3660) {
             if (in_array($current->dayOfWeek, $thuDays, true)) {
                 $exists = BuoiHoc::where('lopHocId', $lopHocId)
                     ->whereDate('ngayHoc', $current->toDateString())
@@ -127,10 +135,10 @@ class BuoiHocService implements BuoiHocServiceInterface
                     ->exists();
 
                 if (! $exists) {
-                    $soBuoi++;
+                    $sessionNumber++;
                     BuoiHoc::create([
                         'lopHocId' => $lopHocId,
-                        'tenBuoiHoc' => "Buổi {$soBuoi}: {$lopHoc->tenLopHoc}",
+                        'tenBuoiHoc' => "Buổi {$sessionNumber}: {$lopHoc->tenLopHoc}",
                         'ngayHoc' => $current->toDateString(),
                         'caHocId' => $lopHoc->caHocId,
                         'phongHocId' => $lopHoc->phongHocId,
@@ -140,6 +148,8 @@ class BuoiHocService implements BuoiHocServiceInterface
                         'trangThai' => BuoiHoc::TRANG_THAI_SAP_DIEN_RA,
                     ]);
                     $count++;
+                } else {
+                    $skipped++;
                 }
             }
 
@@ -147,38 +157,24 @@ class BuoiHocService implements BuoiHocServiceInterface
             $safetyLimit++;
         }
 
-        $this->syncClassTimingFromSessions($lopHocId);
-
-        if ($count === 0 && $soBuoi >= $targetSessions) {
+        if ($count === 0) {
             return [
                 'lopHocSlug' => $lopHoc->slug,
-                'message' => 'Số buổi học hiện có đã đạt số buổi dự kiến, không cần tạo thêm.',
+                'message' => 'Không có buổi học mới nào được tạo trong khoảng ngày của lớp. Có thể các ngày hợp lệ đã tồn tại sẵn.',
                 'flashType' => 'success',
             ];
         }
 
         return [
             'lopHocSlug' => $lopHoc->slug,
-            'message' => "Đã tự động tạo {$count} buổi học thành công.",
+            'message' => "Đã tự động tạo {$count} buổi học trong khoảng {$start->format('d/m/Y')} - {$end->format('d/m/Y')}" . ($skipped > 0 ? ", bỏ qua {$skipped} ngày đã có buổi." : '.'),
             'flashType' => 'success',
         ];
     }
 
-    private function syncClassTimingFromSessions(int $lopHocId): void
-    {
-        $lastSessionDate = BuoiHoc::query()
-            ->where('lopHocId', $lopHocId)
-            ->whereNotIn('trangThai', [BuoiHoc::TRANG_THAI_DA_HUY, BuoiHoc::TRANG_THAI_DOI_LICH])
-            ->max('ngayHoc');
-
-        LopHoc::where('lopHocId', $lopHocId)->update([
-            'ngayKetThuc' => $lastSessionDate ?: null,
-        ]);
-    }
-
     private function validateStorePayload(Request $request): array
     {
-        return $request->validate([
+        $validator = Validator::make($request->all(), [
             'lopHocId' => 'required|exists:lophoc,lopHocId',
             'tenBuoiHoc' => 'nullable|string|max:255',
             'ngayHoc' => 'required|date',
@@ -192,11 +188,31 @@ class BuoiHocService implements BuoiHocServiceInterface
             'ngayHoc.required' => 'Vui lòng chọn ngày học.',
             'caHocId.required' => 'Vui lòng chọn ca học.',
         ]);
+
+        $validator->after(function ($validator) use ($request) {
+            $lopHocId = (int) $request->input('lopHocId');
+            if ($lopHocId <= 0 || ! $request->filled('ngayHoc')) {
+                return;
+            }
+
+            $lopHoc = LopHoc::find($lopHocId);
+            if (! $lopHoc) {
+                return;
+            }
+
+            $this->validateSessionDateAgainstClass(
+                $validator,
+                $lopHoc,
+                (string) $request->input('ngayHoc')
+            );
+        });
+
+        return $validator->validate();
     }
 
-    private function validateUpdatePayload(Request $request): array
+    private function validateUpdatePayload(Request $request, BuoiHoc $buoiHoc): array
     {
-        return $request->validate([
+        $validator = Validator::make($request->all(), [
             'tenBuoiHoc' => 'nullable|string|max:255',
             'ngayHoc' => 'sometimes|required|date',
             'caHocId' => 'sometimes|required|exists:cahoc,caHocId',
@@ -207,5 +223,68 @@ class BuoiHocService implements BuoiHocServiceInterface
             'daDiemDanh' => 'nullable|in:0,1',
             'trangThai' => 'nullable|in:' . implode(',', BuoiHoc::validTrangThaiValues()),
         ]);
+
+        $validator->after(function ($validator) use ($request, $buoiHoc) {
+            if (! $request->filled('ngayHoc')) {
+                return;
+            }
+
+            $lopHoc = LopHoc::find($buoiHoc->lopHocId);
+            if (! $lopHoc) {
+                return;
+            }
+
+            $this->validateSessionDateAgainstClass(
+                $validator,
+                $lopHoc,
+                (string) $request->input('ngayHoc'),
+                $buoiHoc->buoiHocId
+            );
+        });
+
+        return $validator->validate();
+    }
+
+    private function validateSessionDateAgainstClass(
+        $validator,
+        LopHoc $lopHoc,
+        string $ngayHoc,
+        ?int $ignoreBuoiHocId = null
+    ): void {
+        $date = Carbon::parse($ngayHoc)->startOfDay();
+
+        if ($lopHoc->ngayBatDau && $date->lt(Carbon::parse($lopHoc->ngayBatDau)->startOfDay())) {
+            $validator->errors()->add('ngayHoc', 'Ngày học không được nhỏ hơn ngày bắt đầu của lớp.');
+        }
+
+        if ($lopHoc->ngayKetThuc && $date->gt(Carbon::parse($lopHoc->ngayKetThuc)->startOfDay())) {
+            $validator->errors()->add('ngayHoc', 'Ngày học không được lớn hơn ngày kết thúc của lớp.');
+        }
+
+        if (! empty($lopHoc->lichHoc)) {
+            $allowedDays = collect(explode(',', (string) $lopHoc->lichHoc))
+                ->map(fn ($item) => trim($item))
+                ->filter(fn ($item) => isset(self::THU_MAP[$item]))
+                ->map(fn ($item) => self::THU_MAP[$item])
+                ->values()
+                ->all();
+
+            if ($allowedDays !== [] && ! in_array($date->dayOfWeek, $allowedDays, true)) {
+                $validator->errors()->add('ngayHoc', 'Ngày học phải khớp với lịch học đã cấu hình cho lớp.');
+            }
+        }
+
+        $duplicateQuery = BuoiHoc::query()
+            ->where('lopHocId', $lopHoc->lopHocId)
+            ->whereDate('ngayHoc', $date->toDateString())
+            ->whereNotIn('trangThai', [BuoiHoc::TRANG_THAI_DA_HUY, BuoiHoc::TRANG_THAI_DOI_LICH]);
+
+        if ($ignoreBuoiHocId !== null) {
+            $duplicateQuery->where('buoiHocId', '!=', $ignoreBuoiHocId);
+        }
+
+        if ($duplicateQuery->exists()) {
+            $validator->errors()->add('ngayHoc', 'Lớp đã có buổi học ở ngày này.');
+        }
     }
 }
