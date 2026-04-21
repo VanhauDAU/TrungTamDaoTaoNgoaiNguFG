@@ -201,6 +201,7 @@ class ChatMessageService
                     'joinedAt' => now(),
                     'lastReadMessageId' => $message->chatMessageId,
                     'lastSeenAt' => now(),
+                    'hiddenAt' => null,
                     'roiAt' => null,
                 ]
             );
@@ -432,6 +433,7 @@ class ChatMessageService
                 'joinedAt' => now(),
                 'lastReadMessageId' => $lastMessageId,
                 'lastSeenAt' => now(),
+                'hiddenAt' => null,
                 'roiAt' => null,
             ]
         );

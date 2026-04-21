@@ -564,15 +564,20 @@ body.client-chat-mode {
 }
 
 .chat-main-header {
+    position: relative;
+    z-index: 6;
     flex-shrink: 0;
     padding: 1.15rem 1.35rem;
     border-bottom: 1px solid var(--chat-border);
     background: rgba(255, 255, 255, 0.88);
     backdrop-filter: blur(12px);
+    overflow: visible;
 }
 
 .chat-main-header-row,
 .chat-main-primary {
+    flex: 1 1 auto;
+    min-width: 0;
     display: flex;
     align-items: center;
     gap: 0.95rem;
@@ -717,8 +722,11 @@ body.client-chat-mode {
 
 .chat-main-actions {
     display: flex;
+    flex-shrink: 0;
     align-items: center;
     gap: 0.55rem;
+    position: relative;
+    z-index: 2;
 }
 
 .chat-main-toolbar {
@@ -730,6 +738,8 @@ body.client-chat-mode {
 }
 
 .chat-search-panel {
+    position: relative;
+    z-index: 1;
     margin-top: 0.8rem;
 }
 
@@ -1637,11 +1647,17 @@ body.client-chat-mode {
     display: flex;
     flex-wrap: wrap;
     gap: 0.35rem;
-    margin-top: 0.45rem;
-    padding: 0 0.15rem;
+    align-items: center;
+    width: fit-content;
+    max-width: 100%;
+    margin-top: -0.18rem;
+    padding: 0 0.45rem;
+    position: relative;
+    z-index: 3;
 }
 
 .chat-message-row.is-mine .chat-message-reactions {
+    align-self: flex-end;
     justify-content: flex-end;
 }
 
@@ -1660,6 +1676,7 @@ body.client-chat-mode {
         transform 0.18s ease,
         border-color 0.18s ease,
         background 0.18s ease;
+    position: relative;
 }
 
 .chat-message-reaction-pill:hover {
@@ -1929,7 +1946,10 @@ body.client-chat-mode {
 .chat-composer-emoji {
     position: absolute;
     right: 0.55rem;
-    bottom: 0.55rem;
+    top: 50%;
+    bottom: auto;
+    transform: translateY(-50%);
+    z-index: 2;
 }
 
 .chat-composer-emoji-btn {
@@ -1959,7 +1979,7 @@ body.client-chat-mode {
 .chat-composer-emoji-picker {
     position: absolute;
     right: 0;
-    bottom: calc(100% + 0.55rem);
+    bottom: calc(100% + 0.7rem);
     display: flex;
     align-items: center;
     flex-wrap: wrap;

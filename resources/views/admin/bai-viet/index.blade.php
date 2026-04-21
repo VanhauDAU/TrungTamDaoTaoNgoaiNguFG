@@ -1,5 +1,9 @@
 @extends('layouts.admin')
 
+@php
+    $portalRouteBase = request()->routeIs('staff.*') ? 'staff' : 'admin';
+@endphp
+
 @section('title', 'Quản lý Bài Viết')
 @section('page-title', 'Bài Viết / Blog')
 @section('breadcrumb', 'Nội dung · Danh sách bài viết')
@@ -19,18 +23,18 @@
         </div>
         <div style="display:flex;gap:10px;align-items:center">
             @if ($daXoa > 0)
-                <a href="{{ route('admin.bai-viet.trash') }}" class="btn-add-bv"
+                <a href="{{ route($portalRouteBase . '.bai-viet.trash') }}" class="btn-add-bv"
                     style="background:linear-gradient(135deg,#dc2626,#f87171)">
                     <i class="fas fa-trash-alt"></i> Thùng rác
                     <span
                         style="background:rgba(255,255,255,.25);padding:1px 8px;border-radius:12px;font-size:.75rem">{{ $daXoa }}</span>
                 </a>
             @endif
-            <a href="{{ route('admin.danh-muc-bai-viet.index') }}" class="btn-add-bv"
+            <a href="{{ route($portalRouteBase . '.danh-muc-bai-viet.index') }}" class="btn-add-bv"
                 style="background:linear-gradient(135deg,#7c3aed,#a78bfa)">
                 <i class="fas fa-folder-open"></i> Danh mục
             </a>
-            <a href="{{ route('admin.bai-viet.create') }}" class="btn-add-bv">
+            <a href="{{ route($portalRouteBase . '.bai-viet.create') }}" class="btn-add-bv">
                 <i class="fas fa-plus"></i> Thêm bài viết
             </a>
         </div>
@@ -90,7 +94,7 @@
     </div>
 
     {{-- ── Filter bar ────────────────────────────────────────────── --}}
-    <form action="{{ route('admin.bai-viet.index') }}" method="GET" class="bv-filter-bar" id="bv-filter-form">
+    <form action="{{ route($portalRouteBase . '.bai-viet.index') }}" method="GET" class="bv-filter-bar" id="bv-filter-form">
         <div class="search-wrap">
             <i class="fas fa-search"></i>
             <input type="text" name="q" class="search-input" placeholder="Tìm theo tiêu đề, tóm tắt..."
@@ -122,7 +126,7 @@
         <button type="submit" class="bv-btn-filter bv-btn-filter-primary">
             <i class="fas fa-filter"></i> Lọc
         </button>
-        <a href="{{ route('admin.bai-viet.index') }}" class="bv-btn-filter bv-btn-filter-reset">
+        <a href="{{ route($portalRouteBase . '.bai-viet.index') }}" class="bv-btn-filter bv-btn-filter-reset">
             <i class="fas fa-times"></i> Đặt lại
         </a>
     </form>
@@ -133,7 +137,7 @@
             <i class="fas fa-newspaper"></i>
             <p>Không tìm thấy bài viết nào.</p>
             @if (request()->anyFilled(['q', 'danhMucId', 'trangThai']))
-                <a href="{{ route('admin.bai-viet.index') }}" class="bv-btn-filter bv-btn-filter-reset"
+                <a href="{{ route($portalRouteBase . '.bai-viet.index') }}" class="bv-btn-filter bv-btn-filter-reset"
                     style="margin-top:12px;display:inline-flex">
                     Xóa bộ lọc
                 </a>
@@ -178,7 +182,7 @@
                             </td>
                             <td>
                                 <div class="bv-row-title">
-                                    <a href="{{ route('admin.bai-viet.show', $bv->baiVietId) }}">{{ $bv->tieuDe }}</a>
+                                    <a href="{{ route($portalRouteBase . '.bai-viet.show', $bv->baiVietId) }}">{{ $bv->tieuDe }}</a>
                                 </div>
                                 <div class="bv-row-author">
                                     <i class="fas fa-user" style="font-size:.65rem"></i>
@@ -219,11 +223,11 @@
                             </td>
                             <td>
                                 <div class="bv-actions">
-                                    <a href="{{ route('admin.bai-viet.show', $bv->baiVietId) }}" class="bv-btn-action bv-btn-view"
+                                    <a href="{{ route($portalRouteBase . '.bai-viet.show', $bv->baiVietId) }}" class="bv-btn-action bv-btn-view"
                                         title="Xem">
                                         <i class="fas fa-eye"></i>
                                     </a>
-                                    <a href="{{ route('admin.bai-viet.edit', $bv->baiVietId) }}" class="bv-btn-action bv-btn-edit"
+                                    <a href="{{ route($portalRouteBase . '.bai-viet.edit', $bv->baiVietId) }}" class="bv-btn-action bv-btn-edit"
                                         title="Sửa">
                                         <i class="fas fa-pen"></i>
                                     </a>
@@ -325,7 +329,7 @@
             }).then(result => {
                 if (!result.isConfirmed) return;
 
-                fetch('{{ route("admin.bai-viet.bulk-destroy") }}', {
+                fetch('{{ route($portalRouteBase . ".bai-viet.bulk-destroy") }}', {
                     method: 'POST',
                     headers: {
                         'X-CSRF-TOKEN': csrfToken,

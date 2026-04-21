@@ -252,13 +252,13 @@ class DeviceSessionService
         }
 
         if ($request->routeIs('admin.*') || Str::startsWith($request->path(), 'admin')) {
-            return in_array($user->role, [TaiKhoan::ROLE_NHAN_VIEN, TaiKhoan::ROLE_ADMIN], true) ? 'staff' : 'teacher';
+            return 'admin';
         }
 
         return match ($user->role) {
             TaiKhoan::ROLE_GIAO_VIEN => 'teacher',
-            TaiKhoan::ROLE_NHAN_VIEN,
-            TaiKhoan::ROLE_ADMIN => 'staff',
+            TaiKhoan::ROLE_NHAN_VIEN => 'staff',
+            TaiKhoan::ROLE_ADMIN => 'admin',
             default => 'student',
         };
     }

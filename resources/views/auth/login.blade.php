@@ -218,6 +218,68 @@
             font-size: 1.1em;
         }
 
+        .demo-login-inline {
+            margin-top: 14px;
+            padding: 12px 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            background: #f8fafc;
+        }
+
+        .demo-login-inline__label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            color: var(--primary-green);
+            font-size: 0.82rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .demo-login-inline__row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .demo-login-inline__creds {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+            color: #334155;
+            font-size: 0.9rem;
+        }
+
+        .demo-login-inline__creds code {
+            padding: 4px 8px;
+            border-radius: 999px;
+            background: #fff;
+            border: 1px solid #dbeafe;
+            color: #1e3a8a;
+            font-size: 0.82rem;
+        }
+
+        .demo-login-inline__btn {
+            border: none;
+            border-radius: 10px;
+            padding: 9px 14px;
+            background: var(--primary-green);
+            color: #fff;
+            font-size: 0.86rem;
+            font-weight: 700;
+            transition: all 0.2s ease;
+        }
+
+        .demo-login-inline__btn:hover {
+            background: #0b3640;
+            color: #fff;
+        }
+
         /* Link Style */
         a {
             transition: all 0.3s ease;
@@ -364,8 +426,23 @@
                     'url' => route('staff.login'),
                     'active' => ($portal ?? 'student') === 'staff',
                 ],
+                [
+                    'label' => 'Đăng nhập quản trị viên',
+                    'short_label' => 'Admin',
+                    'description' => 'Quản trị hệ thống, dữ liệu nền và cấu hình.',
+                    'icon' => 'fas fa-shield-halved',
+                    'url' => route('admin.login'),
+                    'active' => ($portal ?? 'student') === 'admin',
+                ],
             ]);
             $currentPortalLink = $portalLinks->firstWhere('active', true) ?? $portalLinks->first();
+            $demoAccounts = collect([
+                ['portal' => 'Học viên', 'username' => 'hv001', 'password' => '12345678', 'portal_key' => 'student'],
+                ['portal' => 'Giáo viên', 'username' => 'gv001', 'password' => '12345678', 'portal_key' => 'teacher'],
+                ['portal' => 'Nhân viên', 'username' => 'nv001', 'password' => '12345678', 'portal_key' => 'staff'],
+                ['portal' => 'Admin', 'username' => 'admin', 'password' => '12345678', 'portal_key' => 'admin'],
+            ]);
+            $currentDemoAccount = $demoAccounts->firstWhere('portal_key', $portal ?? 'student');
         @endphp
         {{-- Logo --}}
         <div class="logo_abs">
@@ -532,6 +609,30 @@
                                         @endif
                                     </div>
 
+                                    @if ($currentDemoAccount)
+                                        <div class="demo-login-inline">
+                                            <div class="demo-login-inline__label">
+                                                <i class="fas fa-bolt"></i>
+                                                Tài khoản mẫu cho cổng {{ $currentDemoAccount['portal'] }}
+                                            </div>
+                                            <div class="demo-login-inline__row">
+                                                <div class="demo-login-inline__creds">
+                                                    <span>Tài khoản</span>
+                                                    <code>{{ $currentDemoAccount['username'] }}</code>
+                                                    <span>Mật khẩu</span>
+                                                    <code>{{ $currentDemoAccount['password'] }}</code>
+                                                </div>
+                                                <button type="button"
+                                                    class="demo-login-inline__btn"
+                                                    id="quickFillDemoBtn"
+                                                    data-username="{{ $currentDemoAccount['username'] }}"
+                                                    data-password="{{ $currentDemoAccount['password'] }}">
+                                                    Dùng tài khoản này
+                                                </button>
+                                            </div>
+                                        </div>
+                                    @endif
+
                                 </form>
                                 @include('auth.partials.recaptcha-script', [
                                     'formId' => 'loginform',
@@ -621,6 +722,23 @@
                 
                 updateDisplay(remaining);
             }, 1000);
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const usernameInput = document.getElementById('taiKhoan');
+            const passwordInput = document.getElementById('password');
+            const quickFillBtn = document.getElementById('quickFillDemoBtn');
+
+            if (!quickFillBtn || !usernameInput || !passwordInput) return;
+
+            quickFillBtn.addEventListener('click', function() {
+                usernameInput.value = this.dataset.username || '';
+                passwordInput.value = this.dataset.password || '';
+                usernameInput.dispatchEvent(new Event('input', { bubbles: true }));
+                passwordInput.dispatchEvent(new Event('input', { bubbles: true }));
+                passwordInput.focus();
+                passwordInput.setSelectionRange(passwordInput.value.length, passwordInput.value.length);
+            });
         });
 
     </script>

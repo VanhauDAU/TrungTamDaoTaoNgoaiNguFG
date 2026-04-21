@@ -159,9 +159,11 @@ class LopHocService implements LopHocServiceInterface
             'phongHocs' => PhongHoc::where('coSoId', $coSoId)->get(),
             'giaoVienCoSo' => $this->giaoVienTheoCoSo($coSoId, true),
             'giaoVienKhac' => $this->giaoVienTheoCoSo($coSoId, false),
+            'paymentMethods' => \App\Models\Finance\HoaDon::paymentMethodLabels(),
             'soHocVienDangKy' => $lopHoc->dangKyLopHocs->count(),
             'soBuoiDaHoc' => $lopHoc->buoiHocs->where('trangThai', BuoiHoc::TRANG_THAI_DA_HOAN_THANH)->count(),
             'soBuoiChuaHoc' => $lopHoc->buoiHocs->where('trangThai', '!=', BuoiHoc::TRANG_THAI_DA_HOAN_THANH)->count(),
+            'promotionTargetClasses' => $this->findPromotionTargetClasses($lopHoc),
             'mergeEligible' => $mergeEligibility['eligible'],
             'mergeBlockers' => $mergeEligibility['blockers'],
             'mergeCandidates' => $mergeEligibility['eligible'] ? $this->findMergeCandidates($lopHoc) : collect(),
@@ -1244,6 +1246,26 @@ class LopHocService implements LopHocServiceInterface
                 // Kiểm tra tương thích chính sách giá
                 return $this->hasEquivalentPricingPolicy($source, $target);
             })
+            ->values();
+    }
+
+    private function findPromotionTargetClasses(LopHoc $source): Collection
+    {
+        $sourceEndDate = $source->ngayKetThuc ? Carbon::parse($source->ngayKetThuc) : null;
+
+        return LopHoc::with(['khoaHoc', 'coSo', 'dangKyLopHocs'])
+            ->where('lopHocId', '!=', $source->lopHocId)
+            ->where('coSoId', $source->coSoId)
+            ->whereIn('trangThai', [
+                LopHoc::TRANG_THAI_SAP_MO,
+                LopHoc::TRANG_THAI_DANG_TUYEN_SINH,
+                LopHoc::TRANG_THAI_CHOT_DANH_SACH,
+            ])
+            ->when($sourceEndDate, fn ($query) => $query->whereDate('ngayBatDau', '>=', $sourceEndDate->toDateString()))
+            ->orderByRaw('CASE WHEN khoaHocId = ? THEN 0 ELSE 1 END', [$source->khoaHocId])
+            ->orderBy('ngayBatDau')
+            ->orderBy('tenLopHoc')
+            ->get()
             ->values();
     }
 

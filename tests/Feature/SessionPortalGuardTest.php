@@ -78,7 +78,7 @@ class SessionPortalGuardTest extends TestCase
         $this->actingAs($student)
             ->get('/__test__/admin-only')
             ->assertRedirect(route('home.student.index'))
-            ->assertSessionHas('warning', 'Phiên đăng nhập nội bộ không còn hợp lệ vì trình duyệt hiện đang dùng cổng học viên ở tab khác.');
+            ->assertSessionHas('warning', 'Phiên đăng nhập quản trị không còn hợp lệ vì trình duyệt hiện đang dùng cổng khác ở tab khác.');
     }
 
     private function registerTestRoutes(): void

@@ -25,6 +25,10 @@ class CheckPermission
 
         $user = auth()->user();
 
+        if ($request->routeIs('staff.*', 'teacher.*')) {
+            return $next($request);
+        }
+
         // Admin (role=3) bypass hoàn toàn
         if ($user->isAdmin()) {
             return $next($request);

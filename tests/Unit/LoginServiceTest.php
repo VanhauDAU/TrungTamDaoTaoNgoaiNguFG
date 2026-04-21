@@ -67,7 +67,7 @@ class LoginServiceTest extends TestCase
 
         $this->assertSame(route('teacher.login.submit'), $viewData['submitRoute']);
         $this->assertSame(route('staff.login'), $viewData['alternateRoute']);
-        $this->assertSame(route('login'), $viewData['secondaryAlternateRoute']);
+        $this->assertSame(route('admin.login'), $viewData['secondaryAlternateRoute']);
         $this->assertNull($viewData['registerRoute']);
         $this->assertNull($viewData['googleRoute']);
         $this->assertFalse($viewData['recaptchaEnabled']);
@@ -88,12 +88,14 @@ class LoginServiceTest extends TestCase
         $this->assertFalse($this->service->matchesPortal($student, 'staff'));
     }
 
-    public function test_staff_dashboard_route_falls_back_to_admin_dashboard_when_specific_routes_are_missing(): void
+    public function test_dashboard_route_matches_each_internal_portal(): void
     {
         $teacher = new TaiKhoan(['role' => TaiKhoan::ROLE_GIAO_VIEN]);
+        $staff = new TaiKhoan(['role' => TaiKhoan::ROLE_NHAN_VIEN]);
         $admin = new TaiKhoan(['role' => TaiKhoan::ROLE_ADMIN]);
 
-        $this->assertSame('admin.dashboard', $this->service->staffDashboardRouteFor($teacher));
+        $this->assertSame('teacher.dashboard', $this->service->staffDashboardRouteFor($teacher));
+        $this->assertSame('staff.dashboard', $this->service->staffDashboardRouteFor($staff));
         $this->assertSame('admin.dashboard', $this->service->staffDashboardRouteFor($admin));
     }
 
@@ -107,6 +109,6 @@ class LoginServiceTest extends TestCase
         $this->assertSame('login', $this->service->logoutRedirectRouteFor($student));
         $this->assertSame('teacher.login', $this->service->logoutRedirectRouteFor($teacher));
         $this->assertSame('staff.login', $this->service->logoutRedirectRouteFor($staff));
-        $this->assertSame('staff.login', $this->service->logoutRedirectRouteFor($admin));
+        $this->assertSame('admin.login', $this->service->logoutRedirectRouteFor($admin));
     }
 }

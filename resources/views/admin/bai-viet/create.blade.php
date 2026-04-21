@@ -1,5 +1,9 @@
 @extends('layouts.admin')
 
+@php
+    $portalRouteBase = request()->routeIs('staff.*') ? 'staff' : 'admin';
+@endphp
+
 @section('title', 'Thêm bài viết mới')
 @section('page-title', 'Bài Viết / Blog')
 @section('breadcrumb', 'Nội dung · Bài viết · Thêm mới')
@@ -15,7 +19,7 @@
     <div class="bf-page-header">
         <div>
             <div class="bf-breadcrumb">
-                <a href="{{ route('admin.bai-viet.index') }}"><i class="fas fa-newspaper me-1"></i> Bài viết</a>
+                <a href="{{ route($portalRouteBase . '.bai-viet.index') }}"><i class="fas fa-newspaper me-1"></i> Bài viết</a>
                 <span style="margin:0 6px;color:#cbd5e1">/</span> Thêm mới
             </div>
             <div class="bf-page-title" style="margin-top:4px">
@@ -23,7 +27,7 @@
                 Thêm bài viết mới
             </div>
         </div>
-        <a href="{{ route('admin.bai-viet.index') }}" class="bf-btn bf-btn-secondary">
+        <a href="{{ route($portalRouteBase . '.bai-viet.index') }}" class="bf-btn bf-btn-secondary">
             <i class="fas fa-arrow-left"></i> Quay lại
         </a>
     </div>
@@ -43,7 +47,7 @@
         </div>
     @endif
 
-    <form action="{{ route('admin.bai-viet.store') }}" method="POST" enctype="multipart/form-data">
+    <form action="{{ route($portalRouteBase . '.bai-viet.store') }}" method="POST" enctype="multipart/form-data">
         @csrf
 
         {{-- ── Tabs ──────────────────────────────────────────────── --}}
@@ -130,7 +134,7 @@
                 @if ($danhMucs->isEmpty())
                     <p style="color:#64748b;font-size:.85rem">
                         Chưa có danh mục nào.
-                        <a href="{{ route('admin.danh-muc-bai-viet.create') }}" style="color:#1d4ed8">Tạo danh mục mới</a>
+                        <a href="{{ route($portalRouteBase . '.danh-muc-bai-viet.create') }}" style="color:#1d4ed8">Tạo danh mục mới</a>
                     </p>
                 @else
                     <div class="bf-category-grid">
@@ -181,7 +185,7 @@
 
         {{-- ── Action bar ───────────────────────────────────────── --}}
         <div class="bf-action-bar">
-            <a href="{{ route('admin.bai-viet.index') }}" class="bf-btn bf-btn-secondary">
+            <a href="{{ route($portalRouteBase . '.bai-viet.index') }}" class="bf-btn bf-btn-secondary">
                 <i class="fas fa-times"></i> Hủy
             </a>
             <button type="submit" class="bf-btn bf-btn-primary">
@@ -207,7 +211,7 @@
                 'alignright alignjustify | bullist numlist outdent indent | ' +
                 'link image media codesample emoticons | removeformat | fullscreen code help',
             content_style: 'body { font-family: Inter, sans-serif; font-size: 14px; line-height: 1.7; }',
-            images_upload_url: '{{ route("admin.bai-viet.upload-image") }}',
+            images_upload_url: '{{ route($portalRouteBase . ".bai-viet.upload-image") }}',
             images_upload_credentials: true,
             automatic_uploads: true,
             file_picker_types: 'image',
@@ -218,7 +222,7 @@
                     var formData = new FormData();
                     formData.append('file', blobInfo.blob(), blobInfo.filename());
 
-                    fetch('{{ route("admin.bai-viet.upload-image") }}', {
+                    fetch('{{ route($portalRouteBase . ".bai-viet.upload-image") }}', {
                         method: 'POST',
                         headers: {
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
@@ -292,7 +296,7 @@
 
         function fetchSuggestions(query) {
             if (!query || query.length < 1) { hideSuggestions(); return; }
-            fetch(`{{ route('admin.api.tags.index') }}?q=${encodeURIComponent(query)}`, {
+            fetch(`{{ route($portalRouteBase . '.api.tags.index') }}?q=${encodeURIComponent(query)}`, {
                 headers: { 'Accept': 'application/json' },
             })
                 .then(r => r.json())

@@ -15,6 +15,10 @@ Triển khai hiện tại hỗ trợ hai loại hội thoại:
 - `class_group`: nhóm chat theo lớp học.
 - `direct`: đoạn chat riêng giữa hai thành viên có ít nhất một lớp hợp lệ chung.
 
+Ghi chú:
+
+- `direct` hiện là nhắn riêng theo quan hệ lớp học chung, không phải module kết bạn độc lập.
+
 Route giao diện:
 
 - `GET /hoc-vien/chat`
@@ -51,6 +55,7 @@ Lý do:
 - Tự động tạo room lớp khi user có lớp hợp lệ hoặc chạy command bootstrap.
 - Join room lớp.
 - Tạo hoặc mở direct chat.
+- Xóa đoạn chat direct theo kiểu ẩn phía tôi, không xóa lịch sử chung.
 - Load lịch sử tin nhắn theo phân trang ngược.
 - Poll tin mới theo `after`.
 - Gửi tin nhắn text, ảnh và file.
@@ -178,6 +183,8 @@ Nguồn luật chính:
 - Không cho phép tự tạo chat với chính mình.
 - Chỉ tạo direct chat nếu hai user có ít nhất một `lopHocId` chung trong tập lớp chat hợp lệ.
 - Direct chat không gắn `lopHocId` trực tiếp, nhưng payload có thể trả `directContextLabel` để giải thích kết nối chung.
+- Nếu người dùng ẩn một direct chat, room vẫn được giữ lại và sẽ được mở lại đúng lịch sử cũ khi bấm `Nhắn riêng` từ danh sách thành viên lớp.
+- Nếu direct chat đang bị ẩn mà có tin nhắn mới từ đối phương, room sẽ tự hiện lại trong sidebar.
 
 ### 3.3 Ma trận quyền tóm tắt
 

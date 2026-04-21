@@ -1,11 +1,109 @@
 <!DOCTYPE html>
 <html lang="vi">
 
+@php
+    $internalPortal = request()->routeIs('teacher.*')
+        ? 'teacher'
+        : (request()->routeIs('staff.*') ? 'staff' : 'admin');
+
+    $portalMeta = match ($internalPortal) {
+        'teacher' => [
+            'label' => 'Giáo viên',
+            'sidebar' => 'components.internal.sidebar-teacher',
+            'notificationIndexRoute' => 'teacher.notifications.index',
+            'notificationDropdownRoute' => 'teacher.api.notifications.dropdown',
+            'notificationMarkAllRoute' => 'teacher.api.notifications.mark-all-read',
+            'notificationMarkReadRoute' => 'teacher.api.notifications.mark-read',
+        ],
+        'staff' => [
+            'label' => 'Nhân viên',
+            'sidebar' => 'components.internal.sidebar-staff',
+            'notificationIndexRoute' => 'staff.notifications.index',
+            'notificationDropdownRoute' => 'staff.api.notifications.dropdown',
+            'notificationMarkAllRoute' => 'staff.api.notifications.mark-all-read',
+            'notificationMarkReadRoute' => 'staff.api.notifications.mark-read',
+        ],
+        default => [
+            'label' => 'Admin',
+            'sidebar' => 'components.internal.sidebar-admin',
+            'notificationIndexRoute' => 'admin.thong-bao.index',
+            'notificationDropdownRoute' => 'admin.api.thong-bao.dropdown',
+            'notificationMarkAllRoute' => 'admin.api.thong-bao.mark-all-read',
+            'notificationMarkReadRoute' => 'admin.api.thong-bao.mark-read',
+        ],
+    };
+@endphp
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Quản trị') — {{ config('app.name', 'Five Genius') }}</title>
+    <title>@yield('title', $portalMeta['label']) — {{ config('app.name', 'Five Genius') }}</title>
+    <script>
+        (function() {
+            try {
+                if (localStorage.getItem('internal-sidebar-collapsed') === '1') {
+                    document.documentElement.classList.add('sidebar-collapsed');
+                }
+            } catch (e) {}
+            document.documentElement.classList.add('sidebar-booting');
+        })();
+    </script>
+
+    <style>
+        /* Critical shell styles to avoid first-paint white flash before layout.css loads. */
+        html {
+            min-height: 100%;
+            background: #08111b;
+        }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            background:
+                radial-gradient(circle at top left, rgba(39, 196, 181, 0.12), transparent 28%),
+                linear-gradient(180deg, #edf3f8 0%, #eef4f8 48%, #e7eef5 100%);
+            color: #1a2b3c;
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 288px;
+            min-height: 100vh;
+            background: linear-gradient(180deg, #07131e 0%, #0c1722 52%, #111d2a 100%);
+        }
+
+        .main-wrapper {
+            min-height: 100vh;
+            margin-left: 288px;
+            background: transparent;
+        }
+
+        html.sidebar-collapsed .sidebar {
+            width: 96px;
+        }
+
+        html.sidebar-collapsed .main-wrapper {
+            margin-left: 96px;
+        }
+
+        @media (max-width: 991.98px) {
+            html {
+                background: #eaf0f5;
+            }
+
+            .sidebar {
+                transform: translateX(-100%);
+                width: min(88vw, 320px);
+            }
+
+            .main-wrapper {
+                margin-left: 0;
+            }
+        }
+    </style>
 
     {{-- Google Fonts --}}
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -271,7 +369,7 @@
     @yield('stylesheet')
 </head>
 
-<body>
+<body data-internal-portal="{{ $internalPortal }}">
     {{-- Global Admin Page Loader --}}
     <div id="admin-global-loader" class="admin-global-loader">
         <div class="loader-content">
@@ -281,7 +379,8 @@
     </div>
 
     {{-- ──────────────────────── SIDEBAR ──────────────────────── --}}
-    <x-admin.sidebar />
+    @include($portalMeta['sidebar'])
+    <button class="sidebar-overlay" id="sidebarOverlay" type="button" aria-label="Đóng menu"></button>
 
     {{-- ──────────────────────── MAIN ──────────────────────── --}}
     <div class="main-wrapper">
@@ -290,9 +389,12 @@
             <button class="topbar-icon d-lg-none" id="sidebarToggle">
                 <i class="fas fa-bars"></i>
             </button>
+            <button class="topbar-icon d-none d-lg-inline-flex" id="sidebarDesktopToggle" type="button" title="Thu gọn sidebar">
+                <i class="fas fa-bars-staggered"></i>
+            </button>
             <div>
-                <div class="topbar-title">@yield('page-title', 'Dashboard')</div>
-                <div class="topbar-breadcrumb">@yield('breadcrumb', 'Trang chủ quản trị')</div>
+                <div class="topbar-title">@yield('page-title', 'Dashboard ' . $portalMeta['label'])</div>
+                <div class="topbar-breadcrumb">@yield('breadcrumb', 'Trang chủ ' . $portalMeta['label'])</div>
             </div>
             <div class="topbar-right">
                 <a href="{{ route('home.index') }}" class="topbar-icon" title="Xem trang khách hàng" target="_blank">
@@ -317,7 +419,7 @@
                             <div class="bd-loading"><i class="fas fa-spinner fa-spin me-1"></i> Đang tải…</div>
                         </div>
                         <div class="bd-footer">
-                            <a href="{{ route('admin.thong-bao.index') }}">Xem tất cả thông báo →</a>
+                            <a href="{{ route($portalMeta['notificationIndexRoute']) }}">Xem tất cả thông báo →</a>
                         </div>
                     </div>
                 </div>
@@ -338,10 +440,10 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     @include('partials.auth.session-guard', [
-        'sessionGuardContext' => 'staff',
-        'sessionGuardLogoutButtonId' => 'btn-logout-admin',
-        'sessionGuardLogoutFormId' => 'admin-logout-form',
-        'sessionGuardStaleTitle' => 'Phiên nội bộ đã thay đổi',
+        'sessionGuardContext' => $internalPortal,
+        'sessionGuardLogoutButtonId' => 'btn-logout-internal',
+        'sessionGuardLogoutFormId' => 'internal-logout-form',
+        'sessionGuardStaleTitle' => 'Phiên ' . mb_strtolower($portalMeta['label']) . ' đã thay đổi',
     ])
 
     <script>
@@ -383,8 +485,30 @@
         // Toggle sidebar trên mobile
         const sidebarToggle = document.getElementById('sidebarToggle');
         const sidebar = document.getElementById('sidebar');
-        if (sidebarToggle) {
-            sidebarToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        const sidebarDesktopToggle = document.getElementById('sidebarDesktopToggle');
+        const rootElement = document.documentElement;
+        if (sidebarToggle && sidebar) {
+            sidebarToggle.addEventListener('click', () => {
+                sidebar.classList.toggle('open');
+                sidebarOverlay?.classList.toggle('open', sidebar.classList.contains('open'));
+            });
+        }
+
+        if (sidebarOverlay && sidebar) {
+            sidebarOverlay.addEventListener('click', () => {
+                sidebar.classList.remove('open');
+                sidebarOverlay.classList.remove('open');
+            });
+        }
+
+        if (sidebarDesktopToggle) {
+            sidebarDesktopToggle.addEventListener('click', () => {
+                rootElement.classList.toggle('sidebar-collapsed');
+                try {
+                    localStorage.setItem('internal-sidebar-collapsed', rootElement.classList.contains('sidebar-collapsed') ? '1' : '0');
+                } catch (e) {}
+            });
         }
 
         // Xử lý Tree-view Sidebar
@@ -392,27 +516,29 @@
             header.addEventListener('click', () => {
                 const group = header.parentElement;
                 const isOpen = group.classList.contains('open');
+                const isDesktopCollapsed = window.matchMedia('(min-width: 1025px)').matches && rootElement.classList.contains('sidebar-collapsed');
+
+                if (isDesktopCollapsed) {
+                    rootElement.classList.remove('sidebar-collapsed');
+                    try {
+                        localStorage.setItem('internal-sidebar-collapsed', '0');
+                    } catch (e) {}
+                }
 
                 // Accordion: chỉ mở 1 nhóm để tránh sidebar quá dài
                 document.querySelectorAll('.nav-group').forEach(g => {
                     if (g !== group) g.classList.remove('open');
+                    g.querySelector('.nav-group-header')?.setAttribute('aria-expanded', 'false');
                 });
 
                 if (!isOpen) {
                     group.classList.add('open');
+                    header.setAttribute('aria-expanded', 'true');
                 } else {
                     group.classList.remove('open');
+                    header.setAttribute('aria-expanded', 'false');
                 }
             });
-        });
-
-        // Tự động mở group chứa link active
-        document.addEventListener('DOMContentLoaded', () => {
-            const activeLink = document.querySelector('.nav-sub-item.active');
-            if (activeLink) {
-                const group = activeLink.closest('.nav-group');
-                if (group) group.classList.add('open');
-            }
         });
 
         // Toggle nhóm con "Nghiệp vụ nâng cao" trong menu đào tạo
@@ -473,13 +599,17 @@
         });
 
         // Ẩn loader khi trang load xong
-        window.addEventListener('load', hideLoader);
+        window.addEventListener('load', () => {
+            hideLoader();
+            rootElement.classList.remove('sidebar-booting');
+        });
 
         // Đề phòng user back lại bằng browser thì tắt loader (safari bfcache)
         window.addEventListener('pageshow', function (event) {
             if (event.persisted) {
                 hideLoader();
             }
+            rootElement.classList.remove('sidebar-booting');
         });
 
         // ── BELL DROPDOWN ──────────────────────────────────────────
@@ -525,7 +655,7 @@
 
         async function refreshBell() {
             try {
-                const resp = await fetch('{{ route('admin.api.thong-bao.dropdown') }}');
+                const resp = await fetch(@json(route($portalMeta['notificationDropdownRoute'])));
                 const data = await resp.json();
 
                 // Update badge
@@ -546,13 +676,13 @@
                 bdList.innerHTML = data.notifications.map(n => {
                     const map = loaiIconMap[n.loaiGui] ?? loaiIconMap[0];
                     const time = n.ngayGui ? timeAgo(n.ngayGui) : '';
-                    return `<a href="/admin/thong-bao/${n.thongBaoId}" class="bd-item ${n.daDoc ? '' : 'unread'}"
+                    return `<a href="${@json(route($portalMeta['notificationIndexRoute']))}?thong_bao=${n.thongBaoId}" class="bd-item ${n.daDoc ? '' : 'unread'}"
                                 onclick="markRead(event, ${n.thongBaoId}, ${n.thongBaoNguoiDungId}, this)">
                         <div class="bd-icon ${map.cls}"><i class="fas ${map.icon}"></i></div>
                         <div class="bd-text" style="flex:1;min-width:0;">
                             <div class="bd-tb-title">${n.tieuDe}</div>
                             <div class="bd-tb-preview">${n.tomTat}</div>
-                            <div class="bd-tb-time">${time}</div>
+                            <div class="bd-tb-time">${n.nguoiGui} • ${n.loaiLabel} • ${time}${n.tepDinhCount ? ` • ${n.tepDinhCount} tệp` : ''}</div>
                         </div>
                     </a>`;
                 }).join('');
@@ -583,7 +713,7 @@
             // Don't prevent navigation, just fire async
             el.classList.remove('unread');
             el.querySelector('.bd-item::before');
-            fetch(`/admin/api/thong-bao/${thongBaoId}/da-doc`, {
+            fetch(@json(route($portalMeta['notificationMarkReadRoute'], ['id' => '__ID__'])).replace('__ID__', thongBaoId), {
                 method: 'PATCH',
                 headers: {
                     'X-CSRF-TOKEN': CSRF_TOKEN
@@ -595,7 +725,7 @@
         // Mark all read
         if (markAllBtn) {
             markAllBtn.addEventListener('click', async function () {
-                await fetch('{{ route('admin.api.thong-bao.mark-all-read') }}', {
+                await fetch(@json(route($portalMeta['notificationMarkAllRoute'])), {
                     method: 'PATCH',
                     headers: {
                         'X-CSRF-TOKEN': CSRF_TOKEN

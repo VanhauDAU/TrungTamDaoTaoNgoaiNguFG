@@ -27,7 +27,7 @@ class BaiVietController extends Controller
     public function store(Request $request)
     {
         $baiViet = $this->baiVietService->store($request);
-        return redirect()->route('admin.bai-viet.index')
+        return redirect()->route($this->portalRouteBase() . '.bai-viet.index')
             ->with('success', 'Đã thêm bài viết «' . $baiViet->tieuDe . '» thành công.');
     }
 
@@ -44,7 +44,7 @@ class BaiVietController extends Controller
     public function update(Request $request, int $id)
     {
         $baiViet = $this->baiVietService->update($request, $id);
-        return redirect()->route('admin.bai-viet.show', $id)
+        return redirect()->route($this->portalRouteBase() . '.bai-viet.show', $id)
             ->with('success', 'Đã cập nhật bài viết «' . $baiViet->tieuDe . '» thành công.');
     }
 
@@ -52,10 +52,10 @@ class BaiVietController extends Controller
     {
         try {
             $ten = $this->baiVietService->destroy($id);
-            return redirect()->route('admin.bai-viet.index')->with('success', "Đã chuyển bài viết «{$ten}» vào thùng rác.");
+            return redirect()->route($this->portalRouteBase() . '.bai-viet.index')->with('success', "Đã chuyển bài viết «{$ten}» vào thùng rác.");
         }
         catch (\Exception $e) {
-            return redirect()->route('admin.bai-viet.index')->with('error', 'Đã xảy ra lỗi: ' . $e->getMessage());
+            return redirect()->route($this->portalRouteBase() . '.bai-viet.index')->with('error', 'Đã xảy ra lỗi: ' . $e->getMessage());
         }
     }
 
@@ -73,7 +73,7 @@ class BaiVietController extends Controller
     public function restore(int $id)
     {
         $baiViet = $this->baiVietService->restore($id);
-        return redirect()->route('admin.bai-viet.trash')
+        return redirect()->route($this->portalRouteBase() . '.bai-viet.trash')
             ->with('success', "Đã khôi phục bài viết «{$baiViet->tieuDe}».");
     }
 
@@ -86,7 +86,7 @@ class BaiVietController extends Controller
     public function forceDestroy(int $id)
     {
         $ten = $this->baiVietService->forceDestroy($id);
-        return redirect()->route('admin.bai-viet.trash')->with('success', "Đã xóa vĩnh viễn bài viết «{$ten}».");
+        return redirect()->route($this->portalRouteBase() . '.bai-viet.trash')->with('success', "Đã xóa vĩnh viễn bài viết «{$ten}».");
     }
 
     public function toggleStatus(int $id)
@@ -103,5 +103,10 @@ class BaiVietController extends Controller
             'location' => $location,
             'file' => ['url' => $location],
         ]);
+    }
+
+    private function portalRouteBase(): string
+    {
+        return request()->routeIs('staff.*') ? 'staff' : 'admin';
     }
 }

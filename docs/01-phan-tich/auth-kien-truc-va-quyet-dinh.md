@@ -1,6 +1,6 @@
 # Phân Tích Kiến Trúc Auth
 
-> Cập nhật: 2026-03-12
+> Cập nhật: 2026-04-20
 
 ## 1. Mục tiêu của đợt nâng cấp
 
@@ -14,16 +14,17 @@
 
 ## 2. Quyết định kiến trúc đã chốt
 
-### 2.1 Tách hai cổng đăng nhập
+### 2.1 Tách bốn cổng đăng nhập
 
 - Học viên dùng `/login`
 - Giáo viên dùng `/teacher/login`
-- Nhân viên và admin dùng `/staff/login`
+- Nhân viên dùng `/staff/login`
+- Admin dùng `/admin/login`
 
 Lý do:
 - UX rõ ràng hơn.
-- Dễ áp chính sách bảo mật riêng cho staff sau này.
-- Không phải tiếp tục trộn thông điệp học viên và staff trên cùng một màn hình.
+- Dễ áp chính sách bảo mật và ownership module riêng cho teacher, staff, admin.
+- Không phải tiếp tục trộn thông điệp học viên, nhân viên và admin trên cùng một màn hình.
 
 ### 2.2 Email verification chỉ bắt buộc cho học viên
 
@@ -55,13 +56,26 @@ Lý do:
 Không áp dụng ở giai đoạn này cho:
 - `/teacher/login`
 - `/staff/login`
+- `/admin/login`
 
 Lý do:
 - Giảm bot/spam ở khu vực public.
 - Tránh làm nặng UX cho nhân sự nội bộ.
-- Staff nên được tăng cường bằng route riêng, lockout, và có thể thêm 2FA sau.
+- Các cổng nội bộ nên được tăng cường bằng route riêng, lockout, và có thể thêm 2FA sau.
 
-### 2.5 `username` là mã hệ thống, không phải email, không phải CCCD
+### 2.5 Portal gating theo role cố định
+
+- `teacher` chỉ dành cho `role = giao_vien`
+- `staff` chỉ dành cho `role = nhan_vien`
+- `admin` chỉ dành cho `role = admin`
+- Không dùng `nhomquyen/phanquyen` để quyết định người dùng có được vào portal nào.
+
+Lý do:
+- Giảm coupling giữa điều hướng portal và RBAC chức năng.
+- Dễ tách ownership module trong các phase sau.
+- Tránh tình trạng giáo viên hoặc nhân viên phải đi qua `/admin/*` chỉ vì chưa tách route.
+
+### 2.6 `username` là mã hệ thống, không phải email, không phải CCCD
 
 Quy ước:
 - Học viên: `HV######`
@@ -97,9 +111,12 @@ Luồng mới:
 ### Giáo viên / Nhân viên / Admin
 
 Luồng mới:
-- vào `/teacher/login` hoặc `/staff/login`
+- giáo viên vào `/teacher/login`
+- nhân viên vào `/staff/login`
+- admin vào `/admin/login`
 - đăng nhập bằng email hoặc mã hệ thống
 - nếu là tài khoản mới tạo thì bị chuyển sang đổi mật khẩu bắt buộc
+- sau đăng nhập sẽ vào dashboard đúng portal, không còn dùng một landing nội bộ chung
 
 ## 4. Phạm vi kỹ thuật đã thay đổi
 
@@ -116,10 +133,11 @@ Luồng mới:
 ### Routing
 
 - Bật `Auth::routes(['verify' => true])`
-- Thêm `/teacher/login` và `/staff/login`
+- Thêm `/teacher/login`, `/staff/login`, `/admin/login`
 - Thêm `/auth/google/redirect`
 - Thêm `/auth/google/callback`
 - Áp middleware `verified.student` cho khu vực học viên
+- Áp middleware `portal:*` cho các cổng nội bộ
 
 ### Database
 
@@ -136,7 +154,7 @@ Thêm cột vào `taikhoan`:
 - Audit log chuyên biệt cho Google link/unlink
 - Tách guard riêng cho staff và student
 - Social login cho Facebook
-- không dùng reCAPTCHA cho các cổng nội bộ `/teacher/login` và `/staff/login` ở giai đoạn đầu
+- không dùng reCAPTCHA cho các cổng nội bộ `/teacher/login`, `/staff/login`, `/admin/login` ở giai đoạn đầu
 
 ## 6. Rủi ro và lưu ý
 

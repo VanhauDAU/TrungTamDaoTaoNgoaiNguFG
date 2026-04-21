@@ -54,6 +54,16 @@ interface LoginServiceInterface
     public function staffDashboardRouteFor(TaiKhoan $user): string;
 
     /**
+     * Lấy route dashboard phù hợp cho portal hiện tại của user.
+     */
+    public function dashboardRouteForUser(TaiKhoan $user): string;
+
+    /**
+     * Lấy route đăng nhập tương ứng với portal.
+     */
+    public function loginRouteForPortal(string $portal): string;
+
+    /**
      * Lấy route redirect sau khi logout theo role.
      */
     public function logoutRedirectRouteFor(TaiKhoan $user): string;

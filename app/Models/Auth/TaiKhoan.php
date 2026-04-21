@@ -243,6 +243,19 @@ class TaiKhoan extends Authenticatable implements MustVerifyEmail
      */
     public function canDo(string $feature, string $action = 'xem'): bool
     {
+        $route = request()->route();
+        $routeName = $route?->getName();
+
+        if (is_string($routeName)) {
+            if (str_starts_with($routeName, 'staff.') && in_array($this->role, [self::ROLE_NHAN_VIEN, self::ROLE_ADMIN], true)) {
+                return true;
+            }
+
+            if (str_starts_with($routeName, 'teacher.') && $this->role === self::ROLE_GIAO_VIEN) {
+                return true;
+            }
+        }
+
         // Admin luôn có toàn quyền
         if ($this->isAdmin()) {
             return true;

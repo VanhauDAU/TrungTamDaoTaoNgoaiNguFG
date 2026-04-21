@@ -33,6 +33,21 @@ use App\Http\Controllers\Client\ThongBao\ClientThongBaoController;
 use App\Http\Controllers\Auth\GoogleLoginController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Staff\DashboardController as StaffDashboardController;
+use App\Http\Controllers\Staff\HocVien\DangKyHocController as StaffDangKyHocController;
+use App\Http\Controllers\Staff\HocVien\HocVienController as StaffHocVienController;
+use App\Http\Controllers\Staff\KhoaHoc\BuoiHocController as StaffBuoiHocController;
+use App\Http\Controllers\Staff\KhoaHoc\LopHocController as StaffLopHocController;
+use App\Http\Controllers\Staff\TaiChinh\HoaDonController as StaffHoaDonController;
+use App\Http\Controllers\Staff\ThongBao\ThongBaoController as StaffThongBaoController;
+use App\Http\Controllers\Teacher\DashboardController as TeacherDashboardController;
+use App\Http\Controllers\Teacher\DiemDanh\DiemDanhController as TeacherDiemDanhController;
+use App\Http\Controllers\Teacher\LichDay\LichDayController as TeacherLichDayController;
+use App\Http\Controllers\Teacher\LopHoc\LopHocController as TeacherLopHocController;
+use App\Http\Controllers\Teacher\NhanXet\NhanXetController as TeacherNhanXetController;
+use App\Http\Controllers\Teacher\ProfileController as TeacherProfileController;
+use App\Http\Controllers\Teacher\TaiLieu\TaiLieuController as TeacherTaiLieuController;
+use App\Http\Controllers\Teacher\ThongBao\ThongBaoController as TeacherThongBaoController;
 use App\Http\Controllers\Upload\ImageUploadController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
@@ -144,8 +159,193 @@ Route::prefix('/')->name('home.')->group(function () {
 
 });
 
+// ─── TEACHER ROUTES ──────────────────────────────────────────────────────────
+Route::prefix('teacher')->name('teacher.')->middleware(['auth', 'portal:teacher'])->group(function () {
+    Route::get('/dashboard', TeacherDashboardController::class)->name('dashboard');
+    Route::get('/ho-so', TeacherProfileController::class)->name('profile');
+
+    Route::prefix('lop-hoc-cua-toi')->name('classes.')->group(function () {
+        Route::get('/', [TeacherLopHocController::class, 'index'])->name('index');
+    });
+
+    Route::prefix('lich-day')->name('schedule.')->group(function () {
+        Route::get('/', [TeacherLichDayController::class, 'index'])->name('index');
+
+        // ── Đề xuất (proposals) ───────────────────────────────────────────────
+        Route::post('/de-xuat/day-bu/{buoiHocId}', [TeacherLichDayController::class, 'proposeCompensation'])
+            ->name('propose.compensation');
+        Route::post('/de-xuat/tam-ngung/{buoiHocId}', [TeacherLichDayController::class, 'proposeSuspension'])
+            ->name('propose.suspension');
+        Route::post('/de-xuat/doi-lich/{buoiHocId}', [TeacherLichDayController::class, 'proposeReschedule'])
+            ->name('propose.reschedule');
+    });
+
+    Route::prefix('thong-bao')->name('notifications.')->group(function () {
+        Route::get('/', [TeacherThongBaoController::class, 'index'])->name('index');
+        Route::get('/tao-moi', [AdminThongBaoController::class, 'create'])->name('create');
+        Route::post('/', [AdminThongBaoController::class, 'store'])->name('store');
+    });
+
+    Route::prefix('tai-lieu')->name('materials.')->group(function () {
+        Route::get('/', [TeacherTaiLieuController::class, 'index'])->name('index');
+    });
+
+    Route::prefix('nhan-xet')->name('evaluations.')->group(function () {
+        Route::get('/', [TeacherNhanXetController::class, 'index'])->name('index');
+    });
+
+    Route::prefix('diem-danh')->name('attendance.')->group(function () {
+        Route::get('/', [TeacherDiemDanhController::class, 'index'])->name('index');
+    });
+
+    Route::prefix('api/notifications')->name('api.notifications.')->group(function () {
+        Route::get('/recipients', [AdminThongBaoController::class, 'getRecipients'])->name('recipients');
+        Route::get('/dropdown', [AdminThongBaoController::class, 'getDropdown'])->name('dropdown');
+        Route::get('/unread-count', [AdminThongBaoController::class, 'getUnreadCount'])->name('unread-count');
+        Route::patch('/mark-all-read', [AdminThongBaoController::class, 'markAllRead'])->name('mark-all-read');
+        Route::patch('/{id}/mark-read', [AdminThongBaoController::class, 'markAsRead'])->name('mark-read');
+        Route::patch('/{id}/mark-unread', [AdminThongBaoController::class, 'markAsUnread'])->name('mark-unread');
+    });
+});
+
+// ─── STAFF ROUTES ────────────────────────────────────────────────────────────
+Route::prefix('staff')->name('staff.')->middleware(['auth', 'portal:staff'])->group(function () {
+    Route::get('/dashboard', StaffDashboardController::class)->name('dashboard');
+
+    Route::prefix('hoc-vien')->name('hoc-vien.')->group(function () {
+        Route::get('/', [StaffHocVienController::class, 'index'])->name('index');
+        Route::get('/xuat-excel', [StaffHocVienController::class, 'export'])->name('export');
+        Route::post('/tra-cuu-cccd', [StaffHocVienController::class, 'lookupCitizen'])
+            ->middleware('throttle:30,1')
+            ->name('lookup-citizen');
+        Route::get('/tao-moi', [StaffHocVienController::class, 'create'])->name('create');
+        Route::post('/', [StaffHocVienController::class, 'store'])->name('store');
+        Route::get('/thung-rac', [StaffHocVienController::class, 'trash'])->name('trash');
+        Route::patch('/{id}/khoi-phuc', [StaffHocVienController::class, 'restore'])->name('restore');
+        Route::get('/{taiKhoan}/sua', [StaffHocVienController::class, 'edit'])->name('edit');
+        Route::put('/{taiKhoan}', [StaffHocVienController::class, 'update'])->name('update');
+        Route::delete('/{taiKhoan}', [StaffHocVienController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::prefix('dang-ky')->name('dang-ky.')->group(function () {
+        Route::get('/', [StaffDangKyHocController::class, 'index'])->name('index');
+        Route::get('/tao-moi', [StaffDangKyHocController::class, 'create'])->name('create');
+        Route::post('/', [StaffDangKyHocController::class, 'store'])->name('store');
+        Route::patch('/{id}/xac-nhan', [StaffDangKyHocController::class, 'confirm'])->name('confirm');
+        Route::patch('/{id}/huy', [StaffDangKyHocController::class, 'cancel'])->name('cancel');
+        Route::patch('/{id}/bao-luu', [StaffDangKyHocController::class, 'hold'])->name('hold');
+        Route::patch('/{id}/khoi-phuc', [StaffDangKyHocController::class, 'restore'])->name('restore');
+        Route::patch('/{id}/chuyen-lop', [StaffDangKyHocController::class, 'transfer'])->name('transfer');
+    });
+
+    Route::prefix('lop-hoc')->name('lop-hoc.')->group(function () {
+        Route::get('/', [StaffLopHocController::class, 'index'])->name('index');
+        Route::get('/thung-rac', [StaffLopHocController::class, 'trash'])->name('trash');
+        Route::get('/tao-moi', [StaffLopHocController::class, 'create'])->name('create');
+        Route::post('/', [StaffLopHocController::class, 'store'])->name('store');
+        Route::get('/kiem-tra-xung-dot', [StaffLopHocController::class, 'previewSchedulingConflicts'])->name('preview-conflicts');
+        Route::get('/{slug}/hoc-vien-goi-y', [StaffLopHocController::class, 'searchStudents'])->name('search-students');
+        Route::post('/{slug}/hoc-vien', [StaffLopHocController::class, 'quickAddStudents'])->name('quick-add-students');
+        Route::post('/{slug}/hoc-vien-moi', [StaffLopHocController::class, 'createStudentAndEnroll'])->name('create-student-and-enroll');
+        Route::post('/{slug}/len-lop', [StaffLopHocController::class, 'promoteStudents'])->name('promote-students');
+        Route::patch('/{slug}/trang-thai', [StaffLopHocController::class, 'updateStatus'])->name('update-status');
+        Route::get('/{slug}', [StaffLopHocController::class, 'show'])->name('show');
+        Route::get('/{slug}/sua', [StaffLopHocController::class, 'edit'])->name('edit');
+        Route::put('/{slug}', [StaffLopHocController::class, 'update'])->name('update');
+        Route::delete('/{slug}', [StaffLopHocController::class, 'destroy'])->name('destroy');
+        Route::patch('/{slug}/khoi-phuc', [StaffLopHocController::class, 'restore'])->name('restore');
+    });
+
+    Route::prefix('buoi-hoc')->name('buoi-hoc.')->group(function () {
+        Route::post('/', [StaffBuoiHocController::class, 'store'])->name('store');
+        Route::put('/{id}', [StaffBuoiHocController::class, 'update'])->name('update');
+        Route::delete('/{id}', [StaffBuoiHocController::class, 'destroy'])->name('destroy');
+        Route::post('/tu-dong-tao/{lopHocId}', [StaffBuoiHocController::class, 'autoGenerate'])->name('auto-generate');
+    });
+
+    Route::prefix('api')->name('api.')->group(function () {
+        Route::get('/phuong-xa-co-so/{tinhThanhId}', [CoSoController::class, 'getPhuongXaCoCoSo'])->name('phuong-xa-co-so');
+        Route::get('/co-so-by-location', [CoSoController::class, 'getCoSoByLocation'])->name('co-so-by-location');
+    });
+
+    Route::prefix('hoa-don')->name('hoa-don.')->group(function () {
+        Route::get('/', [StaffHoaDonController::class, 'index'])->name('index');
+        Route::get('/tra-cuu-cong-no', [StaffHoaDonController::class, 'debtLookup'])->name('debt-lookup');
+        Route::post('/tra-cuu-cong-no/thanh-toan', [StaffHoaDonController::class, 'settleAllDebts'])->name('debt-lookup.settle');
+        Route::get('/phieu-thu/{id}/in', [StaffHoaDonController::class, 'printReceipt'])->name('phieu-thu.print');
+        Route::post('/phieu-thu/{id}/gui-email', [StaffHoaDonController::class, 'emailReceipt'])->name('phieu-thu.email');
+        Route::get('/{id}', [StaffHoaDonController::class, 'show'])->name('show');
+        Route::get('/{id}/in', [StaffHoaDonController::class, 'printInvoice'])->name('print');
+        Route::post('/{id}/gui-email', [StaffHoaDonController::class, 'emailInvoice'])->name('email');
+        Route::put('/{id}', [StaffHoaDonController::class, 'update'])->name('update');
+        Route::post('/{id}/phieu-thu', [StaffHoaDonController::class, 'storePhieuThu'])->name('phieu-thu.store');
+        Route::delete('/phieu-thu/{id}', [StaffHoaDonController::class, 'destroyPhieuThu'])->name('phieu-thu.destroy');
+    });
+
+    Route::prefix('bai-viet')->name('bai-viet.')->group(function () {
+        Route::get('/', [AdminBaiVietController::class, 'index'])->name('index');
+        Route::get('/tao-moi', [AdminBaiVietController::class, 'create'])->name('create');
+        Route::post('/', [AdminBaiVietController::class, 'store'])->name('store');
+        Route::get('/thung-rac', [AdminBaiVietController::class, 'trash'])->name('trash');
+        Route::post('/xoa-nhieu', [AdminBaiVietController::class, 'bulkDestroy'])->name('bulk-destroy');
+        Route::post('/khoi-phuc-nhieu', [AdminBaiVietController::class, 'bulkRestore'])->name('bulk-restore');
+        Route::get('/{id}', [AdminBaiVietController::class, 'show'])->name('show');
+        Route::get('/{id}/sua', [AdminBaiVietController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [AdminBaiVietController::class, 'update'])->name('update');
+        Route::delete('/{id}', [AdminBaiVietController::class, 'destroy'])->name('destroy');
+        Route::patch('/{id}/toggle-status', [AdminBaiVietController::class, 'toggleStatus'])->name('toggle-status');
+        Route::post('/upload-image', [AdminBaiVietController::class, 'uploadImage'])->name('upload-image');
+        Route::post('/{id}/khoi-phuc', [AdminBaiVietController::class, 'restore'])->name('restore');
+        Route::delete('/{id}/xoa-vinh-vien', [AdminBaiVietController::class, 'forceDestroy'])->name('force-destroy');
+    });
+
+    Route::prefix('danh-muc-bai-viet')->name('danh-muc-bai-viet.')->group(function () {
+        Route::get('/', [AdminDanhMucBaiVietController::class, 'index'])->name('index');
+        Route::get('/tao-moi', [AdminDanhMucBaiVietController::class, 'create'])->name('create');
+        Route::post('/', [AdminDanhMucBaiVietController::class, 'store'])->name('store');
+        Route::get('/{id}/sua', [AdminDanhMucBaiVietController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [AdminDanhMucBaiVietController::class, 'update'])->name('update');
+        Route::delete('/{id}', [AdminDanhMucBaiVietController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::prefix('thong-bao')->name('notifications.')->group(function () {
+        Route::get('/', [StaffThongBaoController::class, 'index'])->name('index');
+        Route::get('/tao-moi', [AdminThongBaoController::class, 'create'])->name('create');
+        Route::post('/', [AdminThongBaoController::class, 'store'])->name('store');
+    });
+
+    Route::prefix('api/tags')->name('api.tags.')->group(function () {
+        Route::get('/', [AdminTagController::class, 'index'])->name('index');
+        Route::post('/', [AdminTagController::class, 'store'])->name('store');
+        Route::delete('/{id}', [AdminTagController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::prefix('api/notifications')->name('api.notifications.')->group(function () {
+        Route::get('/recipients', [AdminThongBaoController::class, 'getRecipients'])->name('recipients');
+        Route::get('/dropdown', [AdminThongBaoController::class, 'getDropdown'])->name('dropdown');
+        Route::get('/unread-count', [AdminThongBaoController::class, 'getUnreadCount'])->name('unread-count');
+        Route::patch('/mark-all-read', [AdminThongBaoController::class, 'markAllRead'])->name('mark-all-read');
+        Route::patch('/{id}/mark-read', [AdminThongBaoController::class, 'markAsRead'])->name('mark-read');
+        Route::patch('/{id}/mark-unread', [AdminThongBaoController::class, 'markAsUnread'])->name('mark-unread');
+    });
+});
+
+// ─── LEGACY ADMIN REDIRECTS FOR STAFF MODULES ───────────────────────────────
+Route::prefix('admin')->middleware(['auth', 'portal:staff'])->group(function () {
+    $legacyModules = ['hoc-vien', 'dang-ky', 'lop-hoc', 'buoi-hoc', 'hoa-don'];
+
+    foreach ($legacyModules as $module) {
+        Route::get("/{$module}/{path?}", function (?string $path = null) use ($module) {
+            $target = '/staff/' . $module . ($path ? '/' . $path : '');
+            $query = request()->getQueryString();
+
+            return redirect()->to($query ? $target . '?' . $query : $target);
+        })->where('path', '.*');
+    }
+});
+
 // ─── ADMIN ROUTES ────────────────────────────────────────────────────────────
-Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(function () {
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'portal:admin'])->group(function () {
     Route::get('/dashboard', [AdminHomeController::class, 'index'])->name('dashboard');
 
     // ── Cấu hình hệ thống ────────────────────────────────────────
@@ -171,33 +371,6 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
         Route::post('/{id}/nhom-quyen', [TaiKhoanController::class, 'updateNhomQuyen'])->name('update-nhom-quyen');
         Route::post('/{id}/toggle-status', [TaiKhoanController::class, 'toggleStatus'])->name('toggle-status');
         Route::post('/{id}/reset-password', [TaiKhoanController::class, 'resetPassword'])->name('reset-password');
-    });
-
-    // ── Học viên ─────────────────────────────────────────────────────────────
-    Route::prefix('hoc-vien')->name('hoc-vien.')->group(function () {
-        Route::get('/', [AdminHocVienController::class, 'index'])->name('index');
-        Route::get('/xuat-excel', [AdminHocVienController::class, 'export'])->name('export');
-        Route::post('/tra-cuu-cccd', [AdminHocVienController::class, 'lookupCitizen'])
-            ->middleware('throttle:30,1')
-            ->name('lookup-citizen');
-        Route::get('/tao-moi', [AdminHocVienController::class, 'create'])->name('create');
-        Route::post('/', [AdminHocVienController::class, 'store'])->name('store');
-        Route::get('/thung-rac', [AdminHocVienController::class, 'trash'])->name('trash');
-        Route::patch('/{id}/khoi-phuc', [AdminHocVienController::class, 'restore'])->name('restore');
-        Route::get('/{taiKhoan}/sua', [AdminHocVienController::class, 'edit'])->name('edit');
-        Route::put('/{taiKhoan}', [AdminHocVienController::class, 'update'])->name('update');
-        Route::delete('/{taiKhoan}', [AdminHocVienController::class, 'destroy'])->name('destroy');
-    });
-
-    Route::prefix('dang-ky')->name('dang-ky.')->group(function () {
-        Route::get('/', [AdminDangKyHocController::class, 'index'])->name('index');
-        Route::get('/tao-moi', [AdminDangKyHocController::class, 'create'])->name('create');
-        Route::post('/', [AdminDangKyHocController::class, 'store'])->name('store');
-        Route::patch('/{id}/xac-nhan', [AdminDangKyHocController::class, 'confirm'])->name('confirm');
-        Route::patch('/{id}/huy', [AdminDangKyHocController::class, 'cancel'])->name('cancel');
-        Route::patch('/{id}/bao-luu', [AdminDangKyHocController::class, 'hold'])->name('hold');
-        Route::patch('/{id}/khoi-phuc', [AdminDangKyHocController::class, 'restore'])->name('restore');
-        Route::patch('/{id}/chuyen-lop', [AdminDangKyHocController::class, 'transfer'])->name('transfer');
     });
 
     // ── Giáo viên ────────────────────────────────────────────────────────────
@@ -321,31 +494,6 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
         Route::delete('/{slug}', [AdminKhoaHocController::class, 'destroy'])->name('destroy');
         Route::patch('/{slug}/khoi-phuc', [AdminKhoaHocController::class, 'restore'])->name('restore');
     });
-
-    // ── Lớp Học ──────────────────────────────────────────────────────────────
-    Route::prefix('lop-hoc')->name('lop-hoc.')->group(function () {
-        Route::get('/', [AdminLopHocController::class, 'index'])->name('index');
-        Route::get('/thung-rac', [AdminLopHocController::class, 'trash'])->name('trash');
-        Route::get('/tao-moi', [AdminLopHocController::class, 'create'])->name('create');
-        Route::post('/', [AdminLopHocController::class, 'store'])->name('store');
-        Route::get('/kiem-tra-xung-dot', [AdminLopHocController::class, 'previewSchedulingConflicts'])->name('preview-conflicts');
-        Route::patch('/{slug}/trang-thai', [AdminLopHocController::class, 'updateStatus'])->name('update-status');
-        Route::get('/{slug}', [AdminLopHocController::class, 'show'])->name('show');
-        Route::get('/{slug}/sua', [AdminLopHocController::class, 'edit'])->name('edit');
-        Route::put('/{slug}', [AdminLopHocController::class, 'update'])->name('update');
-        Route::delete('/{slug}', [AdminLopHocController::class, 'destroy'])->name('destroy');
-        Route::patch('/{slug}/khoi-phuc', [AdminLopHocController::class, 'restore'])->name('restore');
-        Route::patch('/{slug}/gop', [AdminLopHocController::class, 'merge'])->name('merge');
-    });
-
-    // ── Buổi Học ──────────────────────────────────────────────────────────────
-    Route::prefix('buoi-hoc')->name('buoi-hoc.')->group(function () {
-        Route::post('/', [AdminBuoiHocController::class, 'store'])->name('store');
-        Route::put('/{id}', [AdminBuoiHocController::class, 'update'])->name('update');
-        Route::delete('/{id}', [AdminBuoiHocController::class, 'destroy'])->name('destroy');
-        Route::post('/tu-dong-tao/{lopHocId}', [AdminBuoiHocController::class, 'autoGenerate'])->name('auto-generate');
-    });
-
     // ── Ca Học ────────────────────────────────────────────────────────────
     Route::prefix('ca-hoc')->name('ca-hoc.')->group(function () {
         Route::get('/', [AdminCaHocController::class, 'index'])->name('index');
@@ -353,19 +501,6 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
         Route::put('/{id}', [AdminCaHocController::class, 'update'])->name('update');
         Route::delete('/{id}', [AdminCaHocController::class, 'destroy'])->name('destroy');
         Route::patch('/{id}/toggle-status', [AdminCaHocController::class, 'toggleStatus'])->name('toggle-status');
-    });
-
-    // ── Hóa Đơn & Phiếu Thu ─────────────────────────────────────
-    Route::prefix('hoa-don')->name('hoa-don.')->group(function () {
-        Route::get('/', [AdminHoaDonController::class, 'index'])->name('index');
-        Route::get('/phieu-thu/{id}/in', [AdminHoaDonController::class, 'printReceipt'])->name('phieu-thu.print');
-        Route::post('/phieu-thu/{id}/gui-email', [AdminHoaDonController::class, 'emailReceipt'])->name('phieu-thu.email');
-        Route::get('/{id}', [AdminHoaDonController::class, 'show'])->name('show');
-        Route::get('/{id}/in', [AdminHoaDonController::class, 'printInvoice'])->name('print');
-        Route::post('/{id}/gui-email', [AdminHoaDonController::class, 'emailInvoice'])->name('email');
-        Route::put('/{id}', [AdminHoaDonController::class, 'update'])->name('update');
-        Route::post('/{id}/phieu-thu', [AdminHoaDonController::class, 'storePhieuThu'])->name('phieu-thu.store');
-        Route::delete('/phieu-thu/{id}', [AdminHoaDonController::class, 'destroyPhieuThu'])->name('phieu-thu.destroy');
     });
 
     // ── Bài Viết / Blog ──────────────────────────────────────────
@@ -430,6 +565,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
         Route::get('/dropdown', [AdminThongBaoController::class, 'getDropdown'])->name('dropdown');
         Route::patch('/da-doc-tat-ca', [AdminThongBaoController::class, 'markAllRead'])->name('mark-all-read');
         Route::patch('/{id}/da-doc', [AdminThongBaoController::class, 'markAsRead'])->name('mark-read');
+        Route::patch('/{id}/chua-doc', [AdminThongBaoController::class, 'markAsUnread'])->name('mark-unread');
     });
 });
 

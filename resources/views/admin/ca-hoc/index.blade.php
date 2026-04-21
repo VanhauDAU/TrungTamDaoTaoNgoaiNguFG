@@ -18,10 +18,10 @@
             <span>{{ $tongCa }} ca</span>
         </div>
         <div style="display:flex;gap:10px;align-items:center">
-            <a href="{{ route('admin.lop-hoc.index') }}" class="btn-add-ch"
-                style="background:linear-gradient(135deg,#0f766e,#14b8a6)">
-                <i class="fas fa-chalkboard"></i> Lớp học
-            </a>
+            <span class="btn-add-ch" style="background:linear-gradient(135deg,#0f766e,#14b8a6);cursor:default"
+                title="Lớp học được vận hành tại cổng Nhân viên">
+                <i class="fas fa-chalkboard"></i> Lớp học tại Staff portal
+            </span>
             <button type="button" class="btn-add-ch" id="btnOpenAdd">
                 <i class="fas fa-plus"></i> Thêm ca học
             </button>

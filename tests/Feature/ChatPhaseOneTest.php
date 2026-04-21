@@ -11,6 +11,7 @@ use App\Models\Interaction\Chat\ChatRoom;
 use App\Models\Interaction\Chat\ChatRoomMember;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -239,6 +240,171 @@ class ChatPhaseOneTest extends TestCase
         );
     }
 
+    public function test_direct_room_is_hidden_for_current_user_and_reused_when_opened_again(): void
+    {
+        [$student, $peer] = $this->createSharedClassParticipants();
+
+        $openResponse = $this->actingAs($student)->postJson(route('home.api.chat.direct'), [
+            'targetUserId' => $peer->taiKhoanId,
+        ]);
+
+        $openResponse->assertOk();
+        $roomId = (int) $openResponse->json('room.id');
+
+        $message = ChatMessage::query()->create([
+            'chatRoomId' => $roomId,
+            'nguoiGuiId' => $peer->taiKhoanId,
+            'loai' => ChatMessage::TYPE_TEXT,
+            'noiDung' => 'Lịch sử direct cần được giữ lại',
+            'guiLuc' => now(),
+            'deadlineThuHoi' => now()->addDay(),
+        ]);
+
+        ChatRoom::query()
+            ->where('chatRoomId', $roomId)
+            ->update([
+                'lastMessageId' => $message->chatMessageId,
+                'updated_at' => now(),
+            ]);
+
+        $this->actingAs($student)
+            ->deleteJson(route('home.api.chat.leave', ['id' => $roomId]))
+            ->assertOk()
+            ->assertJsonPath('message', 'Đã ẩn đoạn chat.');
+
+        $hiddenMember = ChatRoomMember::query()
+            ->where('chatRoomId', $roomId)
+            ->where('taiKhoanId', $student->taiKhoanId)
+            ->firstOrFail();
+
+        $this->assertNotNull($hiddenMember->hiddenAt);
+        $this->assertNull($hiddenMember->roiAt);
+        $this->assertDatabaseHas('chat_rooms', ['chatRoomId' => $roomId]);
+
+        $studentRooms = $this->actingAs($student)
+            ->getJson(route('home.api.chat.rooms'))
+            ->assertOk()
+            ->json('rooms');
+
+        $this->assertNotContains($roomId, collect($studentRooms)->pluck('id')->all());
+
+        $peerRooms = $this->actingAs($peer)
+            ->getJson(route('home.api.chat.rooms'))
+            ->assertOk()
+            ->json('rooms');
+
+        $this->assertContains($roomId, collect($peerRooms)->pluck('id')->all());
+
+        $reopenResponse = $this->actingAs($student)->postJson(route('home.api.chat.direct'), [
+            'targetUserId' => $peer->taiKhoanId,
+        ]);
+
+        $reopenResponse
+            ->assertOk()
+            ->assertJsonPath('room.id', $roomId);
+
+        $this->assertNull(
+            ChatRoomMember::query()
+                ->where('chatRoomId', $roomId)
+                ->where('taiKhoanId', $student->taiKhoanId)
+                ->value('hiddenAt')
+        );
+
+        $messages = $this->actingAs($student)
+            ->getJson(route('home.api.chat.messages', ['id' => $roomId]))
+            ->assertOk()
+            ->json('messages');
+
+        $this->assertContains($message->chatMessageId, collect($messages)->pluck('id')->all());
+    }
+
+    public function test_hidden_direct_room_reappears_when_peer_sends_new_message(): void
+    {
+        [$student, $peer] = $this->createSharedClassParticipants();
+
+        $roomId = (int) $this->actingAs($student)
+            ->postJson(route('home.api.chat.direct'), [
+                'targetUserId' => $peer->taiKhoanId,
+            ])
+            ->assertOk()
+            ->json('room.id');
+
+        $this->actingAs($student)
+            ->deleteJson(route('home.api.chat.leave', ['id' => $roomId]))
+            ->assertOk();
+
+        $this->actingAs($peer)
+            ->post(route('home.api.chat.send'), [
+                'roomId' => $roomId,
+                'message' => 'Tin nhắn mới để hiện lại sidebar',
+            ])
+            ->assertOk();
+
+        $rooms = $this->actingAs($student)
+            ->getJson(route('home.api.chat.rooms'))
+            ->assertOk()
+            ->json('rooms');
+
+        $restoredRoom = collect($rooms)->firstWhere('id', $roomId);
+
+        $this->assertNotNull($restoredRoom);
+        $this->assertSame('Tin nhắn mới để hiện lại sidebar', $restoredRoom['lastMessagePreview']);
+        $this->assertSame(1, (int) $restoredRoom['unreadCount']);
+    }
+
+    public function test_room_payload_ignores_deleted_last_message_for_preview_and_unread_count(): void
+    {
+        $student = $this->createAccount('hocvien_a', 'Học viên A');
+        $peer = $this->createAccount('hocvien_b', 'Học viên B');
+        $room = $this->createDirectRoom($student, $peer);
+
+        $olderMessage = ChatMessage::query()->create([
+            'chatRoomId' => $room->chatRoomId,
+            'nguoiGuiId' => $peer->taiKhoanId,
+            'loai' => ChatMessage::TYPE_TEXT,
+            'noiDung' => 'Tin nhắn còn hiển thị ở sidebar',
+            'guiLuc' => now()->subMinutes(5),
+            'deadlineThuHoi' => now()->addDay(),
+        ]);
+
+        ChatRoomMember::query()
+            ->where('chatRoomId', $room->chatRoomId)
+            ->where('taiKhoanId', $student->taiKhoanId)
+            ->update([
+                'lastReadMessageId' => $olderMessage->chatMessageId,
+            ]);
+
+        $latestMessage = ChatMessage::query()->create([
+            'chatRoomId' => $room->chatRoomId,
+            'nguoiGuiId' => $peer->taiKhoanId,
+            'loai' => ChatMessage::TYPE_TEXT,
+            'noiDung' => 'Tin nhắn mới nhất đã bị xóa phía tôi',
+            'guiLuc' => now(),
+            'deadlineThuHoi' => now()->addDay(),
+        ]);
+
+        $room->forceFill([
+            'lastMessageId' => $latestMessage->chatMessageId,
+            'updated_at' => now(),
+        ])->save();
+
+        $this->actingAs($student)->post(
+            route('home.api.chat.delete-for-me', ['id' => $latestMessage->chatMessageId]),
+            ['roomId' => $room->chatRoomId]
+        )->assertOk();
+
+        $rooms = $this->actingAs($student)
+            ->getJson(route('home.api.chat.rooms'))
+            ->assertOk()
+            ->json('rooms');
+
+        $roomPayload = collect($rooms)->firstWhere('id', $room->chatRoomId);
+
+        $this->assertNotNull($roomPayload);
+        $this->assertSame('Tin nhắn còn hiển thị ở sidebar', $roomPayload['lastMessagePreview']);
+        $this->assertSame(0, (int) $roomPayload['unreadCount']);
+    }
+
     private function createMinimalChatDependencies(): void
     {
         foreach ([
@@ -321,6 +487,7 @@ class ChatPhaseOneTest extends TestCase
             $table->unsignedBigInteger('lastReadMessageId')->nullable();
             $table->timestamp('lastSeenAt')->nullable();
             $table->boolean('isMuted')->default(false);
+            $table->timestamp('hiddenAt')->nullable();
             $table->timestamp('roiAt')->nullable();
             $table->timestamps();
         });
@@ -421,5 +588,35 @@ class ChatPhaseOneTest extends TestCase
         }
 
         return $room;
+    }
+
+    private function createSharedClassParticipants(): array
+    {
+        $student = $this->createAccount('hocvien_shared_a', 'Học viên Shared A');
+        $peer = $this->createAccount('hocvien_shared_b', 'Học viên Shared B');
+
+        $classId = DB::table('lophoc')->insertGetId([
+            'tenLopHoc' => 'Lớp chat direct chung',
+            'trangThai' => 4,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('dangKyLopHoc')->insert([
+            [
+                'taiKhoanId' => $student->taiKhoanId,
+                'lopHocId' => $classId,
+                'ngayDangKy' => now()->toDateString(),
+                'trangThai' => 1,
+            ],
+            [
+                'taiKhoanId' => $peer->taiKhoanId,
+                'lopHocId' => $classId,
+                'ngayDangKy' => now()->toDateString(),
+                'trangThai' => 1,
+            ],
+        ]);
+
+        return [$student, $peer];
     }
 }

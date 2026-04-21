@@ -11,6 +11,22 @@
 
 @section('content')
     @php
+        $portalNotificationConfig = $portalNotificationConfig ?? [
+            'label' => 'Admin',
+            'indexRoute' => 'admin.thong-bao.index',
+            'createRoute' => 'admin.thong-bao.create',
+            'storeRoute' => 'admin.thong-bao.store',
+            'recipientsRoute' => 'admin.api.thong-bao.recipients',
+            'allowDrafts' => true,
+        ];
+        $recipientOptions = $recipientOptions ?? [
+            ['value' => 0, 'icon' => '🌐', 'label' => 'Tất cả', 'desc' => 'Toàn bộ người dùng'],
+            ['value' => 1, 'icon' => '🏫', 'label' => 'Theo lớp', 'desc' => 'Học viên 1 lớp cụ thể'],
+            ['value' => 2, 'icon' => '📚', 'label' => 'Theo khóa học', 'desc' => 'HV thuộc khóa học'],
+            ['value' => 3, 'icon' => '👤', 'label' => 'Cá nhân', 'desc' => 'Gửi cho 1 người'],
+            ['value' => 4, 'icon' => '🎭', 'label' => 'Theo vai trò', 'desc' => 'Admin/GV/NV/HV'],
+            ['value' => 5, 'icon' => '🏢', 'label' => 'Theo cơ sở', 'desc' => 'Nhân viên & giáo viên trong cơ sở'],
+        ];
         $stepTwoErrorFields = ['doiTuongGui', 'doiTuongId'];
         $initialStep = collect($stepTwoErrorFields)->contains(fn($field) => $errors->has($field)) ? 2 : 1;
     @endphp
@@ -72,7 +88,7 @@
                     </div>
                 </div>
 
-                <form method="POST" action="{{ route('admin.thong-bao.store') }}" id="wizardForm"
+                <form method="POST" action="{{ route($portalNotificationConfig['storeRoute']) }}" id="wizardForm"
                     enctype="multipart/form-data">
                     @csrf
 
@@ -172,7 +188,7 @@
                         </div>
 
                         <div class="wizard-nav">
-                            <a href="{{ route('admin.thong-bao.index') }}" class="nb-btn nb-btn-secondary">
+                            <a href="{{ route($portalNotificationConfig['indexRoute']) }}" class="nb-btn nb-btn-secondary">
                                 <i class="fas fa-arrow-left"></i> Huỷ
                             </a>
                             <div class="nb-spacer"></div>
@@ -193,25 +209,15 @@
                             <div class="nb-form-group">
                                 <label class="nb-form-label">Loại đối tượng <span class="req">*</span></label>
                                 <div class="doi-tuong-cards" id="doiTuongCards">
-                                    @php
-                                        $dtOptions = [
-                                            [0, '🌐', 'Tất cả', 'Toàn bộ người dùng'],
-                                            [1, '🏫', 'Theo lớp', 'Học viên 1 lớp cụ thể'],
-                                            [2, '📚', 'Theo khóa học', 'HV thuộc khóa học'],
-                                            [3, '👤', 'Cá nhân', 'Gửi cho 1 người'],
-                                            [4, '🎭', 'Theo vai trò', 'Admin/GV/NV/HV'],
-                                            [5, '🏢', 'Theo cơ sở', 'Nhân viên & giáo viên trong cơ sở'],
-                                        ];
-                                    @endphp
-                                    @foreach ($dtOptions as [$val, $icon, $label, $desc])
+                                    @foreach ($recipientOptions as $option)
                                         <label
-                                            class="doi-tuong-card {{ old('doiTuongGui', 0) == $val ? 'selected' : '' }}"
-                                            onclick="selectDoiTuong({{ $val }}, this)">
-                                            <input type="radio" name="doiTuongGui" value="{{ $val }}"
-                                                {{ old('doiTuongGui', 0) == $val ? 'checked' : '' }}>
-                                            <div class="dt-icon">{{ $icon }}</div>
-                                            <div class="dt-label">{{ $label }}</div>
-                                            <div class="dt-desc">{{ $desc }}</div>
+                                            class="doi-tuong-card {{ (string) old('doiTuongGui', $recipientOptions[0]['value'] ?? 0) === (string) $option['value'] ? 'selected' : '' }}"
+                                            onclick="selectDoiTuong({{ $option['value'] }}, this)">
+                                            <input type="radio" name="doiTuongGui" value="{{ $option['value'] }}"
+                                                {{ (string) old('doiTuongGui', $recipientOptions[0]['value'] ?? 0) === (string) $option['value'] ? 'checked' : '' }}>
+                                            <div class="dt-icon">{{ $option['icon'] }}</div>
+                                            <div class="dt-label">{{ $option['label'] }}</div>
+                                            <div class="dt-desc">{{ $option['desc'] }}</div>
                                         </label>
                                     @endforeach
                                 </div>
@@ -344,9 +350,11 @@
                                 <i class="fas fa-arrow-left"></i> Quay lại
                             </button>
                             <div class="nb-spacer"></div>
-                            <button type="submit" class="nb-btn nb-btn-secondary" name="hanhDong" value="draft">
-                                <i class="fas fa-file-lines"></i> Lưu nháp
-                            </button>
+                            @if ($portalNotificationConfig['allowDrafts'])
+                                <button type="submit" class="nb-btn nb-btn-secondary" name="hanhDong" value="draft">
+                                    <i class="fas fa-file-lines"></i> Lưu nháp
+                                </button>
+                            @endif
                             <button type="submit" class="nb-btn nb-btn-success" name="hanhDong" value="send">
                                 <i class="fas fa-paper-plane"></i> Gửi thông báo ngay
                             </button>
@@ -364,10 +372,10 @@
 
     {{-- Inject biến PHP → JS (tối thiểu, không inline logic) --}}
     <script>
-        window.RECIPIENTS_URL = '{{ route('admin.api.thong-bao.recipients') }}';
+        window.RECIPIENTS_URL = '{{ route($portalNotificationConfig['recipientsRoute']) }}';
         window.LOAI_LABELS = @json(App\Models\Interaction\ThongBao::loaiLabels());
         window.UU_TIEN_LABELS = @json(App\Models\Interaction\ThongBao::uuTienLabels());
-        window.DOI_TUONG_LABELS = @json(App\Models\Interaction\ThongBao::doiTuongLabels());
+        window.DOI_TUONG_LABELS = @json(collect($recipientOptions)->mapWithKeys(fn($option) => [$option['value'] => $option['label']]));
         window.INITIAL_WIZARD_STEP = {{ $initialStep }};
     </script>
 

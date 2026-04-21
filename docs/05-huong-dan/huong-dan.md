@@ -245,6 +245,7 @@ Xem thêm bộ tài liệu Auth chuyên biệt:
 - `docs/05-huong-dan/auth-van-hanh-va-kiem-thu.md`
 - `docs/05-huong-dan/auth-joi-validation.md`
 - `docs/01-phan-tich/auth-kien-truc-va-quyet-dinh.md`
+- `docs/00-quan-ly-du-an/phase1-4-portals-foundation.md`
 
 ### 3.0.1 Tài liệu nhân sự và lương mới
 
@@ -260,13 +261,19 @@ Xem thêm bộ tài liệu mới cho nhân sự:
 Vào một trong các cổng nội bộ:
 
 - `http://localhost/teacher/login` cho giảng viên
-- `http://localhost/staff/login` cho nhân viên và admin
+- `http://localhost/staff/login` cho nhân viên
+- `http://localhost/admin/login` cho admin
 
 Học viên dùng:
 
 - `http://localhost/login`
 
-Nếu truy cập `http://localhost/admin/dashboard` khi chưa đăng nhập, hệ thống sẽ điều hướng về cổng nội bộ `/staff/login`.
+Nếu truy cập `http://localhost/admin/dashboard` khi chưa đăng nhập, hệ thống sẽ điều hướng về `/admin/login`.
+
+Lưu ý cho phase chuẩn hóa portal:
+
+- các màn vận hành như học viên, đăng ký, lớp học, buổi học, hóa đơn đang được chuyển ownership sang `staff/*`
+- một số URL `/admin/*` cũ của nhóm module vận hành hiện redirect mềm sang `staff/*` để giữ tương thích tạm thời
 
 Tài khoản mặc định (sau seeder):
 

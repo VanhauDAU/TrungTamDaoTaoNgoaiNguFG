@@ -3,6 +3,7 @@
 namespace App\Services\Admin\HocVien;
 
 use App\Contracts\Admin\HocVien\DangKyHocServiceInterface;
+use App\Contracts\Admin\HocVien\HocVienServiceInterface;
 use App\Models\Auth\TaiKhoan;
 use App\Models\Education\BuoiHoc;
 use App\Models\Education\DangKyLopHoc;
@@ -15,12 +16,17 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class DangKyHocService implements DangKyHocServiceInterface
 {
+    public function __construct(
+        private readonly HocVienServiceInterface $hocVienService
+    ) {}
+
     public function getList(Request $request): array
     {
         $query = DangKyLopHoc::with([
@@ -306,6 +312,201 @@ class DangKyHocService implements DangKyHocServiceInterface
             $this->throwIfDuplicateRegistration($exception);
             throw $exception;
         }
+    }
+
+    public function searchEligibleStudentsForClass(int $lopHocId, ?string $keyword = null, int $limit = 12): Collection
+    {
+        $class = LopHoc::with(['chinhSachGia.dotThus', 'phuPhis', 'khoaHoc', 'dangKyLopHocs', 'buoiHocs.caHoc', 'coSo'])
+            ->whereKey($lopHocId)
+            ->firstOrFail();
+
+        $search = trim((string) $keyword);
+
+        return $this->availableStudentsQuery()
+            ->when($search !== '', function (Builder $query) use ($search) {
+                $query->where(function (Builder $studentQuery) use ($search) {
+                    $studentQuery->where('taiKhoan', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%")
+                        ->orWhereHas('hoSoNguoiDung', function (Builder $profileQuery) use ($search) {
+                            $profileQuery->where('hoTen', 'like', "%{$search}%")
+                                ->orWhere('soDienThoai', 'like', "%{$search}%");
+                        });
+                });
+            })
+            ->limit(max(1, min($limit, 25)))
+            ->get()
+            ->filter(fn (TaiKhoan $student) => $this->validateRegistration($student, $class) === true)
+            ->map(function (TaiKhoan $student) {
+                return [
+                    'taiKhoanId' => $student->taiKhoanId,
+                    'taiKhoan' => $student->taiKhoan,
+                    'hoTen' => $student->hoSoNguoiDung?->hoTen ?? $student->taiKhoan,
+                    'email' => $student->email,
+                    'soDienThoai' => $student->hoSoNguoiDung?->soDienThoai,
+                ];
+            })
+            ->values();
+    }
+
+    public function quickAddStudentsToClass(int $lopHocId, array $studentIds, int $paymentMethod, ?string $notePrefix = null): array
+    {
+        $staffId = Auth::id();
+        $created = collect();
+        $errors = [];
+        $uniqueStudentIds = collect($studentIds)
+            ->map(fn ($id) => (int) $id)
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($uniqueStudentIds->isEmpty()) {
+            throw ValidationException::withMessages([
+                'studentIds' => 'Vui lòng chọn ít nhất một học viên để thêm vào lớp.',
+            ]);
+        }
+
+        DB::transaction(function () use ($lopHocId, $paymentMethod, $notePrefix, $staffId, $uniqueStudentIds, &$created, &$errors) {
+            $class = LopHoc::whereKey($lopHocId)->lockForUpdate()->firstOrFail();
+            $class->load(['chinhSachGia.dotThus', 'phuPhis', 'khoaHoc', 'dangKyLopHocs', 'buoiHocs.caHoc', 'coSo']);
+
+            foreach ($uniqueStudentIds as $studentId) {
+                $student = $this->resolveStudent((int) $studentId);
+                $validation = $this->validateRegistration($student, $class);
+
+                if ($validation !== true) {
+                    $errors[] = [
+                        'taiKhoanId' => $student->taiKhoanId,
+                        'hoTen' => $student->hoSoNguoiDung?->hoTen ?? $student->taiKhoan,
+                        'message' => $validation,
+                    ];
+                    continue;
+                }
+
+                $registration = $this->createRegistrationRecord(
+                    $student,
+                    $class,
+                    $paymentMethod,
+                    $staffId,
+                    $notePrefix ?: 'Thêm nhanh từ màn chi tiết lớp'
+                );
+
+                $class->setRelation(
+                    'dangKyLopHocs',
+                    $class->dangKyLopHocs->push($registration)
+                );
+
+                $created->push($registration);
+            }
+        }, 3);
+
+        return [
+            'created' => $created,
+            'errors' => collect($errors),
+        ];
+    }
+
+    public function createStudentAndEnrollInClass(int $lopHocId, array $studentPayload, int $paymentMethod): array
+    {
+        $staffId = Auth::id();
+
+        return DB::transaction(function () use ($lopHocId, $studentPayload, $paymentMethod, $staffId) {
+            $class = LopHoc::whereKey($lopHocId)->lockForUpdate()->firstOrFail();
+            $class->load(['chinhSachGia.dotThus', 'phuPhis', 'khoaHoc', 'dangKyLopHocs', 'buoiHocs.caHoc', 'coSo']);
+
+            $createdStudent = $this->hocVienService->createForEnrollment($studentPayload);
+            /** @var TaiKhoan $student */
+            $student = $createdStudent['student'];
+
+            $validation = $this->validateRegistration($student, $class);
+            if ($validation !== true) {
+                throw ValidationException::withMessages([
+                    'lopHocId' => $validation,
+                ]);
+            }
+
+            $registration = $this->createRegistrationRecord(
+                $student,
+                $class,
+                $paymentMethod,
+                $staffId,
+                'Tạo mới học viên và ghi danh tại màn chi tiết lớp'
+            );
+
+            return [
+                'student' => $student,
+                'temporaryPassword' => $createdStudent['temporaryPassword'],
+                'registration' => $registration,
+            ];
+        }, 3);
+    }
+
+    public function promoteStudentsToNextClass(int $sourceLopHocId, int $targetLopHocId, array $registrationIds, int $paymentMethod): array
+    {
+        $staffId = Auth::id();
+        $created = collect();
+        $errors = [];
+        $uniqueRegistrationIds = collect($registrationIds)
+            ->map(fn ($id) => (int) $id)
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($uniqueRegistrationIds->isEmpty()) {
+            throw ValidationException::withMessages([
+                'registrationIds' => 'Vui lòng chọn ít nhất một học viên để lên lớp tiếp theo.',
+            ]);
+        }
+
+        DB::transaction(function () use ($sourceLopHocId, $targetLopHocId, $paymentMethod, $staffId, $uniqueRegistrationIds, &$created, &$errors) {
+            $sourceClass = LopHoc::whereKey($sourceLopHocId)->lockForUpdate()->firstOrFail();
+            $sourceClass->load(['dangKyLopHocs.taiKhoan.hoSoNguoiDung', 'khoaHoc', 'coSo']);
+
+            $targetClass = LopHoc::whereKey($targetLopHocId)->lockForUpdate()->firstOrFail();
+            $targetClass->load(['chinhSachGia.dotThus', 'phuPhis', 'khoaHoc', 'dangKyLopHocs', 'buoiHocs.caHoc', 'coSo']);
+
+            foreach ($uniqueRegistrationIds as $registrationId) {
+                $registration = $sourceClass->dangKyLopHocs
+                    ->firstWhere('dangKyLopHocId', $registrationId);
+
+                if (!$registration || !$registration->taiKhoan) {
+                    $errors[] = [
+                        'dangKyLopHocId' => $registrationId,
+                        'message' => 'Không tìm thấy đăng ký hợp lệ trong lớp nguồn.',
+                    ];
+                    continue;
+                }
+
+                $validation = $this->validateRegistration($registration->taiKhoan, $targetClass);
+                if ($validation !== true) {
+                    $errors[] = [
+                        'dangKyLopHocId' => $registrationId,
+                        'hoTen' => $registration->taiKhoan->hoSoNguoiDung?->hoTen ?? $registration->taiKhoan->taiKhoan,
+                        'message' => $validation,
+                    ];
+                    continue;
+                }
+
+                $newRegistration = $this->createRegistrationRecord(
+                    $registration->taiKhoan,
+                    $targetClass,
+                    $paymentMethod,
+                    $staffId,
+                    'Lên lớp tiếp theo từ ' . $sourceClass->tenLopHoc
+                );
+
+                $targetClass->setRelation(
+                    'dangKyLopHocs',
+                    $targetClass->dangKyLopHocs->push($newRegistration)
+                );
+
+                $created->push($newRegistration);
+            }
+        }, 3);
+
+        return [
+            'created' => $created,
+            'errors' => collect($errors),
+        ];
     }
 
     private function availableStudentsQuery(): Builder

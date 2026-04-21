@@ -57,6 +57,7 @@ class ChatRoomService
             [
                 'vaiTro' => ChatRoomMember::ROLE_TEACHER,
                 'joinedAt' => now(),
+                'hiddenAt' => null,
                 'roiAt' => null,
             ]
         );
@@ -171,13 +172,20 @@ class ChatRoomService
                     $this->ensureTeacherMember($room, $taiKhoan->taiKhoanId);
                 }
 
-                return $this->buildRoomPayload($room->fresh([
+                $room = $room->fresh([
                     'lopHoc.khoaHoc',
                     'lopHoc.taiKhoan.hoSoNguoiDung',
                     'lastMessage.nguoiGui.hoSoNguoiDung',
                     'members.taiKhoan.hoSoNguoiDung',
-                ]), $taiKhoan, $accessService);
+                ]);
+
+                if (!$room || !$this->isRoomVisibleForUser($room, $taiKhoan)) {
+                    return null;
+                }
+
+                return $this->buildRoomPayload($room, $taiKhoan, $accessService);
             })
+            ->filter()
             ->sortByDesc(function (array $room) {
                 return $room['lastMessageAt'] ?? $room['updatedAt'] ?? '';
             })
@@ -239,18 +247,17 @@ class ChatRoomService
             ]);
         }
 
+        if ($room && !$this->isRoomVisibleForUser($room, $taiKhoan)) {
+            return null;
+        }
+
         return $room;
     }
 
     public function buildRoomPayload(ChatRoom $room, TaiKhoan $taiKhoan, ChatAccessService $accessService): array
     {
-        $member = ChatRoomMember::query()
-            ->where('chatRoomId', $room->chatRoomId)
-            ->where('taiKhoanId', $taiKhoan->taiKhoanId)
-            ->whereNull('roiAt')
-            ->first();
-
-        $lastMessage = $room->lastMessage;
+        $member = $this->findActiveMember($room, $taiKhoan);
+        $lastMessage = $this->getLastVisibleMessageForUser($room, $taiKhoan);
         $teacher = optional($room->lopHoc)->taiKhoan;
         $teacherName = optional($teacher?->hoSoNguoiDung)->hoTen
             ?? $teacher?->taiKhoan
@@ -265,6 +272,8 @@ class ChatRoomService
         $roomAvatarUrl = $room->isDirect()
             ? $this->avatarUrlForAccount($directPeer)
             : null;
+        $lastVisibleAt = $lastMessage?->guiLuc ?? $lastMessage?->created_at;
+        $updatedAt = $lastVisibleAt ?? $room->updated_at;
 
         return [
             'id' => $room->chatRoomId,
@@ -290,12 +299,12 @@ class ChatRoomService
             'directPeerName' => $directPeerName,
             'directPeerAvatarUrl' => $this->avatarUrlForAccount($directPeer),
             'lastMessagePreview' => $this->makeLastMessagePreview($lastMessage),
-            'lastMessageAt' => optional($lastMessage?->guiLuc ?? $lastMessage?->created_at)?->toIso8601String(),
-            'lastMessageAtLabel' => optional($lastMessage?->guiLuc ?? $lastMessage?->created_at)?->diffForHumans(),
+            'lastMessageAt' => optional($lastVisibleAt)?->toIso8601String(),
+            'lastMessageAtLabel' => optional($lastVisibleAt)?->diffForHumans(),
             'unreadCount' => $this->getUnreadCount($room, $taiKhoan, $member),
             'memberLastReadMessageId' => $member?->lastReadMessageId,
             'memberLastSeenAt' => optional($member?->lastSeenAt)?->toIso8601String(),
-            'updatedAt' => optional($room->updated_at)?->toIso8601String(),
+            'updatedAt' => optional($updatedAt)?->toIso8601String(),
         ];
     }
 
@@ -341,17 +350,19 @@ class ChatRoomService
 
         return DB::transaction(function () use ($orderedIds, $firstUser, $secondUser) {
             $room = ChatRoom::query()
-                ->with(['members'])
+                ->with(['allMembers'])
                 ->where('loai', ChatRoom::TYPE_DIRECT)
-                ->whereHas('members', function ($query) use ($orderedIds) {
+                ->whereHas('allMembers', function ($query) use ($orderedIds) {
                     $query->where('taiKhoanId', $orderedIds[0])->whereNull('roiAt');
                 })
-                ->whereHas('members', function ($query) use ($orderedIds) {
+                ->whereHas('allMembers', function ($query) use ($orderedIds) {
                     $query->where('taiKhoanId', $orderedIds[1])->whereNull('roiAt');
                 })
+                ->orderByDesc('updated_at')
                 ->get()
                 ->first(function (ChatRoom $candidate) use ($orderedIds) {
-                    $activeMemberIds = $candidate->members
+                    $activeMemberIds = $candidate->allMembers
+                        ->whereNull('roiAt')
                         ->pluck('taiKhoanId')
                         ->sort()
                         ->values();
@@ -369,19 +380,30 @@ class ChatRoomService
                 ]);
             }
 
-            foreach ([$firstUser, $secondUser] as $user) {
-                ChatRoomMember::query()->updateOrCreate(
-                    [
-                        'chatRoomId' => $room->chatRoomId,
-                        'taiKhoanId' => $user->taiKhoanId,
-                    ],
-                    [
-                        'vaiTro' => ChatRoomMember::ROLE_MEMBER,
-                        'joinedAt' => now(),
-                        'roiAt' => null,
-                    ]
-                );
-            }
+            ChatRoomMember::query()->updateOrCreate(
+                [
+                    'chatRoomId' => $room->chatRoomId,
+                    'taiKhoanId' => $firstUser->taiKhoanId,
+                ],
+                [
+                    'vaiTro' => ChatRoomMember::ROLE_MEMBER,
+                    'joinedAt' => now(),
+                    'hiddenAt' => null,
+                    'roiAt' => null,
+                ]
+            );
+
+            ChatRoomMember::query()->updateOrCreate(
+                [
+                    'chatRoomId' => $room->chatRoomId,
+                    'taiKhoanId' => $secondUser->taiKhoanId,
+                ],
+                [
+                    'vaiTro' => ChatRoomMember::ROLE_MEMBER,
+                    'joinedAt' => now(),
+                    'roiAt' => null,
+                ]
+            );
 
             return $room->fresh([
                 'lopHoc.khoaHoc',
@@ -404,6 +426,7 @@ class ChatRoomService
                     ? ChatRoomMember::ROLE_TEACHER
                     : ChatRoomMember::ROLE_MEMBER,
                 'joinedAt' => now(),
+                'hiddenAt' => null,
                 'roiAt' => null,
             ]
         );
@@ -413,20 +436,20 @@ class ChatRoomService
     {
         DB::transaction(function () use ($room, $taiKhoan) {
             if ($room->isDirect()) {
-                // Direct chat: xóa hẳn bản ghi member của người dùng này
+                $lastVisibleMessageId = $this->visibleMessagesQueryForUser($room, $taiKhoan)
+                    ->max('chatMessageId');
+
+                // Direct chat: chỉ ẩn phía người dùng hiện tại, không xóa lịch sử hay room.
+                $updateData = ['hiddenAt' => now()];
+                if ($lastVisibleMessageId) {
+                    $updateData['lastReadMessageId'] = $lastVisibleMessageId;
+                }
+
                 ChatRoomMember::query()
                     ->where('chatRoomId', $room->chatRoomId)
                     ->where('taiKhoanId', $taiKhoan->taiKhoanId)
-                    ->delete();
-
-                // Nếu không còn thành viên nào → xóa luôn room
-                $remainingMembers = ChatRoomMember::query()
-                    ->where('chatRoomId', $room->chatRoomId)
-                    ->count();
-
-                if ($remainingMembers === 0) {
-                    $room->delete();
-                }
+                    ->whereNull('roiAt')
+                    ->update($updateData);
             } else {
                 // Class group: đặt roiAt = now() (rời nhóm, không xóa room vì còn người khác)
                 ChatRoomMember::query()
@@ -445,11 +468,65 @@ class ChatRoomService
 
         $lastReadMessageId = $member?->lastReadMessageId ?? 0;
 
-        return ChatMessage::query()
-            ->where('chatRoomId', $room->chatRoomId)
+        return $this->visibleMessagesQueryForUser($room, $taiKhoan)
             ->where('chatMessageId', '>', $lastReadMessageId)
             ->where('nguoiGuiId', '!=', $taiKhoan->taiKhoanId)
             ->count();
+    }
+
+    private function findActiveMember(ChatRoom $room, TaiKhoan $taiKhoan): ?ChatRoomMember
+    {
+        return ChatRoomMember::query()
+            ->where('chatRoomId', $room->chatRoomId)
+            ->where('taiKhoanId', $taiKhoan->taiKhoanId)
+            ->whereNull('roiAt')
+            ->first();
+    }
+
+    private function isRoomVisibleForUser(ChatRoom $room, TaiKhoan $taiKhoan): bool
+    {
+        if (!$room->isDirect()) {
+            return true;
+        }
+
+        $member = $this->findActiveMember($room, $taiKhoan);
+        if (!$member) {
+            return false;
+        }
+
+        if ($member->hiddenAt === null) {
+            return true;
+        }
+
+        return $this->hasVisibleIncomingMessagesAfterHidden($room, $taiKhoan, $member);
+    }
+
+    private function hasVisibleIncomingMessagesAfterHidden(ChatRoom $room, TaiKhoan $taiKhoan, ChatRoomMember $member): bool
+    {
+        if ($member->hiddenAt === null) {
+            return false;
+        }
+
+        return $this->visibleMessagesQueryForUser($room, $taiKhoan)
+            ->where('nguoiGuiId', '!=', $taiKhoan->taiKhoanId)
+            ->where('chatMessageId', '>', (int) ($member->lastReadMessageId ?? 0))
+            ->exists();
+    }
+
+    private function getLastVisibleMessageForUser(ChatRoom $room, TaiKhoan $taiKhoan): ?ChatMessage
+    {
+        return $this->visibleMessagesQueryForUser($room, $taiKhoan)
+            ->orderByDesc('chatMessageId')
+            ->first();
+    }
+
+    private function visibleMessagesQueryForUser(ChatRoom $room, TaiKhoan $taiKhoan)
+    {
+        return ChatMessage::query()
+            ->where('chatRoomId', $room->chatRoomId)
+            ->whereDoesntHave('deletes', function ($query) use ($taiKhoan) {
+                $query->where('taiKhoanId', $taiKhoan->taiKhoanId);
+            });
     }
 
     private function memberIsOnlineRecently(ChatRoomMember $member): bool

@@ -1,5 +1,9 @@
 @extends('layouts.admin')
 
+@php
+    $portalRouteBase = request()->routeIs('staff.*') ? 'staff' : 'admin';
+@endphp
+
 @section('title', 'Thùng rác - Bài Viết')
 @section('page-title', 'Bài Viết / Blog')
 @section('breadcrumb', 'Nội dung · Bài viết · Thùng rác')
@@ -17,7 +21,7 @@
             Thùng rác
             <span>{{ $baiViets->total() }} bài viết</span>
         </div>
-        <a href="{{ route('admin.bai-viet.index') }}" class="btn-add-bv"
+        <a href="{{ route($portalRouteBase . '.bai-viet.index') }}" class="btn-add-bv"
             style="background:linear-gradient(135deg,#475569,#64748b)">
             <i class="fas fa-arrow-left"></i> Quay lại danh sách
         </a>
@@ -57,7 +61,7 @@
         <div class="bv-empty">
             <i class="fas fa-trash-alt"></i>
             <p>Thùng rác trống.</p>
-            <a href="{{ route('admin.bai-viet.index') }}" class="bv-btn-filter bv-btn-filter-reset"
+            <a href="{{ route($portalRouteBase . '.bai-viet.index') }}" class="bv-btn-filter bv-btn-filter-reset"
                 style="margin-top:12px;display:inline-flex">
                 Quay lại danh sách
             </a>
@@ -114,7 +118,7 @@
                             </td>
                             <td>
                                 <div class="bv-actions">
-                                    <form action="{{ route('admin.bai-viet.restore', $bv->baiVietId) }}" method="POST"
+                                    <form action="{{ route($portalRouteBase . '.bai-viet.restore', $bv->baiVietId) }}" method="POST"
                                         style="display:inline">
                                         @csrf
                                         <button type="submit" class="bv-btn-action" title="Khôi phục"
@@ -204,7 +208,7 @@
                 reverseButtons: true,
             }).then(result => {
                 if (!result.isConfirmed) return;
-                fetch('{{ route("admin.bai-viet.bulk-restore") }}', {
+                fetch('{{ route($portalRouteBase . ".bai-viet.bulk-restore") }}', {
                     method: 'POST',
                     headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json', 'Content-Type': 'application/json' },
                     body: JSON.stringify({ ids }),

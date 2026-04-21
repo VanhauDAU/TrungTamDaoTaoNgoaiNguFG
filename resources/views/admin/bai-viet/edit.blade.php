@@ -1,5 +1,9 @@
 @extends('layouts.admin')
 
+@php
+    $portalRouteBase = request()->routeIs('staff.*') ? 'staff' : 'admin';
+@endphp
+
 @section('title', 'Chỉnh sửa bài viết')
 @section('page-title', 'Bài Viết / Blog')
 @section('breadcrumb', 'Nội dung · Bài viết · Chỉnh sửa')
@@ -15,7 +19,7 @@
     <div class="bf-page-header">
         <div>
             <div class="bf-breadcrumb">
-                <a href="{{ route('admin.bai-viet.index') }}"><i class="fas fa-newspaper me-1"></i> Bài viết</a>
+                <a href="{{ route($portalRouteBase . '.bai-viet.index') }}"><i class="fas fa-newspaper me-1"></i> Bài viết</a>
                 <span style="margin:0 6px;color:#cbd5e1">/</span> Chỉnh sửa
             </div>
             <div class="bf-page-title" style="margin-top:4px">
@@ -24,10 +28,10 @@
             </div>
         </div>
         <div style="display:flex;gap:8px">
-            <a href="{{ route('admin.bai-viet.show', $baiViet->baiVietId) }}" class="bf-btn bf-btn-secondary">
+            <a href="{{ route($portalRouteBase . '.bai-viet.show', $baiViet->baiVietId) }}" class="bf-btn bf-btn-secondary">
                 <i class="fas fa-eye"></i> Xem
             </a>
-            <a href="{{ route('admin.bai-viet.index') }}" class="bf-btn bf-btn-secondary">
+            <a href="{{ route($portalRouteBase . '.bai-viet.index') }}" class="bf-btn bf-btn-secondary">
                 <i class="fas fa-arrow-left"></i> Quay lại
             </a>
         </div>
@@ -48,7 +52,7 @@
         </div>
     @endif
 
-    <form action="{{ route('admin.bai-viet.update', $baiViet->baiVietId) }}" method="POST" enctype="multipart/form-data">
+    <form action="{{ route($portalRouteBase . '.bai-viet.update', $baiViet->baiVietId) }}" method="POST" enctype="multipart/form-data">
         @csrf
         @method('PUT')
 
@@ -178,7 +182,7 @@
 
         {{-- ── Action bar ───────────────────────────────────────── --}}
         <div class="bf-action-bar">
-            <a href="{{ route('admin.bai-viet.index') }}" class="bf-btn bf-btn-secondary">
+            <a href="{{ route($portalRouteBase . '.bai-viet.index') }}" class="bf-btn bf-btn-secondary">
                 <i class="fas fa-times"></i> Hủy
             </a>
             <button type="submit" class="bf-btn bf-btn-primary">
@@ -203,7 +207,7 @@
                 'alignright alignjustify | bullist numlist outdent indent | ' +
                 'link image media codesample emoticons | removeformat | fullscreen code help',
             content_style: 'body { font-family: Inter, sans-serif; font-size: 14px; line-height: 1.7; }',
-            images_upload_url: '{{ route("admin.bai-viet.upload-image") }}',
+            images_upload_url: '{{ route($portalRouteBase . ".bai-viet.upload-image") }}',
             images_upload_credentials: true,
             automatic_uploads: true,
             file_picker_types: 'image',
@@ -213,7 +217,7 @@
                 return new Promise(function (resolve, reject) {
                     var formData = new FormData();
                     formData.append('file', blobInfo.blob(), blobInfo.filename());
-                    fetch('{{ route("admin.bai-viet.upload-image") }}', {
+                    fetch('{{ route($portalRouteBase . ".bai-viet.upload-image") }}', {
                         method: 'POST',
                         headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content') },
                         body: formData,
@@ -285,7 +289,7 @@
 
         function fetchSuggestions(query) {
             if (!query || query.length < 1) { hideSuggestions(); return; }
-            fetch(`{{ route('admin.api.tags.index') }}?q=${encodeURIComponent(query)}`, {
+            fetch(`{{ route($portalRouteBase . '.api.tags.index') }}?q=${encodeURIComponent(query)}`, {
                 headers: { 'Accept': 'application/json' },
             })
                 .then(r => r.json())
