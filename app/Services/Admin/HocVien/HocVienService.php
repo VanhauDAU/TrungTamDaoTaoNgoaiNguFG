@@ -112,7 +112,7 @@ class HocVienService implements HocVienServiceInterface
     {
         $validator = Validator::make(
             $payload,
-            $this->studentCreationRules(withAvatar: false, requireEmail: false, requirePassword: false),
+            $this->studentCreationRules(withAvatar: false, requireEmail: true, requirePassword: false),
             $this->studentCreationMessages()
         );
 
@@ -310,10 +310,6 @@ class HocVienService implements HocVienServiceInterface
     private function createStudentRecord(array $payload, string $password, ?Request $request = null): TaiKhoan
     {
         $email = trim((string) ($payload['email'] ?? ''));
-
-        if ($email === '') {
-            $email = 'hv.' . now()->format('YmdHis') . '.' . substr((string) str()->ulid(), -6) . '@student.local';
-        }
 
         $taiKhoan = TaiKhoan::create([
             'taiKhoan' => TaiKhoan::generateTemporaryUsername(TaiKhoan::ROLE_HOC_VIEN),

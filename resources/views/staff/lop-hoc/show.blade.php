@@ -1393,7 +1393,7 @@
                         <div>
                             <label class="inline-create-label" for="inline_email">Email</label>
                             <input type="email" id="inline_email" name="email" value="{{ old('email') }}"
-                                placeholder="Có thể để trống, hệ thống sẽ tự tạo email nội bộ">
+                                placeholder="Nhập email học viên" required>
                         </div>
                         <div>
                             <label class="inline-create-label" for="inline_payment_method">Hình thức thanh toán</label>
