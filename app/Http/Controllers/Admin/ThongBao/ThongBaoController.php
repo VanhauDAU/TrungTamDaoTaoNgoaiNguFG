@@ -17,11 +17,212 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Carbon\Carbon;
 
 class ThongBaoController extends Controller
 {
     public function __construct(private ThongBaoService $service) {}
+
+    private function currentPortal(Request $request): string
+    {
+        if ($request->routeIs('teacher.*')) {
+            return 'teacher';
+        }
+
+        if ($request->routeIs('staff.*')) {
+            return 'staff';
+        }
+
+        return 'admin';
+    }
+
+    private function portalConfig(Request $request): array
+    {
+        return match ($this->currentPortal($request)) {
+            'teacher' => [
+                'key' => 'teacher',
+                'label' => 'Giáo viên',
+                'indexRoute' => 'teacher.notifications.index',
+                'createRoute' => 'teacher.notifications.create',
+                'storeRoute' => 'teacher.notifications.store',
+                'recipientsRoute' => 'teacher.api.notifications.recipients',
+                'allowDrafts' => false,
+                'showRoute' => null,
+            ],
+            'staff' => [
+                'key' => 'staff',
+                'label' => 'Nhân viên',
+                'indexRoute' => 'staff.notifications.index',
+                'createRoute' => 'staff.notifications.create',
+                'storeRoute' => 'staff.notifications.store',
+                'recipientsRoute' => 'staff.api.notifications.recipients',
+                'allowDrafts' => false,
+                'showRoute' => null,
+            ],
+            default => [
+                'key' => 'admin',
+                'label' => 'Admin',
+                'indexRoute' => 'admin.thong-bao.index',
+                'createRoute' => 'admin.thong-bao.create',
+                'storeRoute' => 'admin.thong-bao.store',
+                'recipientsRoute' => 'admin.api.thong-bao.recipients',
+                'allowDrafts' => true,
+                'showRoute' => 'admin.thong-bao.show',
+            ],
+        };
+    }
+
+    private function allowedRecipientOptions(Request $request): array
+    {
+        return match ($this->currentPortal($request)) {
+            'teacher' => [
+                ['value' => ThongBao::DOI_TUONG_THEO_LOP, 'icon' => '🏫', 'label' => 'Theo lớp', 'desc' => 'Gửi cho học viên trong lớp bạn phụ trách'],
+                ['value' => ThongBao::DOI_TUONG_CA_NHAN, 'icon' => '👤', 'label' => 'Cá nhân', 'desc' => 'Gửi trực tiếp tới một học viên liên quan'],
+            ],
+            'staff' => [
+                ['value' => ThongBao::DOI_TUONG_THEO_LOP, 'icon' => '🏫', 'label' => 'Theo lớp', 'desc' => 'Gửi cho học viên của một lớp cụ thể'],
+                ['value' => ThongBao::DOI_TUONG_THEO_KHOA, 'icon' => '📚', 'label' => 'Theo khóa học', 'desc' => 'Gửi cho học viên trong một khóa học'],
+                ['value' => ThongBao::DOI_TUONG_CA_NHAN, 'icon' => '👤', 'label' => 'Cá nhân', 'desc' => 'Gửi cho một người dùng trong phạm vi vận hành'],
+                ['value' => ThongBao::DOI_TUONG_THEO_CO_SO, 'icon' => '🏢', 'label' => 'Theo cơ sở', 'desc' => 'Gửi nội bộ cho giáo viên và nhân viên tại cơ sở phụ trách'],
+            ],
+            default => [
+                ['value' => ThongBao::DOI_TUONG_TAT_CA, 'icon' => '🌐', 'label' => 'Tất cả', 'desc' => 'Toàn bộ người dùng đang hoạt động'],
+                ['value' => ThongBao::DOI_TUONG_THEO_LOP, 'icon' => '🏫', 'label' => 'Theo lớp', 'desc' => 'Học viên của một lớp cụ thể'],
+                ['value' => ThongBao::DOI_TUONG_THEO_KHOA, 'icon' => '📚', 'label' => 'Theo khóa học', 'desc' => 'Học viên của một khóa học'],
+                ['value' => ThongBao::DOI_TUONG_CA_NHAN, 'icon' => '👤', 'label' => 'Cá nhân', 'desc' => 'Gửi trực tiếp cho một người'],
+                ['value' => ThongBao::DOI_TUONG_THEO_ROLE, 'icon' => '🎭', 'label' => 'Theo vai trò', 'desc' => 'Admin, giáo viên, nhân viên hoặc học viên'],
+                ['value' => ThongBao::DOI_TUONG_THEO_CO_SO, 'icon' => '🏢', 'label' => 'Theo cơ sở', 'desc' => 'Giáo viên và nhân viên theo cơ sở'],
+            ],
+        };
+    }
+
+    private function allowedRecipientTypeIds(Request $request): array
+    {
+        return collect($this->allowedRecipientOptions($request))
+            ->pluck('value')
+            ->all();
+    }
+
+    private function accessibleClasses(Request $request)
+    {
+        $query = LopHoc::query()
+            ->select('lopHocId', 'tenLopHoc', 'khoaHocId', 'coSoId')
+            ->orderBy('tenLopHoc');
+
+        return match ($this->currentPortal($request)) {
+            'teacher' => $query->where('taiKhoanId', $request->user()->getAuthIdentifier())->get(),
+            'staff' => $query
+                ->when($request->user()->nhanSu?->coSoId, fn ($subQuery, $coSoId) => $subQuery->where('coSoId', $coSoId))
+                ->get(),
+            default => $query->get(),
+        };
+    }
+
+    private function accessibleCourses(Request $request)
+    {
+        $query = KhoaHoc::query()
+            ->select('khoaHocId', 'tenKhoaHoc')
+            ->orderBy('tenKhoaHoc');
+
+        return match ($this->currentPortal($request)) {
+            'staff' => $query
+                ->whereHas('lopHoc', function ($subQuery) use ($request) {
+                    if ($request->user()->nhanSu?->coSoId) {
+                        $subQuery->where('coSoId', $request->user()->nhanSu->coSoId);
+                    }
+                })
+                ->get(),
+            'teacher' => collect(),
+            default => $query->get(),
+        };
+    }
+
+    private function accessibleFacilities(Request $request)
+    {
+        $query = CoSoDaoTao::query()
+            ->select('coSoId', 'tenCoSo')
+            ->orderBy('tenCoSo');
+
+        return match ($this->currentPortal($request)) {
+            'staff' => $query
+                ->when($request->user()->nhanSu?->coSoId, fn ($subQuery, $coSoId) => $subQuery->where('coSoId', $coSoId))
+                ->get(),
+            'teacher' => collect(),
+            default => $query->get(),
+        };
+    }
+
+    private function accessibleAccounts(Request $request)
+    {
+        $user = $request->user();
+        $portal = $this->currentPortal($request);
+        $query = TaiKhoan::query()
+            ->with('hoSoNguoiDung', 'nhanSu')
+            ->where('trangThai', 1)
+            ->orderBy('taiKhoanId');
+
+        if ($portal === 'teacher') {
+            $teacherId = $user->getAuthIdentifier();
+            return $query
+                ->where(function ($subQuery) use ($teacherId) {
+                    $subQuery->where('taiKhoanId', $teacherId)
+                        ->orWhere(function ($studentQuery) use ($teacherId) {
+                            $studentQuery->where('role', TaiKhoan::ROLE_HOC_VIEN)
+                                ->whereHas('dangKyLopHocs.lopHoc', fn ($classQuery) => $classQuery->where('taiKhoanId', $teacherId));
+                        });
+                })
+                ->get();
+        }
+
+        if ($portal === 'staff') {
+            $coSoId = $user->nhanSu?->coSoId;
+
+            return $query
+                ->where(function ($subQuery) use ($user, $coSoId) {
+                    $subQuery->where('taiKhoanId', $user->getAuthIdentifier());
+
+                    if ($coSoId) {
+                        $subQuery->orWhere(function ($internalQuery) use ($coSoId) {
+                            $internalQuery->whereIn('role', [TaiKhoan::ROLE_GIAO_VIEN, TaiKhoan::ROLE_NHAN_VIEN])
+                                ->whereHas('nhanSu', fn ($nhanSuQuery) => $nhanSuQuery->where('coSoId', $coSoId));
+                        })->orWhere(function ($studentQuery) use ($coSoId) {
+                            $studentQuery->where('role', TaiKhoan::ROLE_HOC_VIEN)
+                                ->whereHas('dangKyLopHocs.lopHoc', fn ($classQuery) => $classQuery->where('coSoId', $coSoId));
+                        });
+                    }
+                })
+                ->get();
+        }
+
+        return $query->get();
+    }
+
+    private function validatePortalRecipient(Request $request, array $validated): ?array
+    {
+        $doiTuongGui = (int) $validated['doiTuongGui'];
+        $doiTuongId = isset($validated['doiTuongId']) ? (int) $validated['doiTuongId'] : null;
+
+        if (!in_array($doiTuongGui, $this->allowedRecipientTypeIds($request), true)) {
+            return ['doiTuongGui' => 'Bạn không có quyền gửi thông báo tới nhóm đối tượng này.'];
+        }
+
+        return match ($doiTuongGui) {
+            ThongBao::DOI_TUONG_THEO_LOP => (!$doiTuongId || !$this->accessibleClasses($request)->pluck('lopHocId')->contains($doiTuongId))
+                ? ['doiTuongId' => 'Lớp học được chọn không thuộc phạm vi bạn được phép gửi.']
+                : null,
+            ThongBao::DOI_TUONG_THEO_KHOA => (!$doiTuongId || !$this->accessibleCourses($request)->pluck('khoaHocId')->contains($doiTuongId))
+                ? ['doiTuongId' => 'Khóa học được chọn không thuộc phạm vi bạn được phép gửi.']
+                : null,
+            ThongBao::DOI_TUONG_CA_NHAN => (!$doiTuongId || !$this->accessibleAccounts($request)->pluck('taiKhoanId')->contains($doiTuongId))
+                ? ['doiTuongId' => 'Người nhận được chọn không thuộc phạm vi bạn được phép gửi.']
+                : null,
+            ThongBao::DOI_TUONG_THEO_CO_SO => (!$doiTuongId || !$this->accessibleFacilities($request)->pluck('coSoId')->contains($doiTuongId))
+                ? ['doiTuongId' => 'Cơ sở được chọn không thuộc phạm vi bạn được phép gửi.']
+                : null,
+            default => null,
+        };
+    }
 
     // ── INDEX ──────────────────────────────────────────────
     public function index(Request $request)
@@ -165,45 +366,50 @@ class ThongBaoController extends Controller
     }
 
     // ── CREATE ─────────────────────────────────────────────
-    public function create()
+    public function create(Request $request)
     {
-        $lopHocs    = LopHoc::select('lopHocId', 'tenLopHoc', 'khoaHocId')->orderBy('tenLopHoc')->get();
-        $khoaHocs   = KhoaHoc::select('khoaHocId', 'tenKhoaHoc')->orderBy('tenKhoaHoc')->get();
-        $coSos      = CoSoDaoTao::select('coSoId', 'tenCoSo')->orderBy('tenCoSo')->get();
-        $taiKhoans  = TaiKhoan::with('hoSoNguoiDung', 'nhanSu')
-            ->where('trangThai', 1)
-            ->orderBy('taiKhoanId')
-            ->get();
+        $portalNotificationConfig = $this->portalConfig($request);
+        $lopHocs = $this->accessibleClasses($request);
+        $khoaHocs = $this->accessibleCourses($request);
+        $coSos = $this->accessibleFacilities($request);
+        $taiKhoans = $this->accessibleAccounts($request);
+        $recipientOptions = $this->allowedRecipientOptions($request);
 
-        return view('admin.thong-bao.create', compact('lopHocs', 'khoaHocs', 'coSos', 'taiKhoans'));
+        return view('admin.thong-bao.create', compact(
+            'lopHocs',
+            'khoaHocs',
+            'coSos',
+            'taiKhoans',
+            'portalNotificationConfig',
+            'recipientOptions'
+        ));
     }
 
     // ── STORE ──────────────────────────────────────────────
     public function store(Request $request)
     {
+        $portalNotificationConfig = $this->portalConfig($request);
+        $allowDrafts = (bool) ($portalNotificationConfig['allowDrafts'] ?? false);
+        $allowedRecipientTypeIds = $this->allowedRecipientTypeIds($request);
         $validated = $request->validate([
             'tieuDe'        => 'required|string|max:255',
             'noiDung'       => 'required|string',
             'loaiGui'       => 'required|integer|between:0,4',
-            'doiTuongGui'   => 'required|integer|between:0,5',
+            'doiTuongGui'   => ['required', 'integer', Rule::in($allowedRecipientTypeIds)],
             'doiTuongId'    => 'nullable|integer',
             'uuTien'        => 'required|integer|between:0,2',
             'ghim'          => 'nullable|boolean',
-            'hanhDong'      => 'nullable|in:send,draft',
+            'hanhDong'      => ['nullable', Rule::in($allowDrafts ? ['send', 'draft'] : ['send'])],
             'tepDinhs'      => 'nullable|array|max:5',
             'tepDinhs.*'    => 'file|max:10240',
         ]);
 
-        if ((int) $validated['doiTuongGui'] === ThongBao::DOI_TUONG_THEO_CO_SO) {
-            $coSoId = $validated['doiTuongId'] ?? null;
-            if (!$coSoId || !CoSoDaoTao::where('coSoId', $coSoId)->exists()) {
-                return back()->withInput()->withErrors([
-                    'doiTuongId' => 'Vui lòng chọn cơ sở hợp lệ để gửi thông báo.',
-                ]);
-            }
+        $recipientValidationError = $this->validatePortalRecipient($request, $validated);
+        if ($recipientValidationError !== null) {
+            return back()->withInput()->withErrors($recipientValidationError);
         }
 
-        $hanhDong = $validated['hanhDong'] ?? 'send';
+        $hanhDong = $allowDrafts ? ($validated['hanhDong'] ?? 'send') : 'send';
         $isDraft = $hanhDong === 'draft';
 
         $tb = ThongBao::create([
@@ -232,8 +438,11 @@ class ThongBaoController extends Controller
         }
 
         $this->dispatchQueuedDelivery($tb->fresh(), 'admin_create_send');
+        $redirectRoute = $portalNotificationConfig['showRoute'] ?? $portalNotificationConfig['indexRoute'];
+        $redirectParams = ($portalNotificationConfig['showRoute'] ?? null) ? [$tb->thongBaoId] : [];
+
         return redirect()
-            ->route('admin.thong-bao.show', $tb->thongBaoId)
+            ->route($redirectRoute, $redirectParams)
             ->with('success', 'Đã đưa thông báo vào hàng chờ gửi. Worker queue sẽ xử lý việc phát hành.');
     }
 
@@ -491,6 +700,37 @@ class ThongBaoController extends Controller
         $doiTuongGui = (int) $request->get('doiTuongGui', 0);
         $doiTuongId  = $request->filled('doiTuongId') ? (int) $request->doiTuongId : null;
 
+        if (!in_array($doiTuongGui, $this->allowedRecipientTypeIds($request), true)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Nhóm đối tượng không hợp lệ cho cổng hiện tại.',
+                'soNguoiNhan' => 0,
+                'nguoiNhans' => [],
+            ], 422);
+        }
+
+        if ($doiTuongGui !== ThongBao::DOI_TUONG_TAT_CA && $doiTuongId === null) {
+            return response()->json([
+                'success' => true,
+                'soNguoiNhan' => 0,
+                'nguoiNhans' => [],
+            ]);
+        }
+
+        $validationError = $this->validatePortalRecipient($request, [
+            'doiTuongGui' => $doiTuongGui,
+            'doiTuongId' => $doiTuongId,
+        ]);
+
+        if ($validationError !== null && $doiTuongGui !== ThongBao::DOI_TUONG_TAT_CA) {
+            return response()->json([
+                'success' => false,
+                'message' => reset($validationError),
+                'soNguoiNhan' => 0,
+                'nguoiNhans' => [],
+            ], 422);
+        }
+
         $nguoiNhans = $this->service->previewNguoiNhan($doiTuongGui, $doiTuongId, Auth::id());
 
         return response()->json([
@@ -522,6 +762,12 @@ class ThongBaoController extends Controller
     public function markAsRead(string $id)
     {
         $this->service->markAsRead((int) $id, Auth::id());
+        return response()->json(['success' => true]);
+    }
+
+    public function markAsUnread(string $id)
+    {
+        $this->service->markAsUnread((int) $id, Auth::id());
         return response()->json(['success' => true]);
     }
 

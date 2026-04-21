@@ -16,7 +16,8 @@ class HoaDonController extends Controller
         )
     {
         $this->middleware('permission:tai_chinh,xem')->only('index', 'show', 'printInvoice', 'printReceipt');
-        $this->middleware('permission:tai_chinh,sua')->only('update', 'storePhieuThu', 'destroyPhieuThu', 'emailInvoice', 'emailReceipt');
+        $this->middleware('permission:tai_chinh,xem')->only('debtLookup');
+        $this->middleware('permission:tai_chinh,sua')->only('update', 'storePhieuThu', 'destroyPhieuThu', 'emailInvoice', 'emailReceipt', 'settleAllDebts');
     }
 
     public function index(Request $request)
@@ -27,6 +28,11 @@ class HoaDonController extends Controller
     public function show(int $id)
     {
         return view($this->viewPrefix() . '.show', $this->hoaDonService->getDetail($id));
+    }
+
+    public function debtLookup(Request $request)
+    {
+        return view($this->viewPrefix() . '.debt-lookup', $this->hoaDonService->getDebtLookupData($request));
     }
 
     public function update(Request $request, int $id)
@@ -48,6 +54,16 @@ class HoaDonController extends Controller
         }
 
         return $redirect;
+    }
+
+    public function settleAllDebts(Request $request)
+    {
+        $result = $this->hoaDonService->settleAllStudentDebts($request);
+
+        return redirect()->route($this->portalRoute('hoa-don.debt-lookup'), [
+            'q' => $result['student']->taiKhoan,
+            'taiKhoanId' => $result['student']->taiKhoanId,
+        ])->with('success', 'Đã thu gộp ' . $result['receiptCount'] . ' hóa đơn với tổng số tiền ' . number_format((float) $result['totalCollected'], 0, ',', '.') . 'đ.');
     }
 
     public function destroyPhieuThu(int $id)

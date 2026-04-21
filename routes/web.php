@@ -174,6 +174,8 @@ Route::prefix('teacher')->name('teacher.')->middleware(['auth', 'portal:teacher'
 
     Route::prefix('thong-bao')->name('notifications.')->group(function () {
         Route::get('/', [TeacherThongBaoController::class, 'index'])->name('index');
+        Route::get('/tao-moi', [AdminThongBaoController::class, 'create'])->name('create');
+        Route::post('/', [AdminThongBaoController::class, 'store'])->name('store');
     });
 
     Route::prefix('tai-lieu')->name('materials.')->group(function () {
@@ -189,10 +191,12 @@ Route::prefix('teacher')->name('teacher.')->middleware(['auth', 'portal:teacher'
     });
 
     Route::prefix('api/notifications')->name('api.notifications.')->group(function () {
+        Route::get('/recipients', [AdminThongBaoController::class, 'getRecipients'])->name('recipients');
         Route::get('/dropdown', [AdminThongBaoController::class, 'getDropdown'])->name('dropdown');
         Route::get('/unread-count', [AdminThongBaoController::class, 'getUnreadCount'])->name('unread-count');
         Route::patch('/mark-all-read', [AdminThongBaoController::class, 'markAllRead'])->name('mark-all-read');
         Route::patch('/{id}/mark-read', [AdminThongBaoController::class, 'markAsRead'])->name('mark-read');
+        Route::patch('/{id}/mark-unread', [AdminThongBaoController::class, 'markAsUnread'])->name('mark-unread');
     });
 });
 
@@ -232,6 +236,10 @@ Route::prefix('staff')->name('staff.')->middleware(['auth', 'portal:staff'])->gr
         Route::get('/tao-moi', [StaffLopHocController::class, 'create'])->name('create');
         Route::post('/', [StaffLopHocController::class, 'store'])->name('store');
         Route::get('/kiem-tra-xung-dot', [StaffLopHocController::class, 'previewSchedulingConflicts'])->name('preview-conflicts');
+        Route::get('/{slug}/hoc-vien-goi-y', [StaffLopHocController::class, 'searchStudents'])->name('search-students');
+        Route::post('/{slug}/hoc-vien', [StaffLopHocController::class, 'quickAddStudents'])->name('quick-add-students');
+        Route::post('/{slug}/hoc-vien-moi', [StaffLopHocController::class, 'createStudentAndEnroll'])->name('create-student-and-enroll');
+        Route::post('/{slug}/len-lop', [StaffLopHocController::class, 'promoteStudents'])->name('promote-students');
         Route::patch('/{slug}/trang-thai', [StaffLopHocController::class, 'updateStatus'])->name('update-status');
         Route::get('/{slug}', [StaffLopHocController::class, 'show'])->name('show');
         Route::get('/{slug}/sua', [StaffLopHocController::class, 'edit'])->name('edit');
@@ -247,8 +255,15 @@ Route::prefix('staff')->name('staff.')->middleware(['auth', 'portal:staff'])->gr
         Route::post('/tu-dong-tao/{lopHocId}', [StaffBuoiHocController::class, 'autoGenerate'])->name('auto-generate');
     });
 
+    Route::prefix('api')->name('api.')->group(function () {
+        Route::get('/phuong-xa-co-so/{tinhThanhId}', [CoSoController::class, 'getPhuongXaCoCoSo'])->name('phuong-xa-co-so');
+        Route::get('/co-so-by-location', [CoSoController::class, 'getCoSoByLocation'])->name('co-so-by-location');
+    });
+
     Route::prefix('hoa-don')->name('hoa-don.')->group(function () {
         Route::get('/', [StaffHoaDonController::class, 'index'])->name('index');
+        Route::get('/tra-cuu-cong-no', [StaffHoaDonController::class, 'debtLookup'])->name('debt-lookup');
+        Route::post('/tra-cuu-cong-no/thanh-toan', [StaffHoaDonController::class, 'settleAllDebts'])->name('debt-lookup.settle');
         Route::get('/phieu-thu/{id}/in', [StaffHoaDonController::class, 'printReceipt'])->name('phieu-thu.print');
         Route::post('/phieu-thu/{id}/gui-email', [StaffHoaDonController::class, 'emailReceipt'])->name('phieu-thu.email');
         Route::get('/{id}', [StaffHoaDonController::class, 'show'])->name('show');
@@ -287,6 +302,8 @@ Route::prefix('staff')->name('staff.')->middleware(['auth', 'portal:staff'])->gr
 
     Route::prefix('thong-bao')->name('notifications.')->group(function () {
         Route::get('/', [StaffThongBaoController::class, 'index'])->name('index');
+        Route::get('/tao-moi', [AdminThongBaoController::class, 'create'])->name('create');
+        Route::post('/', [AdminThongBaoController::class, 'store'])->name('store');
     });
 
     Route::prefix('api/tags')->name('api.tags.')->group(function () {
@@ -296,10 +313,12 @@ Route::prefix('staff')->name('staff.')->middleware(['auth', 'portal:staff'])->gr
     });
 
     Route::prefix('api/notifications')->name('api.notifications.')->group(function () {
+        Route::get('/recipients', [AdminThongBaoController::class, 'getRecipients'])->name('recipients');
         Route::get('/dropdown', [AdminThongBaoController::class, 'getDropdown'])->name('dropdown');
         Route::get('/unread-count', [AdminThongBaoController::class, 'getUnreadCount'])->name('unread-count');
         Route::patch('/mark-all-read', [AdminThongBaoController::class, 'markAllRead'])->name('mark-all-read');
         Route::patch('/{id}/mark-read', [AdminThongBaoController::class, 'markAsRead'])->name('mark-read');
+        Route::patch('/{id}/mark-unread', [AdminThongBaoController::class, 'markAsUnread'])->name('mark-unread');
     });
 });
 
@@ -538,6 +557,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'portal:admin'])->gr
         Route::get('/dropdown', [AdminThongBaoController::class, 'getDropdown'])->name('dropdown');
         Route::patch('/da-doc-tat-ca', [AdminThongBaoController::class, 'markAllRead'])->name('mark-all-read');
         Route::patch('/{id}/da-doc', [AdminThongBaoController::class, 'markAsRead'])->name('mark-read');
+        Route::patch('/{id}/chua-doc', [AdminThongBaoController::class, 'markAsUnread'])->name('mark-unread');
     });
 });
 

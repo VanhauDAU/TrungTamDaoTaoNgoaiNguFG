@@ -12,9 +12,13 @@ interface HoaDonServiceInterface
 
     public function getDetail(int $id): array;
 
+    public function getDebtLookupData(Request $request): array;
+
     public function update(Request $request, int $id): HoaDon;
 
     public function storePhieuThu(Request $request, int $hoaDonId): PhieuThu;
+
+    public function settleAllStudentDebts(Request $request): array;
 
     public function destroyPhieuThu(int $id): int;
 }
