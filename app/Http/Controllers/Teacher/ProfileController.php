@@ -9,8 +9,12 @@ class ProfileController extends Controller
 {
     public function __invoke(Request $request)
     {
-        return view('teacher.profile.show', [
-            'user' => $request->user()->loadMissing(['nhanSu.coSoDaoTao', 'nhanSuHoSo']),
+        $user = $request->user()->loadMissing([
+            'hoSoNguoiDung',
+            'nhanSu.coSoDaoTao',
+            'nhanSuHoSo',
         ]);
+
+        return view('teacher.profile.show', compact('user'));
     }
 }
