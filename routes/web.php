@@ -170,6 +170,14 @@ Route::prefix('teacher')->name('teacher.')->middleware(['auth', 'portal:teacher'
 
     Route::prefix('lich-day')->name('schedule.')->group(function () {
         Route::get('/', [TeacherLichDayController::class, 'index'])->name('index');
+
+        // ── Đề xuất (proposals) ───────────────────────────────────────────────
+        Route::post('/de-xuat/day-bu/{buoiHocId}', [TeacherLichDayController::class, 'proposeCompensation'])
+            ->name('propose.compensation');
+        Route::post('/de-xuat/tam-ngung/{buoiHocId}', [TeacherLichDayController::class, 'proposeSuspension'])
+            ->name('propose.suspension');
+        Route::post('/de-xuat/doi-lich/{buoiHocId}', [TeacherLichDayController::class, 'proposeReschedule'])
+            ->name('propose.reschedule');
     });
 
     Route::prefix('thong-bao')->name('notifications.')->group(function () {
