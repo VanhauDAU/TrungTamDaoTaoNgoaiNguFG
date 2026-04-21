@@ -214,12 +214,27 @@ class StudentService implements StudentServiceInterface
         $endOfWeek = $baseDate->copy()->endOfWeek(Carbon::SUNDAY);
 
         $lopHocIds = DangKyLopHoc::where('taiKhoanId', $user->taiKhoanId)
-            ->eligibleForSchedule()
-            ->whereHas('lopHoc', fn($q) => $q->where('trangThai', LopHoc::TRANG_THAI_DANG_HOC))
+            ->whereIn('trangThai', [
+                DangKyLopHoc::TRANG_THAI_DA_XAC_NHAN,
+                DangKyLopHoc::TRANG_THAI_DANG_HOC,
+                DangKyLopHoc::TRANG_THAI_TAM_DUNG_NO_HOC_PHI,
+                DangKyLopHoc::TRANG_THAI_HOAN_THANH,
+            ])
+            ->whereHas('lopHoc', function ($query) {
+                $query->whereIn('trangThai', [
+                    LopHoc::TRANG_THAI_DANG_TUYEN_SINH,
+                    LopHoc::TRANG_THAI_CHOT_DANH_SACH,
+                    LopHoc::TRANG_THAI_DANG_HOC,
+                    LopHoc::TRANG_THAI_DA_KET_THUC,
+                ]);
+            })
             ->pluck('lopHocId');
 
         $buoiHocs = BuoiHoc::whereIn('lopHocId', $lopHocIds)
             ->whereBetween('ngayHoc', [$startOfWeek->toDateString(), $endOfWeek->toDateString()])
+            ->whereNotIn('trangThai', [
+                BuoiHoc::TRANG_THAI_DA_HUY,
+            ])
             ->with(['caHoc', 'phongHoc', 'lopHoc.khoaHoc', 'lopHoc.taiKhoan.hoSoNguoiDung', 'lopHoc.coSo'])
             ->orderBy('ngayHoc')->orderBy('caHocId')->get();
 
