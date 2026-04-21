@@ -1,0 +1,549 @@
+/* ============================================================
+   LỊCH DẠY GIÁO VIÊN – THỜI KHÓA BIỂU TUẦN
+   File: public/assets/teacher/css/lich-day.css
+   ============================================================ */
+
+/* ── ROOT TOKENS ──────────────────────────────────────────── */
+:root {
+    --ld-blue:      #3b7dd8;
+    --ld-blue-dark: #1a2b4a;
+    --ld-teal:      #0d9488;
+    --ld-orange:    #d97706;
+    --ld-red:       #dc2626;
+    --ld-green:     #16a34a;
+    --ld-surface:   #ffffff;
+    --ld-bg:        #f8fafc;
+    --ld-border:    #e2e8f0;
+    --ld-text:      #1a2b4a;
+    --ld-muted:     #64748b;
+    --ld-radius:    14px;
+    --ld-shadow:    0 2px 16px rgba(0,0,0,.08);
+}
+
+/* ── TOOLBAR ──────────────────────────────────────────────── */
+.ld-toolbar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    background: var(--ld-surface);
+    border-radius: var(--ld-radius);
+    padding: 16px 22px;
+    margin-bottom: 20px;
+    box-shadow: var(--ld-shadow);
+    border-bottom: 3px solid var(--ld-blue);
+}
+
+.ld-toolbar__title {
+    flex: 1;
+    min-width: 200px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--ld-text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ld-toolbar__title .week-range {
+    font-size: .88rem;
+    font-weight: 600;
+    color: var(--ld-blue);
+    background: #eff6ff;
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 1px solid #bfdbfe;
+}
+
+.ld-toolbar__nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ld-btn-nav {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 8px 16px;
+    border-radius: 9px;
+    font-size: .85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s;
+    border: none;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.ld-btn-nav.btn-today {
+    background: linear-gradient(135deg, var(--ld-blue), #5b9bf2);
+    color: #fff;
+    box-shadow: 0 3px 10px rgba(59,125,216,.35);
+}
+.ld-btn-nav.btn-today:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 16px rgba(59,125,216,.45);
+}
+
+.ld-btn-nav.btn-prev,
+.ld-btn-nav.btn-next {
+    background: var(--ld-bg);
+    color: #4a5568;
+    border: 1px solid var(--ld-border);
+}
+.ld-btn-nav.btn-prev:hover,
+.ld-btn-nav.btn-next:hover {
+    background: #e2e8f0;
+    color: var(--ld-text);
+    transform: translateY(-1px);
+}
+
+/* ── BẢNG THỜI KHÓA BIỂU ─────────────────────────────────── */
+.ld-table-wrapper {
+    overflow-x: auto;
+    border-radius: var(--ld-radius);
+    box-shadow: var(--ld-shadow);
+    background: var(--ld-surface);
+}
+
+.ld-table {
+    width: 100%;
+    min-width: 800px;
+    border-collapse: collapse;
+}
+
+/* Header */
+.ld-table thead th {
+    padding: 14px 8px;
+    text-align: center;
+    font-size: .75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    border-bottom: 2px solid var(--ld-border);
+    background: var(--ld-bg);
+    color: var(--ld-muted);
+    vertical-align: bottom;
+    white-space: nowrap;
+}
+
+.ld-table thead th.col-ca {
+    color: var(--ld-text);
+    background: #f0f4f8;
+    min-width: 85px;
+    font-size: .72rem;
+}
+
+.ld-table thead th .day-label {
+    display: block;
+    font-weight: 700;
+    color: var(--ld-text);
+    font-size: .85rem;
+}
+
+.ld-table thead th .day-date {
+    display: inline-block;
+    font-size: .78rem;
+    font-weight: 600;
+    color: var(--ld-muted);
+    margin-top: 4px;
+    padding: 2px 9px;
+    border-radius: 20px;
+    transition: .2s;
+}
+
+/* Hôm nay */
+.ld-table thead th.today .day-date {
+    background: linear-gradient(135deg, var(--ld-blue), #5b9bf2);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(59,125,216,.4);
+}
+.ld-table thead th.today .day-label {
+    color: var(--ld-blue);
+}
+
+/* Body cell */
+.ld-table tbody td {
+    border: 1px solid #edf2f7;
+    padding: 6px;
+    vertical-align: top;
+    min-width: 120px;
+    min-height: 90px;
+}
+
+.ld-table tbody td.col-ca-label {
+    background: linear-gradient(180deg, #f8fafc, #f0f4f8);
+    text-align: center;
+    vertical-align: middle;
+    min-width: 85px;
+    border-right: 2px solid var(--ld-border);
+}
+
+.ca-label-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--ld-blue-dark), #2d4a7a);
+    color: #fff;
+    font-size: .72rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: .05em;
+    margin-bottom: 4px;
+}
+
+.ca-time-label {
+    display: block;
+    font-size: .68rem;
+    color: var(--ld-muted);
+    white-space: nowrap;
+}
+
+.cell-empty {
+    height: 78px;
+    background: repeating-linear-gradient(
+        -45deg,
+        transparent,
+        transparent 5px,
+        rgba(0,0,0,.013) 5px,
+        rgba(0,0,0,.013) 10px
+    );
+}
+
+/* ── CARD BUỔI DẠY ─────────────────────────────────────── */
+.lesson-card {
+    border-radius: 10px;
+    padding: 10px 11px;
+    margin-bottom: 5px;
+    cursor: pointer;
+    transition: transform .18s, box-shadow .18s;
+    position: relative;
+    overflow: hidden;
+    border-left: 4px solid transparent;
+}
+.lesson-card:last-child { margin-bottom: 0; }
+
+.lesson-card::before {
+    content: "";
+    position: absolute;
+    top: 0; right: 0;
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    opacity: .08;
+    transform: translate(10px,-10px);
+}
+
+.lesson-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,.14);
+    z-index: 1;
+}
+
+/* trạng thái */
+.lesson-card.sap-dien-ra     { background:#f0f4f8; border-left-color:#718096; color:var(--ld-text); }
+.lesson-card.sap-dien-ra::before { background:#718096; }
+
+.lesson-card.dang-dien-ra    { background:linear-gradient(135deg,#d4edda,#c3e6cb); border-left-color:#28a745; color:#155724; }
+.lesson-card.dang-dien-ra::before { background:#28a745; }
+
+.lesson-card.da-hoan-thanh   { background:linear-gradient(135deg,#dcfce7,#bbf7d0); border-left-color:var(--ld-green); color:#166534; }
+.lesson-card.da-hoan-thanh::before { background:var(--ld-green); }
+
+.lesson-card.da-huy          { background:linear-gradient(135deg,#fee2e2,#fecaca); border-left-color:var(--ld-red); color:#991b1b; opacity:.9; }
+.lesson-card.da-huy::before  { background:var(--ld-red); }
+
+.lesson-card.doi-lich        { background:linear-gradient(135deg,#fff3cd,#fde68a); border-left-color:var(--ld-orange); color:#92400e; }
+.lesson-card.doi-lich::before { background:var(--ld-orange); }
+
+.lesson-title {
+    font-weight: 700;
+    font-size: .78rem;
+    line-height: 1.35;
+    margin-bottom: 4px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.lesson-meta {
+    font-size: .7rem;
+    opacity: .85;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.lesson-meta span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.lesson-meta i { font-size: .65rem; opacity: .7; flex-shrink: 0; }
+
+/* ── LEGEND ──────────────────────────────────────────────── */
+.ld-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    background: var(--ld-surface);
+    border-radius: 12px;
+    padding: 14px 20px;
+    margin-top: 16px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.06);
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: .8rem;
+    color: #4a5568;
+    font-weight: 500;
+}
+
+.legend-dot {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+.legend-dot.sap-dien-ra   { background:#b0bec5; }
+.legend-dot.dang-dien-ra  { background:#28a745; }
+.legend-dot.da-hoan-thanh { background:var(--ld-green); }
+.legend-dot.da-huy        { background:var(--ld-red); }
+.legend-dot.doi-lich      { background:var(--ld-orange); }
+
+/* ── ACTION BUTTONS trong card ───────────────────────────── */
+.lesson-actions {
+    display: none;
+    gap: 4px;
+    margin-top: 6px;
+    flex-wrap: wrap;
+}
+
+.lesson-card:hover .lesson-actions,
+.lesson-card.show-actions .lesson-actions {
+    display: flex;
+}
+
+.lesson-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    font-size: .67rem;
+    font-weight: 600;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    transition: all .15s;
+    white-space: nowrap;
+}
+
+.lesson-action-btn.btn-bu {
+    background: #eff6ff;
+    color: var(--ld-blue);
+    border: 1px solid #bfdbfe;
+}
+.lesson-action-btn.btn-bu:hover { background: #dbeafe; }
+
+.lesson-action-btn.btn-ngung {
+    background: #fff7ed;
+    color: var(--ld-orange);
+    border: 1px solid #fed7aa;
+}
+.lesson-action-btn.btn-ngung:hover { background: #ffedd5; }
+
+.lesson-action-btn.btn-doi-lich {
+    background: #f0fdf4;
+    color: var(--ld-green);
+    border: 1px solid #bbf7d0;
+}
+.lesson-action-btn.btn-doi-lich:hover { background: #dcfce7; }
+
+.lesson-action-btn.btn-detail {
+    background: #f8fafc;
+    color: var(--ld-muted);
+    border: 1px solid var(--ld-border);
+}
+.lesson-action-btn.btn-detail:hover { background: #e2e8f0; }
+
+/* ── NO SCHEDULE ─────────────────────────────────────────── */
+.ld-empty {
+    text-align: center;
+    padding: 56px 20px;
+    color: var(--ld-muted);
+}
+.ld-empty i {
+    font-size: 3rem;
+    color: #cbd5e0;
+    margin-bottom: 16px;
+    display: block;
+}
+.ld-empty p { font-size: 1rem; font-weight: 500; }
+
+/* ── MODALS ──────────────────────────────────────────────── */
+.ld-modal .modal-content {
+    border: none;
+    border-radius: 18px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.15);
+    overflow: hidden;
+}
+
+.ld-modal .modal-header {
+    background: linear-gradient(135deg, var(--ld-blue-dark), #2d4a7a);
+    color: #fff;
+    border: none;
+    padding: 20px 24px;
+}
+
+.ld-modal .modal-header.modal-header--orange {
+    background: linear-gradient(135deg, #b45309, var(--ld-orange));
+}
+
+.ld-modal .modal-header.modal-header--green {
+    background: linear-gradient(135deg, #065f46, var(--ld-teal));
+}
+
+.ld-modal .modal-header.modal-header--red {
+    background: linear-gradient(135deg, #7f1d1d, var(--ld-red));
+}
+
+.ld-modal .modal-title { font-weight: 700; font-size: 1.05rem; }
+.ld-modal .btn-close { filter: invert(1); opacity: .8; }
+.ld-modal .modal-body { padding: 24px; }
+
+.modal-detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+.modal-detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.modal-detail-item .detail-label {
+    font-size: .72rem;
+    font-weight: 600;
+    color: var(--ld-muted);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+}
+
+.modal-detail-item .detail-value {
+    font-size: .9rem;
+    font-weight: 600;
+    color: var(--ld-text);
+}
+
+.modal-detail-item .detail-value i {
+    color: var(--ld-blue);
+    margin-right: 5px;
+}
+
+.modal-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: .78rem;
+    font-weight: 700;
+}
+.modal-badge.sap-dien-ra   { background:#e2e8f0; color:var(--ld-text); }
+.modal-badge.dang-dien-ra  { background:#d4edda; color:#155724; }
+.modal-badge.da-hoan-thanh { background:#dcfce7; color:#166534; }
+.modal-badge.da-huy        { background:#fee2e2; color:#991b1b; }
+.modal-badge.doi-lich      { background:#fff3cd; color:#92400e; }
+
+.modal-divider { border:none; border-top:1px solid #edf2f7; margin:16px 0; }
+
+/* ── PROPOSAL BUTTONS BLOCK ──────────────────────────────── */
+.ld-proposal-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    background: var(--ld-surface);
+    border-radius: var(--ld-radius);
+    padding: 14px 20px;
+    margin-bottom: 20px;
+    box-shadow: var(--ld-shadow);
+    align-items: center;
+}
+
+.ld-proposal-bar .proposal-label {
+    font-size: .8rem;
+    color: var(--ld-muted);
+    font-weight: 600;
+    margin-right: 6px;
+    white-space: nowrap;
+}
+
+.ld-proposal-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    font-size: .82rem;
+    font-weight: 600;
+    border-radius: 9px;
+    border: none;
+    cursor: pointer;
+    transition: all .2s;
+    white-space: nowrap;
+}
+.ld-proposal-btn:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+}
+
+.ld-proposal-btn.btn-compensation {
+    background: linear-gradient(135deg, #3b7dd8, #5b9bf2);
+    color: #fff;
+    box-shadow: 0 3px 10px rgba(59,125,216,.25);
+}
+.ld-proposal-btn.btn-compensation:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 16px rgba(59,125,216,.35);
+}
+
+.ld-proposal-btn.btn-suspend {
+    background: linear-gradient(135deg, #b45309, var(--ld-orange));
+    color: #fff;
+    box-shadow: 0 3px 10px rgba(217,119,6,.25);
+}
+.ld-proposal-btn.btn-suspend:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 16px rgba(217,119,6,.35);
+}
+
+.ld-proposal-btn.btn-reschedule {
+    background: linear-gradient(135deg, #065f46, var(--ld-teal));
+    color: #fff;
+    box-shadow: 0 3px 10px rgba(13,148,136,.25);
+}
+.ld-proposal-btn.btn-reschedule:hover:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+/* ── RESPONSIVE ──────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .ld-toolbar {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .ld-toolbar__nav { width: 100%; justify-content: flex-start; }
+    .modal-detail-grid { grid-template-columns: 1fr; }
+}
+
+@media print {
+    .ld-toolbar__nav, .ld-proposal-bar, .lesson-actions, .ld-modal { display: none !important; }
+    .ld-table-wrapper { box-shadow: none; }
+}
