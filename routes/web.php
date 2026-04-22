@@ -16,7 +16,7 @@ use App\Http\Controllers\Admin\GiaoVien\GiaoVienController as AdminGiaoVienContr
 use App\Http\Controllers\Admin\NhanVien\NhanVienController as AdminNhanVienController;
 use App\Http\Controllers\Admin\NhanVien\NhanSuMauQuyDinhController;
 use App\Http\Controllers\Admin\Auth\TaiKhoanController;
-use App\Http\Controllers\Admin\LienHe\LienHeController as AdminLienHeController;
+use App\Http\Controllers\Internal\LienHe\LienHeController as InternalLienHeController;
 use App\Http\Controllers\Admin\CoSo\CoSoController;
 use App\Http\Controllers\Admin\CoSo\PhongHocController;
 use App\Http\Controllers\Admin\KhoaHoc\KhoaHocController as AdminKhoaHocController;
@@ -287,6 +287,19 @@ Route::prefix('staff')->name('staff.')->middleware(['auth', 'portal:staff'])->gr
         Route::delete('/phieu-thu/{id}', [StaffHoaDonController::class, 'destroyPhieuThu'])->name('phieu-thu.destroy');
     });
 
+    Route::prefix('lien-he')->name('lien-he.')->group(function () {
+        Route::get('/', [InternalLienHeController::class, 'index'])->name('index');
+        Route::get('/thung-rac', [InternalLienHeController::class, 'trash'])->name('trash');
+        Route::delete('/bulk/xoa', [InternalLienHeController::class, 'bulkDestroy'])->name('bulk-destroy');
+        Route::patch('/bulk/trang-thai', [InternalLienHeController::class, 'bulkUpdateStatus'])->name('bulk-status');
+        Route::patch('/{id}/khoi-phuc', [InternalLienHeController::class, 'restore'])->name('restore');
+        Route::get('/{id}', [InternalLienHeController::class, 'show'])->name('show');
+        Route::put('/{id}', [InternalLienHeController::class, 'update'])->name('update');
+        Route::delete('/{id}', [InternalLienHeController::class, 'destroy'])->name('destroy');
+        Route::post('/{id}/phan-hoi', [InternalLienHeController::class, 'storeReply'])->name('reply.store');
+        Route::patch('/{id}/gan-phu-trach', [InternalLienHeController::class, 'assign'])->name('assign');
+    });
+
     Route::prefix('bai-viet')->name('bai-viet.')->group(function () {
         Route::get('/', [AdminBaiVietController::class, 'index'])->name('index');
         Route::get('/tao-moi', [AdminBaiVietController::class, 'create'])->name('create');
@@ -430,22 +443,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'portal:admin'])->gr
 
     // ── Liên Hệ (CRM) ───────────────────────────────────────────────────────────
     Route::prefix('lien-he')->name('lien-he.')->group(function () {
-        Route::get('/', [AdminLienHeController::class, 'index'])->name('index');
-        Route::get('/thung-rac', [AdminLienHeController::class, 'trash'])->name('trash');
-
-        // Bulk actions
-        Route::delete('/bulk/xoa', [AdminLienHeController::class, 'bulkDestroy'])->name('bulk-destroy');
-        Route::patch('/bulk/trang-thai', [AdminLienHeController::class, 'bulkUpdateStatus'])->name('bulk-status');
-
-        // Single item
-        Route::patch('/{id}/khoi-phuc', [AdminLienHeController::class, 'restore'])->name('restore');
-        Route::get('/{id}', [AdminLienHeController::class, 'show'])->name('show');
-        Route::put('/{id}', [AdminLienHeController::class, 'update'])->name('update');
-        Route::delete('/{id}', [AdminLienHeController::class, 'destroy'])->name('destroy');
-
-        // CRM actions
-        Route::post('/{id}/phan-hoi', [AdminLienHeController::class, 'storeReply'])->name('reply.store');
-        Route::patch('/{id}/gan-phu-trach', [AdminLienHeController::class, 'assign'])->name('assign');
+        Route::get('/', [InternalLienHeController::class, 'index'])->name('index');
+        Route::get('/thung-rac', [InternalLienHeController::class, 'trash'])->name('trash');
+        Route::get('/{id}', [InternalLienHeController::class, 'show'])->name('show');
     });
 
     // ── Cơ sở Đào tạo ────────────────────────────────────────────────────────

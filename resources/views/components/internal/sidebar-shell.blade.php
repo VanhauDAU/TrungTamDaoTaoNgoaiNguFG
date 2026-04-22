@@ -15,9 +15,11 @@
     <div class="sidebar-backdrop-glow"></div>
 
     <a href="{{ route($portalHomeRoute) }}" class="sidebar-brand">
-        <span class="sidebar-brand-mark">{{ $portalShortLabel }}</span>
+        <span class="sidebar-brand-mark">
+            <img src="{{ asset('assets/images/logo.png') }}" alt="{{ config('app.name', 'Five Genius') }}">
+        </span>
         <span class="sidebar-brand-copy">
-            <strong>Five Genius</strong>
+            <strong>{{ config('app.name', 'Five Genius') }}</strong>
             <small>{{ $portalLabel }}</small>
         </span>
     </a>
