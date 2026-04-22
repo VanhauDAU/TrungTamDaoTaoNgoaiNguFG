@@ -119,6 +119,13 @@ class LopHoc extends Model
             ->orderBy('lopHocPhuPhiId');
     }
 
+    public function lopHocTaiLieus()
+    {
+        return $this->hasMany(LopHocTaiLieu::class, 'lopHocId', 'lopHocId')
+            ->orderBy('sortOrder')
+            ->orderBy('lopHocTaiLieuId');
+    }
+
     public function hasValidPricingPolicy(): bool
     {
         return $this->relationLoaded('chinhSachGia')
