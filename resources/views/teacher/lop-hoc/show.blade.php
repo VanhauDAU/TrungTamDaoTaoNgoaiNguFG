@@ -329,10 +329,14 @@
         <!-- Tab Tài liệu -->
         <div class="tab-pane fade" id="materials" role="tabpanel" aria-labelledby="materials-tab">
             <div class="card border-0 shadow-sm rounded-4">
-                <div class="card-body p-5 text-center text-muted">
-                    <i class="fas fa-file-pdf fa-4x mb-3 text-primary opacity-50"></i>
-                    <h5 class="fw-semibold pb-2">Tài liệu học tập</h5>
-                    <p class="mb-0">Tính năng chia sẻ tài liệu đối với lớp học đang trong quá trình phát triển.</p>
+                <div class="card-body p-5 text-center">
+                    <i class="fas fa-folder-open fa-4x mb-3 text-primary opacity-50"></i>
+                    <h5 class="fw-semibold pb-2">Tài liệu lớp học</h5>
+                    <p class="text-muted mb-4">Quản lý, tải lên và chia sẻ tài nguyên học tập với học viên.</p>
+                    <a href="{{ route('teacher.classes.materials.index', $lopHoc->slug) }}"
+                       class="btn btn-primary rounded-pill px-5 py-2">
+                        <i class="fas fa-folder-open me-2"></i>Quản lý tài liệu lớp này
+                    </a>
                 </div>
             </div>
         </div>

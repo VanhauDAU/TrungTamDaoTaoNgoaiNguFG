@@ -3,14 +3,25 @@
 namespace App\Http\Controllers\Teacher\TaiLieu;
 
 use App\Http\Controllers\Controller;
+use App\Models\Education\LopHoc;
+use Illuminate\Http\Request;
 
 class TaiLieuController extends Controller
 {
-    public function index()
+    /**
+     * teacher.materials.index – trang tổng hợp tài liệu.
+     * Hiển thị danh sách các lớp của giáo viên và link vào từng lớp.
+     */
+    public function index(Request $request)
     {
-        return view('internal.placeholder', [
-            'title' => 'Tài liệu lớp học',
-            'description' => 'Portal giáo viên đã sẵn sàng route và layout. Chức năng quản lý tài liệu lớp học sẽ được triển khai ở nhánh tiếp theo.',
-        ]);
+        $teacherId = $request->user()->getAuthIdentifier();
+
+        $classes = LopHoc::where('taiKhoanId', $teacherId)
+            ->with(['khoaHoc'])
+            ->withCount('lopHocTaiLieus')
+            ->latest('ngayBatDau')
+            ->get();
+
+        return view('teacher.tai-lieu.index', compact('classes'));
     }
 }
