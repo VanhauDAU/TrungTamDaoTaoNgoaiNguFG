@@ -1,8 +1,8 @@
 :root {
-    --sidebar-w: 288px;
+    --sidebar-w: 308px;
     --sidebar-collapsed-w: 96px;
-    --sidebar-bg: linear-gradient(180deg, #07131e 0%, #0c1722 52%, #111d2a 100%);
-    --sidebar-border: rgba(255, 255, 255, 0.08);
+    --sidebar-bg: linear-gradient(180deg, #0c3f69 0%, #0f4d7f 48%, #12578f 100%);
+    --sidebar-border: rgba(255, 255, 255, 0.12);
     --sidebar-hover: rgba(255, 255, 255, 0.08);
     --sidebar-active: rgba(255, 255, 255, 0.12);
     --accent: #27c4b5;
@@ -21,11 +21,11 @@ body[data-internal-portal="admin"] {
 }
 
 body[data-internal-portal="staff"] {
-    --accent: #0ea5e9;
+    --accent: #27c4b5;
 }
 
 body[data-internal-portal="teacher"] {
-    --accent: #f59e0b;
+    --accent: #27c4b5;
 }
 
 * {
@@ -55,16 +55,16 @@ body {
     transition: transform 0.3s ease, width 0.24s ease;
     overflow: hidden;
     border-right: 1px solid var(--sidebar-border);
-    box-shadow: 18px 0 50px rgba(0, 0, 0, 0.18);
+    box-shadow: 18px 0 50px rgba(4, 35, 61, 0.24);
 }
 
 .sidebar-backdrop-glow {
     position: absolute;
     inset: 0;
     background:
-        radial-gradient(circle at top right, rgba(39, 196, 181, 0.24), transparent 26%),
-        radial-gradient(circle at 20% 18%, rgba(14, 165, 233, 0.18), transparent 22%),
-        linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 26%);
+        linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 18%),
+        radial-gradient(circle at top right, rgba(39, 196, 181, 0.18), transparent 26%),
+        radial-gradient(circle at 18% 20%, rgba(227, 30, 36, 0.12), transparent 24%);
     pointer-events: none;
 }
 
@@ -74,31 +74,35 @@ html.sidebar-booting .main-wrapper {
 }
 
 .sidebar-brand {
-    height: var(--topbar-h);
+    min-height: 88px;
     display: flex;
     align-items: center;
-    padding: 18px 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-    gap: 14px;
+    padding: 18px 20px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    gap: 12px;
     text-decoration: none;
     position: relative;
     z-index: 1;
+    background: rgba(255, 255, 255, 0.96);
 }
 
 .sidebar-brand-mark {
-    width: 42px;
-    height: 42px;
+    width: 52px;
+    height: 52px;
     border-radius: 14px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, rgba(39, 196, 181, 0.28), rgba(14, 165, 233, 0.18));
-    color: #f8fafc;
-    font-weight: 800;
-    font-size: 0.88rem;
-    letter-spacing: 0.08em;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    background: #fff;
+    border: 1px solid rgba(227, 30, 36, 0.12);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
     flex-shrink: 0;
+}
+
+.sidebar-brand-mark img {
+    width: 38px;
+    height: 38px;
+    object-fit: contain;
 }
 
 .sidebar-brand-copy {
@@ -108,22 +112,22 @@ html.sidebar-booting .main-wrapper {
 }
 
 .sidebar-brand-copy strong {
-    color: #f8fafc;
-    font-weight: 700;
+    color: #9c1f1f;
+    font-weight: 800;
     font-size: 1rem;
     letter-spacing: 0.01em;
 }
 
 .sidebar-brand-copy small {
-    color: #8fa0af;
-    font-size: 0.73rem;
-    letter-spacing: 0.08em;
+    color: #36556f;
+    font-size: 0.71rem;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
 }
 
 .sidebar-nav {
     flex: 1;
-    padding: 14px 12px 18px;
+    padding: 18px 14px 18px;
     overflow-y: auto;
     position: relative;
     z-index: 1;
@@ -134,20 +138,20 @@ html.sidebar-booting .main-wrapper {
 }
 
 .sidebar-section {
-    padding: 18px 18px 10px;
-    font-size: 0.68rem;
-    font-weight: 700;
+    padding: 8px 14px 10px;
+    font-size: 0.72rem;
+    font-weight: 800;
     letter-spacing: 0.16em;
-    color: #6f8190;
+    color: rgba(255, 255, 255, 0.7);
     text-transform: uppercase;
 }
 
 .sidebar-footer {
     padding: 16px;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
     position: relative;
     z-index: 1;
-    background: linear-gradient(180deg, rgba(9, 16, 25, 0), rgba(9, 16, 25, 0.44));
+    background: linear-gradient(180deg, rgba(8, 48, 80, 0), rgba(8, 48, 80, 0.28));
 }
 
 .user-card {
@@ -155,9 +159,9 @@ html.sidebar-booting .main-wrapper {
     align-items: center;
     gap: 10px;
     padding: 12px;
-    border-radius: 18px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(16px);
 }
 
@@ -215,10 +219,10 @@ html.sidebar-booting .main-wrapper {
 }
 
 .nav-group {
-    margin: 0 0 10px;
-    border-radius: 18px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    margin: 0 0 12px;
+    border-radius: 16px;
+    background: rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     overflow: hidden;
 }
 
@@ -228,10 +232,10 @@ html.sidebar-booting .main-wrapper {
     gap: 12px;
     width: 100%;
     padding: 14px 16px;
-    color: #d1dde7;
+    color: #f7fbff;
     text-decoration: none;
-    font-size: 0.88rem;
-    font-weight: 600;
+    font-size: 0.92rem;
+    font-weight: 700;
     cursor: pointer;
     transition: all 0.2s ease;
     border: none;
@@ -247,11 +251,11 @@ html.sidebar-booting .main-wrapper {
 .nav-group-icon {
     width: 36px;
     height: 36px;
-    border-radius: 12px;
+    border-radius: 10px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.12);
     color: #f8fafc;
     flex-shrink: 0;
 }
@@ -268,7 +272,7 @@ html.sidebar-booting .main-wrapper {
 }
 
 .nav-group-copy small {
-    color: #7f93a2;
+    color: rgba(255, 255, 255, 0.62);
     font-size: 0.72rem;
 }
 
@@ -276,17 +280,17 @@ html.sidebar-booting .main-wrapper {
     margin-left: auto;
     font-size: 0.75rem;
     transition: transform 0.3s;
-    color: #6f8190;
+    color: rgba(255, 255, 255, 0.76);
 }
 
 .nav-group.open .nav-group-header {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.08);
     color: #fff;
 }
 
 .nav-group.open .nav-group-arrow {
     transform: rotate(90deg);
-    color: var(--accent);
+    color: #fff;
 }
 
 .nav-sub {
@@ -308,35 +312,35 @@ html.sidebar-booting .main-wrapper {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 10px 12px;
-    color: #97abbb;
+    padding: 11px 12px;
+    color: rgba(255, 255, 255, 0.9);
     text-decoration: none;
-    font-size: 0.82rem;
-    border-radius: 14px;
+    font-size: 0.86rem;
+    border-radius: 12px;
     transition: all 0.2s ease;
     min-height: 48px;
 }
 
 .nav-sub-item:hover {
     color: #fff;
-    background: rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.08);
 }
 
 .nav-sub-item.active {
     color: #fff;
     font-weight: 600;
-    background: linear-gradient(135deg, rgba(39, 196, 181, 0.18), rgba(14, 165, 233, 0.14));
-    box-shadow: inset 0 0 0 1px rgba(39, 196, 181, 0.18);
+    background: rgba(255, 255, 255, 0.14);
+    box-shadow: inset 3px 0 0 #ffffff;
 }
 
 .nav-sub-icon {
     width: 28px;
     height: 28px;
-    border-radius: 10px;
+    border-radius: 8px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.08);
     color: currentColor;
     flex-shrink: 0;
 }
@@ -352,7 +356,7 @@ html.sidebar-booting .main-wrapper {
 }
 
 .nav-sub-copy small {
-    color: #6f8190;
+    color: rgba(255, 255, 255, 0.62);
     font-size: 0.7rem;
     line-height: 1.15;
     margin-top: 2px;
