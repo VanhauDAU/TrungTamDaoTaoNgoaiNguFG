@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class LopHocTaiLieuService
 {
@@ -110,7 +110,7 @@ class LopHocTaiLieuService
 
     /* ── Private Download (teacher) ─────────────────────────────────────────── */
 
-    public function downloadForTeacher(LopHocTaiLieu $taiLieu): BinaryFileResponse
+    public function downloadForTeacher(LopHocTaiLieu $taiLieu): StreamedResponse
     {
         abort_unless(
             Storage::disk($taiLieu->disk)->exists($taiLieu->duongDan),
@@ -127,7 +127,7 @@ class LopHocTaiLieuService
      * Kiểm tra học viên có quyền tải file không (dựa trên DangKyLopHoc).
      * Các trạng thái cho phép: Đã xác nhận, Đang học, Tạm dừng nợ, Bảo lưu, Hoàn thành.
      */
-    public function downloadForStudent(LopHocTaiLieu $taiLieu, int $studentId): BinaryFileResponse
+    public function downloadForStudent(LopHocTaiLieu $taiLieu, int $studentId): StreamedResponse
     {
         $this->assertStudentCanAccess($taiLieu->lopHocId, $studentId);
 

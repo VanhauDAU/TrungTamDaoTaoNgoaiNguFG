@@ -1,36 +1,157 @@
 @extends('layouts.internal')
 
-@section('title', 'Tài liệu lớp học')
-@section('page-title', 'Tài liệu lớp học')
-@section('breadcrumb', 'Tài liệu')
+@section('title', 'Thư viện tài liệu của tôi')
+@section('page-title', 'Thư viện tài liệu')
+@section('breadcrumb', 'Thư viện tài liệu')
+
+@section('stylesheet')
+<style>
+    .library-card { transition: all .2s; border: 2px solid transparent; }
+    .library-card:hover { border-color: #6366f1; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(99,102,241,.12) !important; }
+    .file-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+    .nhom-badge { font-size: .72rem; letter-spacing: .03em; }
+    .filter-chip { border-radius: 20px; font-size: .8rem; padding: .35rem .85rem; border: 1.5px solid #dee2e6; background: #fff; cursor: pointer; transition: all .15s; }
+    .filter-chip:hover, .filter-chip.active { border-color: #6366f1; background: #6366f1; color: #fff; }
+    .search-box { border-radius: 30px !important; padding-left: 2.5rem; }
+    .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #9ca3af; }
+    .empty-state { background: linear-gradient(135deg, #f8faff 0%, #f0f4ff 100%); border-radius: 20px; padding: 3rem; }
+</style>
+@endsection
 
 @section('content')
 <div class="container-fluid px-0">
-    <div class="mb-4">
-        <h4 class="fw-bold mb-0">📂 Tổng hợp tài liệu lớp học</h4>
-        <p class="text-muted mt-1 mb-0 small">Chọn lớp để quản lý tài liệu tương ứng.</p>
+
+    {{-- Header --}}
+    <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-3">
+        <div>
+            <h4 class="fw-bold mb-1">📁 Thư viện tài liệu của tôi</h4>
+            <p class="text-muted mb-0 small">
+                Upload file một lần, chia sẻ vào nhiều lớp học khác nhau.
+                <span class="badge bg-primary-subtle text-primary rounded-pill ms-2">{{ $taiLieus->count() }} tài liệu</span>
+            </p>
+        </div>
+        <a href="{{ route('teacher.materials.create') }}" class="btn btn-primary rounded-pill px-4">
+            <i class="fas fa-upload me-2"></i>Tải lên tài liệu mới
+        </a>
     </div>
 
-    @if($classes->isEmpty())
-        <div class="card border-0 shadow-sm rounded-4 p-5 text-center text-muted">
-            <i class="fas fa-chalkboard-teacher fa-3x mb-3 opacity-30"></i>
-            <h5>Bạn chưa phụ trách lớp học nào.</h5>
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show rounded-3 border-0 shadow-sm mb-4" role="alert">
+            <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+
+    {{-- Bộ lọc --}}
+    <div class="card border-0 shadow-sm rounded-4 mb-4 px-3 py-3">
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            {{-- Search --}}
+            <div class="position-relative flex-grow-1" style="max-width:300px; min-width:180px">
+                <i class="fas fa-search search-icon"></i>
+                <form method="GET" action="{{ route('teacher.materials.index') }}" id="searchForm">
+                    <input type="hidden" name="nhom" value="{{ $nhom }}">
+                    <input type="text" name="q" value="{{ $search }}"
+                           class="form-control search-box border-0 bg-light"
+                           placeholder="Tìm kiếm tài liệu..."
+                           oninput="document.getElementById('searchForm').submit()">
+                </form>
+            </div>
+
+            <div class="vr d-none d-md-block mx-1"></div>
+
+            {{-- Nhóm filter --}}
+            <a href="{{ route('teacher.materials.index', ['q' => $search]) }}"
+               class="filter-chip text-decoration-none {{ !$nhom ? 'active' : '' }}">
+                Tất cả
+            </a>
+            @foreach($nhomOptions as $val => $label)
+                <a href="{{ route('teacher.materials.index', ['nhom' => $val, 'q' => $search]) }}"
+                   class="filter-chip text-decoration-none {{ $nhom === $val ? 'active' : '' }}">
+                    {{ $label }}
+                </a>
+            @endforeach
+        </div>
+    </div>
+
+    {{-- Danh sách --}}
+    @if($taiLieus->isEmpty())
+        <div class="empty-state text-center">
+            <i class="fas fa-cloud-upload-alt fa-4x text-primary opacity-30 mb-3"></i>
+            <h5 class="fw-bold">Thư viện trống</h5>
+            <p class="text-muted mb-4">Bắt đầu bằng cách tải lên tài liệu đầu tiên của bạn.</p>
+            <a href="{{ route('teacher.materials.create') }}" class="btn btn-primary rounded-pill px-4">
+                <i class="fas fa-upload me-2"></i>Tải lên ngay
+            </a>
         </div>
     @else
         <div class="row g-3">
-            @foreach($classes as $lop)
+            @foreach($taiLieus as $tl)
                 <div class="col-md-6 col-xl-4">
-                    <div class="card border-0 shadow-sm rounded-4 h-100 p-3">
-                        <div class="fw-bold text-dark mb-1">{{ $lop->tenLopHoc }}</div>
-                        <div class="text-muted small mb-3">{{ $lop->khoaHoc->tenKhoaHoc ?? 'Chưa có khóa học' }}</div>
-                        <div class="d-flex align-items-center justify-content-between">
-                            <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1">
-                                {{ $lop->lop_hoc_tai_lieus_count ?? 0 }} tài liệu
-                            </span>
-                            <a href="{{ route('teacher.classes.materials.index', $lop->slug) }}"
-                               class="btn btn-sm btn-outline-primary rounded-pill px-3">
-                                <i class="fas fa-folder-open me-1"></i>Xem tài liệu
-                            </a>
+                    <div class="card border-0 shadow-sm rounded-4 h-100 library-card">
+                        <div class="card-body p-3">
+                            <div class="d-flex align-items-start gap-3">
+                                {{-- Icon file --}}
+                                <div class="file-icon bg-primary-subtle flex-shrink-0">
+                                    <i class="fas {{ $tl->mime_icon }}"></i>
+                                </div>
+                                <div class="flex-grow-1 min-w-0">
+                                    <div class="fw-semibold text-dark text-truncate" title="{{ $tl->tieuDe }}">
+                                        {{ $tl->tieuDe }}
+                                    </div>
+                                    <div class="text-muted small font-monospace text-truncate" title="{{ $tl->tenGoc }}">
+                                        {{ $tl->tenGoc }}
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2 mt-1 flex-wrap">
+                                        <span class="badge bg-primary-subtle text-primary nhom-badge rounded-pill px-2 py-1">
+                                            {{ $tl->nhom_label }}
+                                        </span>
+                                        <span class="text-muted small">{{ $tl->kich_thuoc_readable }}</span>
+                                        <span class="text-muted small">{{ $tl->created_at->format('d/m/Y') }}</span>
+                                    </div>
+                                    @if($tl->moTa)
+                                        <div class="text-muted small mt-1 text-truncate" title="{{ $tl->moTa }}">
+                                            {{ $tl->moTa }}
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent border-0 pt-0 pb-3 px-3">
+                            <div class="d-flex gap-2 justify-content-end">
+                                {{-- Download --}}
+                                <a href="{{ route('teacher.materials.download', $tl->giaoVienTaiLieuId) }}"
+                                   class="btn btn-sm btn-light border rounded-pill px-2" title="Tải xuống">
+                                    <i class="fas fa-download text-primary me-1"></i>
+                                    <span class="d-none d-md-inline small">Tải</span>
+                                </a>
+
+                                {{-- Chỉnh sửa --}}
+                                <a href="{{ route('teacher.materials.edit', $tl->giaoVienTaiLieuId) }}"
+                                   class="btn btn-sm btn-light border rounded-pill px-2" title="Chỉnh sửa">
+                                    <i class="fas fa-edit text-muted"></i>
+                                </a>
+
+                                {{-- Chia sẻ vào lớp --}}
+                                <button type="button"
+                                        class="btn btn-sm btn-primary rounded-pill px-3"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#shareModal"
+                                        data-id="{{ $tl->giaoVienTaiLieuId }}"
+                                        data-title="{{ $tl->tieuDe }}"
+                                        data-nhom="{{ $tl->nhomTaiLieu }}">
+                                    <i class="fas fa-share-alt me-1"></i>Chia sẻ vào lớp
+                                </button>
+
+                                {{-- Xóa --}}
+                                <form method="POST"
+                                      action="{{ route('teacher.materials.destroy', $tl->giaoVienTaiLieuId) }}"
+                                      onsubmit="return confirm('Xóa tài liệu này khỏi thư viện?\nCác bản chia sẻ trong lớp học sẽ mất kết nối với file.')">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" class="btn btn-sm btn-light border rounded-pill px-2" title="Xóa">
+                                        <i class="fas fa-trash-alt text-danger"></i>
+                                    </button>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -39,3 +160,159 @@
     @endif
 </div>
 @endsection
+
+@section('modal')
+{{-- Modal: Chia sẻ vào lớp --}}
+<div class="modal fade" id="shareModal" tabindex="-1" aria-labelledby="shareModalLabel">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold" id="shareModalLabel">
+                    <i class="fas fa-share-alt text-primary me-2"></i>Chia sẻ tài liệu vào lớp học
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body pt-3">
+                {{-- Hiển thị lỗi nếu có --}}
+                @if($errors->any())
+                    <div class="alert alert-danger rounded-4 border-0 mb-3 small shadow-sm">
+                        <ul class="mb-0 ps-3">
+                            @foreach($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
+                {{-- Chọn lớp --}}
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Chọn lớp học <span class="text-danger">*</span></label>
+                    <select id="shareClassSelect" class="form-select rounded-3" required>
+                        <option value="">-- Chọn lớp của bạn --</option>
+                        @if(isset($classes))
+                            @foreach($classes as $lop)
+                                <option value="{{ $lop->slug }}">{{ $lop->tenLopHoc }}</option>
+                            @endforeach
+                        @endif
+                    </select>
+                    <div id="shareClassError" class="text-danger small mt-1 d-none">Vui lòng chọn lớp học.</div>
+                </div>
+
+                <div class="alert alert-info rounded-3 border-0 mb-3 py-2 px-3 small">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Tài liệu: <strong id="shareTitleDisplay">...</strong>
+                </div>
+
+                <form id="shareForm" method="POST" action="">
+                    @csrf
+                    <input type="hidden" name="giaoVienTaiLieuId" id="shareGvTlId">
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tiêu đề trong lớp <span class="text-danger">*</span></label>
+                        <input type="text" name="tieuDe" id="shareTitleInput" class="form-control rounded-3" required>
+                        <div class="form-text">Mặc định lấy tiêu đề từ thư viện.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Nhóm tài liệu <span class="text-danger">*</span></label>
+                        <select name="nhomTaiLieu" id="shareNhomSelect" class="form-select rounded-3" required>
+                            @foreach($nhomOptions as $val => $label)
+                                <option value="{{ $val }}">{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Ghi chú thêm</label>
+                        <textarea name="moTa" class="form-control rounded-3" rows="2" placeholder="(Tùy chọn)"></textarea>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label fw-semibold">Thứ tự</label>
+                            <input type="number" name="sortOrder" class="form-control rounded-3" value="0" min="0">
+                            <div class="form-text small">Số nhỏ hiện trước.</div>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-semibold">Trạng thái</label>
+                            <select name="trangThai" class="form-select rounded-3">
+                                @foreach(\App\Models\Education\LopHocTaiLieu::trangThaiOptions() as $val => $label)
+                                    <option value="{{ $val }}" {{ $val == 1 ? 'selected' : '' }}>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                            <div class="form-text small">Hiện/Ẩn với HS.</div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                        <button type="button" class="btn btn-light rounded-pill px-4 border" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4">
+                            <i class="fas fa-share-alt me-2"></i>Xác nhận chia sẻ
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@endsection
+
+@push('scripts')
+<script>
+// Cập nhật form action khi modal mở
+document.getElementById('shareModal').addEventListener('show.bs.modal', function (event) {
+    const btn = event.relatedTarget;
+    if (!btn) return;
+
+    const id = btn.getAttribute('data-id');
+    const title = btn.getAttribute('data-title');
+    const nhom = btn.getAttribute('data-nhom');
+
+    document.getElementById('shareGvTlId').value = id;
+    document.getElementById('shareTitleDisplay').textContent = title;
+    document.getElementById('shareTitleInput').value = title;
+    document.getElementById('shareNhomSelect').value = nhom || 'tai_lieu';
+
+    // Reset class select
+    document.getElementById('shareClassSelect').value = '';
+    document.getElementById('shareClassError').classList.add('d-none');
+    document.getElementById('shareForm').action = '';
+});
+
+// Khi chọn lớp → cập nhật action URL
+document.getElementById('shareClassSelect').addEventListener('change', function() {
+    const slug = this.value;
+    if (slug) {
+        // Sử dụng đường dẫn tương đối từ vị trí hiện tại hoặc template URL
+        // Route mong muốn: teacher/lop-hoc-cua-toi/{slug}/tai-lieu/chia-se
+        // Vì trang hiện tại là /teacher/tai-lieu, ta có thể dùng đường dẫn tương đối hoặc data-attribute
+        document.getElementById('shareForm').action = `{{ url('teacher/lop-hoc-cua-toi') }}/${slug}/tai-lieu/chia-se`;
+        document.getElementById('shareClassError').classList.add('d-none');
+    }
+});
+
+// Xử lý submit form
+document.getElementById('shareForm').addEventListener('submit', function(e) {
+    const slug = document.getElementById('shareClassSelect').value;
+    if (!slug) {
+        e.preventDefault();
+        document.getElementById('shareClassError').classList.remove('d-none');
+        document.getElementById('shareClassSelect').focus();
+        return false;
+    }
+    // Action đã được set ở event 'change' của shareClassSelect
+    // Nếu chưa được set (do autofill hoặc lý do khác), set lại lần nữa cho chắc
+    if (!this.action || this.action.includes('undefined')) {
+        this.action = `{{ url('teacher/lop-hoc-cua-toi') }}/${slug}/tai-lieu/chia-se`;
+    }
+});
+
+// Tự động mở lại modal nếu có lỗi validation
+@if($errors->has('giaoVienTaiLieuId') || $errors->has('tieuDe') || $errors->has('nhomTaiLieu'))
+    document.addEventListener('DOMContentLoaded', function() {
+        const modal = new bootstrap.Modal(document.getElementById('shareModal'));
+        modal.show();
+    });
+@endif
+</script>
+@endpush

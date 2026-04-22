@@ -68,6 +68,7 @@
                         <label class="form-label fw-semibold">Thứ tự</label>
                         <input type="number" name="sortOrder" class="form-control rounded-3"
                                value="{{ old('sortOrder', $taiLieu->sortOrder) }}" min="0">
+                        <div class="form-text">Số nhỏ hiện trước.</div>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label fw-semibold">Trạng thái <span class="text-danger">*</span></label>
@@ -76,6 +77,7 @@
                                 <option value="{{ $val }}" {{ old('trangThai', $taiLieu->trangThai) == $val ? 'selected' : '' }}>{{ $label }}</option>
                             @endforeach
                         </select>
+                        <div class="form-text">Ẩn/Hiện với học sinh.</div>
                     </div>
                 </div>
 
