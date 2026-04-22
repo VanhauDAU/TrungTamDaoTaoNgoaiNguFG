@@ -12,43 +12,61 @@
             <div class="row">
                 @include('components.client.account-sidebar')
                 <div class="col-lg-9">
-                    <div class="account-content">
+                    @include('evaluations._theme')
+
+                    <div class="account-content report-ui">
                         <x-client.account-breadcrumb :items="[
                             ['label' => 'Trang chủ', 'url' => route('home.index'), 'icon' => 'fas fa-home'],
                             ['label' => 'Tài khoản', 'url' => route('home.student.index')],
                             ['label' => 'Báo cáo học tập'],
                         ]" />
 
-                        <div class="content-header mb-4">
-                            <h2 class="page-title"><i class="fas fa-file-lines me-2"></i>Báo cáo học tập</h2>
-                            <p class="page-subtitle">Danh sách báo cáo đã được phát hành chính thức từ giáo viên và staff.</p>
-                        </div>
-
-                        @if ($reports->isEmpty())
-                            <div class="alert alert-light border">Hiện chưa có báo cáo học tập nào được phát hành cho tài khoản của bạn.</div>
-                        @else
-                            <div class="d-grid gap-3">
-                                @foreach ($reports as $report)
-                                    <div class="border rounded-4 p-4 bg-white shadow-sm">
-                                        <div class="d-flex flex-wrap justify-content-between gap-3">
-                                            <div>
-                                                <div class="fw-semibold fs-5">{{ $report->dotDanhGia?->tenDot }}</div>
-                                                <div class="text-muted">
-                                                    {{ data_get($report->metadataSnapshot, 'class_name') }} · {{ data_get($report->metadataSnapshot, 'course_name') }}
-                                                </div>
-                                                <div class="text-muted small mt-1">
-                                                    Phát hành: {{ optional($report->publishedAt)->format('d/m/Y H:i') ?? '—' }}
-                                                </div>
-                                            </div>
-                                            <div class="d-flex flex-wrap gap-2">
-                                                <a href="{{ route('home.student.reports.show', $report->baoCaoHocTapId) }}" class="btn btn-outline-primary">Xem bản web</a>
-                                                <a href="{{ route('home.student.reports.download', $report->baoCaoHocTapId) }}" class="btn btn-primary">Tải PDF</a>
-                                            </div>
-                                        </div>
+                        <div class="report-shell">
+                            <section class="report-hero">
+                                <div class="report-hero__content">
+                                    <div>
+                                        <span class="report-overline">Student Reports</span>
+                                        <h2 class="report-title">Báo cáo học tập</h2>
                                     </div>
-                                @endforeach
-                            </div>
-                        @endif
+                                    <div class="report-hero__aside">
+                                        <span class="report-chip">Tổng báo cáo: {{ $reports->count() }}</span>
+                                    </div>
+                                </div>
+                            </section>
+
+                            @if ($reports->isEmpty())
+                                <div class="report-empty">
+                                    <strong>Hiện chưa có báo cáo học tập nào.</strong>
+                                    <p class="mb-0">Khi có báo cáo được phát hành, danh sách sẽ xuất hiện tại đây.</p>
+                                </div>
+                            @else
+                                <div class="report-list">
+                                    @foreach ($reports as $report)
+                                        <article class="report-row">
+                                            <div class="report-row__top">
+                                                <div class="report-persona">
+                                                    <strong>{{ $report->dotDanhGia?->tenDot }}</strong>
+                                                    <span>{{ data_get($report->metadataSnapshot, 'class_name') }} · {{ data_get($report->metadataSnapshot, 'course_name') }}</span>
+                                                </div>
+                                                <span class="report-badge report-badge--success">Đã phát hành</span>
+                                            </div>
+                                            <div class="report-meta-grid">
+                                                <div class="report-kv">
+                                                    <div class="report-kv__label">Phát hành</div>
+                                                    <div class="report-kv__value">{{ optional($report->publishedAt)->format('d/m/Y H:i') ?? '—' }}</div>
+                                                </div>
+                                            </div>
+                                            <div class="report-row__bottom">
+                                                <div class="report-actions">
+                                                    <a href="{{ route('home.student.reports.show', $report->baoCaoHocTapId) }}" class="report-button report-button--secondary">Xem bản web</a>
+                                                    <a href="{{ route('home.student.reports.download', $report->baoCaoHocTapId) }}" class="report-button report-button--primary">Tải PDF</a>
+                                                </div>
+                                            </div>
+                                        </article>
+                                    @endforeach
+                                </div>
+                            @endif
+                        </div>
                     </div>
                 </div>
             </div>

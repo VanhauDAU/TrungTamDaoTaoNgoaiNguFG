@@ -27,4 +27,9 @@ class BaoCaoHocTapMau extends Model
         return $this->hasMany(BaoCaoHocTapMauTieuChi::class, 'baoCaoHocTapMauId', 'baoCaoHocTapMauId')
             ->orderBy('thuTu');
     }
+
+    public function dotDanhGias()
+    {
+        return $this->hasMany(BaoCaoHocTapDotDanhGia::class, 'baoCaoHocTapMauId', 'baoCaoHocTapMauId');
+    }
 }

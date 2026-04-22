@@ -7,142 +7,178 @@
 @section('content')
     @php
         $summaryCards = [
-            ['label' => 'Nháp', 'value' => $summary['draft'] ?? 0, 'class' => 'bg-warning-subtle text-warning-emphasis'],
-            ['label' => 'Chờ duyệt', 'value' => $summary['submitted'] ?? 0, 'class' => 'bg-info-subtle text-info-emphasis'],
-            ['label' => 'Cần chỉnh sửa', 'value' => $summary['needs_revision'] ?? 0, 'class' => 'bg-danger-subtle text-danger-emphasis'],
-            ['label' => 'Đã phát hành', 'value' => $summary['published'] ?? 0, 'class' => 'bg-success-subtle text-success-emphasis'],
-            ['label' => 'Quá hạn', 'value' => $summary['overdue'] ?? 0, 'class' => 'bg-dark-subtle text-dark-emphasis'],
+            ['label' => 'Nháp', 'value' => $summary['draft'] ?? 0, 'variant' => 'warning', 'hint' => 'Báo cáo đang soạn'],
+            ['label' => 'Chờ duyệt', 'value' => $summary['submitted'] ?? 0, 'variant' => 'info', 'hint' => 'Đã gửi staff'],
+            ['label' => 'Cần chỉnh sửa', 'value' => $summary['needs_revision'] ?? 0, 'variant' => 'danger', 'hint' => 'Cần cập nhật lại'],
+            ['label' => 'Đã phát hành', 'value' => $summary['published'] ?? 0, 'variant' => 'success', 'hint' => 'Đã tới học viên'],
+            ['label' => 'Quá hạn', 'value' => $summary['overdue'] ?? 0, 'variant' => 'primary', 'hint' => 'Ưu tiên xử lý ngay'],
         ];
     @endphp
 
-    <div class="container-fluid px-0">
-        <div class="row g-3 mb-4">
-            @foreach ($summaryCards as $card)
-                <div class="col-md col-6">
-                    <div class="card border-0 shadow-sm h-100">
-                        <div class="card-body">
-                            <span class="badge {{ $card['class'] }}">{{ $card['label'] }}</span>
-                            <div class="display-6 fw-bold mt-3">{{ number_format($card['value']) }}</div>
+    @include('evaluations._theme')
+
+    <div class="container-fluid px-0 report-ui">
+        <div class="report-shell">
+            <section class="report-hero">
+                <div class="report-hero__content">
+                    <div>
+                        <span class="report-overline">Teacher Workspace</span>
+                        <h2 class="report-title">Báo cáo học tập theo phong cách làm việc rõ ràng và dễ xử lý hơn</h2>
+                        <p class="report-subtitle">
+                            Theo dõi nhanh báo cáo đang soạn, trạng thái cần xử lý và tiến độ từng đợt đánh giá trong một màn hình duy nhất.
+                        </p>
+                    </div>
+                    <div class="report-hero__aside">
+                        <div class="report-chip-wrap">
+                            <span class="report-chip">Tổng báo cáo: {{ number_format($reports->count()) }}</span>
+                            <span class="report-chip">Đợt phụ trách: {{ number_format($periods->count()) }}</span>
+                        </div>
+                        <div class="report-actions">
+                            <a href="{{ route('teacher.evaluations.periods.index') }}" class="report-button report-button--secondary">Xem đợt đánh giá</a>
+                            <a href="{{ route('teacher.evaluations.index') }}" class="report-button report-button--soft">Làm mới dashboard</a>
                         </div>
                     </div>
                 </div>
-            @endforeach
-        </div>
+            </section>
 
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-body">
-                <form method="GET" class="row g-3 align-items-end">
-                    <div class="col-md-4">
-                        <label class="form-label fw-semibold">Lớp học</label>
-                        <select name="lopHocId" class="form-select">
-                            <option value="">Tất cả lớp</option>
-                            @foreach ($classes as $class)
-                                <option value="{{ $class->lopHocId }}" @selected($selectedClassId == $class->lopHocId)>
-                                    [{{ $class->maLopHoc }}] {{ $class->tenLopHoc }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label fw-semibold">Trạng thái</label>
-                        <select name="trangThai" class="form-select">
-                            <option value="">Tất cả trạng thái</option>
-                            @foreach ($statusOptions as $value => $label)
-                                <option value="{{ $value }}" @selected($selectedStatus === $value)>{{ $label }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-4 d-flex gap-2">
-                        <button class="btn btn-primary">Lọc</button>
-                        <a href="{{ route('teacher.evaluations.index') }}" class="btn btn-outline-secondary">Đặt lại</a>
-                        <a href="{{ route('teacher.evaluations.periods.index') }}" class="btn btn-outline-dark">Xem đợt đánh giá</a>
-                    </div>
-                </form>
-            </div>
-        </div>
+            <section class="report-stat-grid">
+                @foreach ($summaryCards as $card)
+                    <article class="report-stat report-stat--{{ $card['variant'] }}">
+                        <span class="report-stat__label">{{ $card['label'] }}</span>
+                        <div class="report-stat__value">{{ number_format($card['value']) }}</div>
+                        <div class="report-stat__hint">{{ $card['hint'] }}</div>
+                    </article>
+                @endforeach
+            </section>
 
-        <div class="row g-4">
-            <div class="col-xl-7">
-                <div class="card border-0 shadow-sm h-100">
-                    <div class="card-header bg-white border-0 pt-4">
-                        <h5 class="mb-1">Báo cáo gần đây</h5>
-                        <p class="text-muted small mb-0">Danh sách nháp, báo cáo chờ duyệt và các báo cáo vừa cập nhật.</p>
-                    </div>
-                    <div class="card-body">
-                        @if ($reports->isEmpty())
-                            <div class="alert alert-light border mb-0">Chưa có báo cáo nào thuộc bộ lọc hiện tại.</div>
-                        @else
-                            <div class="table-responsive">
-                                <table class="table align-middle">
-                                    <thead>
-                                        <tr>
-                                            <th>Học viên</th>
-                                            <th>Lớp / đợt</th>
-                                            <th>Trạng thái</th>
-                                            <th class="text-end">Thao tác</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach ($reports as $report)
-                                            <tr>
-                                                <td>
-                                                    <div class="fw-semibold">{{ $report->dangKyLopHoc?->taiKhoan?->hoSoNguoiDung?->hoTen ?? '—' }}</div>
-                                                    <div class="text-muted small">{{ $report->dangKyLopHoc?->taiKhoan?->taiKhoan }}</div>
-                                                </td>
-                                                <td>
-                                                    <div>{{ $report->dotDanhGia?->lopHoc?->tenLopHoc }}</div>
-                                                    <div class="text-muted small">{{ $report->dotDanhGia?->tenDot }}</div>
-                                                </td>
-                                                <td><span class="badge text-bg-light border">{{ $report->trangThaiLabel }}</span></td>
-                                                <td class="text-end">
-                                                    <a href="{{ route('teacher.evaluations.reports.edit', $report->baoCaoHocTapId) }}"
-                                                        class="btn btn-sm btn-outline-primary">Mở báo cáo</a>
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        @endif
-                    </div>
+            <section class="report-panel">
+                <div class="report-panel__head">
+                    <h4>Bộ lọc làm việc</h4>
+                    <p>Thu hẹp danh sách theo lớp học và trạng thái để thao tác nhanh hơn.</p>
                 </div>
-            </div>
+                <div class="report-panel__body">
+                    <form method="GET" class="report-filter-grid">
+                        <div class="report-field">
+                            <label>Lớp học</label>
+                            <select name="lopHocId" class="form-select">
+                                <option value="">Tất cả lớp</option>
+                                @foreach ($classes as $class)
+                                    <option value="{{ $class->lopHocId }}" @selected($selectedClassId == $class->lopHocId)>
+                                        [{{ $class->maLopHoc }}] {{ $class->tenLopHoc }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="report-field">
+                            <label>Trạng thái</label>
+                            <select name="trangThai" class="form-select">
+                                <option value="">Tất cả trạng thái</option>
+                                @foreach ($statusOptions as $value => $label)
+                                    <option value="{{ $value }}" @selected($selectedStatus === $value)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="report-actions">
+                            <button class="report-button report-button--primary">Áp dụng bộ lọc</button>
+                            <a href="{{ route('teacher.evaluations.index') }}" class="report-button report-button--secondary">Đặt lại</a>
+                        </div>
+                    </form>
+                </div>
+            </section>
 
-            <div class="col-xl-5">
-                <div class="card border-0 shadow-sm h-100">
-                    <div class="card-header bg-white border-0 pt-4">
-                        <h5 class="mb-1">Đợt đánh giá đang phụ trách</h5>
-                        <p class="text-muted small mb-0">Theo dõi nhanh tiến độ hoàn thành báo cáo từng lớp.</p>
-                    </div>
-                    <div class="card-body d-grid gap-3">
+            <div class="row g-4">
+                <div class="col-xl-7">
+                    <section class="report-panel h-100">
+                        <div class="report-panel__head">
+                            <h4>Báo cáo cần quan tâm</h4>
+                            <p>Hiển thị theo kiểu workspace, ưu tiên thông tin người học, lớp và thao tác tiếp theo.</p>
+                        </div>
+                        <div class="report-panel__body">
+                            @if ($reports->isEmpty())
+                                <div class="report-empty">
+                                    <strong>Chưa có báo cáo phù hợp bộ lọc.</strong>
+                                    <p class="mb-0">Thử đổi trạng thái hoặc lớp học để mở rộng danh sách.</p>
+                                </div>
+                            @else
+                                <div class="report-list">
+                                    @foreach ($reports as $report)
+                                        <article class="report-row">
+                                            <div class="report-row__top">
+                                                <div class="report-persona">
+                                                    <strong>{{ $report->dangKyLopHoc?->taiKhoan?->hoSoNguoiDung?->hoTen ?? '—' }}</strong>
+                                                    <span>{{ $report->dangKyLopHoc?->taiKhoan?->taiKhoan }}</span>
+                                                </div>
+                                                <span class="report-badge report-badge--info">{{ $report->trangThaiLabel }}</span>
+                                            </div>
+                                            <div class="report-meta-grid">
+                                                <div class="report-kv">
+                                                    <div class="report-kv__label">Lớp học</div>
+                                                    <div class="report-kv__value">{{ $report->dotDanhGia?->lopHoc?->tenLopHoc ?: '—' }}</div>
+                                                </div>
+                                                <div class="report-kv">
+                                                    <div class="report-kv__label">Đợt đánh giá</div>
+                                                    <div class="report-kv__value">{{ $report->dotDanhGia?->tenDot ?: '—' }}</div>
+                                                </div>
+                                                <div class="report-kv">
+                                                    <div class="report-kv__label">Cập nhật</div>
+                                                    <div class="report-kv__value">{{ optional($report->updated_at)->format('d/m/Y H:i') ?? '—' }}</div>
+                                                </div>
+                                            </div>
+                                            <div class="report-row__bottom">
+                                                <span class="report-note">Mở để soạn, bổ sung hoặc kiểm tra trước khi gửi duyệt.</span>
+                                                <a href="{{ route('teacher.evaluations.reports.edit', $report->baoCaoHocTapId) }}" class="report-button report-button--primary">Mở báo cáo</a>
+                                            </div>
+                                        </article>
+                                    @endforeach
+                                </div>
+                            @endif
+                        </div>
+                    </section>
+                </div>
+
+                <div class="col-xl-5">
+                    <section class="report-panel h-100">
+                        <div class="report-panel__head">
+                            <h4>Đợt đánh giá đang phụ trách</h4>
+                            <p>Tiến độ từng lớp được đẩy lên rõ hơn để biết đợt nào còn tồn đọng.</p>
+                        </div>
+                        <div class="report-panel__body">
+                            <div class="report-list">
                         @forelse ($periods as $period)
                             @php
                                 $total = $period->baoCaos->count();
                                 $done = $period->baoCaos->whereIn('trangThai', ['submitted', 'approved', 'published'])->count();
+                                $progress = $total > 0 ? round(($done / $total) * 100) : 0;
                             @endphp
-                            <div class="border rounded-4 p-3">
-                                <div class="d-flex justify-content-between gap-3 align-items-start">
-                                    <div>
-                                        <div class="fw-semibold">{{ $period->tenDot }}</div>
-                                        <div class="text-muted small">
-                                            {{ $period->lopHoc?->tenLopHoc }} · {{ $period->lopHoc?->khoaHoc?->tenKhoaHoc }}
+                                <article class="report-row">
+                                    <div class="report-row__top">
+                                        <div class="report-persona">
+                                            <strong>{{ $period->tenDot }}</strong>
+                                            <span>{{ $period->lopHoc?->tenLopHoc }} · {{ $period->lopHoc?->khoaHoc?->tenKhoaHoc }}</span>
                                         </div>
+                                        <span class="report-badge report-badge--warning">{{ $period->trangThaiLabel }}</span>
                                     </div>
-                                    <span class="badge text-bg-light border">{{ $period->trangThaiLabel }}</span>
-                                </div>
-                                <div class="small text-muted mt-2">Hoàn thành {{ $done }}/{{ $total }} báo cáo</div>
-                                <div class="progress mt-2" role="progressbar" aria-label="Progress">
-                                    <div class="progress-bar" style="width: {{ $total > 0 ? round(($done / $total) * 100) : 0 }}%"></div>
-                                </div>
-                                <div class="mt-3">
-                                    <a href="{{ route('teacher.evaluations.periods.show', $period->dotDanhGiaId) }}"
-                                        class="btn btn-sm btn-outline-dark">Chi tiết đợt</a>
-                                </div>
-                            </div>
+                                    <div>
+                                        <div class="d-flex justify-content-between gap-3 mb-2">
+                                            <span class="report-meta">Hoàn thành {{ $done }}/{{ $total }} báo cáo</span>
+                                            <span class="report-meta">{{ $progress }}%</span>
+                                        </div>
+                                        <div class="report-progress"><span style="width: {{ $progress }}%"></span></div>
+                                    </div>
+                                    <div class="report-row__bottom">
+                                        <span class="report-note">Hạn nộp {{ optional($period->hanNop)->format('d/m/Y') ?? 'chưa thiết lập' }}</span>
+                                        <a href="{{ route('teacher.evaluations.periods.show', $period->dotDanhGiaId) }}" class="report-button report-button--secondary">Chi tiết đợt</a>
+                                    </div>
+                                </article>
                         @empty
-                            <div class="alert alert-light border mb-0">Chưa có đợt đánh giá nào được tạo cho lớp bạn phụ trách.</div>
+                                <div class="report-empty">
+                                    <strong>Chưa có đợt đánh giá nào.</strong>
+                                    <p class="mb-0">Khi staff tạo đợt mới cho lớp bạn phụ trách, màn hình này sẽ tự xuất hiện dữ liệu.</p>
+                                </div>
                         @endforelse
-                    </div>
+                            </div>
+                        </div>
+                    </section>
                 </div>
             </div>
         </div>

@@ -338,6 +338,17 @@ Route::prefix('staff')->name('staff.')->middleware(['auth', 'portal:staff'])->gr
         Route::get('/', [StaffEvaluationController::class, 'index'])->name('index');
         Route::get('/dot-danh-gia', [StaffEvaluationController::class, 'periods'])->name('periods.index');
         Route::post('/dot-danh-gia', [StaffEvaluationController::class, 'storePeriod'])->name('periods.store');
+        Route::prefix('mau-bao-cao')->name('templates.')->group(function () {
+            Route::get('/', [StaffEvaluationController::class, 'templates'])->name('index');
+            Route::get('/tao-moi', [StaffEvaluationController::class, 'createTemplate'])->name('create');
+            Route::post('/', [StaffEvaluationController::class, 'storeTemplate'])->name('store');
+            Route::get('/{templateId}/sua', [StaffEvaluationController::class, 'editTemplate'])->name('edit');
+            Route::put('/{templateId}', [StaffEvaluationController::class, 'updateTemplate'])->name('update');
+            Route::post('/{templateId}/nhan-ban', [StaffEvaluationController::class, 'duplicateTemplate'])->name('duplicate');
+            Route::patch('/{templateId}/mac-dinh', [StaffEvaluationController::class, 'setDefaultTemplate'])->name('set-default');
+            Route::patch('/{templateId}/kich-hoat', [StaffEvaluationController::class, 'toggleTemplateActivation'])->name('toggle-activation');
+            Route::delete('/{templateId}', [StaffEvaluationController::class, 'destroyTemplate'])->name('destroy');
+        });
         Route::get('/bao-cao/{reportId}', [StaffEvaluationController::class, 'show'])->name('reports.show');
         Route::get('/bao-cao/{reportId}/xem-pdf', [StaffEvaluationController::class, 'preview'])->name('reports.preview');
         Route::post('/bao-cao/{reportId}/tra-chinh-sua', [StaffEvaluationController::class, 'requestRevision'])->name('reports.request-revision');

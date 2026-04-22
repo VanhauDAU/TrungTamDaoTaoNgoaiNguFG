@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -413,6 +414,48 @@ class ProgressReportManager
         ];
     }
 
+    public function getTemplateList(): array
+    {
+        $templates = BaoCaoHocTapMau::query()
+            ->withCount(['tieuChis', 'dotDanhGias'])
+            ->orderByDesc('macDinh')
+            ->orderByDesc('kichHoat')
+            ->orderByDesc('updated_at')
+            ->get();
+
+        return [
+            'templates' => $templates,
+            'summary' => [
+                'total' => $templates->count(),
+                'active' => $templates->where('kichHoat', true)->count(),
+                'default' => $templates->where('macDinh', true)->count(),
+                'in_use' => $templates->where('dot_danh_gias_count', '>', 0)->count(),
+            ],
+        ];
+    }
+
+    public function getTemplateEditor(?int $templateId = null): array
+    {
+        $template = $templateId
+            ? BaoCaoHocTapMau::query()->with('tieuChis')->findOrFail($templateId)
+            : new BaoCaoHocTapMau([
+                'phienBan' => '1.0',
+                'kichHoat' => true,
+                'macDinh' => false,
+            ]);
+
+        $criteriaRows = $templateId
+            ? $template->tieuChis->map(fn (BaoCaoHocTapMauTieuChi $criterion) => $this->serializeTemplateCriterion($criterion))->values()
+            : collect($this->defaultTemplateBuilderRows());
+
+        return [
+            'template' => $template,
+            'criteriaRows' => $criteriaRows,
+            'criterionTypeOptions' => $this->criterionTypeOptions(),
+            'defaultRatingOptions' => $this->defaultRatingOptions(),
+        ];
+    }
+
     public function createPeriod(array $payload, TaiKhoan $staff): BaoCaoHocTapDotDanhGia
     {
         return DB::transaction(function () use ($payload, $staff) {
@@ -436,6 +479,173 @@ class ProgressReportManager
             $this->notifyTeacherAboutNewPeriod($period, $staff);
 
             return $period;
+        });
+    }
+
+    public function createTemplate(array $payload): BaoCaoHocTapMau
+    {
+        return DB::transaction(function () use ($payload) {
+            $criteria = $this->normalizeTemplateCriteria($payload['criteria'] ?? []);
+
+            if ($criteria->isEmpty()) {
+                throw ValidationException::withMessages([
+                    'criteria' => 'Mẫu báo cáo phải có ít nhất một tiêu chí.',
+                ]);
+            }
+
+            $template = BaoCaoHocTapMau::query()->create([
+                'tenMau' => trim((string) $payload['tenMau']),
+                'moTa' => $this->nullableString($payload['moTa'] ?? null),
+                'phienBan' => $this->nullableString($payload['phienBan'] ?? null) ?? '1.0',
+                'macDinh' => (bool) ($payload['macDinh'] ?? false),
+                'kichHoat' => array_key_exists('kichHoat', $payload) ? (bool) $payload['kichHoat'] : true,
+            ]);
+
+            $this->persistTemplateCriteria($template, $criteria);
+            $this->normalizeDefaultTemplateState($template, (bool) $template->macDinh);
+
+            return $template->fresh(['tieuChis']);
+        });
+    }
+
+    public function updateTemplate(int $templateId, array $payload): BaoCaoHocTapMau
+    {
+        return DB::transaction(function () use ($templateId, $payload) {
+            $template = BaoCaoHocTapMau::query()->with('tieuChis')->findOrFail($templateId);
+            $criteria = $this->normalizeTemplateCriteria($payload['criteria'] ?? []);
+
+            if ($criteria->isEmpty()) {
+                throw ValidationException::withMessages([
+                    'criteria' => 'Mẫu báo cáo phải có ít nhất một tiêu chí.',
+                ]);
+            }
+
+            $active = array_key_exists('kichHoat', $payload) ? (bool) $payload['kichHoat'] : (bool) $template->kichHoat;
+            if (! $active && BaoCaoHocTapMau::query()->where('kichHoat', true)->whereKeyNot($templateId)->doesntExist()) {
+                throw ValidationException::withMessages([
+                    'kichHoat' => 'Phải luôn còn ít nhất một mẫu đang kích hoạt trong hệ thống.',
+                ]);
+            }
+
+            $template->forceFill([
+                'tenMau' => trim((string) $payload['tenMau']),
+                'moTa' => $this->nullableString($payload['moTa'] ?? null),
+                'phienBan' => $this->nullableString($payload['phienBan'] ?? null) ?? $template->phienBan ?? '1.0',
+                'macDinh' => (bool) ($payload['macDinh'] ?? false),
+                'kichHoat' => $active,
+            ])->save();
+
+            $template->tieuChis()->delete();
+            $this->persistTemplateCriteria($template, $criteria);
+            $this->normalizeDefaultTemplateState($template, (bool) $template->macDinh);
+
+            return $template->fresh(['tieuChis']);
+        });
+    }
+
+    public function duplicateTemplate(int $templateId): BaoCaoHocTapMau
+    {
+        return DB::transaction(function () use ($templateId) {
+            $template = BaoCaoHocTapMau::query()->with('tieuChis')->findOrFail($templateId);
+
+            $copy = BaoCaoHocTapMau::query()->create([
+                'tenMau' => $template->tenMau . ' (Bản sao)',
+                'moTa' => $template->moTa,
+                'phienBan' => $template->phienBan,
+                'macDinh' => false,
+                'kichHoat' => true,
+            ]);
+
+            $criteria = $template->tieuChis
+                ->map(fn (BaoCaoHocTapMauTieuChi $criterion) => $this->serializeTemplateCriterion($criterion))
+                ->all();
+
+            $this->persistTemplateCriteria($copy, collect($criteria));
+
+            return $copy->fresh(['tieuChis']);
+        });
+    }
+
+    public function setDefaultTemplate(int $templateId): void
+    {
+        DB::transaction(function () use ($templateId) {
+            $template = BaoCaoHocTapMau::query()->findOrFail($templateId);
+            $template->forceFill([
+                'macDinh' => true,
+                'kichHoat' => true,
+            ])->save();
+
+            BaoCaoHocTapMau::query()
+                ->whereKeyNot($templateId)
+                ->where('macDinh', true)
+                ->update(['macDinh' => false, 'updated_at' => now()]);
+        });
+    }
+
+    public function toggleTemplateActivation(int $templateId): BaoCaoHocTapMau
+    {
+        return DB::transaction(function () use ($templateId) {
+            $template = BaoCaoHocTapMau::query()->findOrFail($templateId);
+            $nextState = ! $template->kichHoat;
+            $wasDefault = (bool) $template->macDinh;
+
+            if (! $nextState && BaoCaoHocTapMau::query()->where('kichHoat', true)->whereKeyNot($templateId)->doesntExist()) {
+                throw ValidationException::withMessages([
+                    'template' => 'Không thể tắt mẫu cuối cùng đang hoạt động.',
+                ]);
+            }
+
+            $template->forceFill([
+                'kichHoat' => $nextState,
+                'macDinh' => $nextState ? $template->macDinh : false,
+            ])->save();
+
+            if (! $nextState && $wasDefault) {
+                $replacement = BaoCaoHocTapMau::query()
+                    ->where('kichHoat', true)
+                    ->whereKeyNot($templateId)
+                    ->orderByDesc('updated_at')
+                    ->first();
+
+                if ($replacement) {
+                    $replacement->forceFill(['macDinh' => true])->save();
+                }
+            }
+
+            return $template->fresh();
+        });
+    }
+
+    public function deleteTemplate(int $templateId): void
+    {
+        DB::transaction(function () use ($templateId) {
+            $template = BaoCaoHocTapMau::query()->withCount('dotDanhGias')->findOrFail($templateId);
+
+            if ($template->dot_danh_gias_count > 0) {
+                throw ValidationException::withMessages([
+                    'template' => 'Mẫu đã được dùng trong đợt đánh giá nên không thể xóa. Bạn có thể tắt kích hoạt để ngừng sử dụng.',
+                ]);
+            }
+
+            if (BaoCaoHocTapMau::query()->count() <= 1) {
+                throw ValidationException::withMessages([
+                    'template' => 'Hệ thống phải luôn còn ít nhất một mẫu báo cáo.',
+                ]);
+            }
+
+            $wasDefault = (bool) $template->macDinh;
+            $template->delete();
+
+            if ($wasDefault) {
+                $replacement = BaoCaoHocTapMau::query()
+                    ->where('kichHoat', true)
+                    ->orderByDesc('updated_at')
+                    ->first();
+
+                if ($replacement) {
+                    $replacement->forceFill(['macDinh' => true])->save();
+                }
+            }
         });
     }
 
@@ -804,6 +1014,208 @@ class ProgressReportManager
                 DangKyLopHoc::TRANG_THAI_HUY,
             ])
             ->get();
+    }
+
+    private function persistTemplateCriteria(BaoCaoHocTapMau $template, Collection $criteria): void
+    {
+        foreach ($criteria->values() as $index => $row) {
+            BaoCaoHocTapMauTieuChi::query()->create([
+                'baoCaoHocTapMauId' => $template->baoCaoHocTapMauId,
+                'nhom' => $row['nhom'],
+                'maTieuChi' => $row['maTieuChi'],
+                'tenTieuChi' => $row['tenTieuChi'],
+                'loaiDuLieu' => $row['loaiDuLieu'],
+                'danhSachMuc' => $row['danhSachMuc'],
+                'tuyChon' => $row['tuyChon'],
+                'batBuoc' => $row['batBuoc'],
+                'isReadonly' => $row['isReadonly'],
+                'thuTu' => $row['thuTu'] ?? (($index + 1) * 10),
+            ]);
+        }
+    }
+
+    private function normalizeTemplateCriteria(array $criteria): Collection
+    {
+        $normalized = collect($criteria)
+            ->map(function ($row, int $index) {
+                $group = trim((string) data_get($row, 'nhom', ''));
+                $title = trim((string) data_get($row, 'tenTieuChi', ''));
+                $type = trim((string) data_get($row, 'loaiDuLieu', 'text'));
+                $code = trim((string) data_get($row, 'maTieuChi', ''));
+                $order = (int) (data_get($row, 'thuTu') ?: (($index + 1) * 10));
+                $rawOptions = preg_split('/\r\n|\r|\n/', (string) data_get($row, 'danhSachMucText', ''));
+                $options = collect($rawOptions)
+                    ->map(fn ($option) => trim((string) $option))
+                    ->filter()
+                    ->values()
+                    ->all();
+
+                if ($group === '' && $title === '') {
+                    return null;
+                }
+
+                if ($code === '') {
+                    $code = Str::slug($group . '-' . $title . '-' . $index, '_');
+                }
+
+                return [
+                    'nhom' => $group,
+                    'maTieuChi' => $code,
+                    'tenTieuChi' => $title,
+                    'loaiDuLieu' => in_array($type, array_keys($this->criterionTypeOptions()), true) ? $type : 'text',
+                    'danhSachMuc' => $type === 'rating' ? ($options ?: $this->defaultRatingOptions()) : [],
+                    'tuyChon' => [
+                        'hint' => $this->nullableString(data_get($row, 'goiY', '')),
+                    ],
+                    'batBuoc' => (bool) data_get($row, 'batBuoc', false),
+                    'isReadonly' => $type === 'readonly_system' ? true : (bool) data_get($row, 'isReadonly', false),
+                    'thuTu' => $order,
+                ];
+            })
+            ->filter()
+            ->values();
+
+        if ($normalized->isEmpty()) {
+            return collect();
+        }
+
+        $errors = [];
+        $codes = [];
+
+        foreach ($normalized as $index => $row) {
+            if ($row['nhom'] === '') {
+                $errors["criteria.{$index}.nhom"] = 'Mỗi tiêu chí phải có tên nhóm.';
+            }
+
+            if ($row['tenTieuChi'] === '') {
+                $errors["criteria.{$index}.tenTieuChi"] = 'Mỗi tiêu chí phải có tên hiển thị.';
+            }
+
+            if ($row['maTieuChi'] === '') {
+                $errors["criteria.{$index}.maTieuChi"] = 'Mỗi tiêu chí phải có mã định danh.';
+            }
+
+            if (in_array($row['maTieuChi'], $codes, true)) {
+                $errors["criteria.{$index}.maTieuChi"] = 'Mã tiêu chí bị trùng trong cùng mẫu.';
+            }
+
+            $codes[] = $row['maTieuChi'];
+        }
+
+        if ($errors !== []) {
+            throw ValidationException::withMessages($errors);
+        }
+
+        return $normalized;
+    }
+
+    private function serializeTemplateCriterion(BaoCaoHocTapMauTieuChi $criterion): array
+    {
+        return [
+            'baoCaoHocTapMauTieuChiId' => $criterion->baoCaoHocTapMauTieuChiId,
+            'nhom' => $criterion->nhom,
+            'maTieuChi' => $criterion->maTieuChi,
+            'tenTieuChi' => $criterion->tenTieuChi,
+            'loaiDuLieu' => $criterion->loaiDuLieu,
+            'danhSachMucText' => collect($criterion->danhSachMuc ?? [])->implode(PHP_EOL),
+            'goiY' => data_get($criterion->tuyChon, 'hint', ''),
+            'batBuoc' => (bool) $criterion->batBuoc,
+            'isReadonly' => (bool) $criterion->isReadonly,
+            'thuTu' => (int) $criterion->thuTu,
+        ];
+    }
+
+    private function criterionTypeOptions(): array
+    {
+        return [
+            'rating' => 'Đánh giá theo mức',
+            'text' => 'Nhận xét văn bản',
+            'number' => 'Số',
+            'ratio' => 'Tỷ lệ',
+            'readonly_system' => 'Dữ liệu hệ thống chỉ đọc',
+        ];
+    }
+
+    private function defaultRatingOptions(): array
+    {
+        return [
+            'Chưa đạt',
+            'Đạt tối thiểu',
+            'Khá',
+            'Tốt',
+            'Rất tốt',
+        ];
+    }
+
+    private function defaultTemplateBuilderRows(): array
+    {
+        return [
+            [
+                'nhom' => 'Đánh giá đầu vào / trước khi học',
+                'maTieuChi' => 'input_pronunciation',
+                'tenTieuChi' => 'Phát âm',
+                'loaiDuLieu' => 'rating',
+                'danhSachMucText' => implode(PHP_EOL, $this->defaultRatingOptions()),
+                'goiY' => '',
+                'batBuoc' => true,
+                'isReadonly' => false,
+                'thuTu' => 10,
+            ],
+            [
+                'nhom' => 'Trong thời gian học / Chuyên cần',
+                'maTieuChi' => 'attendance_total_sessions',
+                'tenTieuChi' => 'Số buổi học',
+                'loaiDuLieu' => 'readonly_system',
+                'danhSachMucText' => '',
+                'goiY' => 'Hệ thống tự đổ từ dữ liệu buổi học',
+                'batBuoc' => false,
+                'isReadonly' => true,
+                'thuTu' => 110,
+            ],
+            [
+                'nhom' => 'Kết luận',
+                'maTieuChi' => 'next_recommendation',
+                'tenTieuChi' => 'Đề xuất / khuyến nghị tiếp theo',
+                'loaiDuLieu' => 'text',
+                'danhSachMucText' => '',
+                'goiY' => '',
+                'batBuoc' => true,
+                'isReadonly' => false,
+                'thuTu' => 510,
+            ],
+        ];
+    }
+
+    private function normalizeDefaultTemplateState(BaoCaoHocTapMau $template, bool $shouldBeDefault): void
+    {
+        if ($shouldBeDefault) {
+            BaoCaoHocTapMau::query()
+                ->whereKeyNot($template->baoCaoHocTapMauId)
+                ->where('macDinh', true)
+                ->update(['macDinh' => false, 'updated_at' => now()]);
+
+            if (! $template->kichHoat) {
+                $template->forceFill(['kichHoat' => true])->save();
+            }
+
+            return;
+        }
+
+        if (BaoCaoHocTapMau::query()->where('macDinh', true)->doesntExist()) {
+            $replacement = BaoCaoHocTapMau::query()
+                ->where('kichHoat', true)
+                ->whereKeyNot($template->baoCaoHocTapMauId)
+                ->orderByDesc('updated_at')
+                ->first();
+
+            if ($replacement) {
+                $replacement->forceFill(['macDinh' => true])->save();
+
+                return;
+            }
+
+            $template->forceFill(['macDinh' => true, 'kichHoat' => true])->save();
+        }
     }
 
     private function seedReportCriteria(BaoCaoHocTap $report, Collection $criteria): void
