@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Contracts\Admin\LienHe;
+namespace App\Contracts\Internal\LienHe;
 
 use App\Models\Interaction\LienHe;
 use Illuminate\Http\Request;

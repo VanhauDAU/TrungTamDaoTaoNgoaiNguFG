@@ -65,12 +65,12 @@ use App\Services\Client\PublicContentCacheService;
 
 // ── Phase 8 Contracts ─────────────────────────────────────────────
 use App\Contracts\Admin\BaiViet\BaiVietServiceInterface;
-use App\Contracts\Admin\LienHe\LienHeServiceInterface;
+use App\Contracts\Internal\LienHe\LienHeServiceInterface;
 use App\Contracts\Admin\ThongBao\ThongBaoServiceInterface;
 
 // ── Phase 8 Services ─────────────────────────────────────────────
 use App\Services\Admin\BaiViet\BaiVietService;
-use App\Services\Admin\LienHe\LienHeService;
+use App\Services\Internal\LienHe\LienHeService;
 use App\Services\Admin\ThongBao\ThongBaoService;
 
 class AppServiceProvider extends ServiceProvider
