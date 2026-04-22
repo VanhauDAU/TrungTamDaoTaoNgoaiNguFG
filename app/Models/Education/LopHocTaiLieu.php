@@ -25,6 +25,7 @@ class LopHocTaiLieu extends Model
 
     protected $fillable = [
         'lopHocId',
+        'giaoVienTaiLieuId',   // nullable: null = upload thẳng, not-null = chia sẻ từ thư viện
         'tieuDe',
         'moTa',
         'nhomTaiLieu',
@@ -40,11 +41,12 @@ class LopHocTaiLieu extends Model
     ];
 
     protected $casts = [
-        'lopHocTaiLieuId' => 'integer',
-        'trangThai'   => 'integer',
-        'kichThuoc'   => 'integer',
-        'sortOrder'   => 'integer',
-        'publishedAt' => 'datetime',
+        'lopHocTaiLieuId'    => 'integer',
+        'giaoVienTaiLieuId'  => 'integer',
+        'trangThai'          => 'integer',
+        'kichThuoc'          => 'integer',
+        'sortOrder'          => 'integer',
+        'publishedAt'        => 'datetime',
     ];
 
     /* ── Relationships ──────────────────────────────────────────────────────── */
@@ -57,6 +59,14 @@ class LopHocTaiLieu extends Model
     public function nguoiTaiLen()
     {
         return $this->belongsTo(TaiKhoan::class, 'nguoiTaiLenId', 'taiKhoanId');
+    }
+
+    /**
+     * Tài liệu gốc trong thư viện cá nhân (nếu được chia sẻ từ thư viện).
+     */
+    public function giaoVienTaiLieu()
+    {
+        return $this->belongsTo(GiaoVienTaiLieu::class, 'giaoVienTaiLieuId', 'giaoVienTaiLieuId');
     }
 
     /* ── Constants helpers ──────────────────────────────────────────────────── */

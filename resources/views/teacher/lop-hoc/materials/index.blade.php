@@ -1,7 +1,7 @@
 @extends('layouts.internal')
 
 @section('title', 'Tài liệu lớp: ' . $lopHoc->tenLopHoc)
-@section('page-title', 'Quản lý tài liệu')
+@section('page-title', 'Tài liệu lớp học')
 @section('breadcrumb', 'Lớp học / ' . $lopHoc->tenLopHoc . ' / Tài liệu')
 
 @section('stylesheet')
@@ -9,6 +9,7 @@
     .material-row { transition: background .15s; }
     .material-row:hover { background: #f8fafc; }
     .nhom-badge { font-size: .72rem; letter-spacing: .03em; }
+    .source-badge { font-size: .65rem; }
 </style>
 @endsection
 
@@ -25,10 +26,18 @@
                 </a>
             </p>
         </div>
-        <a href="{{ route('teacher.classes.materials.create', $lopHoc->slug) }}"
-           class="btn btn-primary rounded-pill px-4">
-            <i class="fas fa-plus me-2"></i>Tải lên tài liệu
-        </a>
+        <div class="d-flex gap-2 flex-wrap">
+            {{-- Nút chính: Chọn từ thư viện --}}
+            <a href="{{ route('teacher.classes.materials.select-library', $lopHoc->slug) }}"
+               class="btn btn-primary rounded-pill px-4">
+                <i class="fas fa-folder-open me-2"></i>Chọn từ thư viện
+            </a>
+            {{-- Nút phụ: Tải thẳng vào lớp (giữ tương thích) --}}
+            <a href="{{ route('teacher.classes.materials.create', $lopHoc->slug) }}"
+               class="btn btn-outline-secondary rounded-pill px-3" title="Tải file mới thẳng vào lớp (không qua thư viện)">
+                <i class="fas fa-upload me-2"></i>Upload thẳng
+            </a>
+        </div>
     </div>
 
     @if(session('success'))
@@ -44,18 +53,28 @@
             <div class="card-body p-5 text-center text-muted">
                 <i class="fas fa-folder-open fa-3x mb-3 opacity-30"></i>
                 <h5>Chưa có tài liệu nào</h5>
-                <p class="mb-0">Nhấn <strong>Tải lên tài liệu</strong> để bắt đầu chia sẻ tài nguyên với học viên.</p>
+                <p class="mb-4">Chọn tài liệu từ thư viện cá nhân hoặc tải file mới để chia sẻ với học viên.</p>
+                <div class="d-flex gap-2 justify-content-center">
+                    <a href="{{ route('teacher.classes.materials.select-library', $lopHoc->slug) }}"
+                       class="btn btn-primary rounded-pill px-4">
+                        <i class="fas fa-folder-open me-2"></i>Chọn từ thư viện
+                    </a>
+                    <a href="{{ route('teacher.classes.materials.create', $lopHoc->slug) }}"
+                       class="btn btn-outline-secondary rounded-pill px-4">
+                        <i class="fas fa-upload me-2"></i>Upload thẳng
+                    </a>
+                </div>
             </div>
         @else
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th class="ps-4 py-3 text-secondary text-uppercase" style="font-size:.75rem">Tiêu đề</th>
+                            <th class="ps-4 py-3 text-secondary text-uppercase" style="font-size:.75rem">Tài liệu</th>
                             <th class="py-3 text-secondary text-uppercase" style="font-size:.75rem">Nhóm</th>
                             <th class="py-3 text-secondary text-uppercase" style="font-size:.75rem">Kích thước</th>
                             <th class="py-3 text-secondary text-uppercase" style="font-size:.75rem">Trạng thái</th>
-                            <th class="py-3 text-secondary text-uppercase" style="font-size:.75rem">Ngày tải</th>
+                            <th class="py-3 text-secondary text-uppercase" style="font-size:.75rem">Ngày chia sẻ</th>
                             <th class="py-3 pe-4 text-end text-secondary text-uppercase" style="font-size:.75rem">Thao tác</th>
                         </tr>
                     </thead>
@@ -67,7 +86,14 @@
                                     @if($tl->moTa)
                                         <div class="text-muted small text-truncate" style="max-width:260px">{{ $tl->moTa }}</div>
                                     @endif
-                                    <div class="text-muted small font-monospace">{{ $tl->tenGoc }}</div>
+                                    <div class="d-flex align-items-center gap-2 mt-1">
+                                        <span class="text-muted small font-monospace">{{ $tl->tenGoc }}</span>
+                                        @if($tl->giaoVienTaiLieuId)
+                                            <span class="badge bg-info-subtle text-info source-badge rounded-pill px-2">
+                                                <i class="fas fa-link me-1"></i>Từ thư viện
+                                            </span>
+                                        @endif
+                                    </div>
                                 </td>
                                 <td>
                                     <span class="badge bg-primary-subtle text-primary nhom-badge rounded-pill px-3 py-1">
@@ -92,15 +118,16 @@
                                             <i class="fas fa-download text-primary"></i>
                                         </a>
                                         <a href="{{ route('teacher.classes.materials.edit', [$lopHoc->slug, $tl->lopHocTaiLieuId]) }}"
-                                           class="btn btn-sm btn-light border rounded-circle" title="Sửa">
+                                           class="btn btn-sm btn-light border rounded-circle" title="Sửa metadata">
                                             <i class="fas fa-pen text-warning"></i>
                                         </a>
                                         <form method="POST"
                                               action="{{ route('teacher.classes.materials.destroy', [$lopHoc->slug, $tl->lopHocTaiLieuId]) }}"
-                                              onsubmit="return confirm('Xóa tài liệu này? Hành động không thể hoàn tác.')">
+                                              onsubmit="return confirm('{{ $tl->giaoVienTaiLieuId ? "Gỡ tài liệu này khỏi lớp? (File gốc trong thư viện vẫn giữ nguyên)" : "Xóa tài liệu này? Hành động không thể hoàn tác." }}')">
                                             @csrf @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-light border rounded-circle" title="Xóa">
-                                                <i class="fas fa-trash-alt text-danger"></i>
+                                            <button type="submit" class="btn btn-sm btn-light border rounded-circle"
+                                                    title="{{ $tl->giaoVienTaiLieuId ? 'Gỡ khỏi lớp' : 'Xóa' }}">
+                                                <i class="fas {{ $tl->giaoVienTaiLieuId ? 'fa-unlink' : 'fa-trash-alt' }} text-danger"></i>
                                             </button>
                                         </form>
                                     </div>

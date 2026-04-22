@@ -122,6 +122,7 @@ Route::prefix('/')->name('home.')->group(function () {
             Route::get('/hoa-don/{id}', [StudentController::class, 'invoiceDetail'])->name('invoices.show');
         });
         Route::get('/lop-hoc', [StudentController::class, 'myClasses'])->name('classes');
+        Route::get('/lop-hoc/{dangKyLopHocId}', [StudentController::class, 'classDetail'])->name('classes.show');
         Route::get('/lich-hoc', [StudentController::class, 'schedule'])->name('schedule');
 
         // ── Tài liệu lớp học (học viên) ─────────────────────────────────────
@@ -183,7 +184,7 @@ Route::prefix('teacher')->name('teacher.')->middleware(['auth', 'portal:teacher'
         Route::get('/', [TeacherLopHocController::class, 'index'])->name('index');
         Route::get('/{slug}', [TeacherLopHocController::class, 'show'])->name('show');
 
-        // ── Tài liệu lớp học (teacher.classes.materials.*) ──────────────────
+        // ── Tài liệu lớp học (teacher.classes.materials.*) ──────────────────────
         Route::prefix('{slug}/tai-lieu')->name('materials.')->group(function () {
             Route::get('/', [TeacherLopHocTaiLieuController::class, 'index'])->name('index');
             Route::get('/tao-moi', [TeacherLopHocTaiLieuController::class, 'create'])->name('create');
@@ -192,6 +193,9 @@ Route::prefix('teacher')->name('teacher.')->middleware(['auth', 'portal:teacher'
             Route::put('/{id}', [TeacherLopHocTaiLieuController::class, 'update'])->name('update');
             Route::delete('/{id}', [TeacherLopHocTaiLieuController::class, 'destroy'])->name('destroy');
             Route::get('/{id}/tai-xuong', [TeacherLopHocTaiLieuController::class, 'download'])->name('download');
+            // ── Chia sẻ từ thư viện cá nhân ─────────────────────────────────────────
+            Route::get('/chon-tu-thu-vien', [TeacherLopHocTaiLieuController::class, 'selectFromLibrary'])->name('select-library');
+            Route::post('/chia-se', [TeacherLopHocTaiLieuController::class, 'storeShared'])->name('share');
         });
     });
 
@@ -214,8 +218,14 @@ Route::prefix('teacher')->name('teacher.')->middleware(['auth', 'portal:teacher'
     });
 
     Route::prefix('tai-lieu')->name('materials.')->group(function () {
-        // teacher.materials.index – trang tổng hợp (giữ route cũ, redirect sang classes)
+        // teacher.materials.index – thư viện tài liệu cá nhân của giáo viên
         Route::get('/', [TeacherTaiLieuController::class, 'index'])->name('index');
+        Route::get('/tao-moi', [TeacherTaiLieuController::class, 'create'])->name('create');
+        Route::post('/', [TeacherTaiLieuController::class, 'store'])->name('store');
+        Route::get('/{id}/sua', [TeacherTaiLieuController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [TeacherTaiLieuController::class, 'update'])->name('update');
+        Route::delete('/{id}', [TeacherTaiLieuController::class, 'destroy'])->name('destroy');
+        Route::get('/{id}/tai-xuong', [TeacherTaiLieuController::class, 'download'])->name('download');
     });
 
     Route::prefix('nhan-xet')->name('evaluations.')->group(function () {

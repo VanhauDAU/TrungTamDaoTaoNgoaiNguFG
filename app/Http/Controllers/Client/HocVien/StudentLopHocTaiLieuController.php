@@ -6,7 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Education\LopHocTaiLieu;
 use App\Services\Education\LopHocTaiLieuService;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+
 
 class StudentLopHocTaiLieuController extends Controller
 {
@@ -35,7 +36,7 @@ class StudentLopHocTaiLieuController extends Controller
     /**
      * Download tài liệu – kiểm quyền theo DangKyLopHoc.
      */
-    public function download(Request $request, int $lopHocId, int $id): BinaryFileResponse
+    public function download(Request $request, int $lopHocId, int $id): StreamedResponse
     {
         $studentId = $request->user()->getAuthIdentifier();
 

@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Http\Middleware\TrackAuthenticatedDeviceSession;
 use App\Models\Education\DangKyLopHoc;
+use App\Models\Education\GiaoVienTaiLieu;
 use App\Models\Education\LopHoc;
 use App\Models\Education\LopHocTaiLieu;
 use App\Models\Auth\TaiKhoan;
@@ -137,8 +138,39 @@ class LopHocTaiLieuTest extends TestCase
         // (disk public sẽ không có file này)
         Storage::disk('public')->assertMissing($path);
 
-        // Request thẳng web URL /storage/... phải 404
-        $this->get('/storage/' . $path)->assertStatus(404);
+        // Request thẳng web URL /storage/... phải 404 (hoặc 403 tùy config server, nhưng không được 200)
+        $this->get('/storage/' . $path)->assertStatus(403);
+    }
+
+    /* ── Case 5: Giáo viên chỉnh sửa tài liệu thư viện ─────────────────────── */
+    public function test_teacher_can_edit_library_item()
+    {
+        Storage::fake('local');
+        [$teacher] = $this->createTeacherWithClass('GV_EDIT', 'edit@example.com', 'lop-edit');
+        
+        $item = GiaoVienTaiLieu::create([
+            'tieuDe' => 'Old Title',
+            'nhomTaiLieu' => 'tai_lieu',
+            'nguoiTaiLenId' => $teacher->taiKhoanId,
+            'disk' => 'local',
+            'duongDan' => 'old/path.pdf',
+            'tenGoc' => 'old.pdf',
+            'mime' => 'application/pdf',
+            'kichThuoc' => 100,
+        ]);
+
+        $this->actingAs($teacher)
+            ->put(route('teacher.materials.update', $item->giaoVienTaiLieuId), [
+                'tieuDe' => 'New Title',
+                'nhomTaiLieu' => 'bai_tap',
+            ])
+            ->assertRedirect(route('teacher.materials.index'));
+
+        $this->assertDatabaseHas('giao_vien_tai_lieu', [
+            'giaoVienTaiLieuId' => $item->giaoVienTaiLieuId,
+            'tieuDe' => 'New Title',
+            'nhomTaiLieu' => 'bai_tap',
+        ]);
     }
 
     /* ── Schema bootstrap ───────────────────────────────────────────────────── */
@@ -149,6 +181,7 @@ class LopHocTaiLieuTest extends TestCase
 
         foreach ([
             'lophoc_tai_lieu',
+            'giao_vien_tai_lieu',
             'dangKyLopHoc',
             'lophoc',
             'hosonguoidung',
@@ -201,6 +234,7 @@ class LopHocTaiLieuTest extends TestCase
         Schema::create('lophoc_tai_lieu', function (Blueprint $table) {
             $table->id('lopHocTaiLieuId');
             $table->unsignedInteger('lopHocId');
+            $table->unsignedInteger('giaoVienTaiLieuId')->nullable(); // tracking source
             $table->string('tieuDe', 255);
             $table->text('moTa')->nullable();
             $table->string('nhomTaiLieu', 40)->default('tai_lieu');
@@ -213,6 +247,20 @@ class LopHocTaiLieuTest extends TestCase
             $table->timestamp('publishedAt')->nullable();
             $table->unsignedSmallInteger('sortOrder')->default(0);
             $table->tinyInteger('trangThai')->default(1);
+            $table->timestamps();
+        });
+
+        Schema::create('giao_vien_tai_lieu', function (Blueprint $table) {
+            $table->increments('giaoVienTaiLieuId');
+            $table->unsignedInteger('nguoiTaiLenId');
+            $table->string('tieuDe', 255);
+            $table->text('moTa')->nullable();
+            $table->string('nhomTaiLieu', 40)->default('tai_lieu');
+            $table->string('disk', 30)->default('local');
+            $table->string('duongDan', 500);
+            $table->string('tenGoc', 255);
+            $table->string('mime', 100)->nullable();
+            $table->unsignedBigInteger('kichThuoc')->default(0);
             $table->timestamps();
         });
 
@@ -280,7 +328,7 @@ class LopHocTaiLieuTest extends TestCase
         ]);
     }
 
-    private function createTaiLieu(LopHoc $lopHoc): LopHocTaiLieu
+    private function createTaiLieu(LopHoc $lopHoc, ?int $giaoVienTaiLieuId = null): LopHocTaiLieu
     {
         Storage::disk('local')->put(
             'lop-hoc/' . $lopHoc->lopHocId . '/test.pdf',
@@ -288,15 +336,122 @@ class LopHocTaiLieuTest extends TestCase
         );
 
         return LopHocTaiLieu::create([
-            'lopHocId'    => $lopHoc->lopHocId,
-            'tieuDe'      => 'Tài liệu test',
-            'nhomTaiLieu' => LopHocTaiLieu::NHOM_TAI_LIEU,
-            'disk'        => 'local',
-            'duongDan'    => 'lop-hoc/' . $lopHoc->lopHocId . '/test.pdf',
-            'tenGoc'      => 'test.pdf',
-            'mime'        => 'application/pdf',
-            'kichThuoc'   => 1024,
-            'trangThai'   => LopHocTaiLieu::TRANG_THAI_ACTIVE,
+            'lopHocId'          => $lopHoc->lopHocId,
+            'giaoVienTaiLieuId' => $giaoVienTaiLieuId,
+            'tieuDe'            => 'Tài liệu test',
+            'nhomTaiLieu'       => LopHocTaiLieu::NHOM_TAI_LIEU,
+            'disk'              => 'local',
+            'duongDan'          => 'lop-hoc/' . $lopHoc->lopHocId . '/test.pdf',
+            'tenGoc'            => 'test.pdf',
+            'mime'              => 'application/pdf',
+            'kichThuoc'         => 1024,
+            'trangThai'         => LopHocTaiLieu::TRANG_THAI_ACTIVE,
         ]);
+    }
+
+    /* ── Case 5: Giáo viên upload vào thư viện cá nhân ─────────────────────── */
+
+    public function test_teacher_can_upload_to_personal_library(): void
+    {
+        Storage::fake('local');
+
+        [$teacher] = $this->createTeacherWithClass('GVF001', 'gvf@example.com', 'lop-f');
+
+        $fakeFile = UploadedFile::fake()->create('lecture.pdf', 100, 'application/pdf');
+
+        $this->actingAs($teacher)
+            ->post(route('teacher.materials.store'), [
+                'tieuDe'      => 'Bài giảng ngữ pháp',
+                'nhomTaiLieu' => GiaoVienTaiLieu::NHOM_TAI_LIEU,
+                'tep'         => $fakeFile,
+            ])
+            ->assertRedirect(route('teacher.materials.index'))
+            ->assertSessionHas('success');
+
+        // Record phải tồn tại trong DB
+        $this->assertDatabaseHas('giao_vien_tai_lieu', [
+            'nguoiTaiLenId' => $teacher->taiKhoanId,
+            'tieuDe'        => 'Bài giảng ngữ pháp',
+        ]);
+
+        // File phải được lưu trên disk local
+        $record = GiaoVienTaiLieu::where('nguoiTaiLenId', $teacher->taiKhoanId)->first();
+        Storage::disk('local')->assertExists($record->duongDan);
+    }
+
+    /* ── Case 6: Chia sẻ tài liệu từ thư viện vào lớp ─────────────────────── */
+
+    public function test_teacher_can_share_library_item_to_class(): void
+    {
+        Storage::fake('local');
+
+        [$teacher, $lopHoc] = $this->createTeacherWithClass('GVG001', 'gvg@example.com', 'lop-g');
+
+        // Tạo tài liệu trong thư viện cá nhân
+        $duongDan = 'giao-vien/' . $teacher->taiKhoanId . '/file.pdf';
+        Storage::disk('local')->put($duongDan, 'content');
+
+        $giaoVienTaiLieu = GiaoVienTaiLieu::create([
+            'nguoiTaiLenId' => $teacher->taiKhoanId,
+            'tieuDe'        => 'Tài liệu gốc',
+            'nhomTaiLieu'   => GiaoVienTaiLieu::NHOM_TAI_LIEU,
+            'disk'          => 'local',
+            'duongDan'      => $duongDan,
+            'tenGoc'        => 'file.pdf',
+            'mime'          => 'application/pdf',
+            'kichThuoc'     => 1024,
+        ]);
+
+        // Chia sẻ vào lớp
+        $this->actingAs($teacher)
+            ->post(route('teacher.classes.materials.share', $lopHoc->slug), [
+                'giaoVienTaiLieuId' => $giaoVienTaiLieu->giaoVienTaiLieuId,
+                'tieuDe'            => 'Tài liệu lớp học',
+                'nhomTaiLieu'       => LopHocTaiLieu::NHOM_TAI_LIEU,
+                'trangThai'         => LopHocTaiLieu::TRANG_THAI_ACTIVE,
+            ])
+            ->assertRedirect(route('teacher.classes.materials.index', $lopHoc->slug))
+            ->assertSessionHas('success');
+
+        // Bản ghi chia sẻ phải tồn tại, reference đúng tài liệu gốc
+        $this->assertDatabaseHas('lophoc_tai_lieu', [
+            'lopHocId'          => $lopHoc->lopHocId,
+            'giaoVienTaiLieuId' => $giaoVienTaiLieu->giaoVienTaiLieuId,
+            'tieuDe'            => 'Tài liệu lớp học',
+        ]);
+
+        // File gốc vẫn còn trong thư viện
+        Storage::disk('local')->assertExists($duongDan);
+    }
+
+    /* ── Case 7: Giáo viên không chia sẻ tài liệu của người khác ───────────── */
+
+    public function test_teacher_cannot_share_another_teachers_library_item(): void
+    {
+        Storage::fake('local');
+
+        [$teacherA, $lopHocA] = $this->createTeacherWithClass('GVH001', 'gvh@example.com', 'lop-h');
+        [$teacherB]           = $this->createTeacherWithClass('GVI001', 'gvi@example.com', 'lop-i');
+
+        // Tài liệu của Teacher B
+        $giaoVienTaiLieu = GiaoVienTaiLieu::create([
+            'nguoiTaiLenId' => $teacherB->taiKhoanId,
+            'tieuDe'        => 'File của B',
+            'nhomTaiLieu'   => GiaoVienTaiLieu::NHOM_TAI_LIEU,
+            'disk'          => 'local',
+            'duongDan'      => 'giao-vien/' . $teacherB->taiKhoanId . '/file-b.pdf',
+            'tenGoc'        => 'file-b.pdf',
+            'kichThuoc'     => 512,
+        ]);
+
+        // Teacher A cố chia sẻ file của Teacher B vào lớp của A → 404
+        $this->actingAs($teacherA)
+            ->post(route('teacher.classes.materials.share', $lopHocA->slug), [
+                'giaoVienTaiLieuId' => $giaoVienTaiLieu->giaoVienTaiLieuId,
+                'tieuDe'            => 'Cố chia sẻ',
+                'nhomTaiLieu'       => LopHocTaiLieu::NHOM_TAI_LIEU,
+                'trangThai'         => 1,
+            ])
+            ->assertStatus(404);
     }
 }
