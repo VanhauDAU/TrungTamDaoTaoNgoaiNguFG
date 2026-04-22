@@ -14,7 +14,7 @@
                         ['label' => 'Lịch dạy', 'icon' => 'fas fa-calendar-days', 'route' => 'teacher.schedule.index', 'active' => ['teacher.schedule.*']],
                         ['label' => 'Điểm danh', 'icon' => 'fas fa-user-check', 'route' => 'teacher.attendance.index', 'active' => ['teacher.attendance.*']],
                         ['label' => 'Tài liệu', 'icon' => 'fas fa-folder-open', 'route' => 'teacher.materials.index', 'active' => ['teacher.materials.*']],
-                        ['label' => 'Nhận xét', 'icon' => 'fas fa-comment-dots', 'route' => 'teacher.evaluations.index', 'active' => ['teacher.evaluations.*']],
+                        ['label' => 'Báo cáo học tập', 'icon' => 'fas fa-comment-dots', 'route' => 'teacher.evaluations.index', 'active' => ['teacher.evaluations.*']],
                         ['label' => 'Thông báo', 'icon' => 'fas fa-bell', 'route' => 'teacher.notifications.index', 'active' => ['teacher.notifications.*']],
                         ['label' => 'Hồ sơ', 'icon' => 'fas fa-id-card', 'route' => 'teacher.profile', 'active' => ['teacher.profile']],
                     ],
