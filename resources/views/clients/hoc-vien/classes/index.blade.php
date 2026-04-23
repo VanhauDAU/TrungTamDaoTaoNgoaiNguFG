@@ -167,12 +167,12 @@
                                         </div>
 
                                         <div class="class-footer">
-                                            <a href="{{ route('home.classes.show', ['slug' => $course->slug, 'slugLopHoc' => $class->slug]) }}"
+                                            <a href="{{ route('home.student.classes.show', $registration->dangKyLopHocId) }}"
                                                 class="btn btn-detail">
                                                 <i class="fas fa-eye"></i> Xem chi tiết
                                             </a>
 
-                                            <a href="#" class="btn btn-materials">
+                                            <a href="{{ route('home.student.classes.show', $registration->dangKyLopHocId) }}#materials" class="btn btn-materials">
                                                 <i class="fas fa-file-alt"></i> Tài liệu
                                             </a>
 
