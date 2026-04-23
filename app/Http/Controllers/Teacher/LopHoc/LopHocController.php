@@ -16,7 +16,13 @@ class LopHocController extends Controller
         return view('teacher.lop-hoc.index', [
             'classes' => LopHoc::query()
                 ->with(['khoaHoc', 'coSo', 'caHoc'])
-                ->withCount('dangKyLopHocs')
+                ->withCount([
+                    'dangKyLopHocs',
+                    'buoiHocs as buoi_hocs_count',
+                    'buoiHocs as buoi_da_day_count' => function ($query) {
+                        $query->where('daHoanThanh', true);
+                    }
+                ])
                 ->where('taiKhoanId', $request->user()->getAuthIdentifier())
                 ->latest('ngayBatDau')
                 ->paginate(12)
