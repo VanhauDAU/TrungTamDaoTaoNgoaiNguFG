@@ -30,12 +30,32 @@ class TaiLieuController extends Controller
         $taiLieus    = $this->service->list($teacherId, $nhom ?: null, $search ?: null);
         $nhomOptions = GiaoVienTaiLieu::nhomOptions();
 
-        // Danh sách lớp để dùng trong modal chia sẻ
+        // Chỉ cho phép chia sẻ vào các lớp còn hiệu lực của giáo viên.
         $classes = LopHoc::where('taiKhoanId', $teacherId)
+            ->with('khoaHoc')
+            ->whereIn('trangThai', [
+                LopHoc::TRANG_THAI_SAP_MO,
+                LopHoc::TRANG_THAI_DANG_TUYEN_SINH,
+                LopHoc::TRANG_THAI_CHOT_DANH_SACH,
+                LopHoc::TRANG_THAI_DANG_HOC,
+            ])
             ->orderBy('tenLopHoc')
-            ->get(['lopHocId', 'tenLopHoc', 'slug']);
+            ->get(['lopHocId', 'khoaHocId', 'tenLopHoc', 'slug', 'trangThai']);
 
-        return view('teacher.tai-lieu.index', compact('taiLieus', 'nhomOptions', 'nhom', 'search', 'classes'));
+        $courses = $classes
+            ->groupBy(fn (LopHoc $lopHoc) => (string) ($lopHoc->khoaHocId ?? 0))
+            ->map(function ($items, string $courseId) {
+                $first = $items->first();
+
+                return [
+                    'id' => $courseId,
+                    'name' => $first?->khoaHoc?->tenKhoaHoc ?? 'Chưa gắn khóa học',
+                ];
+            })
+            ->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE)
+            ->values();
+
+        return view('teacher.tai-lieu.index', compact('taiLieus', 'nhomOptions', 'nhom', 'search', 'classes', 'courses'));
     }
 
     /* ── Tạo mới ─────────────────────────────────────────────────────────────── */
@@ -49,11 +69,14 @@ class TaiLieuController extends Controller
     public function store(Request $request)
     {
         $teacherId = $request->user()->getAuthIdentifier();
-        $this->service->store($request, $teacherId);
+        $createdItems = $this->service->store($request, $teacherId);
+        $count = $createdItems->count();
 
         return redirect()
             ->route('teacher.materials.index')
-            ->with('success', 'Đã tải tài liệu lên thư viện thành công.');
+            ->with('success', $count > 1
+                ? "Đã tải {$count} tài liệu lên thư viện thành công."
+                : 'Đã tải tài liệu lên thư viện thành công.');
     }
 
     /* ── Chỉnh sửa ───────────────────────────────────────────────────────────── */

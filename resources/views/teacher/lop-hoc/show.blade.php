@@ -329,14 +329,88 @@
         <!-- Tab Tài liệu -->
         <div class="tab-pane fade" id="materials" role="tabpanel" aria-labelledby="materials-tab">
             <div class="card border-0 shadow-sm rounded-4">
-                <div class="card-body p-5 text-center">
-                    <i class="fas fa-folder-open fa-4x mb-3 text-primary opacity-50"></i>
-                    <h5 class="fw-semibold pb-2">Tài liệu lớp học</h5>
-                    <p class="text-muted mb-4">Quản lý, tải lên và chia sẻ tài nguyên học tập với học viên.</p>
-                    <a href="{{ route('teacher.classes.materials.index', $lopHoc->slug) }}"
-                       class="btn btn-primary rounded-pill px-5 py-2">
-                        <i class="fas fa-folder-open me-2"></i>Quản lý tài liệu lớp này
-                    </a>
+                <div class="card-body p-4 p-lg-5">
+                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+                        <div>
+                            <h5 class="fw-semibold mb-1">Tài liệu lớp học</h5>
+                            <p class="text-muted mb-0">Tài liệu đã chia sẻ cho lớp này sẽ hiển thị trực tiếp tại đây.</p>
+                        </div>
+                        <a href="{{ route('teacher.classes.materials.index', $lopHoc->slug) }}"
+                           class="btn btn-primary rounded-pill px-4 py-2">
+                            <i class="fas fa-folder-open me-2"></i>Quản lý tài liệu lớp này
+                        </a>
+                    </div>
+
+                    @if($taiLieuGroups->isEmpty())
+                        <div class="text-center py-5">
+                            <i class="fas fa-folder-open fa-4x mb-3 text-primary opacity-50"></i>
+                            <h6 class="fw-semibold">Chưa có tài liệu nào</h6>
+                            <p class="text-muted mb-0">Bạn có thể tải lên hoặc chia sẻ tài liệu từ thư viện vào lớp học này.</p>
+                        </div>
+                    @else
+                        <div class="d-flex flex-column gap-3">
+                            @foreach($taiLieuGroups as $group)
+                                <div class="border rounded-4 overflow-hidden bg-white">
+                                    <div class="px-4 py-3 border-bottom bg-light">
+                                        <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+                                            <div>
+                                                <div class="fw-bold text-dark">{{ $group->title }}</div>
+                                                <div class="text-muted small mt-1">
+                                                    <i class="far fa-clock me-1"></i>{{ $group->sent_at?->format('d/m/Y H:i') ?? 'Chưa rõ thời gian gửi' }}
+                                                    <span class="mx-2">•</span>{{ $group->count }} tài liệu
+                                                </div>
+                                            </div>
+                                            <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2">Đợt gửi</span>
+                                        </div>
+                                    </div>
+                                    <div class="p-3">
+                                        <div class="row g-3">
+                                            @foreach($group->items as $taiLieu)
+                                                <div class="col-md-6 col-xl-4">
+                                                    <div class="border rounded-4 h-100 p-3 bg-white">
+                                                        <div class="d-flex align-items-start gap-3">
+                                                            <div class="icon-box bg-primary bg-opacity-10 text-primary flex-shrink-0">
+                                                                <i class="fas {{ $taiLieu->mime_icon }}"></i>
+                                                            </div>
+                                                            <div class="flex-grow-1 min-w-0">
+                                                                <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                                                                    <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1">
+                                                                        {{ $taiLieu->nhom_label }}
+                                                                    </span>
+                                                                    @if($taiLieu->giaoVienTaiLieuId)
+                                                                        <span class="badge bg-info-subtle text-info rounded-pill px-3 py-1">Từ thư viện</span>
+                                                                    @endif
+                                                                    <span class="badge {{ $taiLieu->trangThai ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary' }} rounded-pill px-3 py-1">
+                                                                        {{ $taiLieu->trang_thai_label }}
+                                                                    </span>
+                                                                </div>
+                                                                <div class="fw-bold text-dark text-truncate" title="{{ $taiLieu->tieuDe }}">
+                                                                    {{ $taiLieu->tieuDe }}
+                                                                </div>
+                                                                <div class="text-muted small font-monospace text-truncate" title="{{ $taiLieu->tenGoc }}">
+                                                                    {{ $taiLieu->tenGoc }}
+                                                                </div>
+                                                                @if($taiLieu->moTa)
+                                                                    <div class="small text-muted mt-2">{{ $taiLieu->moTa }}</div>
+                                                                @endif
+                                                                <div class="d-flex justify-content-between align-items-center mt-3 gap-3">
+                                                                    <span class="small text-muted">{{ $taiLieu->kich_thuoc_readable }}</span>
+                                                                    <a href="{{ route('teacher.classes.materials.download', [$lopHoc->slug, $taiLieu->lopHocTaiLieuId]) }}"
+                                                                       class="btn btn-sm btn-light border rounded-pill px-3">
+                                                                        <i class="fas fa-download text-primary me-1"></i>Tải xuống
+                                                                    </a>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>

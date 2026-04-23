@@ -745,6 +745,7 @@
         setInterval(refreshBell, 60000);
     </script>
 
+    @stack('scripts')
     @yield('script')
 </body>
 

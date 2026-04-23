@@ -48,6 +48,16 @@
                     @error('moTa')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
 
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Tiêu đề đợt gửi</label>
+                    <input type="text" name="dotChiaSeTieuDe"
+                           class="form-control rounded-3 @error('dotChiaSeTieuDe') is-invalid @enderror"
+                           value="{{ old('dotChiaSeTieuDe', 'Đợt gửi ' . now()->format('d/m/Y H:i')) }}"
+                           placeholder="Ví dụ: Tài liệu buổi 1">
+                    @error('dotChiaSeTieuDe')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    <div class="form-text">Dùng để gom nhóm tài liệu theo từng lần gửi cho học viên.</div>
+                </div>
+
                 <div class="row g-3 mb-3">
                     <div class="col-md-6">
                         <label class="form-label fw-semibold">Nhóm tài liệu <span class="text-danger">*</span></label>

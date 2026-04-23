@@ -235,6 +235,9 @@ class LopHocTaiLieuTest extends TestCase
             $table->id('lopHocTaiLieuId');
             $table->unsignedInteger('lopHocId');
             $table->unsignedInteger('giaoVienTaiLieuId')->nullable(); // tracking source
+            $table->string('dotChiaSeKey', 64)->nullable();
+            $table->string('dotChiaSeTieuDe', 255)->nullable();
+            $table->timestamp('dotChiaSeAt')->nullable();
             $table->string('tieuDe', 255);
             $table->text('moTa')->nullable();
             $table->string('nhomTaiLieu', 40)->default('tai_lieu');
@@ -379,6 +382,36 @@ class LopHocTaiLieuTest extends TestCase
         Storage::disk('local')->assertExists($record->duongDan);
     }
 
+    public function test_teacher_can_upload_multiple_files_to_personal_library(): void
+    {
+        Storage::fake('local');
+
+        [$teacher] = $this->createTeacherWithClass('GV_MULTI', 'gvmulti@example.com', 'lop-multi');
+
+        $fileA = UploadedFile::fake()->create('grammar.pdf', 100, 'application/pdf');
+        $fileB = UploadedFile::fake()->create('worksheet.docx', 80, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+
+        $this->actingAs($teacher)
+            ->post(route('teacher.materials.store'), [
+                'nhomTaiLieu' => GiaoVienTaiLieu::NHOM_TAI_LIEU,
+                'teps'        => [$fileA, $fileB],
+            ])
+            ->assertRedirect(route('teacher.materials.index'))
+            ->assertSessionHas('success', 'Đã tải 2 tài liệu lên thư viện thành công.');
+
+        $records = GiaoVienTaiLieu::where('nguoiTaiLenId', $teacher->taiKhoanId)
+            ->orderBy('giaoVienTaiLieuId')
+            ->get();
+
+        $this->assertCount(2, $records);
+        $this->assertSame('grammar', $records[0]->tieuDe);
+        $this->assertSame('worksheet', $records[1]->tieuDe);
+
+        foreach ($records as $record) {
+            Storage::disk('local')->assertExists($record->duongDan);
+        }
+    }
+
     /* ── Case 6: Chia sẻ tài liệu từ thư viện vào lớp ─────────────────────── */
 
     public function test_teacher_can_share_library_item_to_class(): void
@@ -407,7 +440,6 @@ class LopHocTaiLieuTest extends TestCase
             ->post(route('teacher.classes.materials.share', $lopHoc->slug), [
                 'giaoVienTaiLieuId' => $giaoVienTaiLieu->giaoVienTaiLieuId,
                 'tieuDe'            => 'Tài liệu lớp học',
-                'nhomTaiLieu'       => LopHocTaiLieu::NHOM_TAI_LIEU,
                 'trangThai'         => LopHocTaiLieu::TRANG_THAI_ACTIVE,
             ])
             ->assertRedirect(route('teacher.classes.materials.index', $lopHoc->slug))
@@ -422,6 +454,71 @@ class LopHocTaiLieuTest extends TestCase
 
         // File gốc vẫn còn trong thư viện
         Storage::disk('local')->assertExists($duongDan);
+    }
+
+    public function test_teacher_can_share_multiple_library_items_to_class(): void
+    {
+        Storage::fake('local');
+
+        [$teacher, $lopHoc] = $this->createTeacherWithClass('GV_BATCH', 'gvbatch@example.com', 'lop-batch');
+
+        $firstPath = 'giao-vien/' . $teacher->taiKhoanId . '/grammar.pdf';
+        $secondPath = 'giao-vien/' . $teacher->taiKhoanId . '/slides.pdf';
+        Storage::disk('local')->put($firstPath, 'grammar-content');
+        Storage::disk('local')->put($secondPath, 'slides-content');
+
+        $first = GiaoVienTaiLieu::create([
+            'nguoiTaiLenId' => $teacher->taiKhoanId,
+            'tieuDe'        => 'Grammar Pack',
+            'nhomTaiLieu'   => GiaoVienTaiLieu::NHOM_TAI_LIEU,
+            'disk'          => 'local',
+            'duongDan'      => $firstPath,
+            'tenGoc'        => 'grammar.pdf',
+            'mime'          => 'application/pdf',
+            'kichThuoc'     => 1024,
+        ]);
+
+        $second = GiaoVienTaiLieu::create([
+            'nguoiTaiLenId' => $teacher->taiKhoanId,
+            'tieuDe'        => 'Slides Week 1',
+            'nhomTaiLieu'   => GiaoVienTaiLieu::NHOM_SLIDE,
+            'disk'          => 'local',
+            'duongDan'      => $secondPath,
+            'tenGoc'        => 'slides.pdf',
+            'mime'          => 'application/pdf',
+            'kichThuoc'     => 2048,
+        ]);
+
+        $this->actingAs($teacher)
+            ->post(route('teacher.classes.materials.share', $lopHoc->slug), [
+                'giaoVienTaiLieuIds' => [$first->giaoVienTaiLieuId, $second->giaoVienTaiLieuId],
+                'trangThai'          => LopHocTaiLieu::TRANG_THAI_ACTIVE,
+                'sortOrder'          => 3,
+            ])
+            ->assertRedirect(route('teacher.classes.materials.index', $lopHoc->slug))
+            ->assertSessionHas('success', 'Đã chia sẻ 2 tài liệu vào lớp học thành công.');
+
+        $this->assertDatabaseHas('lophoc_tai_lieu', [
+            'lopHocId'          => $lopHoc->lopHocId,
+            'giaoVienTaiLieuId' => $first->giaoVienTaiLieuId,
+            'tieuDe'            => 'Grammar Pack',
+            'sortOrder'         => 3,
+        ]);
+
+        $this->assertDatabaseHas('lophoc_tai_lieu', [
+            'lopHocId'          => $lopHoc->lopHocId,
+            'giaoVienTaiLieuId' => $second->giaoVienTaiLieuId,
+            'tieuDe'            => 'Slides Week 1',
+            'sortOrder'         => 4,
+        ]);
+
+        $sharedRows = LopHocTaiLieu::where('lopHocId', $lopHoc->lopHocId)
+            ->orderBy('lopHocTaiLieuId')
+            ->get();
+
+        $this->assertSame($sharedRows[0]->dotChiaSeKey, $sharedRows[1]->dotChiaSeKey);
+        $this->assertNotNull($sharedRows[0]->dotChiaSeTieuDe);
+        $this->assertNotNull($sharedRows[0]->dotChiaSeAt);
     }
 
     /* ── Case 7: Giáo viên không chia sẻ tài liệu của người khác ───────────── */
@@ -449,7 +546,6 @@ class LopHocTaiLieuTest extends TestCase
             ->post(route('teacher.classes.materials.share', $lopHocA->slug), [
                 'giaoVienTaiLieuId' => $giaoVienTaiLieu->giaoVienTaiLieuId,
                 'tieuDe'            => 'Cố chia sẻ',
-                'nhomTaiLieu'       => LopHocTaiLieu::NHOM_TAI_LIEU,
                 'trangThai'         => 1,
             ])
             ->assertStatus(404);

@@ -28,5 +28,7 @@ interface StudentServiceInterface
 
     public function getMyClasses(TaiKhoan $user): array;
 
+    public function getClassDetail(TaiKhoan $user, int $dangKyLopHocId): array;
+
     public function getSchedule(Request $request, TaiKhoan $user): array;
 }
