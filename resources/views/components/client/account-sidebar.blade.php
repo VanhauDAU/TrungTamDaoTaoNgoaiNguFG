@@ -57,6 +57,13 @@
                 </a>
             </li>
             <li class="menu-item">
+                <a href="{{ route('home.student.reports.index') }}"
+                    class="menu-link {{ request()->routeIs('home.student.reports.*') ? 'active' : '' }}">
+                    <i class="fas fa-file-lines"></i>
+                    <span>Báo cáo học tập</span>
+                </a>
+            </li>
+            <li class="menu-item">
                 <a href="{{ route('home.student.chat') }}"
                     class="menu-link {{ request()->routeIs('home.student.chat') ? 'active' : '' }}">
                     <i class="fas fa-comments"></i>

@@ -57,11 +57,17 @@ use App\Services\Admin\TaiChinh\HoaDonService;
 // ── Client Contracts ──────────────────────────────────────────────
 use App\Contracts\Client\KhoaHoc\CourseServiceInterface;
 use App\Contracts\Client\HocVien\StudentServiceInterface;
+use App\Contracts\Teacher\Evaluation\TeacherEvaluationServiceInterface;
+use App\Contracts\Staff\Evaluation\StaffEvaluationReviewServiceInterface;
+use App\Contracts\Shared\Evaluation\ProgressReportPdfServiceInterface;
 
 // ── Client Services ──────────────────────────────────────────────
 use App\Services\Client\KhoaHoc\CourseService;
 use App\Services\Client\HocVien\StudentService;
 use App\Services\Client\PublicContentCacheService;
+use App\Services\Teacher\Evaluation\TeacherEvaluationService;
+use App\Services\Staff\Evaluation\StaffEvaluationReviewService;
+use App\Services\Shared\Evaluation\ProgressReportPdfService;
 
 // ── Phase 8 Contracts ─────────────────────────────────────────────
 use App\Contracts\Admin\BaiViet\BaiVietServiceInterface;
@@ -106,6 +112,9 @@ class AppServiceProvider extends ServiceProvider
         // ── Phase 5: Client ──────────────────────────────────────────────
         $this->app->bind(CourseServiceInterface::class , CourseService::class);
         $this->app->bind(StudentServiceInterface::class , StudentService::class);
+        $this->app->bind(TeacherEvaluationServiceInterface::class, TeacherEvaluationService::class);
+        $this->app->bind(StaffEvaluationReviewServiceInterface::class, StaffEvaluationReviewService::class);
+        $this->app->bind(ProgressReportPdfServiceInterface::class, ProgressReportPdfService::class);
 
         // ── Phase 8: BaiViet, LienHe, ThongBao ───────────────────────────────
         $this->app->bind(BaiVietServiceInterface::class , BaiVietService::class);
