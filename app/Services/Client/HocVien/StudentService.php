@@ -9,9 +9,12 @@ use App\Models\Auth\TaiKhoan;
 use App\Models\Education\BuoiHoc;
 use App\Models\Education\CaHoc;
 use App\Models\Education\DangKyLopHoc;
+use App\Models\Education\DiemDanh;
 use App\Models\Education\LopHoc;
+use App\Models\Education\LopHocTaiLieu;
 use App\Models\Finance\HoaDon;
 use App\Models\Finance\PhieuThu;
+use App\Services\Education\LopHocTaiLieuService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -26,7 +29,8 @@ use Intervention\Image\Encoders\JpegEncoder;
 class StudentService implements StudentServiceInterface
 {
     public function __construct(
-        protected ImageUploadService $imageUploadService
+        protected ImageUploadService $imageUploadService,
+        protected LopHocTaiLieuService $lopHocTaiLieuService
     ) {
     }
 
@@ -207,6 +211,101 @@ class StudentService implements StudentServiceInterface
         ];
     }
 
+    public function getClassDetail(TaiKhoan $user, int $dangKyLopHocId): array
+    {
+        $registration = DangKyLopHoc::query()
+            ->where('taiKhoanId', $user->taiKhoanId)
+            ->where('dangKyLopHocId', $dangKyLopHocId)
+            ->visibleToStudent()
+            ->with([
+                'lopHoc.khoaHoc.danhMuc',
+                'lopHoc.coSo',
+                'lopHoc.caHoc',
+                'lopHoc.phongHoc',
+                'lopHoc.taiKhoan.hoSoNguoiDung',
+                'lopHoc.chinhSachGia',
+                'hoaDons',
+            ])
+            ->firstOrFail();
+
+        $lopHoc = $registration->lopHoc;
+        abort_unless($lopHoc, 404);
+
+        $sessions = BuoiHoc::query()
+            ->where('lopHocId', $lopHoc->lopHocId)
+            ->with(['caHoc', 'phongHoc'])
+            ->orderBy('ngayHoc')
+            ->orderBy('caHocId')
+            ->get();
+
+        $attendanceRecords = DiemDanh::query()
+            ->where('dangKyLopHocId', $registration->dangKyLopHocId)
+            ->with(['buoiHoc.caHoc', 'buoiHoc.phongHoc', 'nguoiDiemDanh.hoSoNguoiDung'])
+            ->get()
+            ->keyBy('buoiHocId');
+
+        $canAccessMaterials = in_array((int) $registration->trangThai, [
+            DangKyLopHoc::TRANG_THAI_DA_XAC_NHAN,
+            DangKyLopHoc::TRANG_THAI_DANG_HOC,
+            DangKyLopHoc::TRANG_THAI_TAM_DUNG_NO_HOC_PHI,
+            DangKyLopHoc::TRANG_THAI_BAO_LUU,
+            DangKyLopHoc::TRANG_THAI_HOAN_THANH,
+        ], true);
+
+        $taiLieus = $canAccessMaterials
+            ? LopHocTaiLieu::query()
+                ->where('lopHocId', $lopHoc->lopHocId)
+                ->active()
+                ->ordered()
+                ->get()
+            : collect();
+
+        $taiLieuGroups = $canAccessMaterials
+            ? $this->lopHocTaiLieuService->groupForDisplay($taiLieus)
+            : collect();
+
+        $attendanceSummary = $this->buildClassAttendanceSummary($sessions, $attendanceRecords);
+        $sessionSummary = $this->buildClassSessionSummary($sessions);
+        $nextSessions = $sessions
+            ->filter(fn (BuoiHoc $session) => $session->ngayHoc >= now()->toDateString()
+                && (int) $session->trangThai !== BuoiHoc::TRANG_THAI_DA_HUY)
+            ->take(5)
+            ->values();
+
+        $recentAttendance = $attendanceRecords
+            ->sortByDesc(fn (DiemDanh $attendance) => $attendance->buoiHoc?->ngayHoc
+                ? Carbon::parse($attendance->buoiHoc->ngayHoc)->timestamp
+                : 0)
+            ->take(5)
+            ->values();
+
+        $classmateCount = DangKyLopHoc::query()
+            ->where('lopHocId', $lopHoc->lopHocId)
+            ->whereIn('trangThai', [
+                DangKyLopHoc::TRANG_THAI_DA_XAC_NHAN,
+                DangKyLopHoc::TRANG_THAI_DANG_HOC,
+                DangKyLopHoc::TRANG_THAI_TAM_DUNG_NO_HOC_PHI,
+                DangKyLopHoc::TRANG_THAI_BAO_LUU,
+                DangKyLopHoc::TRANG_THAI_HOAN_THANH,
+            ])
+            ->count();
+
+        return compact(
+            'registration',
+            'lopHoc',
+            'sessions',
+            'attendanceRecords',
+            'attendanceSummary',
+            'sessionSummary',
+            'nextSessions',
+            'recentAttendance',
+            'taiLieus',
+            'taiLieuGroups',
+            'classmateCount',
+            'canAccessMaterials'
+        );
+    }
+
     public function getSchedule(Request $request, TaiKhoan $user): array
     {
         $baseDate = $request->get('tuan') ? Carbon::parse($request->get('tuan')) : Carbon::now();
@@ -267,6 +366,42 @@ class StudentService implements StudentServiceInterface
                     ->orWhere('daTra', '>', 0);
             })
             ->with(['dangKyLopHoc.lopHoc.khoaHoc', 'dangKyLopHocPhuPhi', 'coSo']);
+    }
+
+    private function buildClassAttendanceSummary(Collection $sessions, Collection $attendanceRecords): array
+    {
+        $countedSessions = $sessions->filter(function (BuoiHoc $session) use ($attendanceRecords) {
+            return (bool) $session->daDiemDanh || $attendanceRecords->has($session->buoiHocId);
+        });
+
+        $present = $attendanceRecords->filter(fn (DiemDanh $item) => (int) $item->trangThai === DiemDanh::CO_MAT)->count();
+        $absent = $attendanceRecords->filter(fn (DiemDanh $item) => (int) $item->trangThai === DiemDanh::VANG_KHONG_PHEP)->count();
+        $locked = $attendanceRecords->filter(fn (DiemDanh $item) => (int) $item->trangThai === DiemDanh::BI_KHOA_NO_HP)->count();
+        $checked = max($countedSessions->count(), $attendanceRecords->count());
+
+        return [
+            'checked' => $checked,
+            'present' => $present,
+            'absent' => $absent,
+            'locked' => $locked,
+            'missing' => max(0, $checked - $attendanceRecords->count()),
+            'rate' => $checked > 0 ? round(($present / $checked) * 100) : 0,
+        ];
+    }
+
+    private function buildClassSessionSummary(Collection $sessions): array
+    {
+        $validSessions = $sessions->reject(fn (BuoiHoc $session) => (int) $session->trangThai === BuoiHoc::TRANG_THAI_DA_HUY);
+        $completed = $validSessions->filter(fn (BuoiHoc $session) => (int) $session->trangThai === BuoiHoc::TRANG_THAI_DA_HOAN_THANH || (bool) $session->daHoanThanh)->count();
+        $total = $validSessions->count();
+
+        return [
+            'total' => $total,
+            'completed' => $completed,
+            'upcoming' => $validSessions->filter(fn (BuoiHoc $session) => (int) $session->trangThai === BuoiHoc::TRANG_THAI_SAP_DIEN_RA)->count(),
+            'cancelled' => $sessions->filter(fn (BuoiHoc $session) => (int) $session->trangThai === BuoiHoc::TRANG_THAI_DA_HUY)->count(),
+            'progress' => $total > 0 ? round(($completed / $total) * 100) : 0,
+        ];
     }
 
     private function receiptQueryForUser(TaiKhoan $user): Builder
