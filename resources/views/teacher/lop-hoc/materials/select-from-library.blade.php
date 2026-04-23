@@ -83,7 +83,6 @@
                             @php $alreadyShared = in_array($tl->giaoVienTaiLieuId, $sharedIds); @endphp
                             <div class="col-md-6">
                                 <div class="card border-0 shadow-sm rounded-4 lib-card h-100 {{ $alreadyShared ? 'already-shared' : '' }}"
-                                     onclick="selectLibItem(this, {{ $tl->giaoVienTaiLieuId }}, '{{ addslashes($tl->tieuDe) }}', '{{ $tl->nhomTaiLieu }}')"
                                      data-id="{{ $tl->giaoVienTaiLieuId }}"
                                      data-title="{{ $tl->tieuDe }}"
                                      data-nhom="{{ $tl->nhomTaiLieu }}"
@@ -166,15 +165,13 @@
                                 </div>
 
                                 <div class="mb-3">
-                                    <label class="form-label fw-semibold small">Nhóm tài liệu <span class="text-danger">*</span></label>
-                                    <select name="nhomTaiLieu" id="formNhom" class="form-select rounded-3 @error('nhomTaiLieu') is-invalid @enderror">
-                                        @foreach(\App\Models\Education\LopHocTaiLieu::nhomOptions() as $val => $label)
-                                            <option value="{{ $val }}" {{ old('nhomTaiLieu') === $val ? 'selected' : '' }}>
-                                                {{ $label }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    @error('nhomTaiLieu')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                    <label class="form-label fw-semibold small">Tiêu đề đợt gửi</label>
+                                    <input type="text" name="dotChiaSeTieuDe" id="formBatchTitle"
+                                           class="form-control rounded-3 @error('dotChiaSeTieuDe') is-invalid @enderror"
+                                           value="{{ old('dotChiaSeTieuDe', 'Đợt gửi ' . now()->format('d/m/Y H:i')) }}"
+                                           placeholder="Ví dụ: Tài liệu buổi 1">
+                                    @error('dotChiaSeTieuDe')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                    <div class="form-text">Giúp gom nhóm tài liệu theo từng lần gửi cho học viên.</div>
                                 </div>
 
                                 <div class="row g-2 mb-3">
@@ -220,64 +217,72 @@
 <script>
 let selectedCard = null;
 
-function selectLibItem(card, id, title, nhom) {
-    // Bỏ chọn cũ
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.lib-card').forEach((card) => {
+        card.addEventListener('click', () => selectLibItem(card));
+    });
+
+    @if(old('giaoVienTaiLieuId'))
+        const card = document.querySelector(`[data-id="{{ old('giaoVienTaiLieuId') }}"]`);
+        if (card) {
+            card.classList.add('selected');
+            selectedCard = card;
+            updatePanel(card.dataset.id, card.dataset.title);
+            document.getElementById('formTieuDe').dataset.autofilled = '1';
+        }
+    @endif
+});
+
+function selectLibItem(card) {
+    const { id, title } = card.dataset;
+
     if (selectedCard && selectedCard !== card) {
         selectedCard.classList.remove('selected');
     }
 
-    // Toggle chọn mới
     if (selectedCard === card) {
         card.classList.remove('selected');
         selectedCard = null;
-        updatePanel(null, '', '');
+        updatePanel('', '');
     } else {
         card.classList.add('selected');
         selectedCard = card;
-        updatePanel(id, title, nhom);
+        updatePanel(id, title);
     }
 }
 
-function updatePanel(id, title, nhom) {
+function updatePanel(id, title) {
     const submit     = document.getElementById('submitBtn');
     const hiddenId   = document.getElementById('hiddenGvTlId');
     const titleInput = document.getElementById('formTieuDe');
-    const nhomSelect = document.getElementById('formNhom');
     const selInfo    = document.getElementById('selectedInfo');
     const noSel      = document.getElementById('noSelection');
     const selTitle   = document.getElementById('selectedTitle');
 
     if (id) {
         hiddenId.value   = id;
-        titleInput.value = title;
+        if (!titleInput.value || titleInput.dataset.autofilled === '1') {
+            titleInput.value = title;
+            titleInput.dataset.autofilled = '1';
+        }
         selTitle.textContent = title;
         selInfo.style.removeProperty('display');
         noSel.style.display = 'none';
         submit.disabled = false;
-
-        // Đặt nhóm
-        for (let opt of nhomSelect.options) {
-            if (opt.value === nhom) { opt.selected = true; break; }
-        }
     } else {
         hiddenId.value   = '';
         submit.disabled  = true;
         selInfo.style.display = 'none!important';
         noSel.style.removeProperty('display');
+        if (titleInput.dataset.autofilled === '1') {
+            titleInput.value = '';
+        }
+        titleInput.dataset.autofilled = '1';
     }
 }
 
-// Nếu có lỗi validation, restore giá trị cũ
-@if(old('giaoVienTaiLieuId'))
-document.addEventListener('DOMContentLoaded', () => {
-    const id = {{ old('giaoVienTaiLieuId') }};
-    const card = document.querySelector(`[data-id="${id}"]`);
-    if (card) {
-        card.classList.add('selected');
-        selectedCard = card;
-        updatePanel(id, card.dataset.title, card.dataset.nhom);
-    }
+document.getElementById('formTieuDe').addEventListener('input', function () {
+    this.dataset.autofilled = this.value.trim() === '' ? '1' : '0';
 });
-@endif
 </script>
 @endpush

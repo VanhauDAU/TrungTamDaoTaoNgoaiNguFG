@@ -4,6 +4,7 @@ namespace App\Services\Education;
 
 use App\Models\Education\LopHoc;
 use App\Models\Education\LopHocTaiLieu;
+use Illuminate\Support\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -43,13 +44,17 @@ class LopHocTaiLieuService
     public function store(Request $request, LopHoc $lopHoc): LopHocTaiLieu
     {
         $validated = $this->validateStoreRequest($request);
+        $batchMeta = $this->makeShareBatchMeta($validated['dotChiaSeTieuDe'] ?? null);
 
-        return DB::transaction(function () use ($validated, $request, $lopHoc) {
+        return DB::transaction(function () use ($validated, $request, $lopHoc, $batchMeta) {
             $file = $request->file('tep');
             [$disk, $path, $tenGoc, $mime, $size] = $this->uploadFile($file, $lopHoc->lopHocId);
 
             return LopHocTaiLieu::create([
                 'lopHocId'     => $lopHoc->lopHocId,
+                'dotChiaSeKey' => $batchMeta['key'],
+                'dotChiaSeTieuDe' => $batchMeta['title'],
+                'dotChiaSeAt'  => $batchMeta['sent_at'],
                 'tieuDe'       => $validated['tieuDe'],
                 'moTa'         => $validated['moTa'] ?? null,
                 'nhomTaiLieu'  => $validated['nhomTaiLieu'],
@@ -177,9 +182,10 @@ class LopHocTaiLieuService
         $mime       = $file->getMimeType();
         $size       = $file->getSize();
         $extension  = $file->getClientOriginalExtension();
-        $safeName   = Str::slug(pathinfo($tenGoc, PATHINFO_FILENAME));
+        $safeName   = Str::slug(pathinfo($tenGoc, PATHINFO_FILENAME)) ?: 'tai-lieu';
         $timestamp  = now()->format('Ymd_His');
-        $storedName = $timestamp . '_' . $safeName . ($extension ? '.' . $extension : '');
+        $storedName = $timestamp . '_' . $safeName . '_' . Str::lower(Str::random(6))
+            . ($extension ? '.' . $extension : '');
 
         $storedPath = $file->storeAs(
             'lop-hoc/' . $lopHocId,
@@ -210,6 +216,7 @@ class LopHocTaiLieuService
     {
         return Validator::make($request->all(), [
             'tieuDe'       => ['required', 'string', 'max:255'],
+            'dotChiaSeTieuDe' => ['nullable', 'string', 'max:255'],
             'moTa'         => ['nullable', 'string'],
             'nhomTaiLieu'  => ['required', Rule::in(array_keys(LopHocTaiLieu::nhomOptions()))],
             'publishedAt'  => ['nullable', 'date'],
@@ -223,6 +230,7 @@ class LopHocTaiLieuService
     {
         return Validator::make($request->all(), [
             'tieuDe'       => ['required', 'string', 'max:255'],
+            'dotChiaSeTieuDe' => ['nullable', 'string', 'max:255'],
             'moTa'         => ['nullable', 'string'],
             'nhomTaiLieu'  => ['required', Rule::in(array_keys(LopHocTaiLieu::nhomOptions()))],
             'publishedAt'  => ['nullable', 'date'],
@@ -237,6 +245,7 @@ class LopHocTaiLieuService
         return [
             'tieuDe.required'      => 'Vui lòng nhập tiêu đề tài liệu.',
             'tieuDe.max'           => 'Tiêu đề không được vượt quá 255 ký tự.',
+            'dotChiaSeTieuDe.max'  => 'Tiêu đề đợt gửi không được vượt quá 255 ký tự.',
             'nhomTaiLieu.required' => 'Vui lòng chọn nhóm tài liệu.',
             'nhomTaiLieu.in'       => 'Nhóm tài liệu không hợp lệ.',
             'tep.required'         => 'Vui lòng chọn file tải lên.',
@@ -244,6 +253,44 @@ class LopHocTaiLieuService
             'tep.max'              => 'File không được vượt quá 50MB.',
             'trangThai.required'   => 'Vui lòng chọn trạng thái.',
             'trangThai.in'         => 'Trạng thái không hợp lệ.',
+        ];
+    }
+
+    public function groupForDisplay(Collection $taiLieus): Collection
+    {
+        return $taiLieus
+            ->groupBy(fn (LopHocTaiLieu $taiLieu) => $taiLieu->dot_chia_se_group_key)
+            ->map(function (Collection $items, string $key) {
+                $sortedItems = $items->sortBy([
+                    ['sortOrder', 'asc'],
+                    ['lopHocTaiLieuId', 'asc'],
+                ])->values();
+
+                /** @var LopHocTaiLieu $first */
+                $first = $sortedItems->first();
+                $sentAt = $first->dotChiaSeAt ?: $first->publishedAt ?: $first->created_at;
+
+                return (object) [
+                    'key' => $key,
+                    'title' => $first->dot_chia_se_display_title,
+                    'sent_at' => $sentAt,
+                    'count' => $sortedItems->count(),
+                    'items' => $sortedItems,
+                ];
+            })
+            ->sortByDesc(fn ($group) => optional($group->sent_at)?->timestamp ?? 0)
+            ->values();
+    }
+
+    public function makeShareBatchMeta(?string $batchTitle = null): array
+    {
+        $sentAt = now();
+        $title = trim((string) $batchTitle);
+
+        return [
+            'key' => $sentAt->format('YmdHis') . '_' . Str::lower(Str::random(8)),
+            'title' => $title !== '' ? $title : 'Đợt gửi ' . $sentAt->format('d/m/Y H:i'),
+            'sent_at' => $sentAt,
         ];
     }
 }

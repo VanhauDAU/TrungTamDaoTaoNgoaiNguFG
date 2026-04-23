@@ -5,6 +5,7 @@ namespace App\Services\Education;
 use App\Models\Education\GiaoVienTaiLieu;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -41,25 +42,28 @@ class GiaoVienTaiLieuService
     /**
      * Upload file mới vào thư viện cá nhân.
      */
-    public function store(Request $request, int $teacherId): GiaoVienTaiLieu
+    public function store(Request $request, int $teacherId): Collection
     {
         $validated = $this->validateStoreRequest($request);
+        $files = $this->normalizeUploadedFiles($request);
+        $isSingleUpload = count($files) === 1;
 
-        return DB::transaction(function () use ($validated, $request, $teacherId) {
-            $file = $request->file('tep');
-            [$disk, $path, $tenGoc, $mime, $size] = $this->uploadFile($file, $teacherId);
+        return DB::transaction(function () use ($files, $validated, $teacherId, $isSingleUpload) {
+            return collect($files)->map(function (UploadedFile $file) use ($validated, $teacherId, $isSingleUpload) {
+                [$disk, $path, $tenGoc, $mime, $size] = $this->uploadFile($file, $teacherId);
 
-            return GiaoVienTaiLieu::create([
-                'nguoiTaiLenId' => $teacherId,
-                'tieuDe'        => $validated['tieuDe'],
-                'moTa'          => $validated['moTa'] ?? null,
-                'nhomTaiLieu'   => $validated['nhomTaiLieu'],
-                'disk'          => $disk,
-                'duongDan'      => $path,
-                'tenGoc'        => $tenGoc,
-                'mime'          => $mime,
-                'kichThuoc'     => $size,
-            ]);
+                return GiaoVienTaiLieu::create([
+                    'nguoiTaiLenId' => $teacherId,
+                    'tieuDe'        => $this->resolveUploadTitle($file, $validated['tieuDe'] ?? null, $isSingleUpload),
+                    'moTa'          => $validated['moTa'] ?? null,
+                    'nhomTaiLieu'   => $validated['nhomTaiLieu'],
+                    'disk'          => $disk,
+                    'duongDan'      => $path,
+                    'tenGoc'        => $tenGoc,
+                    'mime'          => $mime,
+                    'kichThuoc'     => $size,
+                ]);
+            });
         });
     }
 
@@ -148,9 +152,10 @@ class GiaoVienTaiLieuService
         $mime      = $file->getMimeType();
         $size      = $file->getSize();
         $extension = $file->getClientOriginalExtension();
-        $safeName  = Str::slug(pathinfo($tenGoc, PATHINFO_FILENAME));
+        $safeName  = Str::slug(pathinfo($tenGoc, PATHINFO_FILENAME)) ?: 'tai-lieu';
         $timestamp = now()->format('Ymd_His');
-        $storedName = $timestamp . '_' . $safeName . ($extension ? '.' . $extension : '');
+        $storedName = $timestamp . '_' . $safeName . '_' . Str::lower(Str::random(6))
+            . ($extension ? '.' . $extension : '');
 
         $storedPath = $file->storeAs(
             'giao-vien/' . $teacherId,
@@ -176,13 +181,24 @@ class GiaoVienTaiLieuService
 
     private function validateStoreRequest(Request $request): array
     {
-        return Validator::make($request->all(), [
-            'tieuDe'      => ['required', 'string', 'max:255'],
+        $validator = Validator::make($request->all(), [
+            'tieuDe'      => ['nullable', 'string', 'max:255'],
             'moTa'        => ['nullable', 'string'],
             'nhomTaiLieu' => ['required', Rule::in(array_keys(GiaoVienTaiLieu::nhomOptions()))],
-            'tep'         => ['required', 'file', 'max:51200',
+            'tep'         => ['nullable', 'file', 'max:51200',
                               'mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,png,jpg,jpeg,mp3,mp4,zip'],
-        ], $this->messages())->validate();
+            'teps'        => ['nullable', 'array'],
+            'teps.*'      => ['file', 'max:51200',
+                              'mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,png,jpg,jpeg,mp3,mp4,zip'],
+        ], $this->messages());
+
+        $validator->after(function ($validator) use ($request) {
+            if (count($this->normalizeUploadedFiles($request)) === 0) {
+                $validator->errors()->add('teps', 'Vui lòng chọn ít nhất một file tải lên.');
+            }
+        });
+
+        return $validator->validate();
     }
 
     private function validateUpdateRequest(Request $request, GiaoVienTaiLieu $taiLieu): array
@@ -205,6 +221,50 @@ class GiaoVienTaiLieuService
             'tep.required'         => 'Vui lòng chọn file tải lên.',
             'tep.mimes'            => 'Định dạng file chưa được hỗ trợ.',
             'tep.max'              => 'File không được vượt quá 50MB.',
+            'teps.array'           => 'Danh sách file tải lên không hợp lệ.',
+            'teps.*.mimes'         => 'Một hoặc nhiều file có định dạng chưa được hỗ trợ.',
+            'teps.*.max'           => 'Mỗi file không được vượt quá 50MB.',
         ];
+    }
+
+    /**
+     * Chuẩn hóa danh sách file upload từ cả input đơn và input nhiều file.
+     *
+     * @return UploadedFile[]
+     */
+    private function normalizeUploadedFiles(Request $request): array
+    {
+        $files = [];
+
+        $singleFile = $request->file('tep');
+        if ($singleFile instanceof UploadedFile) {
+            $files[] = $singleFile;
+        }
+
+        $multipleFiles = $request->file('teps', []);
+        if ($multipleFiles instanceof UploadedFile) {
+            $multipleFiles = [$multipleFiles];
+        }
+
+        if (is_array($multipleFiles)) {
+            foreach ($multipleFiles as $file) {
+                if ($file instanceof UploadedFile) {
+                    $files[] = $file;
+                }
+            }
+        }
+
+        return $files;
+    }
+
+    private function resolveUploadTitle(UploadedFile $file, ?string $requestedTitle, bool $isSingleUpload): string
+    {
+        $requestedTitle = trim((string) $requestedTitle);
+
+        if ($isSingleUpload && $requestedTitle !== '') {
+            return $requestedTitle;
+        }
+
+        return pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME) ?: $file->getClientOriginalName();
     }
 }

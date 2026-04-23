@@ -26,6 +26,9 @@ class LopHocTaiLieu extends Model
     protected $fillable = [
         'lopHocId',
         'giaoVienTaiLieuId',   // nullable: null = upload thẳng, not-null = chia sẻ từ thư viện
+        'dotChiaSeKey',
+        'dotChiaSeTieuDe',
+        'dotChiaSeAt',
         'tieuDe',
         'moTa',
         'nhomTaiLieu',
@@ -46,6 +49,7 @@ class LopHocTaiLieu extends Model
         'trangThai'          => 'integer',
         'kichThuoc'          => 'integer',
         'sortOrder'          => 'integer',
+        'dotChiaSeAt'        => 'datetime',
         'publishedAt'        => 'datetime',
     ];
 
@@ -114,6 +118,55 @@ class LopHocTaiLieu extends Model
             return round($bytes / 1024, 1) . ' KB';
         }
         return $bytes . ' B';
+    }
+
+    public function getMimeIconAttribute(): string
+    {
+        $map = [
+            'pdf'  => 'fa-file-pdf text-danger',
+            'doc'  => 'fa-file-word text-primary',
+            'docx' => 'fa-file-word text-primary',
+            'xls'  => 'fa-file-excel text-success',
+            'xlsx' => 'fa-file-excel text-success',
+            'ppt'  => 'fa-file-powerpoint text-warning',
+            'pptx' => 'fa-file-powerpoint text-warning',
+            'zip'  => 'fa-file-archive text-secondary',
+            'mp3'  => 'fa-file-audio text-info',
+            'mp4'  => 'fa-file-video text-primary',
+            'png'  => 'fa-file-image text-success',
+            'jpg'  => 'fa-file-image text-success',
+            'jpeg' => 'fa-file-image text-success',
+        ];
+
+        $ext = strtolower(pathinfo($this->tenGoc, PATHINFO_EXTENSION));
+
+        return $map[$ext] ?? 'fa-file text-muted';
+    }
+
+    public function getDotChiaSeGroupKeyAttribute(): string
+    {
+        if (!blank($this->dotChiaSeKey)) {
+            return (string) $this->dotChiaSeKey;
+        }
+
+        $fallbackAt = $this->dotChiaSeAt ?: $this->publishedAt ?: $this->created_at;
+
+        return $fallbackAt
+            ? 'legacy-' . $fallbackAt->format('YmdHis')
+            : 'legacy-' . $this->lopHocTaiLieuId;
+    }
+
+    public function getDotChiaSeDisplayTitleAttribute(): string
+    {
+        if (!blank($this->dotChiaSeTieuDe)) {
+            return (string) $this->dotChiaSeTieuDe;
+        }
+
+        $sentAt = $this->dotChiaSeAt ?: $this->publishedAt ?: $this->created_at;
+
+        return $sentAt
+            ? 'Đợt gửi ' . $sentAt->format('d/m/Y H:i')
+            : 'Đợt gửi tài liệu';
     }
 
     /* ── Scopes ─────────────────────────────────────────────────────────────── */
