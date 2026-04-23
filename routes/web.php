@@ -207,8 +207,7 @@ Route::prefix('teacher')->name('teacher.')->middleware(['auth', 'portal:teacher'
             ->name('propose.compensation');
         Route::post('/de-xuat/tam-ngung/{buoiHocId}', [TeacherLichDayController::class, 'proposeSuspension'])
             ->name('propose.suspension');
-        Route::post('/de-xuat/doi-lich/{buoiHocId}', [TeacherLichDayController::class, 'proposeReschedule'])
-            ->name('propose.reschedule');
+
     });
 
     Route::prefix('thong-bao')->name('notifications.')->group(function () {

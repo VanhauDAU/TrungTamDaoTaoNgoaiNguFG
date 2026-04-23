@@ -111,6 +111,7 @@
     width: 100%;
     min-width: 800px;
     border-collapse: collapse;
+    table-layout: fixed; /* Cố định chiều rộng các cột */
 }
 
 /* Header */
@@ -131,7 +132,8 @@
 .ld-table thead th.col-ca {
     color: var(--ld-text);
     background: #f0f4f8;
-    min-width: 85px;
+    width: 90px; /* Độ rộng cố định cho cột Ca học */
+    min-width: 90px;
     font-size: .72rem;
 }
 
@@ -170,6 +172,8 @@
     vertical-align: top;
     min-width: 120px;
     min-height: 90px;
+    position: relative; /* Hỗ trợ z-index */
+    overflow: visible;  /* Để lờ lửng card khi hover */
 }
 
 .ld-table tbody td.col-ca-label {
@@ -212,14 +216,15 @@
 
 /* ── CARD BUỔI DẠY ─────────────────────────────────────── */
 .lesson-card {
-    border-radius: 10px;
-    padding: 10px 11px;
-    margin-bottom: 5px;
+    border-radius: 12px;
+    padding: 10px 12px 12px;
+    margin-bottom: 8px;
     cursor: pointer;
-    transition: transform .18s, box-shadow .18s;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
-    overflow: hidden;
-    border-left: 4px solid transparent;
+    overflow: visible; /* Cần để hiện hành động khi hover */
+    border-left: 5px solid transparent;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 .lesson-card:last-child { margin-bottom: 0; }
 
@@ -234,9 +239,9 @@
 }
 
 .lesson-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0,0,0,.14);
-    z-index: 1;
+    z-index: 20;
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 12px 24px rgba(0,0,0,0.12);
 }
 
 /* trạng thái */
@@ -252,8 +257,6 @@
 .lesson-card.da-huy          { background:linear-gradient(135deg,#fee2e2,#fecaca); border-left-color:var(--ld-red); color:#991b1b; opacity:.9; }
 .lesson-card.da-huy::before  { background:var(--ld-red); }
 
-.lesson-card.doi-lich        { background:linear-gradient(135deg,#fff3cd,#fde68a); border-left-color:var(--ld-orange); color:#92400e; }
-.lesson-card.doi-lich::before { background:var(--ld-orange); }
 
 .lesson-title {
     font-weight: 700;
@@ -315,62 +318,6 @@
 .legend-dot.dang-dien-ra  { background:#28a745; }
 .legend-dot.da-hoan-thanh { background:var(--ld-green); }
 .legend-dot.da-huy        { background:var(--ld-red); }
-.legend-dot.doi-lich      { background:var(--ld-orange); }
-
-/* ── ACTION BUTTONS trong card ───────────────────────────── */
-.lesson-actions {
-    display: none;
-    gap: 4px;
-    margin-top: 6px;
-    flex-wrap: wrap;
-}
-
-.lesson-card:hover .lesson-actions,
-.lesson-card.show-actions .lesson-actions {
-    display: flex;
-}
-
-.lesson-action-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 3px 8px;
-    font-size: .67rem;
-    font-weight: 600;
-    border-radius: 6px;
-    border: none;
-    cursor: pointer;
-    transition: all .15s;
-    white-space: nowrap;
-}
-
-.lesson-action-btn.btn-bu {
-    background: #eff6ff;
-    color: var(--ld-blue);
-    border: 1px solid #bfdbfe;
-}
-.lesson-action-btn.btn-bu:hover { background: #dbeafe; }
-
-.lesson-action-btn.btn-ngung {
-    background: #fff7ed;
-    color: var(--ld-orange);
-    border: 1px solid #fed7aa;
-}
-.lesson-action-btn.btn-ngung:hover { background: #ffedd5; }
-
-.lesson-action-btn.btn-doi-lich {
-    background: #f0fdf4;
-    color: var(--ld-green);
-    border: 1px solid #bbf7d0;
-}
-.lesson-action-btn.btn-doi-lich:hover { background: #dcfce7; }
-
-.lesson-action-btn.btn-detail {
-    background: #f8fafc;
-    color: var(--ld-muted);
-    border: 1px solid var(--ld-border);
-}
-.lesson-action-btn.btn-detail:hover { background: #e2e8f0; }
 
 /* ── NO SCHEDULE ─────────────────────────────────────────── */
 .ld-empty {
@@ -461,7 +408,6 @@
 .modal-badge.dang-dien-ra  { background:#d4edda; color:#155724; }
 .modal-badge.da-hoan-thanh { background:#dcfce7; color:#166534; }
 .modal-badge.da-huy        { background:#fee2e2; color:#991b1b; }
-.modal-badge.doi-lich      { background:#fff3cd; color:#92400e; }
 
 .modal-divider { border:none; border-top:1px solid #edf2f7; margin:16px 0; }
 
@@ -524,14 +470,6 @@
     box-shadow: 0 5px 16px rgba(217,119,6,.35);
 }
 
-.ld-proposal-btn.btn-reschedule {
-    background: linear-gradient(135deg, #065f46, var(--ld-teal));
-    color: #fff;
-    box-shadow: 0 3px 10px rgba(13,148,136,.25);
-}
-.ld-proposal-btn.btn-reschedule:hover:not(:disabled) {
-    transform: translateY(-1px);
-}
 
 /* ── RESPONSIVE ──────────────────────────────────────────── */
 @media (max-width: 768px) {

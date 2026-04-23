@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Teacher\LichDay;
 use App\Http\Controllers\Controller;
 use App\Models\Education\BuoiHoc;
 use App\Models\Education\CaHoc;
+use App\Models\TeacherScheduleProposal;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -98,13 +99,19 @@ class LichDayController extends Controller
         $buoi = BuoiHoc::findOrFail($buoiHocId);
         $teacherId = $request->user()->getAuthIdentifier();
 
-        // Đảm bảo GV chỉ đề xuất buổi của lớp mình phụ trách
         if ($buoi->lopHoc?->taiKhoanId !== $teacherId) {
             return response()->json(['message' => 'Bạn không có quyền đề xuất cho buổi học này.'], 403);
         }
 
-        // TODO: Lưu đề xuất vào bảng đề xuất (feature mở rộng)
-        // DeXuatDayBu::create([...]);
+        TeacherScheduleProposal::create([
+            'buoiHocId'  => $buoiHocId,
+            'taiKhoanId' => $teacherId,
+            'loaiDeXuat' => 'compensation',
+            'lyDo'       => $validated['ly_do'],
+            'ngayBu'     => $validated['ngay_bu'] ?? null,
+            'caHocId'    => $validated['ca_hoc_id'] ?? null,
+            'trangThai'  => 'pending',
+        ]);
 
         return response()->json([
             'success' => true,
@@ -128,35 +135,17 @@ class LichDayController extends Controller
             return response()->json(['message' => 'Bạn không có quyền đề xuất cho buổi học này.'], 403);
         }
 
-        // TODO: Lưu đề xuất tạm ngưng
+        TeacherScheduleProposal::create([
+            'buoiHocId'  => $buoiHocId,
+            'taiKhoanId' => $teacherId,
+            'loaiDeXuat' => 'suspension',
+            'lyDo'       => $validated['ly_do'],
+            'trangThai'  => 'pending',
+        ]);
+
         return response()->json([
             'success' => true,
             'message' => 'Đề xuất tạm ngưng buổi học đã được ghi nhận.',
-        ]);
-    }
-
-    /**
-     * API: Đề xuất đổi lịch một buổi học.
-     */
-    public function proposeReschedule(Request $request, int $buoiHocId)
-    {
-        $validated = $request->validate([
-            'ly_do'        => 'required|string|max:1000',
-            'ngay_moi'     => 'required|date|after_or_equal:today',
-            'ca_hoc_id'    => 'nullable|integer|exists:cahoc,caHocId',
-            'phong_hoc_id' => 'nullable|integer|exists:phonghoc,phongHocId',
-        ]);
-
-        $buoi = BuoiHoc::findOrFail($buoiHocId);
-        $teacherId = $request->user()->getAuthIdentifier();
-
-        if ($buoi->lopHoc?->taiKhoanId !== $teacherId) {
-            return response()->json(['message' => 'Bạn không có quyền đề xuất cho buổi học này.'], 403);
-        }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Đề xuất đổi lịch đã được ghi nhận.',
         ]);
     }
 }
