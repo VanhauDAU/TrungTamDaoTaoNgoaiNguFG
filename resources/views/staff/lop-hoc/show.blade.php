@@ -570,6 +570,116 @@
             color: #64748b;
         }
 
+        .hub-action-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            margin-top: 14px;
+        }
+
+        .hub-mini-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 16px;
+            background: linear-gradient(180deg, #ffffff, #f8fafc);
+        }
+
+        .hub-mini-card h4 {
+            margin: 0 0 6px;
+            font-size: .92rem;
+            color: #0f172a;
+        }
+
+        .hub-mini-card p {
+            margin: 0 0 12px;
+            font-size: .8rem;
+            color: #64748b;
+        }
+
+        .btn-enroll-secondary {
+            min-height: 40px;
+            border-radius: 10px;
+            border: 1px solid #cbd5e1;
+            background: #fff;
+            color: #334155;
+            font-weight: 700;
+            padding: 0 14px;
+            cursor: pointer;
+        }
+
+        .portal-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 9998;
+            align-items: center;
+            justify-content: center;
+            background: rgba(15, 23, 42, .58);
+            padding: 18px;
+        }
+
+        .portal-modal.is-open {
+            display: flex;
+        }
+
+        .portal-modal-dialog {
+            width: min(920px, 100%);
+            max-height: 90vh;
+            overflow: auto;
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 24px 60px rgba(15, 23, 42, .28);
+        }
+
+        .portal-modal-header {
+            padding: 18px 22px;
+            color: #fff;
+            background: linear-gradient(135deg, #312e81, #7c3aed);
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .portal-modal-header h3 {
+            margin: 0 0 4px;
+            font-size: 1rem;
+            font-weight: 800;
+        }
+
+        .portal-modal-header p {
+            margin: 0;
+            color: rgba(255, 255, 255, .82);
+            font-size: .82rem;
+        }
+
+        .portal-modal-close {
+            width: 36px;
+            height: 36px;
+            border: none;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, .16);
+            color: #fff;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .portal-modal-body {
+            padding: 20px 22px 22px;
+        }
+
+        .session-hint-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .session-hint-row .hint-badge {
+            background: #eef2ff;
+            color: #4338ca;
+        }
+
         .hub-feedback.warning {
             background: #fff7ed;
             border: 1px solid #fdba74;
@@ -582,6 +692,10 @@
             }
 
             .inline-create-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .hub-action-grid {
                 grid-template-columns: 1fr;
             }
         }
@@ -725,177 +839,45 @@
                 </div>
             </form>
 
-            <div class="inline-create-card">
-                <div class="promotion-toolbar">
-                    <div>
-                        <h3>Tạo học viên mới và ghi danh ngay</h3>
-                        <p>Tạo tài khoản tự động theo logic học viên, đồng thời mở phiếu hợp đồng để in ngay sau khi ghi danh.</p>
-                    </div>
-                    <span class="hint-badge"><i class="fas fa-file-pdf"></i> Mở phiếu in sau khi lưu</span>
+            <div class="hub-action-grid">
+                <div class="hub-mini-card">
+                    <h4>Tạo học viên mới</h4>
+                    <p>Form ngắn gọn trong popup, tự tạo tài khoản và mở phiếu hợp đồng để in ngay.</p>
+                    <button type="button" class="btn-enroll-primary" onclick="openPortalModal('createStudentModal')">
+                        <i class="fas fa-user-plus"></i> Tạo học viên trong popup
+                    </button>
                 </div>
-
-                <form action="{{ route($portalRouteBase . '.lop-hoc.create-student-and-enroll', $lopHoc->slug) }}" method="POST" target="_blank">
-                    @csrf
-                    <div class="inline-create-grid">
-                        <div class="full">
-                            <label class="inline-create-label" for="inline_hoTen">Họ và tên học viên</label>
-                            <input type="text" id="inline_hoTen" name="hoTen" value="{{ old('hoTen') }}"
-                                placeholder="Nhập họ tên học viên" required>
-                        </div>
-                        <div>
-                            <label class="inline-create-label" for="inline_cccd">CCCD / CMND</label>
-                            <input type="text" id="inline_cccd" name="cccd" value="{{ old('cccd') }}"
-                                placeholder="Dùng làm mật khẩu tạm nếu đủ 8 ký tự">
-                        </div>
-                        <div>
-                            <label class="inline-create-label" for="inline_soDienThoai">Số điện thoại</label>
-                            <input type="text" id="inline_soDienThoai" name="soDienThoai" value="{{ old('soDienThoai') }}"
-                                placeholder="0901234567">
-                        </div>
-                        <div>
-                            <label class="inline-create-label" for="inline_email">Email</label>
-                            <input type="email" id="inline_email" name="email" value="{{ old('email') }}"
-                                placeholder="Có thể để trống, hệ thống sẽ tự tạo email nội bộ">
-                        </div>
-                        <div>
-                            <label class="inline-create-label" for="inline_payment_method">Hình thức thanh toán</label>
-                            <select name="payment_method" id="inline_payment_method" required>
-                                <option value="">Chọn hình thức thanh toán</option>
-                                @foreach ($paymentMethods as $methodValue => $methodLabel)
-                                    <option value="{{ $methodValue }}" @selected(old('payment_method') == (string) $methodValue)>{{ $methodLabel }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div>
-                            <label class="inline-create-label" for="inline_ngaySinh">Ngày sinh</label>
-                            <input type="date" id="inline_ngaySinh" name="ngaySinh" value="{{ old('ngaySinh') }}">
-                        </div>
-                        <div>
-                            <label class="inline-create-label" for="inline_gioiTinh">Giới tính</label>
-                            <select name="gioiTinh" id="inline_gioiTinh">
-                                <option value="">Chọn giới tính</option>
-                                <option value="1" @selected(old('gioiTinh') === '1')>Nam</option>
-                                <option value="0" @selected(old('gioiTinh') === '0')>Nữ</option>
-                                <option value="2" @selected(old('gioiTinh') === '2')>Khác</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="inline-create-label" for="inline_nguoiGiamHo">Người giám hộ</label>
-                            <input type="text" id="inline_nguoiGiamHo" name="nguoiGiamHo" value="{{ old('nguoiGiamHo') }}"
-                                placeholder="Nếu học viên chưa đủ tuổi">
-                        </div>
-                        <div>
-                            <label class="inline-create-label" for="inline_sdtGuardian">SĐT giám hộ</label>
-                            <input type="text" id="inline_sdtGuardian" name="sdtGuardian" value="{{ old('sdtGuardian') }}"
-                                placeholder="0912345678">
-                        </div>
-                        <div>
-                            <label class="inline-create-label" for="inline_moiQuanHe">Mối quan hệ</label>
-                            <input type="text" id="inline_moiQuanHe" name="moiQuanHe" value="{{ old('moiQuanHe') }}"
-                                placeholder="Bố, mẹ, anh, chị...">
-                        </div>
-                        <div class="full">
-                            <label class="inline-create-label" for="inline_diaChi">Địa chỉ</label>
-                            <input type="text" id="inline_diaChi" name="diaChi" value="{{ old('diaChi') }}"
-                                placeholder="Địa chỉ liên hệ">
-                        </div>
-                        <div>
-                            <label class="inline-create-label" for="inline_trinhDoHienTai">Trình độ hiện tại</label>
-                            <input type="text" id="inline_trinhDoHienTai" name="trinhDoHienTai" value="{{ old('trinhDoHienTai') }}"
-                                placeholder="Beginner, Intermediate...">
-                        </div>
-                        <div>
-                            <label class="inline-create-label" for="inline_ngonNguMucTieu">Ngôn ngữ mục tiêu</label>
-                            <input type="text" id="inline_ngonNguMucTieu" name="ngonNguMucTieu" value="{{ old('ngonNguMucTieu') }}"
-                                placeholder="Tiếng Anh, Nhật, Hàn...">
-                        </div>
-                        <div class="full">
-                            <label class="inline-create-label" for="inline_ghiChu">Ghi chú</label>
-                            <textarea id="inline_ghiChu" name="ghiChu"
-                                placeholder="Ghi chú thêm nếu cần">{{ old('ghiChu') }}</textarea>
-                        </div>
-                    </div>
-
-                    <div class="enrollment-form-actions">
-                        <button type="submit" class="btn-enroll-primary">
-                            <i class="fas fa-user-plus"></i> Tạo học viên, ghi danh và mở phiếu in
-                        </button>
-                    </div>
-                    <p class="inline-create-note">
-                        Mật khẩu tạm sẽ lấy theo CCCD nếu đủ 8 ký tự, nếu không hệ thống dùng mặc định <strong>12345678</strong>.
-                    </p>
-                </form>
+                <div class="hub-mini-card">
+                    <h4>Lên lớp tiếp theo theo nhóm</h4>
+                    <p>Chọn lớp đích và danh sách học viên trong popup để thao tác nhanh, gọn hơn.</p>
+                    <button type="button" class="btn-enroll-secondary" onclick="openPortalModal('promoteStudentsModal')">
+                        <i class="fas fa-arrow-trend-up"></i> Mở popup lên lớp
+                    </button>
+                </div>
             </div>
         </div>
 
         <div class="enrollment-card">
             <div class="promotion-toolbar">
                 <div>
-                    <h3>Lên lớp tiếp theo theo nhóm</h3>
-                    <p>Chọn lớp đích rồi tick những học viên cần lên lớp. Phù hợp cho các lớp đã học xong và cần đẩy sang lớp nâng cấp.</p>
+                    <h3>Điều phối học viên trong lớp</h3>
+                    <p>Từ đây nhân viên có thể ghi danh nhanh học viên sẵn có, tạo mới học viên hoặc chuẩn bị danh sách nâng cấp sang lớp tiếp theo mà không phải rời trang.</p>
                 </div>
-                <span class="hint-badge"><i class="fas fa-people-arrows"></i> Luồng nâng cấp hàng loạt</span>
+                <span class="hint-badge"><i class="fas fa-people-arrows"></i> Luồng thao tác tại chỗ</span>
             </div>
 
-            <form action="{{ route($portalRouteBase . '.lop-hoc.promote-students', $lopHoc->slug) }}" method="POST">
-                @csrf
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
-                    <select name="target_lop_hoc_id" required>
-                        <option value="">Chọn lớp đích</option>
-                        @foreach ($promotionTargetClasses as $candidate)
-                            <option value="{{ $candidate->lopHocId }}">
-                                [{{ $candidate->maLopHoc }}] {{ $candidate->tenLopHoc }}
-                                • {{ $candidate->khoaHoc?->tenKhoaHoc ?? '—' }}
-                                • {{ $candidate->ngayBatDau ? \Carbon\Carbon::parse($candidate->ngayBatDau)->format('d/m/Y') : 'Chưa có ngày' }}
-                            </option>
-                        @endforeach
-                    </select>
-                    <select name="payment_method" required>
-                        <option value="">Hình thức thanh toán</option>
-                        @foreach ($paymentMethods as $methodValue => $methodLabel)
-                            <option value="{{ $methodValue }}">{{ $methodLabel }}</option>
-                        @endforeach
-                    </select>
+            <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px">
+                <div class="hub-mini-card">
+                    <h4>Tạo tài khoản học viên</h4>
+                    <p>Mật khẩu tạm lấy theo CCCD nếu đủ 8 ký tự, nếu không dùng mặc định <strong>12345678</strong>.</p>
+                    <span class="hint-badge"><i class="fas fa-file-pdf"></i> Có phiếu in ngay</span>
                 </div>
-
-                <div class="promotion-toolbar">
-                    <label style="font-size:.82rem;font-weight:700;color:#334155;display:flex;gap:8px;align-items:center">
-                        <input type="checkbox" id="selectAllPromotionStudents">
-                        Chọn tất cả học viên trong danh sách dưới
-                    </label>
-                    <span class="hint-badge"><i class="fas fa-filter"></i> Chỉ nên chọn các học viên đủ điều kiện tiếp tục khóa mới.</span>
+                <div class="hub-mini-card">
+                    <h4>Nâng cấp sang lớp mới</h4>
+                    <p>Phù hợp khi lớp cũ kết thúc và cần tạo đăng ký hàng loạt cho lớp nối tiếp.</p>
+                    <span class="hint-badge"><i class="fas fa-filter"></i> Chọn theo từng học viên</span>
                 </div>
-
-                <div class="promotion-student-list">
-                    @forelse ($lopHoc->dangKyLopHocs as $dk)
-                        <label class="promotion-student-item">
-                            <input type="checkbox" name="registration_ids[]" value="{{ $dk->dangKyLopHocId }}" class="promotion-student-checkbox">
-                            <div style="flex:1">
-                                <div style="font-size:.86rem;font-weight:700;color:#1e293b">
-                                    {{ $dk->taiKhoan?->hoSoNguoiDung?->hoTen ?? ($dk->taiKhoan?->taiKhoan ?? '—') }}
-                                </div>
-                                <div style="font-size:.74rem;color:#64748b;margin-top:3px">
-                                    {{ $dk->taiKhoan?->taiKhoan ?? '—' }}
-                                    @if ($dk->taiKhoan?->email)
-                                        • {{ $dk->taiKhoan->email }}
-                                    @endif
-                                </div>
-                            </div>
-                            <span class="hint-badge">{{ $dk->trangThaiLabel }}</span>
-                        </label>
-                    @empty
-                        <div style="padding:18px;border:1px dashed #cbd5e1;border-radius:12px;color:#64748b;text-align:center">
-                            Chưa có đăng ký nào để thực hiện lên lớp tiếp theo.
-                        </div>
-                    @endforelse
-                </div>
-
-                <div class="enrollment-form-actions">
-                    <button type="submit" class="btn-enroll-primary">
-                        <i class="fas fa-arrow-trend-up"></i> Tạo đăng ký lớp tiếp theo
-                    </button>
-                </div>
-            </form>
+            </div>
         </div>
     </div>
 
@@ -1143,13 +1125,13 @@
     @endif
 
     {{-- ── Auto generate buổi học ────────────────────────────── --}}
-    @if ($lopHoc->lichHoc && $lopHoc->ngayBatDau && $lopHoc->soBuoiDuKien)
+    @if ($lopHoc->lichHoc && $lopHoc->ngayBatDau && $lopHoc->ngayKetThuc)
         <div class="auto-gen-card">
             <h3><i class="fas fa-magic me-2"></i> Tự động tạo buổi học</h3>
             <p>Tạo tự động các buổi học theo lịch
                 <strong>Thứ {{ implode(', ', array_map('trim', explode(',', $lopHoc->lichHoc))) }}</strong>
                 bắt đầu từ <strong>{{ \Carbon\Carbon::parse($lopHoc->ngayBatDau)->format('d/m/Y') }}</strong>
-                cho đến khi đủ <strong>{{ $lopHoc->soBuoiDuKien }}</strong> buổi dự kiến.
+                đến <strong>{{ \Carbon\Carbon::parse($lopHoc->ngayKetThuc)->format('d/m/Y') }}</strong>.
             </p>
             <form action="{{ route($portalRouteBase . '.buoi-hoc.auto-generate', $lopHoc->lopHocId) }}" method="POST"
                 style="display:inline">
@@ -1160,7 +1142,7 @@
                         <span style="opacity:.9">Xóa buổi học chưa hoàn thành trước khi tạo mới</span>
                     </label>
                     <button type="submit" class="btn-auto-gen"
-                        onclick="return confirm('Tự động tạo buổi học từ lịch học?')">
+                        onclick="return confirm('Tạo lại danh sách buổi học trong toàn bộ khoảng ngày của lớp?')">
                         <i class="fas fa-magic"></i> Tự động tạo
                     </button>
                 </div>
@@ -1194,7 +1176,9 @@
                         <label style="font-size:.78rem;font-weight:600;color:#64748b;display:block;margin-bottom:4px">
                             Ngày học <span style="color:#dc2626">*</span>
                         </label>
-                        <input type="date" name="ngayHoc" required>
+                        <input type="date" name="ngayHoc" required class="session-date-input"
+                            min="{{ $lopHoc->ngayBatDau }}"
+                            max="{{ $lopHoc->ngayKetThuc }}">
                     </div>
                     <div>
                         <label style="font-size:.78rem;font-weight:600;color:#64748b;display:block;margin-bottom:4px">
@@ -1269,6 +1253,12 @@
                             <i class="fas fa-plus me-1"></i> Thêm buổi học
                         </button>
                     </div>
+                </div>
+                <div class="session-hint-row">
+                    <span class="hint-badge"><i class="fas fa-calendar-check"></i> Chỉ chọn ngày trong khoảng {{ $lopHoc->ngayBatDau ? \Carbon\Carbon::parse($lopHoc->ngayBatDau)->format('d/m/Y') : '—' }} - {{ $lopHoc->ngayKetThuc ? \Carbon\Carbon::parse($lopHoc->ngayKetThuc)->format('d/m/Y') : '—' }}</span>
+                    @if ($lopHoc->lichHoc)
+                        <span class="hint-badge"><i class="fas fa-repeat"></i> Phải khớp lịch học: {{ $lopHoc->lichHoc }}</span>
+                    @endif
                 </div>
             </form>
         </div>
@@ -1370,6 +1360,194 @@
     </div>
 
 
+    <div id="createStudentModal" class="portal-modal" onclick="handlePortalModalBackdrop(event, 'createStudentModal')">
+        <div class="portal-modal-dialog">
+            <div class="portal-modal-header">
+                <div>
+                    <h3>Tạo học viên mới và ghi danh ngay</h3>
+                    <p>Tạo tài khoản theo logic học viên, đồng thời mở phiếu hợp đồng để in ngay sau khi ghi danh.</p>
+                </div>
+                <button type="button" class="portal-modal-close" onclick="closePortalModal('createStudentModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="portal-modal-body">
+                <form action="{{ route($portalRouteBase . '.lop-hoc.create-student-and-enroll', $lopHoc->slug) }}" method="POST" target="_blank">
+                    @csrf
+                    <div class="inline-create-grid">
+                        <div class="full">
+                            <label class="inline-create-label" for="inline_hoTen">Họ và tên học viên</label>
+                            <input type="text" id="inline_hoTen" name="hoTen" value="{{ old('hoTen') }}"
+                                placeholder="Nhập họ tên học viên" required>
+                        </div>
+                        <div>
+                            <label class="inline-create-label" for="inline_cccd">CCCD / CMND</label>
+                            <input type="text" id="inline_cccd" name="cccd" value="{{ old('cccd') }}"
+                                placeholder="Dùng làm mật khẩu tạm nếu đủ 8 ký tự">
+                        </div>
+                        <div>
+                            <label class="inline-create-label" for="inline_soDienThoai">Số điện thoại</label>
+                            <input type="text" id="inline_soDienThoai" name="soDienThoai" value="{{ old('soDienThoai') }}"
+                                placeholder="0901234567">
+                        </div>
+                        <div>
+                            <label class="inline-create-label" for="inline_email">Email</label>
+                            <input type="email" id="inline_email" name="email" value="{{ old('email') }}"
+                                placeholder="Nhập email học viên" required>
+                        </div>
+                        <div>
+                            <label class="inline-create-label" for="inline_payment_method">Hình thức thanh toán</label>
+                            <select name="payment_method" id="inline_payment_method" required>
+                                <option value="">Chọn hình thức thanh toán</option>
+                                @foreach ($paymentMethods as $methodValue => $methodLabel)
+                                    <option value="{{ $methodValue }}" @selected(old('payment_method') == (string) $methodValue)>{{ $methodLabel }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="inline-create-label" for="inline_ngaySinh">Ngày sinh</label>
+                            <input type="date" id="inline_ngaySinh" name="ngaySinh" value="{{ old('ngaySinh') }}">
+                        </div>
+                        <div>
+                            <label class="inline-create-label" for="inline_gioiTinh">Giới tính</label>
+                            <select name="gioiTinh" id="inline_gioiTinh">
+                                <option value="">Chọn giới tính</option>
+                                <option value="1" @selected(old('gioiTinh') === '1')>Nam</option>
+                                <option value="0" @selected(old('gioiTinh') === '0')>Nữ</option>
+                                <option value="2" @selected(old('gioiTinh') === '2')>Khác</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="inline-create-label" for="inline_nguoiGiamHo">Người giám hộ</label>
+                            <input type="text" id="inline_nguoiGiamHo" name="nguoiGiamHo" value="{{ old('nguoiGiamHo') }}"
+                                placeholder="Nếu học viên chưa đủ tuổi">
+                        </div>
+                        <div>
+                            <label class="inline-create-label" for="inline_sdtGuardian">SĐT giám hộ</label>
+                            <input type="text" id="inline_sdtGuardian" name="sdtGuardian" value="{{ old('sdtGuardian') }}"
+                                placeholder="0912345678">
+                        </div>
+                        <div>
+                            <label class="inline-create-label" for="inline_moiQuanHe">Mối quan hệ</label>
+                            <input type="text" id="inline_moiQuanHe" name="moiQuanHe" value="{{ old('moiQuanHe') }}"
+                                placeholder="Bố, mẹ, anh, chị...">
+                        </div>
+                        <div class="full">
+                            <label class="inline-create-label" for="inline_diaChi">Địa chỉ</label>
+                            <input type="text" id="inline_diaChi" name="diaChi" value="{{ old('diaChi') }}"
+                                placeholder="Địa chỉ liên hệ">
+                        </div>
+                        <div>
+                            <label class="inline-create-label" for="inline_trinhDoHienTai">Trình độ hiện tại</label>
+                            <input type="text" id="inline_trinhDoHienTai" name="trinhDoHienTai" value="{{ old('trinhDoHienTai') }}"
+                                placeholder="Beginner, Intermediate...">
+                        </div>
+                        <div>
+                            <label class="inline-create-label" for="inline_ngonNguMucTieu">Ngôn ngữ mục tiêu</label>
+                            <input type="text" id="inline_ngonNguMucTieu" name="ngonNguMucTieu" value="{{ old('ngonNguMucTieu') }}"
+                                placeholder="Tiếng Anh, Nhật, Hàn...">
+                        </div>
+                        <div class="full">
+                            <label class="inline-create-label" for="inline_ghiChu">Ghi chú</label>
+                            <textarea id="inline_ghiChu" name="ghiChu"
+                                placeholder="Ghi chú thêm nếu cần">{{ old('ghiChu') }}</textarea>
+                        </div>
+                    </div>
+
+                    <div class="enrollment-form-actions">
+                        <button type="submit" class="btn-enroll-primary">
+                            <i class="fas fa-user-plus"></i> Tạo học viên, ghi danh và mở phiếu in
+                        </button>
+                        <button type="button" class="btn-enroll-secondary" onclick="closePortalModal('createStudentModal')">
+                            Đóng
+                        </button>
+                    </div>
+                    <p class="inline-create-note">
+                        Mật khẩu tạm sẽ lấy theo CCCD nếu đủ 8 ký tự, nếu không hệ thống dùng mặc định <strong>12345678</strong>.
+                    </p>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="promoteStudentsModal" class="portal-modal" onclick="handlePortalModalBackdrop(event, 'promoteStudentsModal')">
+        <div class="portal-modal-dialog">
+            <div class="portal-modal-header">
+                <div>
+                    <h3>Lên lớp tiếp theo theo nhóm</h3>
+                    <p>Chọn lớp đích và tick các học viên cần tạo đăng ký lớp tiếp theo.</p>
+                </div>
+                <button type="button" class="portal-modal-close" onclick="closePortalModal('promoteStudentsModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="portal-modal-body">
+                <form action="{{ route($portalRouteBase . '.lop-hoc.promote-students', $lopHoc->slug) }}" method="POST">
+                    @csrf
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+                        <select name="target_lop_hoc_id" required>
+                            <option value="">Chọn lớp đích</option>
+                            @foreach ($promotionTargetClasses as $candidate)
+                                <option value="{{ $candidate->lopHocId }}">
+                                    [{{ $candidate->maLopHoc }}] {{ $candidate->tenLopHoc }}
+                                    • {{ $candidate->khoaHoc?->tenKhoaHoc ?? '—' }}
+                                    • {{ $candidate->ngayBatDau ? \Carbon\Carbon::parse($candidate->ngayBatDau)->format('d/m/Y') : 'Chưa có ngày' }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <select name="payment_method" required>
+                            <option value="">Hình thức thanh toán</option>
+                            @foreach ($paymentMethods as $methodValue => $methodLabel)
+                                <option value="{{ $methodValue }}">{{ $methodLabel }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="promotion-toolbar">
+                        <label style="font-size:.82rem;font-weight:700;color:#334155;display:flex;gap:8px;align-items:center">
+                            <input type="checkbox" id="selectAllPromotionStudents">
+                            Chọn tất cả học viên trong danh sách dưới
+                        </label>
+                        <span class="hint-badge"><i class="fas fa-filter"></i> Chỉ nên chọn các học viên đủ điều kiện tiếp tục khóa mới.</span>
+                    </div>
+
+                    <div class="promotion-student-list">
+                        @forelse ($lopHoc->dangKyLopHocs as $dk)
+                            <label class="promotion-student-item">
+                                <input type="checkbox" name="registration_ids[]" value="{{ $dk->dangKyLopHocId }}" class="promotion-student-checkbox">
+                                <div style="flex:1">
+                                    <div style="font-size:.86rem;font-weight:700;color:#1e293b">
+                                        {{ $dk->taiKhoan?->hoSoNguoiDung?->hoTen ?? ($dk->taiKhoan?->taiKhoan ?? '—') }}
+                                    </div>
+                                    <div style="font-size:.74rem;color:#64748b;margin-top:3px">
+                                        {{ $dk->taiKhoan?->taiKhoan ?? '—' }}
+                                        @if ($dk->taiKhoan?->email)
+                                            • {{ $dk->taiKhoan->email }}
+                                        @endif
+                                    </div>
+                                </div>
+                                <span class="hint-badge">{{ $dk->trangThaiLabel }}</span>
+                            </label>
+                        @empty
+                            <div style="padding:18px;border:1px dashed #cbd5e1;border-radius:12px;color:#64748b;text-align:center">
+                                Chưa có đăng ký nào để thực hiện lên lớp tiếp theo.
+                            </div>
+                        @endforelse
+                    </div>
+
+                    <div class="enrollment-form-actions">
+                        <button type="submit" class="btn-enroll-primary">
+                            <i class="fas fa-arrow-trend-up"></i> Tạo đăng ký lớp tiếp theo
+                        </button>
+                        <button type="button" class="btn-enroll-secondary" onclick="closePortalModal('promoteStudentsModal')">
+                            Đóng
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     {{-- Hidden forms --}}
     <form id="delete-bh-form" method="POST" style="display:none">
         @csrf @method('DELETE')
@@ -1413,6 +1591,8 @@
                             style="display:block;font-size:.75rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Ngày
                             học <span style="color:#dc2626">*</span></label>
                         <input type="date" id="ebh-ngay" required
+                            min="{{ $lopHoc->ngayBatDau }}"
+                            max="{{ $lopHoc->ngayKetThuc }}"
                             style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.9rem;color:#1e293b;outline:none;"
                             onfocus="this.style.borderColor='#7c3aed'" onblur="this.style.borderColor='#e2e8f0'">
                     </div>
@@ -1522,6 +1702,18 @@
         const BUOI_HOC_UPDATE_URL_TEMPLATE = @js(route($portalRouteBase . '.buoi-hoc.update', ['id' => '__ID__']));
         const BUOI_HOC_DELETE_URL_TEMPLATE = @js(route($portalRouteBase . '.buoi-hoc.destroy', ['id' => '__ID__']));
         const SEARCH_STUDENTS_URL = @js(route($portalRouteBase . '.lop-hoc.search-students', $lopHoc->slug));
+        const CLASS_START_DATE = @js($lopHoc->ngayBatDau);
+        const CLASS_END_DATE = @js($lopHoc->ngayKetThuc);
+        const CLASS_SCHEDULE_DAYS = @js(array_map('trim', explode(',', (string) $lopHoc->lichHoc)));
+        const SCHEDULE_DAY_MAP = {
+            '2': 1,
+            '3': 2,
+            '4': 3,
+            '5': 4,
+            '6': 5,
+            '7': 6,
+            'CN': 0,
+        };
         const selectedStudentIds = new Map();
 
         function getBuoiHocActionUrl(template, id) {
@@ -1656,6 +1848,75 @@
             f.style.display = f.style.display === 'block' ? 'none' : 'block';
         }
 
+        function openPortalModal(id) {
+            const modal = document.getElementById(id);
+            if (!modal) return;
+            modal.classList.add('is-open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closePortalModal(id) {
+            const modal = document.getElementById(id);
+            if (!modal) return;
+            modal.classList.remove('is-open');
+            document.body.style.overflow = '';
+        }
+
+        function handlePortalModalBackdrop(event, id) {
+            if (event.target.id === id) {
+                closePortalModal(id);
+            }
+        }
+
+        function isClassScheduleDate(dateValue) {
+            if (!dateValue) {
+                return false;
+            }
+
+            const date = new Date(`${dateValue}T00:00:00`);
+            if (Number.isNaN(date.getTime())) {
+                return false;
+            }
+
+            if (CLASS_START_DATE && dateValue < CLASS_START_DATE) {
+                return false;
+            }
+
+            if (CLASS_END_DATE && dateValue > CLASS_END_DATE) {
+                return false;
+            }
+
+            const allowedDays = CLASS_SCHEDULE_DAYS
+                .map(day => SCHEDULE_DAY_MAP[day])
+                .filter(day => day !== undefined);
+
+            if (allowedDays.length && !allowedDays.includes(date.getDay())) {
+                return false;
+            }
+
+            return true;
+        }
+
+        function getSessionDateValidationMessage() {
+            const rangeText = CLASS_START_DATE && CLASS_END_DATE ?
+                `Ngày học phải nằm trong khoảng ${CLASS_START_DATE} đến ${CLASS_END_DATE}.` :
+                'Ngày học không hợp lệ.';
+            const scheduleText = CLASS_SCHEDULE_DAYS.filter(Boolean).length ?
+                ` Đồng thời phải khớp lịch học của lớp: ${CLASS_SCHEDULE_DAYS.join(', ')}.` :
+                '';
+
+            return rangeText + scheduleText;
+        }
+
+        function validateSessionDateValue(dateValue) {
+            if (isClassScheduleDate(dateValue)) {
+                return true;
+            }
+
+            Swal.fire('Ngày học chưa hợp lệ', getSessionDateValidationMessage(), 'warning');
+            return false;
+        }
+
         function deleteBuoiHoc(id, name) {
             Swal.fire({
                 title: 'Xóa buổi học?',
@@ -1740,6 +2001,21 @@
                     checkbox.checked = this.checked;
                 });
             });
+            document.querySelector('#addBhForm form')?.addEventListener('submit', function(e) {
+                const dateValue = this.querySelector('input[name="ngayHoc"]')?.value;
+                if (!validateSessionDateValue(dateValue)) {
+                    e.preventDefault();
+                }
+            });
+            @if ($errors->has('ngayHoc') || $errors->has('caHocId') || $errors->has('lopHocId'))
+                document.getElementById('addBhForm').style.display = 'block';
+            @endif
+            @if ($errors->has('hoTen') || $errors->has('cccd') || $errors->has('soDienThoai') || $errors->has('email') || $errors->has('nguoiGiamHo'))
+                openPortalModal('createStudentModal');
+            @endif
+            @if ($errors->has('target_lop_hoc_id') || $errors->has('registration_ids'))
+                openPortalModal('promoteStudentsModal');
+            @endif
         });
 
         function setSelectVal(id, val) {
@@ -1754,6 +2030,11 @@
         }
 
         function saveEditBuoiHoc() {
+            const sessionDate = document.getElementById('ebh-ngay').value;
+            if (!validateSessionDateValue(sessionDate)) {
+                return;
+            }
+
             const btn = document.getElementById('ebh-save-btn');
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Đang lưu...';

@@ -214,6 +214,16 @@ class StudentController extends Controller
         return view('clients.hoc-vien.classes.index', $this->studentService->getMyClasses($user));
     }
 
+    public function classDetail(int $dangKyLopHocId)
+    {
+        /** @var TaiKhoan $user */
+        $user = Auth::user();
+        if (!$user instanceof TaiKhoan)
+            abort(403);
+
+        return view('clients.hoc-vien.classes.show', $this->studentService->getClassDetail($user, $dangKyLopHocId));
+    }
+
     public function schedule(Request $request)
     {
         /** @var TaiKhoan $user */

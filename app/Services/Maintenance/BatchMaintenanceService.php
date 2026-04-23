@@ -106,9 +106,8 @@ class BatchMaintenanceService
                         'taiKhoanId' => $dangKy->taiKhoanId,
                         'dangKyLopHocId' => $dangKy->dangKyLopHocId,
                         'trangThai' => DiemDanh::BI_KHOA_NO_HP,
-                        'coMat' => 0,
-                        'lyDo' => 'Nợ học phí – tự động hệ thống',
-                        'thoiGianDiemDanh' => now(),
+                        'nguoiDiemDanhId' => null,
+                        'ghiChu' => 'Nợ học phí – tự động hệ thống',
                     ]);
 
                     $lockedCount++;

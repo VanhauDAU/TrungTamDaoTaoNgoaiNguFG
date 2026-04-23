@@ -5,6 +5,7 @@ use App\Http\Controllers\Client\LienHe\ContactController;
 use App\Http\Controllers\Client\HomeController;
 use App\Http\Controllers\Client\Blog\AboutController;
 use App\Http\Controllers\Client\KhoaHoc\CourseController;
+use App\Http\Controllers\Client\HocVien\StudentReportController;
 use App\Http\Controllers\Client\HocVien\StudentController;
 use App\Http\Controllers\Client\Chat\ClientChatController;
 use App\Http\Controllers\Admin\HomeController as AdminHomeController;
@@ -16,7 +17,7 @@ use App\Http\Controllers\Admin\GiaoVien\GiaoVienController as AdminGiaoVienContr
 use App\Http\Controllers\Admin\NhanVien\NhanVienController as AdminNhanVienController;
 use App\Http\Controllers\Admin\NhanVien\NhanSuMauQuyDinhController;
 use App\Http\Controllers\Admin\Auth\TaiKhoanController;
-use App\Http\Controllers\Admin\LienHe\LienHeController as AdminLienHeController;
+use App\Http\Controllers\Internal\LienHe\LienHeController as InternalLienHeController;
 use App\Http\Controllers\Admin\CoSo\CoSoController;
 use App\Http\Controllers\Admin\CoSo\PhongHocController;
 use App\Http\Controllers\Admin\KhoaHoc\KhoaHocController as AdminKhoaHocController;
@@ -34,6 +35,7 @@ use App\Http\Controllers\Auth\GoogleLoginController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Staff\DashboardController as StaffDashboardController;
+use App\Http\Controllers\Staff\Evaluation\EvaluationController as StaffEvaluationController;
 use App\Http\Controllers\Staff\HocVien\DangKyHocController as StaffDangKyHocController;
 use App\Http\Controllers\Staff\HocVien\HocVienController as StaffHocVienController;
 use App\Http\Controllers\Staff\KhoaHoc\BuoiHocController as StaffBuoiHocController;
@@ -44,10 +46,12 @@ use App\Http\Controllers\Teacher\DashboardController as TeacherDashboardControll
 use App\Http\Controllers\Teacher\DiemDanh\DiemDanhController as TeacherDiemDanhController;
 use App\Http\Controllers\Teacher\LichDay\LichDayController as TeacherLichDayController;
 use App\Http\Controllers\Teacher\LopHoc\LopHocController as TeacherLopHocController;
+use App\Http\Controllers\Teacher\LopHoc\LopHocTaiLieuController as TeacherLopHocTaiLieuController;
 use App\Http\Controllers\Teacher\NhanXet\NhanXetController as TeacherNhanXetController;
 use App\Http\Controllers\Teacher\ProfileController as TeacherProfileController;
 use App\Http\Controllers\Teacher\TaiLieu\TaiLieuController as TeacherTaiLieuController;
 use App\Http\Controllers\Teacher\ThongBao\ThongBaoController as TeacherThongBaoController;
+use App\Http\Controllers\Client\HocVien\StudentLopHocTaiLieuController;
 use App\Http\Controllers\Upload\ImageUploadController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
@@ -118,8 +122,20 @@ Route::prefix('/')->name('home.')->group(function () {
             Route::get('/hoa-don/{id}', [StudentController::class, 'invoiceDetail'])->name('invoices.show');
         });
         Route::get('/lop-hoc', [StudentController::class, 'myClasses'])->name('classes');
+        Route::get('/lop-hoc/{dangKyLopHocId}', [StudentController::class, 'classDetail'])->name('classes.show');
         Route::get('/lich-hoc', [StudentController::class, 'schedule'])->name('schedule');
+
+        // ── Tài liệu lớp học (học viên) ─────────────────────────────────────
+        Route::prefix('lop-hoc/{lopHocId}/tai-lieu')->name('classes.materials.')->group(function () {
+            Route::get('/', [StudentLopHocTaiLieuController::class, 'index'])->name('index');
+            Route::get('/{id}/tai-xuong', [StudentLopHocTaiLieuController::class, 'download'])->name('download');
+        });
         Route::get('/chat', [ClientChatController::class, 'index'])->name('chat');
+        Route::prefix('bao-cao-hoc-tap')->name('reports.')->group(function () {
+            Route::get('/', [StudentReportController::class, 'index'])->name('index');
+            Route::get('/{reportId}', [StudentReportController::class, 'show'])->name('show');
+            Route::get('/{reportId}/tai-xuong', [StudentReportController::class, 'download'])->name('download');
+        });
     });
 
     // ── Thông báo client (auth required) ────────────────────────────────────
@@ -166,6 +182,21 @@ Route::prefix('teacher')->name('teacher.')->middleware(['auth', 'portal:teacher'
 
     Route::prefix('lop-hoc-cua-toi')->name('classes.')->group(function () {
         Route::get('/', [TeacherLopHocController::class, 'index'])->name('index');
+        Route::get('/{slug}', [TeacherLopHocController::class, 'show'])->name('show');
+
+        // ── Tài liệu lớp học (teacher.classes.materials.*) ──────────────────────
+        Route::prefix('{slug}/tai-lieu')->name('materials.')->group(function () {
+            Route::get('/', [TeacherLopHocTaiLieuController::class, 'index'])->name('index');
+            Route::get('/tao-moi', [TeacherLopHocTaiLieuController::class, 'create'])->name('create');
+            Route::post('/', [TeacherLopHocTaiLieuController::class, 'store'])->name('store');
+            Route::get('/{id}/sua', [TeacherLopHocTaiLieuController::class, 'edit'])->name('edit');
+            Route::put('/{id}', [TeacherLopHocTaiLieuController::class, 'update'])->name('update');
+            Route::delete('/{id}', [TeacherLopHocTaiLieuController::class, 'destroy'])->name('destroy');
+            Route::get('/{id}/tai-xuong', [TeacherLopHocTaiLieuController::class, 'download'])->name('download');
+            // ── Chia sẻ từ thư viện cá nhân ─────────────────────────────────────────
+            Route::get('/chon-tu-thu-vien', [TeacherLopHocTaiLieuController::class, 'selectFromLibrary'])->name('select-library');
+            Route::post('/chia-se', [TeacherLopHocTaiLieuController::class, 'storeShared'])->name('share');
+        });
     });
 
     Route::prefix('lich-day')->name('schedule.')->group(function () {
@@ -186,15 +217,36 @@ Route::prefix('teacher')->name('teacher.')->middleware(['auth', 'portal:teacher'
     });
 
     Route::prefix('tai-lieu')->name('materials.')->group(function () {
+        // teacher.materials.index – thư viện tài liệu cá nhân của giáo viên
         Route::get('/', [TeacherTaiLieuController::class, 'index'])->name('index');
+        Route::get('/tao-moi', [TeacherTaiLieuController::class, 'create'])->name('create');
+        Route::post('/', [TeacherTaiLieuController::class, 'store'])->name('store');
+        Route::get('/{id}/sua', [TeacherTaiLieuController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [TeacherTaiLieuController::class, 'update'])->name('update');
+        Route::delete('/{id}', [TeacherTaiLieuController::class, 'destroy'])->name('destroy');
+        Route::get('/{id}/tai-xuong', [TeacherTaiLieuController::class, 'download'])->name('download');
     });
 
     Route::prefix('nhan-xet')->name('evaluations.')->group(function () {
         Route::get('/', [TeacherNhanXetController::class, 'index'])->name('index');
+        Route::get('/dot-danh-gia', [TeacherNhanXetController::class, 'periods'])->name('periods.index');
+        Route::get('/dot-danh-gia/{periodId}', [TeacherNhanXetController::class, 'showPeriod'])->name('periods.show');
+        Route::post('/dot-danh-gia/{periodId}/tao-nhap-hang-loat', [TeacherNhanXetController::class, 'bulkCreateDrafts'])->name('periods.bulk-create');
+        Route::get('/bao-cao/tao/{periodId}/{dangKyLopHocId}', [TeacherNhanXetController::class, 'create'])->name('reports.create');
+        Route::get('/bao-cao/{reportId}/sua', [TeacherNhanXetController::class, 'edit'])->name('reports.edit');
+        Route::post('/bao-cao/{reportId}/luu-nhap', [TeacherNhanXetController::class, 'save'])->name('reports.save');
+        Route::post('/bao-cao/{reportId}/sao-chep-dot-truoc', [TeacherNhanXetController::class, 'copyPrevious'])->name('reports.copy-previous');
+        Route::post('/bao-cao/{reportId}/gui-duyet', [TeacherNhanXetController::class, 'submit'])->name('reports.submit');
+        Route::get('/bao-cao/{reportId}/xem-truoc-pdf', [TeacherNhanXetController::class, 'preview'])->name('reports.preview');
+        Route::get('/bao-cao/{reportId}/lich-su', [TeacherNhanXetController::class, 'history'])->name('reports.history');
     });
 
     Route::prefix('diem-danh')->name('attendance.')->group(function () {
         Route::get('/', [TeacherDiemDanhController::class, 'index'])->name('index');
+        Route::get('/classes', [TeacherDiemDanhController::class, 'classes'])->name('classes');
+        Route::get('/sessions', [TeacherDiemDanhController::class, 'sessions'])->name('sessions');
+        Route::post('/{buoiHocId}', [TeacherDiemDanhController::class, 'store'])->name('store');
+        Route::get('/{buoiHocId}/xuat-danh-sach', [TeacherDiemDanhController::class, 'export'])->name('export');
     });
 
     Route::prefix('api/notifications')->name('api.notifications.')->group(function () {
@@ -279,6 +331,41 @@ Route::prefix('staff')->name('staff.')->middleware(['auth', 'portal:staff'])->gr
         Route::put('/{id}', [StaffHoaDonController::class, 'update'])->name('update');
         Route::post('/{id}/phieu-thu', [StaffHoaDonController::class, 'storePhieuThu'])->name('phieu-thu.store');
         Route::delete('/phieu-thu/{id}', [StaffHoaDonController::class, 'destroyPhieuThu'])->name('phieu-thu.destroy');
+    });
+
+    Route::prefix('bao-cao-hoc-tap')->name('evaluations.')->group(function () {
+        Route::get('/', [StaffEvaluationController::class, 'index'])->name('index');
+        Route::get('/dot-danh-gia', [StaffEvaluationController::class, 'periods'])->name('periods.index');
+        Route::post('/dot-danh-gia', [StaffEvaluationController::class, 'storePeriod'])->name('periods.store');
+        Route::prefix('mau-bao-cao')->name('templates.')->group(function () {
+            Route::get('/', [StaffEvaluationController::class, 'templates'])->name('index');
+            Route::get('/tao-moi', [StaffEvaluationController::class, 'createTemplate'])->name('create');
+            Route::post('/', [StaffEvaluationController::class, 'storeTemplate'])->name('store');
+            Route::get('/{templateId}/sua', [StaffEvaluationController::class, 'editTemplate'])->name('edit');
+            Route::put('/{templateId}', [StaffEvaluationController::class, 'updateTemplate'])->name('update');
+            Route::post('/{templateId}/nhan-ban', [StaffEvaluationController::class, 'duplicateTemplate'])->name('duplicate');
+            Route::patch('/{templateId}/mac-dinh', [StaffEvaluationController::class, 'setDefaultTemplate'])->name('set-default');
+            Route::patch('/{templateId}/kich-hoat', [StaffEvaluationController::class, 'toggleTemplateActivation'])->name('toggle-activation');
+            Route::delete('/{templateId}', [StaffEvaluationController::class, 'destroyTemplate'])->name('destroy');
+        });
+        Route::get('/bao-cao/{reportId}', [StaffEvaluationController::class, 'show'])->name('reports.show');
+        Route::get('/bao-cao/{reportId}/xem-pdf', [StaffEvaluationController::class, 'preview'])->name('reports.preview');
+        Route::post('/bao-cao/{reportId}/tra-chinh-sua', [StaffEvaluationController::class, 'requestRevision'])->name('reports.request-revision');
+        Route::post('/bao-cao/{reportId}/duyet', [StaffEvaluationController::class, 'approve'])->name('reports.approve');
+        Route::post('/bao-cao/{reportId}/phat-hanh', [StaffEvaluationController::class, 'publish'])->name('reports.publish');
+    });
+
+    Route::prefix('lien-he')->name('lien-he.')->group(function () {
+        Route::get('/', [InternalLienHeController::class, 'index'])->name('index');
+        Route::get('/thung-rac', [InternalLienHeController::class, 'trash'])->name('trash');
+        Route::delete('/bulk/xoa', [InternalLienHeController::class, 'bulkDestroy'])->name('bulk-destroy');
+        Route::patch('/bulk/trang-thai', [InternalLienHeController::class, 'bulkUpdateStatus'])->name('bulk-status');
+        Route::patch('/{id}/khoi-phuc', [InternalLienHeController::class, 'restore'])->name('restore');
+        Route::get('/{id}', [InternalLienHeController::class, 'show'])->name('show');
+        Route::put('/{id}', [InternalLienHeController::class, 'update'])->name('update');
+        Route::delete('/{id}', [InternalLienHeController::class, 'destroy'])->name('destroy');
+        Route::post('/{id}/phan-hoi', [InternalLienHeController::class, 'storeReply'])->name('reply.store');
+        Route::patch('/{id}/gan-phu-trach', [InternalLienHeController::class, 'assign'])->name('assign');
     });
 
     Route::prefix('bai-viet')->name('bai-viet.')->group(function () {
@@ -424,22 +511,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'portal:admin'])->gr
 
     // ── Liên Hệ (CRM) ───────────────────────────────────────────────────────────
     Route::prefix('lien-he')->name('lien-he.')->group(function () {
-        Route::get('/', [AdminLienHeController::class, 'index'])->name('index');
-        Route::get('/thung-rac', [AdminLienHeController::class, 'trash'])->name('trash');
-
-        // Bulk actions
-        Route::delete('/bulk/xoa', [AdminLienHeController::class, 'bulkDestroy'])->name('bulk-destroy');
-        Route::patch('/bulk/trang-thai', [AdminLienHeController::class, 'bulkUpdateStatus'])->name('bulk-status');
-
-        // Single item
-        Route::patch('/{id}/khoi-phuc', [AdminLienHeController::class, 'restore'])->name('restore');
-        Route::get('/{id}', [AdminLienHeController::class, 'show'])->name('show');
-        Route::put('/{id}', [AdminLienHeController::class, 'update'])->name('update');
-        Route::delete('/{id}', [AdminLienHeController::class, 'destroy'])->name('destroy');
-
-        // CRM actions
-        Route::post('/{id}/phan-hoi', [AdminLienHeController::class, 'storeReply'])->name('reply.store');
-        Route::patch('/{id}/gan-phu-trach', [AdminLienHeController::class, 'assign'])->name('assign');
+        Route::get('/', [InternalLienHeController::class, 'index'])->name('index');
+        Route::get('/thung-rac', [InternalLienHeController::class, 'trash'])->name('trash');
+        Route::get('/{id}', [InternalLienHeController::class, 'show'])->name('show');
     });
 
     // ── Cơ sở Đào tạo ────────────────────────────────────────────────────────

@@ -217,7 +217,9 @@
                             @php
                                 $profile = $hv->hoSoNguoiDung;
                                 $hoTen = $profile->hoTen ?? $hv->taiKhoan;
-                                $initials = strtoupper(mb_substr($hoTen, 0, 1));
+                                $initials = mb_strtoupper(mb_substr($hoTen, 0, 1, 'UTF-8'), 'UTF-8');
+                                $avatarUrl = $hv->getAvatarUrl();
+                                $hasPhoto = !str_contains($avatarUrl, 'user-default.png');
                             @endphp
                             <tr style="opacity:.82">
                                 <td style="color:#8899a6;font-size:.78rem">
@@ -227,7 +229,11 @@
                                 <td>
                                     <div class="hv-info">
                                         <div class="hv-avatar" style="background:#fca5a5;color:#7f1d1d">
-                                            {{ $initials }}
+                                            @if ($hasPhoto)
+                                                <img src="{{ $avatarUrl }}" alt="{{ $hoTen }}" class="hv-avatar-img">
+                                            @else
+                                                {{ $initials }}
+                                            @endif
                                         </div>
                                         <div>
                                             <div class="hv-name">{{ $hoTen }}</div>

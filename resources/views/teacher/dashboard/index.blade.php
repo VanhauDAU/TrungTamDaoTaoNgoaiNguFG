@@ -58,11 +58,11 @@
                     <i class="fas fa-clipboard-check"></i>
                 </div>
                 <div>
-                    <div class="dashboard-stat-card__value">{{ number_format($attendanceSummary['present'] + $attendanceSummary['late']) }}</div>
+                    <div class="dashboard-stat-card__value">{{ number_format($attendanceSummary['present']) }}</div>
                     <div class="dashboard-stat-card__label">Lượt điểm danh có mặt</div>
                     <div class="dashboard-stat-card__trend">
-                        <i class="fas fa-user-clock"></i>
-                        {{ number_format($attendanceSummary['late']) }} lượt đi trễ
+                        <i class="fas fa-user-slash"></i>
+                        {{ number_format($attendanceSummary['absent']) }} lượt vắng hoặc bị khóa
                     </div>
                 </div>
             </a>
@@ -118,8 +118,8 @@
                         @endforeach
                     </div>
                     <div class="dashboard-footer-info mt-3 justify-content-center">
-                        <span>{{ number_format($attendanceSummary['absent']) }} lượt vắng không phép hoặc khóa học phí</span>
-                        <span>{{ number_format($attendanceSummary['excused']) }} lượt vắng có phép</span>
+                        <span>{{ number_format($attendanceSummary['absent']) }} lượt vắng hoặc khóa học phí</span>
+                        <span>{{ number_format($attendanceSummary['locked']) }} lượt bị khóa do nợ học phí</span>
                     </div>
                 </div>
             </article>
@@ -174,8 +174,8 @@
                     <div class="row g-3 mb-3">
                         <div class="col-6">
                             <div class="rounded-4 p-3 h-100 bg-light">
-                                <div class="small text-muted mb-1">Có mặt / đi trễ</div>
-                                <div class="fw-semibold fs-5">{{ number_format($attendanceSummary['present'] + $attendanceSummary['late']) }}</div>
+                                <div class="small text-muted mb-1">Có mặt</div>
+                                <div class="fw-semibold fs-5">{{ number_format($attendanceSummary['present']) }}</div>
                             </div>
                         </div>
                         <div class="col-6">

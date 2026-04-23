@@ -79,12 +79,11 @@ class DashboardController extends Controller
 
         $attendanceSummary = [
             'present' => (clone $attendanceBaseQuery)->where('trangThai', DiemDanh::CO_MAT)->count(),
-            'late' => (clone $attendanceBaseQuery)->where('trangThai', DiemDanh::DI_TRE)->count(),
-            'excused' => (clone $attendanceBaseQuery)->where('trangThai', DiemDanh::CO_PHEP)->count(),
             'absent' => (clone $attendanceBaseQuery)->whereIn('trangThai', [
                 DiemDanh::VANG_KHONG_PHEP,
                 DiemDanh::BI_KHOA_NO_HP,
             ])->count(),
+            'locked' => (clone $attendanceBaseQuery)->where('trangThai', DiemDanh::BI_KHOA_NO_HP)->count(),
         ];
 
         return view('teacher.dashboard.index', [

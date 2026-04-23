@@ -133,7 +133,7 @@ class LopHocController extends AdminLopHocController
         $lopHoc = LopHoc::where('slug', $slug)->firstOrFail();
         $payload = $request->validate([
             'hoTen' => 'required|string|max:100',
-            'email' => 'nullable|email|max:100',
+            'email' => 'required|email|max:100',
             'soDienThoai' => 'nullable|string|max:20',
             'cccd' => 'nullable|string|max:20',
             'ngaySinh' => 'nullable|date',
@@ -148,6 +148,7 @@ class LopHocController extends AdminLopHocController
             'payment_method' => 'required|in:1,2,3',
         ], [
             'hoTen.required' => 'Vui lòng nhập họ và tên học viên.',
+            'email.required' => 'Vui lòng nhập email học viên.',
             'payment_method.required' => 'Vui lòng chọn hình thức thanh toán.',
         ]);
 
