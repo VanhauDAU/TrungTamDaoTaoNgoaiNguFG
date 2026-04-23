@@ -7,10 +7,16 @@ use App\Models\Education\LopHoc;
 use App\Models\Education\DangKyLopHoc;
 use App\Models\Education\BuoiHoc;
 use App\Models\Interaction\Chat\ChatRoom;
+use App\Services\Education\LopHocTaiLieuService;
 use Illuminate\Http\Request;
 
 class LopHocController extends Controller
 {
+    public function __construct(
+        private readonly LopHocTaiLieuService $lopHocTaiLieuService
+    ) {
+    }
+
     public function index(Request $request)
     {
         return view('teacher.lop-hoc.index', [
@@ -29,7 +35,7 @@ class LopHocController extends Controller
         $teacherId = $request->user()->getAuthIdentifier();
 
         $lopHoc = LopHoc::query()
-            ->with(['khoaHoc', 'coSo', 'caHoc', 'phongHoc', 'chinhSachGia'])
+            ->with(['khoaHoc', 'coSo', 'caHoc', 'phongHoc', 'chinhSachGia', 'lopHocTaiLieus.giaoVienTaiLieu'])
             ->where('slug', $slug)
             ->where('taiKhoanId', $teacherId)
             ->firstOrFail();
@@ -50,6 +56,9 @@ class LopHocController extends Controller
             ->where('loai', ChatRoom::TYPE_CLASS_GROUP)
             ->first();
 
-        return view('teacher.lop-hoc.show', compact('lopHoc', 'dangKyLopHocs', 'buoiHocs', 'chatRoom'));
+        $taiLieus = $lopHoc->lopHocTaiLieus;
+        $taiLieuGroups = $this->lopHocTaiLieuService->groupForDisplay($taiLieus);
+
+        return view('teacher.lop-hoc.show', compact('lopHoc', 'dangKyLopHocs', 'buoiHocs', 'chatRoom', 'taiLieus', 'taiLieuGroups'));
     }
 }

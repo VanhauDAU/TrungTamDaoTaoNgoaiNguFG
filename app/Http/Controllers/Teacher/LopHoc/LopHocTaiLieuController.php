@@ -25,8 +25,9 @@ class LopHocTaiLieuController extends Controller
         $teacherId = $request->user()->getAuthIdentifier();
         $lopHoc    = $this->service->findLopHocForTeacher($slug, $teacherId);
         $taiLieus  = $this->service->list($lopHoc);
+        $taiLieuGroups = $this->service->groupForDisplay($taiLieus);
 
-        return view('teacher.lop-hoc.materials.index', compact('lopHoc', 'taiLieus'));
+        return view('teacher.lop-hoc.materials.index', compact('lopHoc', 'taiLieus', 'taiLieuGroups'));
     }
 
     /* ── Chọn từ thư viện để chia sẻ vào lớp ────────────────────────────────── */
@@ -66,46 +67,70 @@ class LopHocTaiLieuController extends Controller
         $lopHoc    = $this->service->findLopHocForTeacher($slug, $teacherId);
 
         $validated = $request->validate([
-            'giaoVienTaiLieuId' => ['required', 'integer', 'exists:giao_vien_tai_lieu,giaoVienTaiLieuId'],
-            'tieuDe'            => ['required', 'string', 'max:255'],
+            'giaoVienTaiLieuId' => ['nullable', 'integer', 'exists:giao_vien_tai_lieu,giaoVienTaiLieuId'],
+            'giaoVienTaiLieuIds' => ['nullable', 'array', 'min:1'],
+            'giaoVienTaiLieuIds.*' => ['integer', 'distinct', 'exists:giao_vien_tai_lieu,giaoVienTaiLieuId'],
+            'tieuDe'            => ['nullable', 'string', 'max:255'],
+            'dotChiaSeTieuDe'   => ['nullable', 'string', 'max:255'],
             'moTa'              => ['nullable', 'string'],
-            'nhomTaiLieu'       => ['required', Rule::in(array_keys(LopHocTaiLieu::nhomOptions()))],
             'sortOrder'         => ['nullable', 'integer', 'min:0', 'max:9999'],
             'trangThai'         => ['nullable', Rule::in(array_keys(LopHocTaiLieu::trangThaiOptions()))],
         ], [
             'giaoVienTaiLieuId.required' => 'Vui lòng chọn tài liệu từ thư viện.',
+            'giaoVienTaiLieuIds.required' => 'Vui lòng chọn ít nhất một tài liệu từ thư viện.',
+            'giaoVienTaiLieuIds.min'      => 'Vui lòng chọn ít nhất một tài liệu từ thư viện.',
             'giaoVienTaiLieuId.exists'   => 'Tài liệu không tồn tại.',
-            'tieuDe.required'            => 'Vui lòng nhập tiêu đề.',
-            'nhomTaiLieu.required'       => 'Vui lòng chọn nhóm tài liệu.',
+            'giaoVienTaiLieuIds.*.exists'=> 'Một trong các tài liệu đã chọn không tồn tại.',
         ]);
 
-        // Lấy tài liệu gốc (phải thuộc giáo viên này)
-        $nguon = $this->libraryService->findForTeacher(
-            (int) $validated['giaoVienTaiLieuId'],
-            $teacherId
-        );
+        $ids = collect($validated['giaoVienTaiLieuIds'] ?? []);
+        if ($ids->isEmpty() && !empty($validated['giaoVienTaiLieuId'])) {
+            $ids = collect([(int) $validated['giaoVienTaiLieuId']]);
+        }
 
-        // Tạo bản ghi chia sẻ (sao chép metadata file, giữ reference)
-        LopHocTaiLieu::create([
-            'lopHocId'          => $lopHoc->lopHocId,
-            'giaoVienTaiLieuId' => $nguon->giaoVienTaiLieuId,
-            'tieuDe'            => $validated['tieuDe'],
-            'moTa'              => $validated['moTa'] ?? null,
-            'nhomTaiLieu'       => $validated['nhomTaiLieu'],
-            'disk'              => $nguon->disk,
-            'duongDan'          => $nguon->duongDan,
-            'tenGoc'            => $nguon->tenGoc,
-            'mime'              => $nguon->mime,
-            'kichThuoc'         => $nguon->kichThuoc,
-            'nguoiTaiLenId'     => $teacherId,
-            'publishedAt'       => now(),
-            'sortOrder'         => $validated['sortOrder'] ?? 0,
-            'trangThai'         => $validated['trangThai'] ?? LopHocTaiLieu::TRANG_THAI_ACTIVE,
-        ]);
+        if ($ids->isEmpty()) {
+            return back()
+                ->withErrors(['giaoVienTaiLieuIds' => 'Vui lòng chọn ít nhất một tài liệu từ thư viện.'])
+                ->withInput();
+        }
+
+        if ($ids->count() === 1 && blank($validated['tieuDe'] ?? null)) {
+            return back()
+                ->withErrors(['tieuDe' => 'Vui lòng nhập tiêu đề.'])
+                ->withInput();
+        }
+
+        $batchMeta = $this->service->makeShareBatchMeta($validated['dotChiaSeTieuDe'] ?? null);
+        $isSingleShare = $ids->count() === 1;
+
+        $result = $ids->values()->reduce(function (array $carry, int $id, int $index) use ($teacherId, $lopHoc, $validated, $batchMeta, $isSingleShare) {
+            $nguon = $this->libraryService->findForTeacher($id, $teacherId);
+            $title = $index === 0 && $isSingleShare
+                ? ($validated['tieuDe'] ?? $nguon->tieuDe)
+                : $nguon->tieuDe;
+
+            $sharedItem = $this->shareLibraryItemToClass($lopHoc->lopHocId, $teacherId, $nguon, [
+                'tieuDe' => $title,
+                'moTa' => $validated['moTa'] ?? null,
+                'sortOrder' => isset($validated['sortOrder']) ? ((int) $validated['sortOrder'] + $index) : $index,
+                'trangThai' => $validated['trangThai'] ?? LopHocTaiLieu::TRANG_THAI_ACTIVE,
+                'dotChiaSeKey' => $batchMeta['key'],
+                'dotChiaSeTieuDe' => $batchMeta['title'],
+                'dotChiaSeAt' => $batchMeta['sent_at'],
+            ]);
+
+            if ($sharedItem->wasRecentlyCreated) {
+                $carry['created']++;
+            } else {
+                $carry['updated']++;
+            }
+
+            return $carry;
+        }, ['created' => 0, 'updated' => 0]);
 
         return redirect()
             ->route('teacher.classes.materials.index', $slug)
-            ->with('success', 'Đã chia sẻ tài liệu vào lớp học thành công.');
+            ->with('success', $this->buildShareSuccessMessage($result['created'], $result['updated']));
     }
 
     /* ── Tạo mới (upload thẳng vào lớp – giữ tương thích) ─────────────────── */
@@ -202,5 +227,49 @@ class LopHocTaiLieuController extends Controller
             ->firstOrFail();
 
         return $this->service->downloadForTeacher($taiLieu);
+    }
+
+    private function shareLibraryItemToClass(int $lopHocId, int $teacherId, GiaoVienTaiLieu $nguon, array $payload): LopHocTaiLieu
+    {
+        return LopHocTaiLieu::updateOrCreate(
+            [
+                'lopHocId'          => $lopHocId,
+                'giaoVienTaiLieuId' => $nguon->giaoVienTaiLieuId,
+            ],
+            [
+                'dotChiaSeKey'  => $payload['dotChiaSeKey'],
+                'dotChiaSeTieuDe' => $payload['dotChiaSeTieuDe'],
+                'dotChiaSeAt'   => $payload['dotChiaSeAt'],
+                'tieuDe'        => $payload['tieuDe'],
+                'moTa'          => $payload['moTa'],
+                'nhomTaiLieu'   => $nguon->nhomTaiLieu,
+                'disk'          => $nguon->disk,
+                'duongDan'      => $nguon->duongDan,
+                'tenGoc'        => $nguon->tenGoc,
+                'mime'          => $nguon->mime,
+                'kichThuoc'     => $nguon->kichThuoc,
+                'nguoiTaiLenId' => $teacherId,
+                'publishedAt'   => now(),
+                'sortOrder'     => $payload['sortOrder'],
+                'trangThai'     => $payload['trangThai'],
+            ]
+        );
+    }
+
+    private function buildShareSuccessMessage(int $created, int $updated): string
+    {
+        if ($created > 0 && $updated === 0) {
+            return $created === 1
+                ? 'Đã chia sẻ tài liệu vào lớp học thành công.'
+                : "Đã chia sẻ {$created} tài liệu vào lớp học thành công.";
+        }
+
+        if ($created === 0 && $updated > 0) {
+            return $updated === 1
+                ? 'Tài liệu đã có trong lớp, thông tin chia sẻ đã được cập nhật.'
+                : "Đã cập nhật {$updated} tài liệu đã có sẵn trong lớp.";
+        }
+
+        return "Đã chia sẻ {$created} tài liệu mới và cập nhật {$updated} tài liệu đã có trong lớp.";
     }
 }

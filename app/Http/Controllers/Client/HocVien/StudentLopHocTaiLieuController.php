@@ -27,10 +27,11 @@ class StudentLopHocTaiLieuController extends Controller
             ->active()
             ->ordered()
             ->get();
+        $taiLieuGroups = $this->service->groupForDisplay($taiLieus);
 
         $lopHoc = \App\Models\Education\LopHoc::findOrFail($lopHocId);
 
-        return view('clients.hoc-vien.lop-hoc-tai-lieu.index', compact('lopHoc', 'taiLieus'));
+        return view('clients.hoc-vien.lop-hoc-tai-lieu.index', compact('lopHoc', 'taiLieus', 'taiLieuGroups'));
     }
 
     /**
