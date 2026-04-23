@@ -33,6 +33,12 @@ app/Http/Controllers/Teacher/LichDay/
 resources/views/teacher/lich-day/
 └── index.blade.php                ← Blade view (đã viết lại)
 
+app/Models/
+└── TeacherScheduleProposal.php    ← Model lưu đề xuất (Mới)
+
+database/migrations/
+└── 2026_04_21_..._create_teacher_schedule_proposals_table.php
+
 public/assets/teacher/css/
 └── lich-day.css                   ← CSS riêng cho trang giảng dạy
 
@@ -72,7 +78,7 @@ Nếu thiếu → dùng tuần hiện tại.
 
 **Guard:** Controller kiểm tra `lopHoc.taiKhoanId === auth()->id()` trước khi xử lý, trả 403 nếu sai.
 
-> **Ghi chú mở rộng:** Các endpoint hiện tại trả JSON mock thành công. Khi cần lưu DB, tạo model `DeXuatLichDay` và thêm migration tương ứng.
+> **Trạng thái dữ liệu:** Các đề xuất đã được lưu vào bảng `teacher_schedule_proposals` với trạng thái mặc định là `pending`.
 
 ---
 
@@ -149,7 +155,7 @@ Giáo viên → Nhấp card → Modal chi tiết
 
 ## 8. Checklist mở rộng (TODO)
 
-- [ ] Tạo migration + model `de_xuat_lich_day` để lưu đề xuất
+- [x] Tạo migration + model `teacher_schedule_proposals` để lưu đề xuất
 - [ ] Gửi thông báo nội bộ tới quản lý khi có đề xuất mới
 - [ ] Cho phép quản lý duyệt/từ chối đề xuất trong admin/staff panel
 - [ ] Thêm bộ lọc lớp học trong toolbar
@@ -164,7 +170,7 @@ Giáo viên → Nhấp card → Modal chi tiết
 > Trang sử dụng layout `layouts.internal` (→ extends `layouts.admin`), đảm bảo nhất quán với các trang teacher khác.
 
 > [!IMPORTANT]
-> Các endpoint `POST` đề xuất **chưa lưu DB** – chỉ validate + trả JSON mock. Cần implement persistence trước khi deploy production.
+> Các đề xuất hiện tại đã được **lưu vào cơ sở dữ liệu**. Tuy nhiên, logic để Quản lý (Admin) duyệt và cập nhật ngược lại vào bảng `buoihoc` cần được triển khai ở module Admin.
 
 > [!TIP]
 > Để thêm ca học mới vào timetable, vào **Admin → Ca học** và đảm bảo trường `trangThai = 1` (đang hoạt động).

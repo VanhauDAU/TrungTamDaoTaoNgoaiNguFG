@@ -60,10 +60,7 @@
             title="Chọn một buổi học để đề xuất tạm ngưng">
             <i class="fas fa-pause-circle"></i> Đề xuất tạm ngưng
         </button>
-        <button class="ld-proposal-btn btn-reschedule" id="btn-global-doi-lich" disabled
-            title="Chọn một buổi học để đề xuất đổi lịch">
-            <i class="fas fa-calendar-days"></i> Đề xuất đổi lịch
-        </button>
+
         <small class="text-muted ms-auto" id="proposal-hint">
             <i class="fas fa-info-circle me-1"></i>Nhấp vào ô buổi dạy để chọn, sau đó sử dụng các nút bên trái.
         </small>
@@ -139,27 +136,6 @@
                                                 @endif
                                             </div>
 
-                                            {{-- Quick actions --}}
-                                            <div class="lesson-actions">
-                                                <button class="lesson-action-btn btn-detail"
-                                                    data-action="detail" data-buoi-id="{{ $buoi->buoiHocId }}">
-                                                    <i class="fas fa-info"></i> Chi tiết
-                                                </button>
-                                                @if (!$buoi->daHoanThanh && $buoi->trangThaiKey !== 'da-huy')
-                                                    <button class="lesson-action-btn btn-bu"
-                                                        data-action="bu" data-buoi-id="{{ $buoi->buoiHocId }}">
-                                                        <i class="fas fa-calendar-plus"></i> Dạy bù
-                                                    </button>
-                                                    <button class="lesson-action-btn btn-ngung"
-                                                        data-action="ngung" data-buoi-id="{{ $buoi->buoiHocId }}">
-                                                        <i class="fas fa-pause"></i> Tạm ngưng
-                                                    </button>
-                                                    <button class="lesson-action-btn btn-doi-lich"
-                                                        data-action="doi-lich" data-buoi-id="{{ $buoi->buoiHocId }}">
-                                                        <i class="fas fa-calendar-days"></i> Đổi lịch
-                                                    </button>
-                                                @endif
-                                            </div>
                                         </div>
                                     @endforeach
                                 @else
@@ -198,7 +174,7 @@
         <span class="legend-item"><span class="legend-dot dang-dien-ra"></span> Đang diễn ra</span>
         <span class="legend-item"><span class="legend-dot da-hoan-thanh"></span> Đã hoàn thành</span>
         <span class="legend-item"><span class="legend-dot da-huy"></span> Đã hủy</span>
-        <span class="legend-item"><span class="legend-dot doi-lich"></span> Đổi lịch</span>
+        <span class="legend-item"><span class="legend-dot da-huy"></span> Đã hủy</span>
     </div>
 
     {{-- ━━━━━━━━━━━━━━━━━━━━━ MODAL CHI TIẾT ━━━━━━━━━━━━━━━━━━━━━ --}}
@@ -258,10 +234,6 @@
                         style="display:none">
                         <i class="fas fa-pause-circle me-1"></i>Tạm ngưng
                     </button>
-                    <button type="button" class="btn btn-sm btn-outline-success" id="detail-btn-doi-lich"
-                        style="display:none">
-                        <i class="fas fa-calendar-days me-1"></i>Đổi lịch
-                    </button>
                 </div>
             </div>
         </div>
@@ -285,10 +257,23 @@
                     <form id="form-day-bu">
                         @csrf
                         <input type="hidden" id="bu-buoi-id" name="buoi_id" value="">
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Ngày dạy bù (dự kiến)</label>
-                            <input type="date" class="form-control" id="bu-ngay-bu" name="ngay_bu"
-                                min="{{ date('Y-m-d') }}">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">Ngày dạy bù (dự kiến)</label>
+                                <input type="date" class="form-control" id="bu-ngay-bu" name="ngay_bu"
+                                    min="{{ date('Y-m-d') }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">Ca học (dự kiến)</label>
+                                <select class="form-select" id="bu-ca-hoc-id" name="ca_hoc_id">
+                                    <option value="">-- Chọn ca học --</option>
+                                    @foreach($caHocs as $ca)
+                                        <option value="{{ $ca->caHocId }}">
+                                            {{ $ca->tenCa }} ({{ \Carbon\Carbon::parse($ca->gioBatDau)->format('H:i') }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Lý do <span class="text-danger">*</span></label>
@@ -343,42 +328,6 @@
         </div>
     </div>
 
-    {{-- ━━━━━━━━━━━━━━━━━━━━━ MODAL ĐỔI LỊCH ━━━━━━━━━━━━━━━━━━━━━ --}}
-    <div class="modal fade ld-modal" id="modalDoiLich" tabindex="-1" aria-labelledby="modalDoiLichLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header modal-header--green">
-                    <h5 class="modal-title" id="modalDoiLichLabel">
-                        <i class="fas fa-calendar-days me-2"></i>Đề xuất đổi lịch
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
-                </div>
-                <div class="modal-body">
-                    <p class="small text-muted mb-3">Lớp: <strong id="doi-ten-lop">–</strong></p>
-                    <form id="form-doi-lich">
-                        @csrf
-                        <input type="hidden" id="doi-buoi-id" name="buoi_id" value="">
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Ngày mới (dự kiến) <span class="text-danger">*</span></label>
-                            <input type="date" class="form-control" id="doi-ngay-moi" name="ngay_moi"
-                                min="{{ date('Y-m-d') }}" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Lý do đổi lịch <span class="text-danger">*</span></label>
-                            <textarea class="form-control" id="doi-ly-do" name="ly_do" rows="3"
-                                placeholder="Mô tả lý do cần đổi lịch..." required></textarea>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer border-0">
-                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Hủy</button>
-                    <button type="button" class="btn btn-success btn-sm" id="btn-submit-doi-lich">
-                        <i class="fas fa-paper-plane me-1"></i>Gửi đề xuất
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
 
 @endsection
 
@@ -432,7 +381,7 @@
             card.style.outlineOffset = '2px';
         }
         const hasCard = !!card;
-        ['btn-global-bu','btn-global-ngung','btn-global-doi-lich'].forEach(id => {
+        ['btn-global-bu','btn-global-ngung'].forEach(id => {
             const btn = document.getElementById(id);
             if (btn) btn.disabled = !hasCard;
         });
@@ -441,26 +390,11 @@
     /* ── LESSON CARD CLICK ──────────────────────────────── */
     document.querySelectorAll('.lesson-card').forEach(card => {
         card.addEventListener('click', (e) => {
-            // Nếu click vào action button, không mở modal detail
-            if (e.target.closest('.lesson-action-btn')) return;
             selectCard(card);
             openDetailModal(card);
         });
     });
 
-    /* Lessons action buttons (inside card) */
-    document.querySelectorAll('.lesson-action-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const card = btn.closest('.lesson-card');
-            selectCard(card);
-            const action = btn.dataset.action;
-            if (action === 'detail') openDetailModal(card);
-            else if (action === 'bu')       openBuModal(card);
-            else if (action === 'ngung')    openNgungModal(card);
-            else if (action === 'doi-lich') openDoiLichModal(card);
-        });
-    });
 
     /* Global proposal buttons */
     document.getElementById('btn-global-bu')?.addEventListener('click', () => {
@@ -468,9 +402,6 @@
     });
     document.getElementById('btn-global-ngung')?.addEventListener('click', () => {
         if (selectedCard) openNgungModal(selectedCard);
-    });
-    document.getElementById('btn-global-doi-lich')?.addEventListener('click', () => {
-        if (selectedCard) openDoiLichModal(selectedCard);
     });
 
     /* ── DETAIL MODAL ───────────────────────────────────── */
@@ -499,13 +430,8 @@
 
         const btnBu      = document.getElementById('detail-btn-bu');
         const btnNgung   = document.getElementById('detail-btn-ngung');
-        const btnDoiLich = document.getElementById('detail-btn-doi-lich');
-
-        [btnBu, btnNgung, btnDoiLich].forEach(b => b.style.display = isActionable ? 'inline-flex' : 'none');
-
         btnBu.onclick      = () => { modalDetail.hide(); openBuModal(card); };
         btnNgung.onclick   = () => { modalDetail.hide(); openNgungModal(card); };
-        btnDoiLich.onclick = () => { modalDetail.hide(); openDoiLichModal(card); };
 
         modalDetail.show();
     }
@@ -518,6 +444,7 @@
         document.getElementById('bu-buoi-id').value       = card.dataset.buoiId;
         document.getElementById('bu-ly-do').value         = '';
         document.getElementById('bu-ngay-bu').value       = '';
+        document.getElementById('bu-ca-hoc-id').value      = '';
         modalDayBu.show();
     }
 
@@ -526,8 +453,9 @@
             '{{ route("teacher.schedule.propose.compensation", ["buoiHocId" => "__ID__"]) }}',
             document.getElementById('bu-buoi-id').value,
             {
-                ly_do:   document.getElementById('bu-ly-do').value,
-                ngay_bu: document.getElementById('bu-ngay-bu').value,
+                ly_do:     document.getElementById('bu-ly-do').value,
+                ngay_bu:   document.getElementById('bu-ngay-bu').value,
+                ca_hoc_id: document.getElementById('bu-ca-hoc-id').value,
             },
             modalDayBu
         );
@@ -552,28 +480,6 @@
         );
     });
 
-    /* ── ĐỔI LỊCH MODAL ─────────────────────────────────── */
-    const modalDoiLich = new bootstrap.Modal(document.getElementById('modalDoiLich'));
-
-    function openDoiLichModal(card) {
-        document.getElementById('doi-ten-lop').textContent = card.dataset.tenLop || '—';
-        document.getElementById('doi-buoi-id').value       = card.dataset.buoiId;
-        document.getElementById('doi-ly-do').value         = '';
-        document.getElementById('doi-ngay-moi').value      = '';
-        modalDoiLich.show();
-    }
-
-    document.getElementById('btn-submit-doi-lich')?.addEventListener('click', async () => {
-        await submitProposal(
-            '{{ route("teacher.schedule.propose.reschedule", ["buoiHocId" => "__ID__"]) }}',
-            document.getElementById('doi-buoi-id').value,
-            {
-                ly_do:    document.getElementById('doi-ly-do').value,
-                ngay_moi: document.getElementById('doi-ngay-moi').value,
-            },
-            modalDoiLich
-        );
-    });
 
     /* ── SUBMIT HELPER ──────────────────────────────────── */
     async function submitProposal(routeTemplate, buoiId, payload, modal) {
